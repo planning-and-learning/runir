@@ -164,16 +164,15 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Program, C>> : fmt::fo
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::program(view), context); }
 };
 
-template<tyr::TaskKind Kind, typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ModuleState<Kind>, C>>
+template<typename C>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ModuleState, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
 
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
-                              "ModuleState(state={}, mod={}, memory_state={}, registers={}, arguments={})",
-                              value.get_state().index(),
+                              "ModuleState(mod={}, memory_state={}, registers={}, arguments={})",
                               value.get_mod().get_symbol().get_name(),
                               value.get_memory_state(),
                               value.get_registers(),
@@ -189,11 +188,8 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::ext::CallStack, C>>
     auto format(const auto& value, format_context& context) const -> format_context::iterator
     {
         return fmt::format_to(context.out(),
-                              "CallStack(mod={}, return_memory_state={}, registers={}, arguments={}, caller={})",
-                              value.get_mod().get_symbol().get_name(),
-                              value.get_return_memory_state(),
-                              value.get_registers(),
-                              value.get_arguments(),
+                              "CallStack(module_state={}, caller={})",
+                              value.get_module_state(),
                               value.get_caller());
     }
 };
@@ -206,8 +202,8 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ProgramState<Kind>, C>
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
-                              "ProgramState(program={}, module_state={}, call_stack={})",
-                              value.get_program().index(),
+                              "ProgramState(state={}, module_state={}, call_stack={})",
+                              value.get_state().index(),
                               value.get_module_state(),
                               value.get_call_stack());
     }
@@ -223,7 +219,7 @@ struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamil
         const auto state = label.program_state;
         return fmt::format_to(context.out(),
                               "state={} module={} initial={} goal={} alive={} unsolvable={}",
-                              state.get_module_state().get_state().index(),
+                              state.get_state().index(),
                               state.get_module_state().get_mod().get_symbol().get_name(),
                               label.is_initial,
                               label.is_goal,

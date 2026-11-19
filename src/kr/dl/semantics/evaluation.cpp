@@ -23,7 +23,7 @@ namespace
 template<typename Categories, std::size_t I>
 using At = boost::mp11::mp_at_c<Categories, I>;
 template<tyr::TaskKind Kind>
-using BuilderContext = StateEvaluationContext<Kind, tyr::planning::BuilderStateView<Kind>>;
+using BuilderContext = StateEvaluationContext<Kind, tyr::planning::StateBuilderView<Kind>>;
 }
 
 static_assert(boost::mp11::mp_size<CategoryTags>::value == 4, "the instantiations below cover the 4 CategoryTags");
@@ -60,7 +60,7 @@ namespace runir::kr::dl::semantics::incremental
 #define RUNIR_EVALUATION_GRAPH_AT(z, I, Kind)                                                                                                              \
     template EvaluationIndex<At<CategoryTags, (I)>> EvaluationGraph<Kind>::prepare<At<CategoryTags, (I)>>(ConstructorView<At<CategoryTags, (I)>>);         \
     template EvaluationIndex<At<CategoryTags, (I)>> EvaluationGraph<Kind>::get_index<At<CategoryTags, (I)>>(ConstructorView<At<CategoryTags, (I)>>) const; \
-    template BorrowedDenotationView<At<CategoryTags, (I)>> EvaluationGraph<Kind>::result<At<CategoryTags, (I)>>(EvaluationIndex<At<CategoryTags, (I)>>) const;
+    template DenotationBuilderView<At<CategoryTags, (I)>> EvaluationGraph<Kind>::result<At<CategoryTags, (I)>>(EvaluationIndex<At<CategoryTags, (I)>>) const;
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
 #define RUNIR_CONCEPT_OR_ROLE_AT(z, I, Kind)                                                                               \
     template const DenotationDelta<At<ConceptOrRoleTags, (I)>>& EvaluationGraph<Kind>::change<At<ConceptOrRoleTags, (I)>>( \

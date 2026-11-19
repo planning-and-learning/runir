@@ -24,29 +24,29 @@ struct ProjectionEvaluator
     tyr::datalog::database::incremental::ProjectionEvaluator operation;
     DenotationState<Category> value;
 
-    ProjectionEvaluator(const ygg::FreeRelationRepository& layer, QueryEvaluationIndex child_, const tyr::datalog::database::ProjectionPlan& plan) :
+    ProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex child_, const tyr::datalog::database::ProjectionPlan& plan) :
         child(child_),
-        operation(layer, plan)
+        operation(scratch, plan)
     {
     }
 
-    static void set_row(urd::builder<Denotation<Category>>& builder, const auto& row, bool present)
+    static void set_row(urd::builder<Denotation<Category>, runir::kr::dl::semantics::DenotationRepository>& builder, const auto& row, bool present)
     {
         using ObjectIndex = urd::index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
-            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), present);
+            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 0))), present);
         else
-            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(1))), present);
+            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 0))), ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 1))), present);
     }
 
     static void set_row(DenotationState<Category>& state, const auto& row, bool present, const tyr::formalism::planning::Repository& repository)
     {
         using ObjectIndex = urd::index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
-            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), present, repository);
+            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 0))), present, repository);
         else
-            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))),
-                      ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(1))),
+            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 0))),
+                      ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 1))),
                       present,
                       repository);
     }
@@ -54,7 +54,7 @@ struct ProjectionEvaluator
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
-        auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
+        auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context), graph.records(), graph.denotations());
         operation.initialize(graph.result(child), context.get_workspace().get_database_workspace());
         const auto rows = operation.get_result();
         for (size_t i = 0; i < rows.size(); ++i)

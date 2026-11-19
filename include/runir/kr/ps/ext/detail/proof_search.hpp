@@ -80,9 +80,12 @@ ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, Evaluat
     const auto out_of_time = [&] { return stopwatch && stopwatch->has_finished(); };
     const auto classify = [&](ProgramStateViewConcept<Kind> auto state)
     {
-        const auto planning_state = state.get_module_state().get_state();
-        const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_state, planning_state);
-        return std::pair(goal, !goal && classifier.is_unsolvable(planning_state));
+        return urd::visit_view(state.get_state(),
+                               [&](const auto& planning_state)
+                               {
+                                   const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_state, planning_state);
+                                   return std::pair(goal, !goal && classifier.is_unsolvable(planning_state));
+                               });
     };
     const auto record_transition = [&](ProgramStateViewConcept<Kind> auto source, const Step& step, std::size_t choice_width)
     {

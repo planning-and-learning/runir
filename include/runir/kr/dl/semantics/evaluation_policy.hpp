@@ -4,7 +4,7 @@
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/evaluation.hpp"
-#include "runir/kr/dl/semantics/register_values_data.hpp"
+#include "runir/kr/dl/semantics/register_values_builder.hpp"
 
 #include <concepts>
 #include <span>
@@ -63,8 +63,9 @@ class DeltaEvaluationPolicy
     {
         const tyr::planning::Task<Kind>* m_task;
         incremental::IncrementalEvaluation<Kind> m_evaluation;
-        urd::builder<tyr::planning::State<Kind>> m_state;  ///< A copy: the entered state may be a builder view of scratch storage.
-        urd::data<RegisterValues> m_registers;
+        urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>
+            m_state;  ///< A copy: the entered state may be a builder view of scratch storage.
+        urd::builder<RegisterValues, runir::kr::dl::semantics::DenotationRepository> m_registers;
         incremental::Delta m_delta;
         bool m_has_previous = false;  ///< m_state holds the previously entered state.
         bool m_entered = false;       ///< The current state is entered.
@@ -88,14 +89,18 @@ class DeltaEvaluationPolicy
             {
                 if (!std::exchange(m_has_previous, false))
                     return m_evaluation.enter(context);
-                m_delta.template assign<Kind>(urd::resolve(m_state, context.get_state().context()),
-                                              urd::resolve(m_registers, *task.get_repository()),
-                                              context.get_state(),
-                                              context.registers());
+                urd::visit_view(context.registers(),
+                                [&](const auto& registers)
+                                {
+                                    m_delta.template assign<Kind>(urd::resolve(m_state, context.get_state().context()),
+                                                                  urd::resolve(m_registers, context.get_denotation_repository()),
+                                                                  context.get_state(),
+                                                                  registers);
+                                });
                 return m_evaluation.enter(context, m_delta, detail::get_database_workspace(context.get_workspace()));
             }();
             m_state.assign(context.get_state());
-            assign(m_registers, context.registers());
+            urd::visit_view(context.registers(), [this](const auto& registers) { assign(m_registers, registers); });
             m_has_previous = m_entered = true;
             return evaluation;
         }

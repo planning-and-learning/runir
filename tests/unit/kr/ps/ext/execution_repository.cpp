@@ -29,13 +29,11 @@ void expect_cista_round_trip(const T& value)
     EXPECT_EQ(value, *decoded);
 }
 
-template<tyr::TaskKind Kind>
-void expect_execution_records_round_trip()
+void expect_control_records_round_trip()
 {
-    auto builder = kr::ps::ext::ExecutionBuilder<Kind>();
+    auto builder = kr::ps::ext::ControlBuilder();
     {
-        auto data = builder.template checkout<kr::ps::ext::ModuleState<Kind>>();
-        data->state = urd::index<tyr::planning::State<Kind>>(5);
+        auto data = builder.template scratch<kr::ps::ext::ModuleState>();
         data->mod = urd::index<kr::ps::ext::Module>(1);
         data->memory_state = urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>(2);
         data->registers = urd::index<kr::dl::semantics::RegisterValues>(3);
@@ -43,32 +41,30 @@ void expect_execution_records_round_trip()
         expect_cista_round_trip(*data);
     }
     {
-        auto data = builder.template checkout<kr::ps::ext::CallStack>();
-        data->mod = urd::index<kr::ps::ext::Module>(1);
-        data->return_memory_state = urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>(2);
-        data->registers = urd::index<kr::dl::semantics::RegisterValues>(3);
-        data->arguments = urd::index<kr::dl::semantics::CallArguments>(4);
+        auto data = builder.template scratch<kr::ps::ext::CallStack>();
+        data->module_state = urd::index<kr::ps::ext::ModuleState>(6);
         expect_cista_round_trip(*data);
         data->caller = urd::index<kr::ps::ext::CallStack>(7);
         expect_cista_round_trip(*data);
     }
+}
+
+template<tyr::TaskKind Kind>
+void expect_execution_records_round_trip()
+{
+    auto builder = kr::ps::ext::ExecutionBuilder<Kind>();
     {
-        auto data = builder.template checkout<kr::ps::ext::ProgramState<Kind>>();
-        data->program = urd::index<kr::ps::ext::Program>(8);
-        data->module_state = urd::index<kr::ps::ext::ModuleState<Kind>>(6);
+        auto data = builder.template scratch<kr::ps::ext::ProgramState<Kind>>();
+        data->state = urd::index<tyr::planning::State<Kind>>(5);
+        data->module_state = urd::index<kr::ps::ext::ModuleState>(6);
         expect_cista_round_trip(*data);
         data->call_stack = urd::index<kr::ps::ext::CallStack>(9);
         expect_cista_round_trip(*data);
     }
     {
-        auto data = builder.template get_builder<kr::ps::ext::ProgramState<Kind>>();
-        EXPECT_EQ(data->program, urd::index<kr::ps::ext::Program>(8));
-        ASSERT_TRUE(data->call_stack);
-        EXPECT_EQ(*data->call_stack, urd::index<kr::ps::ext::CallStack>(9));
-    }
-    {
-        auto data = kr::ps::ext::checkout<kr::ps::ext::ProgramState<Kind>>(builder);
-        EXPECT_EQ(data->program, urd::index<kr::ps::ext::Program>());
+        // A scratch record drawn again starts empty.
+        auto data = builder.template scratch<kr::ps::ext::ProgramState<Kind>>();
+        EXPECT_EQ(data->module_state, urd::index<kr::ps::ext::ModuleState>());
         EXPECT_FALSE(data->call_stack);
     }
 }
@@ -92,13 +88,15 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     const auto program = create_program(*repository, caller, { caller, callee });
     auto& execution_builder = task_context->execution_builder;
+    auto& control_builder = task_context->control_builder;
+    auto control_repository = task_context->control_repository;
     auto& dl_builder = task_context->dl_builder;
     auto& denotations = *task_context->dl_denotation_repository;
     auto execution_repository = task_context->execution_repository;
 
     const void* scratch_address = nullptr;
     {
-        auto scratch = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
+        auto scratch = dl_builder.scratch<kr::dl::semantics::RegisterValues>();
         scratch_address = scratch.get();
         EXPECT_TRUE(scratch->concept_values.empty());
         EXPECT_TRUE(scratch->role_values.empty());
@@ -107,7 +105,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         scratch->concept_values[0] = urd::index<tyr::formalism::Object>(0);
     }
     {
-        auto scratch = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
+        auto scratch = dl_builder.scratch<kr::dl::semantics::RegisterValues>();
         EXPECT_EQ(scratch.get(), scratch_address);
         EXPECT_TRUE(scratch->concept_values.empty());
         EXPECT_TRUE(scratch->role_values.empty());
@@ -115,7 +113,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     const auto registers = [&]()
     {
-        auto data = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
+        auto data = dl_builder.scratch<kr::dl::semantics::RegisterValues>();
         data->concept_values.resize(6);
         data->role_values.resize(7);
         data->concept_values[0] = urd::index<tyr::formalism::Object>(0);
@@ -129,7 +127,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     }();
 
     {
-        auto data = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
+        auto data = dl_builder.scratch<kr::dl::semantics::RegisterValues>();
         data->concept_values.resize(6);
         data->role_values.resize(7);
         data->concept_values[0] = urd::index<tyr::formalism::Object>(0);
@@ -147,7 +145,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         data->concept_values[0] = urd::index<tyr::formalism::Object>(1);
         const auto changed = denotations.insert(*data).first;
         EXPECT_NE(changed.index(), registers.index());
-        urd::clear_members(*data);
+        urd::clear_fields(*data);
         EXPECT_EQ(changed.template values<kr::dl::ConceptTag>()[0].value().index(), urd::index<tyr::formalism::Object>(1));
         EXPECT_EQ(registers.template values<kr::dl::ConceptTag>()[0].value().index(), urd::index<tyr::formalism::Object>(0));
         EXPECT_EQ(denotations.size<kr::dl::semantics::RegisterValues>(), 2);
@@ -155,7 +153,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     const auto arguments = [&]()
     {
-        auto data = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(dl_builder);
+        auto data = dl_builder.scratch<kr::dl::semantics::CallArguments>();
         auto boolean = urd::data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>();
         boolean.value = true;
         data->boolean_arguments.push_back(denotations.insert(boolean).first.index());
@@ -163,7 +161,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         return denotations.insert(*data).first;
     }();
     {
-        auto data = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(dl_builder);
+        auto data = dl_builder.scratch<kr::dl::semantics::CallArguments>();
         data->boolean_arguments = denotations[arguments.index()].boolean_arguments;
         const auto found = denotations.find(*data);
         ASSERT_TRUE(found);
@@ -172,7 +170,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         EXPECT_FALSE(created);
         EXPECT_EQ(duplicate.index(), arguments.index());
         EXPECT_EQ(&duplicate.context(), &denotations);
-        urd::clear_members(*data);
+        urd::clear_fields(*data);
         const auto empty = denotations.insert(*data).first;
         EXPECT_TRUE(empty.arguments<kr::dl::BooleanTag>().empty());
         EXPECT_TRUE(arguments.arguments<kr::dl::BooleanTag>()[0].get_value());
@@ -181,117 +179,90 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     const auto initial = search_context->successor_generator->get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator);
     const auto& state = initial.get_state();
-    const auto caller_configuration = [&]()
-    {
-        auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();
-        urd::store(data->state, state);
-        urd::store(data->mod, caller);
-        urd::store(data->memory_state, caller_return);
-        urd::store(data->registers, registers);
-        urd::store(data->arguments, arguments);
-        return execution_repository->insert(*data).first;
-    }();
+    using CallStackView = kr::ps::ext::CallStackView;
 
-    const auto callee_configuration = [&]()
+    // An activation: a module, a memory state, registers and arguments, interned once.
+    const auto activation = [&](kr::ps::ext::ModuleView module_, kr::ps::ext::MemoryStateView memory_state)
     {
-        auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();
-        urd::store(data->state, state);
-        urd::store(data->mod, callee);
-        urd::store(data->memory_state, callee_entry);
-        urd::store(data->registers, registers);
-        urd::store(data->arguments, arguments);
-        return execution_repository->insert(*data).first;
-    }();
+        auto data = control_builder.checkout<kr::ps::ext::ModuleState>();
+        data->mod = module_;
+        data->memory_state = memory_state;
+        data->registers = registers;
+        data->arguments = arguments;
+        return control_repository->insert(*data, control_builder).first;
+    };
+    const auto caller_activation = activation(caller, caller_return);
+    const auto callee_activation = activation(callee, callee_entry);
+    EXPECT_EQ(activation(callee, callee_entry), callee_activation);
+    EXPECT_EQ(&callee_activation.context(), control_repository.get());
+    EXPECT_EQ(&callee_activation.get_mod().context(), repository.get());
+    EXPECT_EQ(&callee_activation.get_registers().context(), &denotations);
+    EXPECT_EQ(control_repository->size<kr::ps::ext::ModuleState>(), 2);
 
+    const auto program_state = [&](const tyr::planning::StateView<tyr::GroundTag>& planning_state,
+                                   kr::ps::ext::ModuleStateView activation_,
+                                   std::optional<CallStackView> caller_)
     {
-        auto data = callee_configuration.context()[callee_configuration.index()];
-        data.index = urd::index<kr::ps::ext::ModuleState<tyr::GroundTag>>();
-        const auto [duplicate, created] = execution_repository->insert(data);
-        EXPECT_FALSE(created);
-        EXPECT_EQ(duplicate, callee_configuration);
-        EXPECT_EQ(data.index, duplicate.index());
-        EXPECT_EQ(&duplicate.context(), execution_repository.get());
-        EXPECT_EQ(&duplicate.get_mod().context(), repository.get());
-        EXPECT_EQ(&duplicate.get_registers().context(), &denotations);
-        const auto found = execution_repository->find(data);
-        ASSERT_TRUE(found);
-        EXPECT_EQ(found.value(), callee_configuration);
-
+        auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
+        data->state = search_context->state_repository->view(planning_state.index());
+        data->module_state = activation_;
+        if (caller_.has_value())
+            data->call_stack.emplace(*caller_);
+        return execution_repository->insert(*data, execution_builder).first;
+    };
+    {
+        // Program states that differ in their planning state share their activation.
         const auto successors =
             search_context->successor_generator->get_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
         const auto changed = std::ranges::find_if(successors, [&](const auto& node) { return node.get_state().index() != state.index(); });
         ASSERT_NE(changed, successors.end());
-        urd::store(data.state, changed->get_state());
-        const auto [changed_configuration, changed_created] = execution_repository->insert(data);
-        EXPECT_TRUE(changed_created);
-        EXPECT_EQ(data.index, changed_configuration.index());
-        EXPECT_EQ(&changed_configuration.context(), execution_repository.get());
-        EXPECT_NE(changed_configuration, callee_configuration);
-        EXPECT_EQ(changed_configuration.get_state().index(), changed->get_state().index());
-        EXPECT_EQ(callee_configuration.get_state().index(), state.index());
-        EXPECT_EQ(execution_repository->size<kr::ps::ext::ModuleState<tyr::GroundTag>>(), 3);
+        const auto first = program_state(state, callee_activation, std::nullopt);
+        const auto moved = program_state(changed->get_state(), callee_activation, std::nullopt);
+        EXPECT_NE(moved, first);
+        EXPECT_EQ(moved.get_module_state(), first.get_module_state());
+        EXPECT_EQ(moved.get_state().index(), changed->get_state().index());
+        EXPECT_EQ(first.get_state().index(), state.index());
+        EXPECT_EQ(program_state(state, callee_activation, std::nullopt), first);
+        EXPECT_EQ(control_repository->size<kr::ps::ext::ModuleState>(), 2);
     }
 
-    const auto caller_frame = [&]()
+    // A frame: the suspended activation (its memory state the one to return to) and its caller.
+    const auto frame = [&](kr::ps::ext::ModuleStateView activation_, std::optional<CallStackView> caller_)
     {
-        auto data = execution_builder.checkout<kr::ps::ext::CallStack>();
-        urd::store(data->mod, caller);
-        urd::store(data->return_memory_state, caller_return);
-        urd::store(data->registers, registers);
-        urd::store(data->arguments, arguments);
-        return execution_repository->insert(*data).first;
-    }();
-    const auto callee_frame = [&]()
+        auto data = control_builder.checkout<kr::ps::ext::CallStack>();
+        data->module_state = activation_;
+        if (caller_.has_value())
+            data->caller.emplace(*caller_);
+        return control_repository->insert(*data, control_builder).first;
+    };
+    const auto caller_frame = frame(caller_activation, std::nullopt);
+    const auto callee_frame = frame(callee_activation, caller_frame);
     {
-        auto data = execution_builder.checkout<kr::ps::ext::CallStack>();
-        urd::store(data->mod, callee);
-        urd::store(data->return_memory_state, callee_entry);
-        urd::store(data->registers, registers);
-        urd::store(data->arguments, arguments);
-        urd::store(data->caller, std::optional { caller_frame });
-        return execution_repository->insert(*data).first;
-    }();
-    {
-        auto nested_caller_data = runir::tests::copy_fields(caller_frame.context()[caller_frame.index()]);
-        nested_caller_data.caller = caller_frame.index();
-        const auto nested_caller = execution_repository->insert(nested_caller_data).first;
-        auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
-        urd::store(data->program, program);
-        urd::store(data->module_state, callee_configuration);
-        data->call_stack = caller_frame.index();
-        const auto first = execution_repository->insert(*data).first;
-        data->call_stack = nested_caller.index();
-        const auto nested = execution_repository->insert(*data).first;
+        const auto nested_caller = frame(caller_activation, caller_frame);
+        const auto first = program_state(state, callee_activation, caller_frame);
+        const auto nested = program_state(state, callee_activation, nested_caller);
         EXPECT_NE(nested, first);
         EXPECT_EQ(nested.get_module_state(), first.get_module_state());
         EXPECT_EQ(nested.get_call_stack().value(), nested_caller);
-        const auto [duplicate, created] = execution_repository->insert(*data);
-        EXPECT_FALSE(created);
-        EXPECT_EQ(duplicate, nested);
-        EXPECT_EQ(execution_repository->size<kr::ps::ext::ModuleState<tyr::GroundTag>>(), 3);
+        EXPECT_EQ(program_state(state, callee_activation, nested_caller), nested);
+        EXPECT_EQ(control_repository->size<kr::ps::ext::ModuleState>(), 2);
     }
 
     ASSERT_TRUE(callee_frame.get_caller());
     EXPECT_EQ(callee_frame.get_caller().value().index(), caller_frame.index());
-    EXPECT_EQ(callee_frame.get_caller().value().get_registers().template values<kr::dl::ConceptTag>()[0].value().index(),
-              urd::index<tyr::formalism::Object>(0));
-    const auto role_value = callee_frame.get_caller().value().get_registers().template values<kr::dl::RoleTag>()[0];
+    const auto saved = callee_frame.get_caller().value().get_module_state().get_registers();
+    EXPECT_EQ(saved.template values<kr::dl::ConceptTag>()[0].value().index(), urd::index<tyr::formalism::Object>(0));
+    const auto role_value = saved.template values<kr::dl::RoleTag>()[0];
     ASSERT_TRUE(role_value);
     const auto pair = role_value.value();
     EXPECT_EQ(pair.first.index(), urd::index<tyr::formalism::Object>(0));
     EXPECT_EQ(pair.second.index(), urd::index<tyr::formalism::Object>(1));
 
-    const auto returned_state = [&]()
-    {
-        auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
-        urd::store(data->program, program);
-        urd::store(data->module_state, caller_configuration);
-        return execution_repository->insert(*data).first;
-    }();
+    // A return: the frame's activation and caller, over the current planning state.
+    const auto returned_state = program_state(state, caller_frame.get_module_state(), caller_frame.get_caller());
     EXPECT_EQ(returned_state.get_module_state().get_mod().get_symbol().get_name(), "caller");
-    EXPECT_EQ(returned_state.get_program().index(), program.index());
-    EXPECT_EQ(returned_state.get_module_state(), caller_configuration);
-    EXPECT_EQ(returned_state.get_module_state().get_state().index(), state.index());
+    EXPECT_EQ(returned_state.get_module_state(), caller_activation);
+    EXPECT_EQ(returned_state.get_state().index(), state.index());
     EXPECT_FALSE(returned_state.get_call_stack());
 }
 
@@ -299,7 +270,7 @@ TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)
 {
     auto dl_builder = kr::dl::semantics::Builder();
     {
-        auto data = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
+        auto data = dl_builder.scratch<kr::dl::semantics::RegisterValues>();
         data->concept_values.resize(6);
         data->role_values.resize(7);
         data->concept_values[0] = urd::index<tyr::formalism::Object>(3);
@@ -311,13 +282,14 @@ TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)
         expect_cista_round_trip(*data);
     }
     {
-        auto data = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(dl_builder);
+        auto data = dl_builder.scratch<kr::dl::semantics::CallArguments>();
         data->concept_arguments.push_back(urd::index<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(1));
         data->role_arguments.push_back(urd::index<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(2));
         data->boolean_arguments.push_back(urd::index<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(3));
         data->numerical_arguments.push_back(urd::index<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(4));
         expect_cista_round_trip(*data);
     }
+    expect_control_records_round_trip();
     expect_execution_records_round_trip<tyr::GroundTag>();
     expect_execution_records_round_trip<tyr::LiftedTag>();
 }

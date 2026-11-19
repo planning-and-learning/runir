@@ -473,7 +473,7 @@ void check_load_evaluator_entry_checks()
         const auto source = workspace.initial_state(planning_state);
         auto context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { &workspace, planning_state };
         const auto states_before = task->icp_execution_repository->template size<kr::ps::icp::ProgramState<Kind>>();
-        const auto histories_before = task->icp_execution_repository->template size<kr::ps::icp::Histories>();
+        const auto histories_before = task->icp_control_repository->template size<kr::ps::icp::Histories>();
         const auto registers_before = task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>();
         auto steps = urd::Store<urd::sequence<kr::ps::ProgramStep<kr::IcpFamilyTag, Kind>>> {};
         for (const auto rules : policy.get_entry_mod().get_memory_transitions())
@@ -516,7 +516,7 @@ void check_load_evaluator_entry_checks()
             else
                 EXPECT_TRUE(steps.empty());
             EXPECT_EQ(task->icp_execution_repository->template size<kr::ps::icp::ProgramState<Kind>>(), states_before);
-            EXPECT_EQ(task->icp_execution_repository->template size<kr::ps::icp::Histories>(), histories_before);
+            EXPECT_EQ(task->icp_control_repository->template size<kr::ps::icp::Histories>(), histories_before);
             EXPECT_EQ(task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>(), registers_before);
         }
     }
@@ -537,7 +537,7 @@ void check_rule_evaluator_scheduling()
 
     auto history_buffer = [&]
     {
-        auto histories = kr::ps::icp::checkout<kr::ps::icp::Histories>(context->icp_execution_builder);
+        auto histories = kr::ps::icp::checkout<kr::ps::icp::Histories>(context->icp_control_builder);
         return histories->concepts.data();
     };
     const auto* reused_history_buffer = history_buffer();
@@ -551,12 +551,12 @@ void check_rule_evaluator_scheduling()
         data.concepts.push_back(data.concepts.front());
         const auto* buffer = data.concepts.data();
         const auto expected_size = data.concepts.size();
-        const auto [stored, created] = ygg::formalism::insert(*context->icp_execution_repository, data);
+        const auto [stored, created] = ygg::formalism::insert(*context->icp_control_repository, data);
         EXPECT_TRUE(created);
         EXPECT_EQ(stored.context()[stored.index()].concepts, data.concepts);
         EXPECT_EQ(data.concepts.size(), expected_size);
         EXPECT_EQ(data.concepts.data(), buffer);
-        EXPECT_FALSE(kr::ps::icp::insert(*context->icp_execution_repository, data).second);
+        EXPECT_FALSE(kr::ps::icp::insert(*context->icp_control_repository, data).second);
     }
 
     // Repeated grouped expansions retain action-group and history scratch, while the

@@ -46,7 +46,7 @@ public:
             step.rule = m_variant;
             return output(std::move(step));
         }
-        auto registers = checkout<Registers>(task->dl_builder);
+        auto registers = task->dl_builder.template scratch<Registers>();
         for (const auto value : denotation.views())
         {
             if (stop())

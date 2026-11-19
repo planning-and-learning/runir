@@ -29,9 +29,9 @@ struct RegisterEvaluator
     explicit RegisterEvaluator(RegisterIdentifier<Category> identifier_) : identifier(identifier_) {}
 
     template<StateEvaluationContextConcept<Kind> Context>
-    void initialize(EvaluationGraph<Kind>&, Context& context)
+    void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
-        auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
+        auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context), graph.records(), graph.denotations());
         const auto slot = register_value(context, identifier);
         if (slot)
         {

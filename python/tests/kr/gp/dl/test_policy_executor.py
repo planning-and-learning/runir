@@ -7,7 +7,7 @@ from collections import Counter
 
 from fixture_utils import read_fixture
 from pytyr.formalism.planning import PlanningDomain, RowActionLifted
-from pytyr.planning.ground import LabeledNode, Node, PackedState
+from pytyr.planning.ground import LabeledNode, Node, State
 
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext
@@ -54,7 +54,7 @@ def test_base_proof_properties_keep_the_graph_and_sketch_alive(
     graph = proof.graph
     references = sys.getrefcount(graph)
     vertex = graph.vertex_value(next(iter(graph.vertices())))
-    assert isinstance(vertex.state, PackedState)
+    assert isinstance(vertex.state, State)
     assert vertex.state.unpack().pack() == vertex.state
     assert sys.getrefcount(graph) > references
     references = sys.getrefcount(vertex)

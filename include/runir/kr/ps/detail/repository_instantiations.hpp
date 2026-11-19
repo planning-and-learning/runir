@@ -26,9 +26,11 @@
                                                                         runir::kr::ps::icp::RepositoryTypes,                          \
                                                                         runir::kr::uns::RepositoryTypes>>)                            \
     YGG_FORMALISM_INTERNS(PREFIX,                                                                                                     \
-                          8,                                                                                                          \
+                          7,                                                                                                          \
                           false,                                                                                                      \
-                          boost::mp11::mp_unique<boost::mp11::mp_append<runir::kr::ps::ext::ExecutionRepositoryTypes<tyr::GroundTag>, \
+                          boost::mp11::mp_unique<boost::mp11::mp_append<runir::kr::ps::ext::ControlRepositoryTypes,                   \
+                                                                        runir::kr::ps::icp::ControlRepositoryTypes,                   \
+                                                                        runir::kr::ps::ext::ExecutionRepositoryTypes<tyr::GroundTag>, \
                                                                         runir::kr::ps::ext::ExecutionRepositoryTypes<tyr::LiftedTag>, \
                                                                         runir::kr::ps::icp::ExecutionRepositoryTypes<tyr::GroundTag>, \
                                                                         runir::kr::ps::icp::ExecutionRepositoryTypes<tyr::LiftedTag>>>)

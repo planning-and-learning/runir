@@ -75,20 +75,33 @@ void assign_register(urd::data<RegisterValues>& data,
     data.index = {};
 }
 
+namespace detail
+{
+/// Whether values (a register view's) read these stored values themselves: a view of the record being assigned.
+template<typename Stored, typename Values>
+bool reads(const Stored& stored, const Values& values) noexcept
+{
+    if constexpr (requires { values.base().data() == stored.data(); })
+        return values.base().data() == stored.data();
+    else
+        return false;  // a builder's view reads its own values, never a record's
+}
+}  // namespace detail
+
 /// Replace mutable values while retaining buffers and invalidating published identity. A view of `data` itself (its
 /// values read from data's own storage) leaves them as they are.
 template<RegisterValuesViewConcept R>
 urd::data<RegisterValues>& assign(urd::data<RegisterValues>& data, R source)
 {
     const auto concept_values = source.template values<ConceptTag>();
-    if (concept_values.base().data() != data.concept_values.data())
+    if (!detail::reads(data.concept_values, concept_values))
     {
         data.concept_values.clear();
         for (const auto& value : concept_values)
             urd::append(data.concept_values, value);
     }
     const auto role_values = source.template values<RoleTag>();
-    if (role_values.base().data() != data.role_values.data())
+    if (!detail::reads(data.role_values, role_values))
     {
         data.role_values.clear();
         for (const auto& value : role_values)

@@ -42,6 +42,31 @@
 namespace runir::tests
 {
 
+/// A planning state being built, read through its task's state repository.
+template<tyr::TaskKind Kind>
+using StateBuilder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>;
+
+/// A child's builder, where it holds one (a transient storage's states hold their planning state, activation and
+/// registers built).
+template<typename T, typename C, typename K>
+auto& built_of(urd::child<T, C, K>& child)
+{ return std::get<urd::built_child<T, C>>(child).held(); }
+
+/// A program state's memory state (interned, as its activation holds it in either form).
+template<typename S>
+auto memory_state_of(const S& state)
+{ return urd::visit_view(state.get_module_state(), [](const auto& activation) { return urd::interned_view(activation.get_memory_state()); }); }
+
+/// A stored program state's planning state, as built.
+template<typename P>
+auto& built_state(P& program_state)
+{ return built_of(program_state.state); }
+
+/// A stored program state's registers, as built (in its activation, as built).
+template<typename P>
+auto& built_registers(P& program_state)
+{ return built_of(built_of(program_state.module_state).registers); }
+
 inline auto create_register(kr::ps::ext::Repository& repository, const std::string& name, ygg::uint_t identifier)
 {
     auto data = urd::data<kr::dl::Register<kr::dl::ConceptTag>>(name, kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(identifier));
@@ -91,7 +116,6 @@ void expect_initial_program_state_uses_expander_repository()
     dl_repository.reset();
     EXPECT_EQ(state.get_module_state().get_mod().get_symbol().get_name(), "module");
     EXPECT_EQ(state.get_module_state().get_memory_state().get_name(), "entry");
-    EXPECT_EQ(state.get_program().get_entry_mod().get_symbol().get_name(), "module");
     EXPECT_FALSE(state.get_call_stack());
 }
 
@@ -150,17 +174,17 @@ void expect_module_return_preserves_callee_planning_state()
     {
         const auto moved = move.get_target();
         ASSERT_TRUE(move.planning_successor);
-        ASSERT_NE(moved.get_module_state().get_state().index(), initial.get_module_state().get_state().index());
-        EXPECT_EQ(move.planning_successor->node.get_state(), moved.get_module_state().get_state().pack());
+        ASSERT_NE(moved.get_state().index(), initial.get_state().index());
+        EXPECT_EQ(move.planning_successor->node.get_state(), moved.get_state().pack());
         const auto returns = collect_steps(expander, moved);
         ASSERT_EQ(returns.size(), 1);
         EXPECT_EQ(returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(returns.front().planning_successor);
         const auto returned = returns.front().get_target();
-        EXPECT_EQ(returned.get_module_state().get_state().index(), moved.get_module_state().get_state().index());
-        EXPECT_EQ(returned.get_module_state().get_mod(), suspended_callee->get_mod());
-        EXPECT_EQ(returned.get_module_state().get_memory_state(), suspended_callee->get_return_memory_state());
-        EXPECT_EQ(returned.get_module_state().get_registers(), suspended_callee->get_registers());
+        EXPECT_EQ(returned.get_state().index(), moved.get_state().index());
+        EXPECT_EQ(returned.get_module_state().get_mod(), suspended_callee->get_module_state().get_mod());
+        EXPECT_EQ(returned.get_module_state().get_memory_state(), suspended_callee->get_module_state().get_memory_state());
+        EXPECT_EQ(returned.get_module_state().get_registers(), suspended_callee->get_module_state().get_registers());
         EXPECT_EQ(returned.get_module_state().get_arguments(), callee.get_module_state().get_arguments());
         EXPECT_EQ(returned.get_call_stack(), suspended);
 
@@ -169,14 +193,14 @@ void expect_module_return_preserves_callee_planning_state()
         EXPECT_EQ(outer_returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(outer_returns.front().planning_successor);
         const auto caller = outer_returns.front().get_target();
-        EXPECT_EQ(caller.get_module_state().get_state().index(), moved.get_module_state().get_state().index());
-        EXPECT_EQ(caller.get_module_state().get_mod(), suspended->get_mod());
-        EXPECT_EQ(caller.get_module_state().get_memory_state(), suspended->get_return_memory_state());
-        EXPECT_EQ(caller.get_module_state().get_registers(), suspended->get_registers());
-        EXPECT_EQ(caller.get_module_state().get_arguments(), suspended->get_arguments());
+        EXPECT_EQ(caller.get_state().index(), moved.get_state().index());
+        EXPECT_EQ(caller.get_module_state().get_mod(), suspended->get_module_state().get_mod());
+        EXPECT_EQ(caller.get_module_state().get_memory_state(), suspended->get_module_state().get_memory_state());
+        EXPECT_EQ(caller.get_module_state().get_registers(), suspended->get_module_state().get_registers());
+        EXPECT_EQ(caller.get_module_state().get_arguments(), suspended->get_module_state().get_arguments());
         EXPECT_FALSE(caller.get_call_stack());
     }
-    EXPECT_EQ(callee.get_module_state().get_state().index(), initial.get_module_state().get_state().index());
+    EXPECT_EQ(callee.get_state().index(), initial.get_state().index());
 }
 
 template<tyr::TaskKind Kind>
@@ -214,7 +238,7 @@ void expect_borrowed_query_evaluation()
         const auto successors = search.successor_generator->get_labeled_successor_nodes(initial, *search.state_repository, *search.axiom_evaluator);
         ASSERT_FALSE(successors.empty());
         const auto stack = state.get_module_state();
-        auto transition = environment.make_dl_transition_context(state.get_module_state().get_state(),
+        auto transition = environment.make_dl_transition_context(state.get_state(),
                                                                  successors.front().node.get_state(),
                                                                  stack.get_arguments(),
                                                                  stack.get_registers(),
@@ -227,9 +251,9 @@ void expect_borrowed_query_evaluation()
             EXPECT_NE(&target_rows.context(), &rows.context());  // independent caches: other layers
 
             // The indexed program state supplies bindings; its prepared planning view may use builder storage.
-            auto source_builder = urd::builder<tyr::planning::State<Kind>>();
+            auto source_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
             source_builder.assign(planning_node.get_state());
-            auto target_builder = urd::builder<tyr::planning::State<Kind>>();
+            auto target_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
             target_builder.assign(successors.front().node.get_state());
             const auto prepared_source = urd::resolve(source_builder, *search.state_repository);
             const auto prepared_target = urd::resolve(target_builder, *search.state_repository);
@@ -237,14 +261,14 @@ void expect_borrowed_query_evaluation()
             auto evaluators = kr::ps::ext::detail::RuleEvaluators<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(task_context, program);
             auto context = evaluators.make_context(storage, prepared_source);
             auto prepared_context = context.make_dl_context(state);
-            static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
+            static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::StateBuilderView<Kind>>);
             const auto prepared_rows = kr::ps::evaluate<Kind>(feature, prepared_context);
             ASSERT_EQ(prepared_rows.get_rows().size(), rows.get_rows().size());
             EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_rows.row(0).value(0))),
                       urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
-            const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::BuilderStateView<Kind>> {
+            const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::StateBuilderView<Kind>> {
                 successors.front().label,
-                tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>>(prepared_target, successors.front().node.get_metric())
+                tyr::planning::Node<Kind, tyr::planning::StateBuilderView<Kind>>(prepared_target, successors.front().node.get_metric())
             };
             auto prepared_transition = context.make_dl_transition_context(state, candidate);
             const auto prepared_target_rows = kr::ps::evaluate<Kind>(feature, prepared_transition.get_target_context());
@@ -320,7 +344,7 @@ void expect_binding_effects_and_empty_choices()
                     {
                         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
                         const auto target = step.get_target();
-                        EXPECT_EQ(target.get_module_state().get_state().index(), initial.get_module_state().get_state().index());
+                        EXPECT_EQ(target.get_state().index(), initial.get_state().index());
                         EXPECT_EQ(target.get_module_state().get_memory_state().get_name(), "target");
                         EXPECT_FALSE(step.planning_successor.has_value());
                         ASSERT_TRUE(step.rule);
@@ -525,7 +549,7 @@ void expect_control_only_steps_do_not_generate_planning_successors()
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
-        EXPECT_EQ(step.get_target().get_module_state().get_state().index(), initial.get_module_state().get_state().index());
+        EXPECT_EQ(step.get_target().get_state().index(), initial.get_state().index());
         EXPECT_FALSE(step.planning_successor.has_value());
         ASSERT_TRUE(step.rule);
         const auto applied = expander.apply(initial, step.rule.value());
@@ -557,7 +581,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
     auto& repository = *context->domain_context->ext_repository;
     auto& search = *context->search_context;
-    auto& executions = *context->execution_repository;
+    auto& controls = *context->control_repository;
     const auto entry = create_memory_state(repository, "entry");
     const auto outer_return = create_memory_state(repository, "outer-return");
     const auto inner_return = create_memory_state(repository, "inner-return");
@@ -567,69 +591,70 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto initial_node = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
     const auto initial = storage.initial_state(initial_node.get_state());
     EXPECT_FALSE(storage.view(initial).get_call_stack());
-    EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 0);
-    const auto source = storage.view(initial).get_module_state().get_state();
+    EXPECT_EQ(controls.template size<kr::ps::ext::CallStack>(), 0);
+    // A transient storage's state holds its planning state and its activation built.
+    const auto source = std::get<tyr::planning::StateBuilderView<Kind>>(storage.view(initial).get_state());
     const auto bindings = search.successor_generator->get_applicable_action_bindings(initial_node);
     ASSERT_EQ(bindings.size(), 2);
 
     const auto outer_caller = storage.save_caller(storage.view(initial), outer_return);
     EXPECT_EQ(storage.save_caller(storage.view(initial), outer_return).index(), outer_caller.index());
-    EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 1);
-    const auto initial_module = storage.view(initial).get_module_state();
-    const auto callee = storage.store(source, module_, entry, initial_module.get_registers(), initial_module.get_arguments(), outer_caller);
+    EXPECT_EQ(controls.template size<kr::ps::ext::CallStack>(), 1);
+    const auto initial_module = std::get<kr::ps::ext::ModuleStateBuilderView>(storage.view(initial).get_module_state());
+    const auto callee = storage.store(source, module_, entry, initial_module.get_registers(), initial_module.get_arguments(), std::optional(outer_caller));
     const auto inner_caller = storage.save_caller(storage.view(callee), inner_return);
     EXPECT_EQ(storage.save_caller(storage.view(callee), inner_return).index(), inner_caller.index());
-    EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 2);
+    EXPECT_EQ(controls.template size<kr::ps::ext::CallStack>(), 2);
     ASSERT_TRUE(inner_caller.get_caller());
     EXPECT_EQ(inner_caller.get_caller().value().index(), outer_caller.index());
     EXPECT_FALSE(outer_caller.get_caller());
 
     const auto first = storage.successor(source, bindings.front());
-    const auto* scratch = &first.get_state().get_fact_storage();
-    auto expected = urd::builder<tyr::planning::State<Kind>>();
+    const auto* scratch = &first.get_state().get_numeric_storage().get_values();
+    auto expected = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     expected.assign(first.get_state());
-    const auto retained = storage.store(first.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), inner_caller);
-    ASSERT_TRUE(retained->call_stack);
-    EXPECT_EQ(*retained->call_stack, inner_caller.index());
+    const auto retained = storage.store(first.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), std::optional(inner_caller));
+    const auto& retained_call_stack = retained->call_stack;
+    ASSERT_TRUE(retained_call_stack.has_value());
+    EXPECT_EQ(retained_call_stack.has_value() ? urd::interned_view(*retained_call_stack).index() : urd::index<kr::ps::ext::CallStack>(), inner_caller.index());
 
     // Generating another candidate overwrites scratch, but not the accepted program state.
     const auto second = storage.successor(source, bindings.back());
-    EXPECT_EQ(&second.get_state().get_fact_storage(), scratch);
-    auto second_values = urd::builder<tyr::planning::State<Kind>>();
+    EXPECT_EQ(&second.get_state().get_numeric_storage().get_values(), scratch);
+    auto second_values = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     second_values.assign(second.get_state());
-    auto initial_values = urd::builder<tyr::planning::State<Kind>>();
+    auto initial_values = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     initial_values.assign(initial_node.get_state());
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state.builder, expected));
-    EXPECT_FALSE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state.builder, second_values));
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(initial->module_state.state.builder, initial_values));
+    EXPECT_TRUE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*retained), expected));
+    EXPECT_FALSE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*retained), second_values));
+    EXPECT_TRUE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*initial), initial_values));
 
     const auto copy = storage.retain(storage.view(retained));
-    ASSERT_TRUE(copy->call_stack);
-    EXPECT_EQ(*copy->call_stack, inner_caller.index());
+    const auto& copy_call_stack = copy->call_stack;
+    ASSERT_TRUE(copy_call_stack.has_value());
+    EXPECT_EQ(copy_call_stack.has_value() ? urd::interned_view(*copy_call_stack).index() : urd::index<kr::ps::ext::CallStack>(), inner_caller.index());
     const auto caller = storage.view(copy).get_call_stack();
     ASSERT_TRUE(caller);
-    EXPECT_EQ(caller.value().index(), inner_caller.index());
-    const auto returned = storage.store(storage.view(copy).get_module_state().get_state(),
-                                        caller.value().get_mod(),
-                                        caller.value().get_return_memory_state(),
-                                        caller.value().get_registers(),
-                                        caller.value().get_arguments(),
-                                        caller.value().get_caller());
-    ASSERT_TRUE(returned->call_stack);
-    EXPECT_EQ(*returned->call_stack, outer_caller.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(storage.view(returned).get_module_state().get_memory_state(), inner_return));
+    const auto frame = urd::interned_view(caller.value());  // a frame is interned
+    EXPECT_EQ(frame.index(), inner_caller.index());
+    // Return: the frame's activation and caller over the current planning state.
+    const auto returned = storage.store(storage.view(copy).get_state(), frame.get_module_state(), frame.get_caller());
+    const auto& returned_call_stack = returned->call_stack;
+    ASSERT_TRUE(returned_call_stack.has_value());
+    EXPECT_EQ(returned_call_stack.has_value() ? urd::interned_view(*returned_call_stack).index() : urd::index<kr::ps::ext::CallStack>(), outer_caller.index());
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(memory_state_of(storage.view(returned)), inner_return));
 
     const auto materialized = storage.materialize(storage.view(retained));
     const auto materialized_inner = materialized.get_call_stack();
     ASSERT_TRUE(materialized_inner);
     EXPECT_EQ(materialized_inner.value().index(), inner_caller.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_inner.value().get_return_memory_state(), inner_return));
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_inner.value().get_module_state().get_memory_state(), inner_return));
     const auto materialized_outer = materialized_inner.value().get_caller();
     ASSERT_TRUE(materialized_outer);
     EXPECT_EQ(materialized_outer.value().index(), outer_caller.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_outer.value().get_return_memory_state(), outer_return));
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_outer.value().get_module_state().get_memory_state(), outer_return));
     EXPECT_FALSE(materialized_outer.value().get_caller());
-    EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 2);
+    EXPECT_EQ(controls.template size<kr::ps::ext::CallStack>(), 2);
 
     // Reusing a released slot must replace its values without replacing its buffers.
     auto planning_values = expected;
@@ -639,34 +664,38 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     register_values.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
     register_values.role_values.emplace_back(::cista::pair { urd::index<tyr::formalism::Object>(0), urd::index<tyr::formalism::Object>(1) });
     const auto registers = storage.registers(register_values);
-    auto recycled = storage.store(planning, module_, inner_return, registers, initial_module.get_arguments(), inner_caller);
+    auto recycled = storage.store(planning, module_, inner_return, registers, initial_module.get_arguments(), std::optional(inner_caller));
     const auto* slot = recycled.get();
-    const auto numeric_buffer = std::ranges::data(recycled->module_state.state.builder.numeric_storage.values);
-    const auto numeric_capacity = recycled->module_state.state.builder.numeric_storage.values.capacity();
-    const auto concept_buffer = recycled->module_state.registers.values.concept_values.data();
-    const auto concept_capacity = recycled->module_state.registers.values.concept_values.allocated_size_;
-    const auto role_buffer = recycled->module_state.registers.values.role_values.data();
-    const auto role_capacity = recycled->module_state.registers.values.role_values.allocated_size_;
+    const auto numeric_buffer = std::ranges::data(built_state(*recycled).numeric_storage.values);
+    const auto numeric_capacity = built_state(*recycled).numeric_storage.values.capacity();
+    const auto concept_buffer = built_registers(*recycled).concept_values.data();
+    const auto concept_capacity = built_registers(*recycled).concept_values.capacity();
+    const auto role_buffer = built_registers(*recycled).role_values.data();
+    const auto role_capacity = built_registers(*recycled).role_values.capacity();
     recycled = {};
     planning_values.assign(initial_node.get_state());
     planning_values.numeric_storage.values = { 4.0 };
     register_values.concept_values.front() = urd::index<tyr::formalism::Object>(1);
     register_values.role_values.front().value().first = urd::index<tyr::formalism::Object>(1);
     register_values.role_values.front().value().second = urd::index<tyr::formalism::Object>(0);
-    const auto reused = storage.store(planning, module_, entry, registers, initial_module.get_arguments(), {});
+    const auto reused = storage.store(planning, module_, entry, registers, initial_module.get_arguments(), std::optional<kr::ps::ext::CallStackView>());
     EXPECT_EQ(reused.get(), slot);
-    EXPECT_EQ(std::ranges::data(reused->module_state.state.builder.numeric_storage.values), numeric_buffer);
-    EXPECT_EQ(reused->module_state.state.builder.numeric_storage.values.capacity(), numeric_capacity);
-    EXPECT_EQ(reused->module_state.registers.values.concept_values.data(), concept_buffer);
-    EXPECT_EQ(reused->module_state.registers.values.concept_values.allocated_size_, concept_capacity);
-    EXPECT_EQ(reused->module_state.registers.values.role_values.data(), role_buffer);
-    EXPECT_EQ(reused->module_state.registers.values.role_values.allocated_size_, role_capacity);
-    EXPECT_EQ(reused->module_state.state.builder.numeric_storage.values.front(), 4.0);
-    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(reused->module_state.registers.values, register_values));
+    EXPECT_EQ(std::ranges::data(built_state(*reused).numeric_storage.values), numeric_buffer);
+    EXPECT_EQ(built_state(*reused).numeric_storage.values.capacity(), numeric_capacity);
+    EXPECT_EQ(built_registers(*reused).concept_values.data(), concept_buffer);
+    EXPECT_EQ(built_registers(*reused).concept_values.capacity(), concept_capacity);
+    EXPECT_EQ(built_registers(*reused).role_values.data(), role_buffer);
+    EXPECT_EQ(built_registers(*reused).role_values.capacity(), role_capacity);
+    EXPECT_EQ(built_state(*reused).numeric_storage.values.front(), 4.0);
+    auto reused_registers = urd::data<kr::dl::semantics::RegisterValues>();
+    urd::visit_view(storage.view(reused).get_module_state(),
+                    [&](const auto& activation)
+                    { urd::visit_view(activation.get_registers(), [&](const auto& values) { kr::dl::semantics::assign(reused_registers, values); }); });
+    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(reused_registers, register_values));
     EXPECT_FALSE(storage.view(reused).get_call_stack());
-    EXPECT_EQ(storage.view(reused).get_module_state().get_memory_state().index(), entry.index());
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(reused->module_state.state.builder, planning_values));
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state.builder, expected));
+    EXPECT_EQ(memory_state_of(storage.view(reused)).index(), entry.index());
+    EXPECT_TRUE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*reused), planning_values));
+    EXPECT_TRUE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*retained), expected));
 }
 
 template<tyr::TaskKind Kind, kr::ps::ext::RuleKind Tag>
@@ -773,13 +802,11 @@ void expect_query_action_contracts()
         }
         if (scenario == 3)
         {
-            // Only the first two rows are applicable; the third is unvisited by
-            // greedy execution and remains a contract violation exhaustively.
-            lazy = collect_steps(expander, initial, true);
-            ASSERT_EQ(lazy.size(), 1);
-            EXPECT_EQ(lazy.front().status, kr::ps::ProgramOutcome::APPLIED);
+            // A query's rows are in value order: an inapplicable edge row comes before the applicable ones, so greedy
+            // execution reaches it too; a contract violation either way.
+            EXPECT_THROW(lazy = collect_steps(expander, initial, true), std::logic_error);
             auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
-            EXPECT_NO_THROW(kr::ps::ext::find_solution(task_context, program, options));
+            EXPECT_THROW(kr::ps::ext::find_solution(task_context, program, options), std::logic_error);
             options.universal = true;
             EXPECT_THROW(kr::ps::ext::find_solution(task_context, program, options), std::logic_error);
             EXPECT_THROW(collect_steps(expander, initial), std::logic_error);
@@ -804,13 +831,13 @@ void expect_query_action_contracts()
                                 EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
                                     planning_node,
                                     action,
-                                    [&](tyr::planning::BorrowedActionRowView<Kind> binding)
+                                    [&](tyr::planning::ActionBindingView<Kind> binding)
                                     {
                                         const auto target = storage.successor(planning_node.get_state(), binding);
                                         EXPECT_TRUE(evaluator.matches(
                                             context,
                                             initial,
-                                            tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::BorrowedActionRowView<Kind>> {
+                                            tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::ActionBindingView<Kind>> {
                                                 binding,
                                                 target }));
                                         ++matched;
@@ -1048,7 +1075,7 @@ void expect_query_action_existential_binding()
     ASSERT_EQ(objects.size(), 2);
     EXPECT_EQ(objects[0].get_name(), "start");
     EXPECT_EQ(objects[1].get_name(), "proof");
-    EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_module_state().get_state()));
+    EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
     EXPECT_TRUE(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}).is_successful());
 }
 
@@ -1088,7 +1115,7 @@ void expect_query_action_nullary_binding()
             EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
             ASSERT_TRUE(steps.front().planning_successor.has_value());
             EXPECT_TRUE(steps.front().planning_successor.value().label.get_objects().empty());
-            EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_module_state().get_state()));
+            EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
             EXPECT_THROW(collect_steps(expander, steps.front().get_target()), std::logic_error);
             EXPECT_THROW(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}), std::invalid_argument);
         }

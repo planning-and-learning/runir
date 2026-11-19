@@ -39,7 +39,8 @@ class ActionRuleEvaluator
     tyr::formalism::planning::ActionView<tyr::LiftedTag> m_action;
     // Retained scratch for decoding query rows; each use completes before any callback.
     /// The offered binding (the action and the row's objects), read through the planning repository when checked.
-    mutable urd::data<ygg::Row<tyr::formalism::planning::Action<tyr::LiftedTag>>> m_offer;
+    /// The binding offered for the action, being filled: a row's builder.
+    mutable urd::builder<ygg::Row<tyr::formalism::planning::Action<tyr::LiftedTag>>, tyr::formalism::planning::Repository> m_offer;
     mutable urd::Store<urd::sequence<ygg::Value>> m_row;
 
     static void require_applicable(tyr::planning::ActionBindingStatus status)
@@ -57,7 +58,7 @@ public:
         m_rule(rule),
         m_variant(variant),
         m_action(action)
-    { m_offer.relation = action.index(); }
+    { m_offer.relation = action; }
 
     auto get_rule() const noexcept { return m_rule; }
 
@@ -67,17 +68,22 @@ private:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate>
     bool effects_hold(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                       State state,
-                      const tyr::planning::Node<Kind, PlanningState>& candidate) const
+                      const tyr::planning::Node<Kind, Candidate>& candidate) const
     {
         context.environment->reset_target();
-        auto transition = context.environment->make_dl_transition_context(context.planning_state,
-                                                                          candidate.get_state(),
-                                                                          state.get_module_state().get_arguments(),
-                                                                          state.get_module_state().get_registers(),
-                                                                          state.get_module_state().get_registers());
+        auto transition = urd::visit_view(state.get_module_state(),
+                                          [&](const auto& activation)
+                                          {
+                                              return context.environment->make_dl_transition_context(context.planning_state,
+                                                                                                     candidate.get_state(),
+                                                                                                     activation.get_arguments(),
+                                                                                                     activation.get_registers(),
+                                                                                                     activation.get_registers());
+                                          });
         return all_compatible<Kind, ExtFamilyTag>(m_rule.get_effects(), transition);
     }
 
@@ -103,8 +109,12 @@ public:
             if (stop())
                 return false;
             m_offer.values.clear();
-            for (size_t i = 0; i < row.get_values().size(); ++i)
-                m_offer.values.emplace_back(row.value(i));
+            ygg::with_values(row,
+                             [this](const auto& values)
+                             {
+                                 for (const ygg::Value value : values)
+                                     m_offer.values.push_back(value);
+                             });
             // Policy applicability has no carried path metric.
             const auto offered =
                 (*context.task_context)
@@ -117,7 +127,7 @@ public:
             // Effects filter the offered transitions, as for Do rules.
             if (!effects_hold(context, state, candidate))
                 continue;
-            const auto labeled = tyr::planning::LabeledNode<Kind, PlanningState> { *offered.binding, candidate };
+            const auto labeled = tyr::planning::LabeledNode<Kind, typename Storage::PlanningState> { *offered.binding, candidate };
             if (!emit(detail::planning_step(*context.storage, state, labeled, rule_variant, rule.get_target(), *context.task_context)))
                 return false;
         }
@@ -128,15 +138,16 @@ public:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
-                 const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
+                 const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate) const
     {
         const auto& planning_state = context.planning_state;
         const auto rule = m_rule;
         const auto action = candidate.label.get_relation();
-        if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment) || action != m_action)
+        if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment) || !urd::is_interned_as(action, m_action))
             return false;
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);

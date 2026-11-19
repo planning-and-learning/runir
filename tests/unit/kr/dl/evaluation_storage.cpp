@@ -5,6 +5,8 @@
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
+#include "semantics/denotation_builders.hpp"
+
 #include <algorithm>
 #include <array>
 #include <concepts>
@@ -55,7 +57,8 @@ static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongKindContext
 
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(kr::dl::semantics::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
-static_assert(acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, ygg::uint_t>());
+static_assert(acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, ygg::uint_t, const kr::dl::semantics::DenotationRepository&>());
+static_assert(acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, bool>());
 static_assert(!acquires_builder.template operator()<ygg::Relation<ygg::Schema>, std::span<const urd::index<ygg::Column>>>());
 static_assert(!acquires_builder.template operator()<int>());
 static_assert(!acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, std::string>());
@@ -74,10 +77,10 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
     const auto check = [&]<kr::dl::CategoryTag Category>()
     {
         using Denotation = kr::dl::semantics::Denotation<Category>;
-        auto source = urd::builder<Denotation>();
+        auto source = urd::builder<Denotation, runir::kr::dl::semantics::DenotationRepository>();
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
         {
-            source.initialize(3);
+            source.initialize(3, builder.records(), repository);
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                 source.get().set(1);
             else
@@ -87,12 +90,12 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
             source.get() = true;
         else
             source.get() = 7;
-        const auto expected = source;
+        const auto expected = runir::tests::copy_denotation(source, builder, repository);
         const auto [view, inserted] = kr::dl::semantics::insert(repository, source, builder);
         EXPECT_TRUE(inserted);
         EXPECT_EQ(&view.context(), &repository);
         EXPECT_EQ(source.index, view.index());
-        EXPECT_TRUE(urd::EqualTo<urd::builder<Denotation>> {}(source, expected));
+        EXPECT_TRUE((urd::EqualTo<urd::builder<Denotation, runir::kr::dl::semantics::DenotationRepository>> {}(source, expected)));
 
         source.index = {};
         const auto [duplicate, duplicate_inserted] = kr::dl::semantics::insert(repository, source, builder);
@@ -101,7 +104,10 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
         EXPECT_EQ(source.index, view.index());
         EXPECT_EQ(repository.size<Denotation>(), 1);
 
-        source.initialize(0);
+        if constexpr (kr::dl::ConceptOrRoleTag<Category>)
+            source.initialize(0, builder.records(), repository);
+        else
+            source.initialize(0);
         if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
         {
             EXPECT_EQ(view.value().count(), 1);
@@ -122,7 +128,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
     check.template operator()<kr::dl::RoleTag>();
 }
 
-TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchIndexedIteration)
+TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndexedIteration)
 {
     constexpr auto digits = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits);
     constexpr auto num_objects = digits + 3;
@@ -136,25 +142,25 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
     auto scratch = kr::dl::semantics::Builder();
     const auto object = [&](ygg::uint_t index) { return urd::resolve(ObjectIndex(index), *formalism); };
 
-    auto boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(true);
-    auto numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(7);
-    const auto boolean_view = urd::resolve(boolean, *formalism);
-    const auto numerical_view = urd::resolve(numerical, *formalism);
+    auto boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository>(true);
+    auto numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository>(7);
+    const auto boolean_view = urd::resolve(boolean, repository);
+    const auto numerical_view = urd::resolve(numerical, repository);
     static_assert(std::same_as<decltype(boolean_view.get_value()), bool>);
     static_assert(std::same_as<decltype(numerical_view.get_value()), ygg::uint_t>);
     EXPECT_TRUE(boolean_view.get_value());
     EXPECT_EQ(numerical_view.get_value(), 7);
-    EXPECT_EQ(&numerical_view.context(), formalism.get());
+    EXPECT_EQ(&numerical_view.context(), &repository);
 
     const auto check = [&]<kr::dl::ConceptOrRoleTag Category>()
     {
-        auto builder = urd::builder<kr::dl::semantics::Denotation<Category>>(num_objects);
-        const auto borrowed = urd::resolve(builder, *formalism);
+        auto builder = runir::tests::make_denotation<kr::dl::semantics::Denotation<Category>>(num_objects, scratch, repository);
+        const auto borrowed = urd::resolve(builder, repository);
         EXPECT_EQ(borrowed.views().begin(), borrowed.views().end());
         EXPECT_FALSE(borrowed.storage_bits().any());
         EXPECT_EQ(borrowed.storage_bits().count(), 0);
         EXPECT_EQ(borrowed.get_num_objects(), num_objects);
-        EXPECT_EQ(&borrowed.context(), formalism.get());
+        EXPECT_EQ(&borrowed.context(), &repository);
 
         const auto expected = [&]
         {
@@ -187,7 +193,7 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
         EXPECT_TRUE(std::ranges::equal(borrowed.views(), expected));
         EXPECT_TRUE(std::ranges::equal(indexed.views(), expected));
         static_assert(std::ranges::borrowed_range<decltype(borrowed.views())> && std::ranges::borrowed_range<decltype(indexed.indices())>);
-        auto borrowed_iterator = urd::resolve(builder, *formalism).views().begin();
+        auto borrowed_iterator = urd::resolve(builder, repository).views().begin();
         auto indexed_iterator = kr::dl::semantics::DenotationView<Category>(indexed).views().begin();
         for (const auto& value : expected)
         {
@@ -210,7 +216,7 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
             EXPECT_TRUE(borrowed.views_from(object(1)).empty());
             EXPECT_TRUE(indexed.views_from(object(1)).empty());
             // Row iterators borrow storage directly, not the temporary view or range.
-            auto borrowed_target = urd::resolve(builder, *formalism).views_from(object(0)).begin();
+            auto borrowed_target = urd::resolve(builder, repository).views_from(object(0)).begin();
             auto indexed_target = kr::dl::semantics::DenotationView<Category>(indexed).views_from(object(0)).begin();
             EXPECT_EQ(*borrowed_target++, targets.front());
             EXPECT_EQ(*indexed_target++, targets.front());
@@ -222,7 +228,7 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
     check.template operator()<kr::dl::RoleTag>();
 }
 
-TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreservesBorrowedValues)
+TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreservesRecordValues)
 {
     const auto search = query_search();
     const auto formalism = search->task->get_repository();
@@ -237,7 +243,7 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     values.role_values.emplace_back(::cista::pair { objects[1].index(), objects[2].index() });
     const auto expected_index = values.index;
     const auto expected = runir::tests::copy_fields(values);
-    const auto borrowed = urd::resolve(values, *formalism);
+    const auto borrowed = urd::resolve(values, repository);
     const auto [view, inserted] = kr::dl::semantics::copy(borrowed, { repository, builder });
     EXPECT_TRUE(inserted);
     EXPECT_EQ(&view.context(), &repository);
@@ -302,7 +308,7 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     values.concept_values[0] = objects[2].index();
     values.role_values[0].reset();
     extracted.index = view.index();
-    kr::dl::semantics::assign(extracted, urd::resolve(values, *formalism));
+    kr::dl::semantics::assign(extracted, urd::resolve(values, repository));
     EXPECT_EQ(extracted.index, urd::index<kr::dl::semantics::RegisterValues>());
     EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(extracted, values));
     EXPECT_EQ(extracted.concept_values.data(), concept_buffer);
@@ -314,7 +320,7 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     EXPECT_TRUE(repository[view.index()].role_values[0].has_value());
 
     extracted.index = view.index();
-    kr::dl::semantics::assign(extracted, urd::resolve(extracted, *formalism));
+    kr::dl::semantics::assign(extracted, urd::resolve(extracted, repository));
     EXPECT_EQ(extracted.index, urd::index<kr::dl::semantics::RegisterValues>());
     EXPECT_EQ(extracted.concept_values.data(), concept_buffer);
     EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(extracted, values));
@@ -329,10 +335,10 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
     const auto check = [&]<kr::dl::CategoryTag Category>()
     {
         using D = kr::dl::semantics::Denotation<Category>;
-        auto payload = urd::builder<D>();
+        auto payload = urd::builder<D, runir::kr::dl::semantics::DenotationRepository>();
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
         {
-            payload.initialize(3);
+            payload.initialize(3, scratch.records(), source_repository);
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                 payload.get().set(1);
             else
@@ -341,18 +347,21 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
         else
             payload.value = 1;
         const auto source = kr::dl::semantics::insert(source_repository, payload, scratch).first;
-        auto destination = urd::builder<D>();
-        kr::dl::semantics::assign(destination, source);
-        EXPECT_TRUE(urd::EqualTo<urd::builder<D>> {}(destination, payload));
+        auto destination = urd::builder<D, runir::kr::dl::semantics::DenotationRepository>();
+        kr::dl::semantics::assign(destination, source, scratch.records(), source_repository);  // read as the payload is
+        EXPECT_TRUE((urd::EqualTo<urd::builder<D, runir::kr::dl::semantics::DenotationRepository>> {}(destination, payload)));
         EXPECT_EQ(destination.index, urd::index<D>());
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
         {
-            const auto* buffer = destination.blocks.data();
-            kr::dl::semantics::assign(destination, source);
-            EXPECT_EQ(destination.blocks.data(), buffer);
+            const auto* buffer = runir::tests::own_words(destination).data();
+            kr::dl::semantics::assign(destination, source, scratch.records(), source_repository);
+            EXPECT_EQ(runir::tests::own_words(destination).data(), buffer);
         }
 
-        payload.initialize(0);
+        if constexpr (kr::dl::ConceptOrRoleTag<Category>)
+            payload.initialize(0, scratch.records(), source_repository);
+        else
+            payload.initialize(0);
         const auto unrelated = kr::dl::semantics::insert(target_repository, payload, scratch).first;
         const auto [copied, created] = kr::dl::semantics::copy(source, { target_repository, scratch });
         EXPECT_TRUE(created);
@@ -362,8 +371,8 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
         EXPECT_EQ(kr::dl::semantics::copy(copied, { target_repository, scratch }).first, copied);
 
         source_repository.reset();
-        kr::dl::semantics::assign(payload, copied);
-        EXPECT_TRUE(urd::EqualTo<urd::builder<D>> {}(destination, payload));
+        kr::dl::semantics::assign(payload, copied, scratch.records(), target_repository);
+        EXPECT_TRUE((urd::EqualTo<urd::builder<D, runir::kr::dl::semantics::DenotationRepository>> {}(destination, payload)));
     };
     check.template operator()<kr::dl::BooleanTag>();
     check.template operator()<kr::dl::NumericalTag>();
@@ -421,7 +430,7 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
     registers_data.concept_values.resize(1);
     registers_data.concept_values[0] = search->task->get_domain().get_domain().get_constants()[0].index();
     const auto arguments = kr::dl::semantics::insert(persistent, arguments_data).first;
-    const auto registers = urd::resolve(registers_data, *search->task->get_repository());
+    const auto registers = urd::resolve(registers_data, persistent);
     using Context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
     auto transient = Context(initial.get_state(), builder, storage, arguments, registers);
     auto durable = Context(initial.get_state(), builder, root_caches, persistent, storage, arguments, registers);
@@ -447,8 +456,10 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
         {
             EXPECT_EQ(&copy.get_workspace(), &builder.get_workspace());
             EXPECT_EQ(copy.arguments(), arguments);
-            EXPECT_EQ(copy.registers().template values<kr::dl::ConceptTag>().base().data(), registers_data.concept_values.data());
-            EXPECT_EQ(copy.registers().at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0)).value().index(), registers_data.concept_values[0].value());
+            const auto first_concept = urd::visit_view(copy.registers(),
+                                                       [](const auto& registers)
+                                                       { return registers.at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0)).value().index(); });
+            EXPECT_EQ(first_concept, registers_data.concept_values[0].value());
         }
     }
     EXPECT_EQ(&transient.get_denotation_repository(), &storage.get_denotation_repository(false));
@@ -543,7 +554,7 @@ TEST(RunirEvaluationStorage, PreparedContextsRejectForeignTaskRepositories)
     EXPECT_THROW(Context(initial.get_state(), builder, caches, prototype, foreign_storage), std::invalid_argument);
 }
 
-TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBorrowedAndIndexedRegisters)
+TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBuiltAndIndexedRegisters)
 {
     const auto search = query_search();
     const auto foreign_search = query_search();
@@ -568,7 +579,7 @@ TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBorrowedAndIndexedR
         EXPECT_THROW(Context(initial.get_state(), builder, storage, arguments, foreign_registers), std::invalid_argument);
         EXPECT_THROW(Context(initial.get_state(), builder, caches, repository, storage, arguments, foreign_registers), std::invalid_argument);
     };
-    check(urd::resolve(registers_data, *search->task->get_repository()), urd::resolve(registers_data, *foreign_search->task->get_repository()));
+    check(urd::resolve(registers_data, input_repository), urd::resolve(registers_data, foreign_repository));
     check(kr::dl::semantics::insert(input_repository, registers_data).first, kr::dl::semantics::insert(foreign_repository, registers_data).first);
 }
 
@@ -628,13 +639,14 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_EQ(results.template size<ygg::Relation<ygg::Schema>>(), 2);
 
     {
-        auto direct = persistent.get_relation_repository().get_relation_builder<ygg::Schema>(
-            std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
-                         ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
+        auto scratch_relations = ygg::FreeScratchRelations();
+        const auto layouts = std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                          ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } };
+        auto direct = scratch_relations.draw(layouts);
         for (size_t i = 0; i < left_result.get_rows().size(); ++i)
-            direct->insert(left_result.row(i));
+            ygg::with_values(left_result.row(i), [&direct](const auto& values) { direct->insert(values); });
         auto dl_builder = kr::dl::semantics::Builder();
-        const auto [interned, inserted] = kr::dl::semantics::insert(persistent, *direct, dl_builder);
+        const auto [interned, inserted] = kr::dl::semantics::insert(persistent, direct->view(), dl_builder);
         EXPECT_FALSE(inserted);
         EXPECT_EQ(interned, left_result);
     }

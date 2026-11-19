@@ -52,7 +52,7 @@ struct AtomicEvaluator
         }
         else
         {
-            auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
+            auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context), graph.records(), graph.denotations());
             for (const auto atom : context.get_state().get_atoms(predicate))
             {
                 const auto objects = atom.get_row().template get<urd::index<tyr::formalism::Object>>();

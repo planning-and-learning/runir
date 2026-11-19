@@ -13,7 +13,6 @@ namespace runir::kr::dl::semantics
 {
 
 DenotationRepository::DenotationRepository(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
-    m_vector_repository(),
     m_formalism_repository(std::move(formalism_repository)),
     m_index(ygg::next_layer())
 {
@@ -28,5 +27,6 @@ DenotationRepository::~DenotationRepository() = default;
 RUNIR_KR_DL_SEMANTICS_INTERNS()
 
 // The symbols and builders of the library's repositories, which its other sources only declare.
-YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::dl::semantics::DenotationRepository, 6)
-YGG_FORMALISM_BUILDER(, runir::kr::dl::semantics::DenotationDataStorage, 9)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::dl::semantics::DenotationRepository, 7)
+YGG_FORMALISM_BUILDER(, runir::kr::dl::semantics::RecordStorage, 7)
+YGG_FORMALISM_BUILDER(, runir::kr::dl::semantics::RelationStorage, 4)

@@ -39,20 +39,27 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
     auto make_dl_context(State state)
     {
         environment->select_source(state);
-        const auto module_ = state.get_module_state();
-        return environment->make_dl_context(planning_state, module_.get_arguments(), module_.get_registers());
+        return urd::visit_view(state.get_module_state(),
+                               [&](const auto& module_) { return environment->make_dl_context(planning_state, module_.get_arguments(), module_.get_registers()); });
     }
 
-    template<ext::ProgramStateViewConcept<Kind> State, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
-    auto make_dl_transition_context(State state, const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate)
+    /// From this context's planning state to a candidate's (its storage's successor: of another state type, where this
+    /// one is registered and the storage builds its successors).
+    template<ext::ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> Candidate,
+             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    auto make_dl_transition_context(State state, const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate)
     {
         environment->select_source(state);
-        const auto module_ = state.get_module_state();
-        return environment->make_dl_transition_context(planning_state,
-                                                       candidate.node.get_state(),
-                                                       module_.get_arguments(),
-                                                       module_.get_registers(),
-                                                       module_.get_registers());
+        return urd::visit_view(state.get_module_state(),
+                               [&](const auto& module_)
+                               {
+                                   return environment->make_dl_transition_context(planning_state,
+                                                                                  candidate.node.get_state(),
+                                                                                  module_.get_arguments(),
+                                                                                  module_.get_registers(),
+                                                                                  module_.get_registers());
+                               });
     }
 };
 

@@ -33,10 +33,10 @@ struct NonemptyEvaluator
         value.set(std::visit(
             [&](auto index)
             {
-                const auto& delta = graph.change(index);
-                if (!delta.added.empty())
+                const auto [added, removed] = graph.change(index).change();
+                if (!std::ranges::empty(added))
                     return true;
-                if (delta.removed.empty())
+                if (std::ranges::empty(removed))
                     return value.get_value();
                 return graph.nonempty(index);
             },

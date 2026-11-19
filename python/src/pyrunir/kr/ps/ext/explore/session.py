@@ -54,7 +54,7 @@ from pyrunir.kr.ps.ext import (
     LiftedProgramSearchOptions,
     LiftedSuccessorExpander,
     Module,
-    ModuleStateLifted,
+    ModuleState,
     Program,
     ProgramSearchStatistics,
     ProgramStateLifted,
@@ -547,8 +547,8 @@ class Session:
         values = [self._feature_values(task_context, source, row[5], rule, row[0]) for row in rows]
         reference = next((i for i, row in enumerate(rows) if row[2] in ("succeeded", "succeeds")), 0)
         atoms = distinguishing_atoms(
-            [object_atoms(source.get_module_state().get_state().unpack(), row[0]) for row in rows],
-            object_types(source.get_module_state().get_state().unpack()),
+            [object_atoms(source.get_state().unpack(), row[0]) for row in rows],
+            object_types(source.get_state().unpack()),
             [row[0] for row in rows],
         )
         return [
@@ -711,9 +711,9 @@ class Session:
         program_state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state
         module_state = program_state.get_module_state()
         expander = LiftedSuccessorExpander(task_context, self._program)
-        before = self._state_values(task_context, program_state.get_module_state().get_state().unpack(), module_state)
+        before = self._state_values(task_context, program_state.get_state().unpack(), module_state)
         node = search.successor_generator.get_node(
-            search.state_repository, program_state.get_module_state().get_state().unpack().index()
+            search.state_repository, program_state.get_state().unpack().index()
         )
         steps: list[Step] = []
         for successor in search.successor_generator.get_labeled_successor_nodes(
@@ -810,7 +810,7 @@ class Session:
     # -- internals -----------------------------------------------------------------------------------------------------
 
     def _state_values(
-        self, task_context: LiftedTaskContext, state: lifted.State, module_state: ModuleStateLifted
+        self, task_context: LiftedTaskContext, state: lifted.StateBuilderShared, module_state: ModuleState
     ) -> dict[str, Value]:
         storage = EvaluationStorage(task_context.dl_denotation_repository)
         context = LiftedStateEvaluationContext(
@@ -1048,7 +1048,7 @@ class Session:
         storage = EvaluationStorage(task_context.dl_denotation_repository)
         module_state = program_state.get_module_state()
         return LiftedStateEvaluationContext(
-            program_state.get_module_state().get_state().unpack(),
+            program_state.get_state().unpack(),
             task_context.dl_builder,
             storage,
             module_state.get_arguments(),

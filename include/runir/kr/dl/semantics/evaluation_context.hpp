@@ -22,7 +22,7 @@ concept EvaluationContextConcept = tyr::TaskKind<Kind>
                                           { evaluate<Kind>(numerical, context) } -> DenotationViewConcept<NumericalTag>;
                                           { evaluate<Kind>(concept_, context) } -> DenotationViewConcept<ConceptTag>;
                                           { evaluate<Kind>(role, context) } -> DenotationViewConcept<RoleTag>;
-                                          { evaluate<Kind>(query, context) } -> tyr::datalog::database::RelationViewConcept;
+                                          { evaluate<Kind>(query, context) } -> ygg::RelationViewConcept<ygg::Schema>;
                                       };
 
 }  // namespace runir::kr::dl::semantics

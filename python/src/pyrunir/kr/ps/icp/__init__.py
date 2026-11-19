@@ -6,6 +6,8 @@
 from pyrunir._pyrunir.kr.ps.icp import (
     ArgumentPosition as ArgumentPosition,
     ConditionOperation as ConditionOperation,
+    ControlBuilder as ControlBuilder,
+    ControlRepository as ControlRepository,
     EffectOperation as EffectOperation,
     GroundEvaluationEnvironment as GroundEvaluationEnvironment,
     GroundExecutionBuilder as GroundExecutionBuilder,
@@ -17,6 +19,7 @@ from pyrunir._pyrunir.kr.ps.icp import (
     GroundProgramProofVertexLabel as GroundProgramProofVertexLabel,
     GroundProgramSearchOptions as GroundProgramSearchOptions,
     GroundSuccessorExpander as GroundSuccessorExpander,
+    Histories as Histories,
     HistoriesData as HistoriesData,
     HistoriesIndex as HistoriesIndex,
     LiftedEvaluationEnvironment as LiftedEvaluationEnvironment,
@@ -73,8 +76,6 @@ from pyrunir._pyrunir.kr.ps.icp import (
     evaluate as evaluate,
     find_ground_solution as find_ground_solution,
     find_lifted_solution as find_lifted_solution,
-    ground as ground,
-    lifted as lifted,
     optimize as optimize,
     query_statistics_sampler as query_statistics_sampler,
 )

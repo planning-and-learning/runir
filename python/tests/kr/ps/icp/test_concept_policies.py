@@ -222,7 +222,7 @@ def check_loaded_features(
 
 def check_history_tables(
     state_type: type[icp.ProgramStateGround] | type[icp.ProgramStateLifted],
-    history_type: type[icp.ground.Histories] | type[icp.lifted.Histories],
+    history_type: type[icp.Histories],
     initial: icp.ProgramStateGround | icp.ProgramStateLifted,
     loaded: icp.ProgramStateGround | icp.ProgramStateLifted,
 ) -> None:
@@ -266,7 +266,7 @@ def check_histories_ground() -> None:
     histories = loaded.get_histories()
     counts = [len(history.views()) for history in histories.get_concepts()]
     assert sum(counts) == 1
-    check_history_tables(icp.ProgramStateGround, icp.ground.Histories, initial, loaded)
+    check_history_tables(icp.ProgramStateGround, icp.Histories, initial, loaded)
     del context, program, environment, dl_context, expander, initial, loaded, step
     gc.collect()
     assert [len(history.views()) for history in histories.get_concepts()] == counts
@@ -292,7 +292,7 @@ def check_histories_lifted() -> None:
     histories = loaded.get_histories()
     counts = [len(history.views()) for history in histories.get_concepts()]
     assert sum(counts) == 1
-    check_history_tables(icp.ProgramStateLifted, icp.lifted.Histories, initial, loaded)
+    check_history_tables(icp.ProgramStateLifted, icp.Histories, initial, loaded)
     del context, program, environment, dl_context, expander, initial, loaded, step
     gc.collect()
     assert [len(history.views()) for history in histories.get_concepts()] == counts

@@ -11,7 +11,7 @@
 
 /// The instantiations (PREFIX extern: declarations).
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
-#define RUNIR_KR_DL_SEMANTICS_INTERNS(PREFIX) YGG_FORMALISM_INTERNS(PREFIX, 6, false, runir::kr::dl::semantics::DenotationRecordTypes)
+#define RUNIR_KR_DL_SEMANTICS_INTERNS(PREFIX) YGG_FORMALISM_INTERNS(PREFIX, 7, false, runir::kr::dl::semantics::DenotationRecordTypes)
 
 RUNIR_KR_DL_SEMANTICS_INTERNS(extern)
 

@@ -35,17 +35,16 @@ template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
 class AtomicQueryEvaluator
 {
-    const ygg::FreeRelationRepository* m_layer;
     tyr::formalism::planning::PredicateView<Fact> m_predicate;
     bool m_initialized = false;
-    urd::builder<ygg::Relation<ygg::Schema>> m_result;
+    urd::handle<ygg::FreeScratchRelation> m_result;
     tyr::datalog::database::incremental::Delta m_delta;
     urd::Store<urd::sequence<ygg::Value>> m_row;
 
 public:
-    /// Its builders are read through `layer`, which must outlive it.
+    /// Its relations are drawn from `scratch`, which must outlive it.
     template<typename C>
-    AtomicQueryEvaluator(const ygg::FreeRelationRepository& layer, urd::index_view<Query<AtomicStateTag<Fact>>, C> query);
+    AtomicQueryEvaluator(ygg::FreeScratchRelations& scratch, urd::index_view<Query<AtomicStateTag<Fact>>, C> query);
 
     /// Replace the baseline from a completed state, retaining buffers and clearing the last delta.
     template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
@@ -56,7 +55,7 @@ public:
     void update(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
                 std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed);
 
-    [[nodiscard]] ygg::FreeRelationBuilderView get_result() const& noexcept { return m_layer->view(m_result); }
+    [[nodiscard]] ygg::FreeRelationBuilderView get_result() const& noexcept { return m_result->view(); }
 
     [[nodiscard]] ygg::FreeRelationBuilderView get_result() const&& = delete;
 
@@ -68,11 +67,10 @@ public:
 template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
 template<typename C>
-AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(const ygg::FreeRelationRepository& layer, urd::index_view<Query<AtomicStateTag<Fact>>, C> query) :
-    m_layer(&layer),
+AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(ygg::FreeScratchRelations& scratch, urd::index_view<Query<AtomicStateTag<Fact>>, C> query) :
     m_predicate(query.get_predicate()),
-    m_result(query.get_schema()),
-    m_delta(layer, query.get_schema())
+    m_result(scratch.draw(query.get_schema())),
+    m_delta(scratch, query.get_schema())
 {
 }
 
@@ -84,10 +82,10 @@ void AtomicQueryEvaluator<Fact>::initialize(const State& state)
     if (!ygg::formalism::contains(*state.get_formalism_repository(), m_predicate))
         throw std::invalid_argument("Incremental atomic query: predicate does not belong to the task repository.");
     m_initialized = false;
-    m_result.clear();
+    m_result->clear();
     m_delta.clear();
     for (const auto atom : state.get_atoms(m_predicate))
-        m_result.insert(encode_object_row(atom.get_row().get_values(), m_row));
+        m_result->insert(encode_object_row(atom.get_row().get_values(), m_row));
     m_initialized = true;
 }
 
@@ -106,24 +104,22 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
         if (atom.get_predicate() != m_predicate)
             continue;
         const auto row = encode_object_row(atom.get_row().get_values(), m_row);
-        if (m_result.contains(row))
+        if (m_result->view().contains(row))
             throw std::invalid_argument("Incremental atomic query: added atom is already present.");
-        m_delta.added.insert(row);
+        m_delta.added->insert(row);
     }
     for (const auto atom : removed)
     {
         if (atom.get_predicate() != m_predicate)
             continue;
         const auto row = encode_object_row(atom.get_row().get_values(), m_row);
-        const auto position = m_result.find(row);
-        if (!position)
+        if (!m_result->erase(row))
             throw std::invalid_argument("Incremental atomic query: removed atom is absent.");
-        m_delta.removed.insert(row);
-        m_result.erase(*position);
+        m_delta.removed->insert(row);
     }
-    const auto added_rows = m_layer->view(m_delta.added);
+    const auto added_rows = m_delta.added->view();
     for (size_t i = 0; i < added_rows.size(); ++i)
-        m_result.insert(added_rows.row(i));
+        ygg::with_values(added_rows.row(i), [this](const auto& values) { m_result->insert(values); });
     m_initialized = true;
 }
 

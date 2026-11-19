@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/semantics/register_values_builder.hpp"
 
 namespace runir::kr::dl::semantics
 {
@@ -13,6 +14,9 @@ class EvaluationStorage
     DenotationRepositoryPtr m_static_denotations;
     DenotationRepositoryPtr m_dynamic_denotations;
     DenotationCaches m_caches;
+    /// The builder a context evaluated with this storage reads registers given in another form (interned) from: copied
+    /// in, its buffers retained.
+    urd::builder<RegisterValues, runir::kr::dl::semantics::DenotationRepository> m_registers;
 
 public:
     explicit EvaluationStorage(const DenotationRepository& prototype) :
@@ -28,6 +32,8 @@ public:
     ~EvaluationStorage() = default;
 
     auto& get_caches() noexcept { return m_caches; }
+
+    auto& get_registers() noexcept { return m_registers; }
 
     [[nodiscard]] const auto& get_caches() const noexcept { return m_caches; }
 

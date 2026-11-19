@@ -13,10 +13,10 @@ from pytyr.formalism.planning import AtomGroundDerived, AtomGroundFluent, AtomGr
 from pytyr.planning import lifted
 
 from pyrunir.kr.ps import ProofStatus
+from pyrunir.kr.ps.ext import ModuleState
 from pyrunir.kr.ps.ext import (
     LiftedProgramProofGraph,
     LiftedProgramProofResults,
-    ModuleStateLifted,
     RuleChooseConcept,
     RuleChooseRole,
     RuleExt,
@@ -138,7 +138,7 @@ def object_name(value: Object | tuple[Object, Object] | None) -> str | None:
     return str(value.get_name())
 
 
-def register_value(module_state: ModuleStateLifted, rule: RuleExt) -> str | None:
+def register_value(module_state: ModuleState, rule: RuleExt) -> str | None:
     """Return the name of the value held by the register that the Choose rule `rule` binds.
 
     Raises:
@@ -174,7 +174,7 @@ def rewrite_choose_as_load(text: str, rule: str) -> str:
     raise KeyError(rule)
 
 
-def object_types(state: lifted.State) -> dict[str, frozenset[str]]:
+def object_types(state: lifted.StateBuilderShared) -> dict[str, frozenset[str]]:
     """Each object's static unary predicates, which include its domain types."""
     types: dict[str, set[str]] = {}
     for atom in state.static_atoms():
@@ -191,7 +191,7 @@ def atom_text(atom: AtomGroundStatic | AtomGroundFluent | AtomGroundDerived) -> 
     return "(" + " ".join(names) + ")"
 
 
-def object_atoms(state: lifted.State, name: str) -> list[tuple[str, tuple[str, ...]]]:
+def object_atoms(state: lifted.StateBuilderShared, name: str) -> list[tuple[str, tuple[str, ...]]]:
     """The static, fluent and derived atoms of `state` that mention the object `name`, with `*` for it."""
     atoms: list[tuple[str, tuple[str, ...]]] = []
     for atom in (*state.static_atoms(), *state.fluent_atoms(), *state.derived_atoms()):

@@ -26,7 +26,7 @@ void build_proof_graph(SketchProofResults<Kind>& result,
     using VertexLabel = SketchProofVertexLabel<Kind>;
     using Edge = std::tuple<VertexIndex, VertexIndex, SketchProofEdgeLabel>;
 
-    auto graph_indices = urd::Store<urd::map<urd::index<tyr::planning::PackedState<Kind>>, VertexIndex>, urd::dense> {};
+    auto graph_indices = urd::Store<urd::map<urd::index<tyr::planning::State<Kind>>, VertexIndex>, urd::dense> {};
     graph_indices.reserve(nodes.size());
     auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     result.deadend_states.clear();

@@ -42,7 +42,7 @@ public:
 
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
 
-    [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const
+    [[nodiscard]] DenotationBuilderView<Category> get_result(const DenotationRepository& repository) const
     { return state().get_result(repository); }
 
     [[nodiscard]] const auto& get_delta() const
@@ -134,7 +134,7 @@ private:
 
     template<ConceptOrRoleTag Projected, typename C>
     Evaluators prepare(urd::index_view<QueryProjection<Projected>, C> expression, GraphBuilder<Kind>& graph)
-    { return ProjectionEvaluator<Kind, Category>(graph.layer(), graph.prepare(expression.get_operand(), m_dependencies), expression.get_plan()); }
+    { return ProjectionEvaluator<Kind, Category>(graph.scratch(), graph.prepare(expression.get_operand(), m_dependencies), expression.get_plan()); }
 
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
     { return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies); }

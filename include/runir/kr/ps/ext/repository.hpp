@@ -3,23 +3,34 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/dl/condition_builder.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
+#include "runir/kr/ps/dl/effect_builder.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
+#include "runir/kr/ps/dl/feature_builder.hpp"
 #include "runir/kr/ps/dl/feature_data.hpp"
 #include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
+#include "runir/kr/ps/ext/module_builder.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
+#include "runir/kr/ps/ext/order_term_builder.hpp"
+#include "runir/kr/ps/ext/program_builder.hpp"
 #include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
+#include "runir/kr/ps/ext/rule_builder.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
+#include "runir/kr/ps/feature_builder.hpp"
 #include "runir/kr/ps/feature_data.hpp"
 #include "runir/kr/ps/feature_view.hpp"
+#include "runir/kr/ps/memory_state_builder.hpp"
 #include "runir/kr/ps/memory_state_data.hpp"
 #include "runir/kr/ps/memory_state_view.hpp"
+#include "runir/kr/ps/module_symbol_builder.hpp"
 #include "runir/kr/ps/module_symbol_data.hpp"
 #include "runir/kr/ps/module_symbol_view.hpp"
+#include "runir/kr/ps/rule_variant_builder.hpp"
 #include "runir/kr/ps/rule_variant_data.hpp"
 #include "runir/kr/ps/rule_variant_view.hpp"
 
@@ -29,14 +40,16 @@
 namespace runir::kr::ps::ext
 {
 
-using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, RepositoryTypes>;
+using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, boost::mp11::mp_push_front<RepositoryTypes, Repository>>;
 
 using ygg::formalism::checkout;
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<Repository, T>
 void prepare_for_insert(Repository&, urd::data<T>& data)
-{ canonicalize(data); }
+{
+    canonicalize(data);
+}
 
 using ygg::formalism::insert;
 }

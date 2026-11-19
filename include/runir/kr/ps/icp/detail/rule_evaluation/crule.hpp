@@ -87,8 +87,8 @@ public:
     {
         const auto memory = state.get_memory_state();
         const auto source = m_rule.get_source();
-        const auto action = candidate.label.get_relation();
-        if (&memory.context() != &source.context() || memory != source || &action.context() != &m_action.context() || action != m_action)
+        // The candidate's action, as its binding holds it: this rule's only where it is that interned action.
+        if (&memory.context() != &source.context() || memory != source || !urd::is_interned_as(candidate.label.get_relation(), m_action))
             return false;
         auto source_context = context.make_dl_context(state);
         if (!is_applicable(source_context) || !xconditions_match(source_context, state, candidate.label))
@@ -112,7 +112,7 @@ public:
     ProgramStep<IcpFamilyTag, Kind> apply(RuleEvaluationWorkspace<Kind, EvaluationPolicy>& workspace,
                                           ProgramStateView<Kind> source,
                                           const tyr::planning::LabeledNode<Kind>& candidate,
-                                          HistoriesView<Kind> histories) const
+                                          HistoriesView histories) const
     {
         auto target = urd::data<ProgramState<Kind>>(source.get_program().index(),
                                                     m_rule.get_target().index(),

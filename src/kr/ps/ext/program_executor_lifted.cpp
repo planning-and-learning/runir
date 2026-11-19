@@ -26,18 +26,18 @@ SuccessorExpander<tyr::LiftedTag>::apply_choice<runir::kr::dl::RoleTag, ProgramS
                                                                                                           ProgramSearchStatistics&);
 
 template ProgramStateView<tyr::LiftedTag>
-SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::materialize<BuilderProgramStateView<tyr::LiftedTag>>(
-    const BuilderProgramStateView<tyr::LiftedTag>&);
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::materialize<ProgramStateBuilderView<tyr::LiftedTag>>(
+    const ProgramStateBuilderView<tyr::LiftedTag>&);
 
 template ProgramStep<ExtFamilyTag, tyr::LiftedTag, StorageStoredState<TransientExecutionStorage<tyr::LiftedTag>>>
-SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::ConceptTag, BuilderProgramStateView<tyr::LiftedTag>>(
-    BuilderProgramStateView<tyr::LiftedTag>,
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::ConceptTag, ProgramStateBuilderView<tyr::LiftedTag>>(
+    ProgramStateBuilderView<tyr::LiftedTag>,
     const detail::Choice<runir::kr::dl::ConceptTag>&,
     ProgramSearchStatistics&);
 
 template ProgramStep<ExtFamilyTag, tyr::LiftedTag, StorageStoredState<TransientExecutionStorage<tyr::LiftedTag>>>
-SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::RoleTag, BuilderProgramStateView<tyr::LiftedTag>>(
-    BuilderProgramStateView<tyr::LiftedTag>,
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::RoleTag, ProgramStateBuilderView<tyr::LiftedTag>>(
+    ProgramStateBuilderView<tyr::LiftedTag>,
     const detail::Choice<runir::kr::dl::RoleTag>&,
     ProgramSearchStatistics&);
 

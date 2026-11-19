@@ -11,8 +11,8 @@ from fixture_utils import load_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pytyr.formalism.planning import Parser, RowActionLifted
-from pytyr.planning.ground import PackedState as GroundPackedState
-from pytyr.planning.lifted import GroundTaskInstantiationOptions, PackedState as LiftedPackedState, Task
+from pytyr.planning.ground import State as GroundPackedState
+from pytyr.planning.lifted import GroundTaskInstantiationOptions, State as LiftedPackedState, Task
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import (

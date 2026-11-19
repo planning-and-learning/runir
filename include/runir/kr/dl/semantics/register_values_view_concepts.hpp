@@ -25,6 +25,7 @@ concept RegisterValuesViewConcept =
         requires std::same_as<std::remove_cvref_t<decltype(values.at(role_id).value().second)>, tyr::formalism::planning::ObjectView>;
     };
 
+
 }  // namespace runir::kr::dl::semantics
 
 #endif

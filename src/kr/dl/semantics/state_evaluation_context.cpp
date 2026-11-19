@@ -3,7 +3,7 @@
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
-#include "runir/kr/dl/semantics/register_values_data.hpp"
+#include "runir/kr/dl/semantics/register_values_builder.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -18,9 +18,9 @@ tyr::datalog::database::Workspace& get_database_workspace(EvaluationWorkspace& w
 const tyr::formalism::planning::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept
 { return &repository.get_formalism_repository(); }
 
-const urd::data<RegisterValues>& empty_register_values() noexcept
+const urd::builder<RegisterValues, DenotationRepository>& empty_register_values() noexcept
 {
-    static const auto values = urd::data<RegisterValues>();
+    static const auto values = urd::builder<RegisterValues, DenotationRepository>();
     return values;
 }
 

@@ -44,13 +44,16 @@ public:
             return true;
         if (stop())
             return false;
-        const auto module_ = state.get_module_state();
-        auto target = context.storage->store(context.planning_state,
-                                             module_.get_mod(),
-                                             m_rule.get_target(),
-                                             module_.get_registers(),
-                                             module_.get_arguments(),
-                                             state.get_call_stack());
+        auto target = urd::visit_view(state.get_module_state(),
+                                      [&](const auto& activation)
+                                      {
+                                          return context.storage->store(context.planning_state,
+                                                                        activation.get_mod(),
+                                                                        m_rule.get_target(),
+                                                                        activation.get_registers(),
+                                                                        activation.get_arguments(),
+                                                                        state.get_call_stack());
+                                      });
         return emit(detail::applied<Kind, Storage>(std::move(target), m_variant, *context.task_context));
     }
 
@@ -58,10 +61,11 @@ public:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
-                 const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
+                 const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate) const
     {
         if (m_rule.get_effects().empty() || !ext::has_current_source<Kind>(m_rule, state))
             return false;

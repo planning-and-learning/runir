@@ -50,7 +50,7 @@ public:
         // Tyr requires a Node, but policy expansion does not carry a path metric.
         const auto node = tyr::planning::Node<Kind>(state, 0);
 
-        const auto visit_binding = [&](tyr::planning::BorrowedActionRowView<Kind> binding)
+        const auto visit_binding = [&](tyr::planning::ActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;

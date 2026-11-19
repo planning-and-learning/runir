@@ -24,14 +24,18 @@ struct ProgramState
     static constexpr std::string_view name = urd::joined_name<"ProgramState", Kind::name>;
 };
 
+/// The records of a program's control, whatever the task's kind: histories.
+using ControlRepositoryTypes = boost::mp11::mp_list<Histories>;
+
 template<tyr::TaskKind Kind>
-using ExecutionRepositoryTypes = boost::mp11::mp_list<Histories, ProgramState<Kind>>;
+using ExecutionRepositoryTypes = boost::mp11::mp_list<ProgramState<Kind>>;
+
+using ControlRepository = runir::kr::ps::ControlRepository<IcpFamilyTag>;
 
 template<tyr::TaskKind Kind>
 using ProgramStateView = urd::index_view<ProgramState<Kind>, ExecutionRepository<IcpFamilyTag, Kind>>;
 
-template<tyr::TaskKind Kind>
-using HistoriesView = urd::index_view<Histories, ExecutionRepository<IcpFamilyTag, Kind>>;
+using HistoriesView = urd::index_view<Histories, ControlRepository>;
 
 }
 

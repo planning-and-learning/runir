@@ -26,6 +26,7 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include <urd/elements/children.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/segmented.hpp>
@@ -55,8 +56,8 @@ using runir::kr::parser::constructors::parse;
 using runir::kr::parser::constructors::parse_constructor;
 
 template<typename T>
-auto intern(Repository& repository, urd::data<T>& data)
-{ return runir::kr::ps::ext::insert(repository, data).first; }
+auto intern(Repository& repository, runir::kr::ps::ext::Builder& builder, const urd::builder<T, Repository>& built)
+{ return repository.insert(built, builder).first; }
 
 template<typename T>
 struct AstCategory
@@ -110,7 +111,7 @@ auto intern_argument(Repository& repository, runir::kr::dl::Builder& builder, co
     auto data = runir::kr::dl::checkout<runir::kr::dl::Argument<Category>>(builder);
     data->name = argument.symbol.text;
     data->identifier = runir::kr::dl::ArgumentIdentifier<Category>(identifier);
-    return runir::kr::dl::insert(repository.get_dl_repository(), *data).first;
+    return repository.get_dl_repository().insert(*data, builder).first;
 }
 
 struct SignatureCounts
@@ -246,7 +247,7 @@ void validate_module_declarations(const ast::Module& module_, const runir::kr::p
 
 void append_argument(Repository& repository,
                      runir::kr::dl::Builder& builder,
-                     urd::data<Module>& data,
+                     urd::builder<Module, Repository>& data,
                      ModuleReferences& references,
                      const ast::ArgumentVariant& argument,
                      ygg::uint_t& concept_identifier,
@@ -260,29 +261,33 @@ void append_argument(Repository& repository,
             using Category = AstCategoryT<Concrete>;
             if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             {
-                const auto index = intern_argument<Category>(repository, builder, concrete, concept_identifier++).index();
-                data.concept_arguments.push_back(index);
+                const auto interned = intern_argument<Category>(repository, builder, concrete, concept_identifier++);
+                const auto index = interned.index();
+                data.concept_arguments.emplace_back(interned);
                 references.concept_arguments.by_name.emplace(concrete.symbol.text, index);
                 references.concept_arguments.by_identifier.push_back(index);
             }
             else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
             {
-                const auto index = intern_argument<Category>(repository, builder, concrete, role_identifier++).index();
-                data.role_arguments.push_back(index);
+                const auto interned = intern_argument<Category>(repository, builder, concrete, role_identifier++);
+                const auto index = interned.index();
+                data.role_arguments.emplace_back(interned);
                 references.role_arguments.by_name.emplace(concrete.symbol.text, index);
                 references.role_arguments.by_identifier.push_back(index);
             }
             else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
             {
-                const auto index = intern_argument<Category>(repository, builder, concrete, boolean_identifier++).index();
-                data.boolean_arguments.push_back(index);
+                const auto interned = intern_argument<Category>(repository, builder, concrete, boolean_identifier++);
+                const auto index = interned.index();
+                data.boolean_arguments.emplace_back(interned);
                 references.boolean_arguments.by_name.emplace(concrete.symbol.text, index);
                 references.boolean_arguments.by_identifier.push_back(index);
             }
             else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
             {
-                const auto index = intern_argument<Category>(repository, builder, concrete, numerical_identifier++).index();
-                data.numerical_arguments.push_back(index);
+                const auto interned = intern_argument<Category>(repository, builder, concrete, numerical_identifier++);
+                const auto index = interned.index();
+                data.numerical_arguments.emplace_back(interned);
                 references.numerical_arguments.by_name.emplace(concrete.symbol.text, index);
                 references.numerical_arguments.by_identifier.push_back(index);
             }
@@ -294,19 +299,19 @@ template<typename FeatureTag, typename Expression>
 auto intern_dl_feature(Repository& repository, runir::kr::ps::ext::Builder& builder, urd::index<Expression> constructor, const std::string& symbol)
 {
     auto concrete_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>(builder);
-    concrete_data->feature = constructor;
+    concrete_data->feature = repository.get_dl_repository().view(constructor);
     concrete_data->symbol = symbol;
-    const auto concrete = intern(repository, *concrete_data);
+    const auto concrete = intern(repository, builder, *concrete_data);
     auto feature_data = runir::kr::ps::ext::checkout<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>(builder);
-    feature_data->variant = concrete.index();
-    return intern(repository, *feature_data);
+    feature_data->variant = concrete;
+    return intern(repository, builder, *feature_data);
 }
 
 template<runir::kr::dl::CategoryTag Category>
 void append_feature(
     Repository& repository,
     Builders& builders,
-    urd::data<Module>& module_data,
+    urd::builder<Module, Repository>& module_data,
     const ast::Feature<Category>& feature,
     tyr::formalism::planning::DomainView domain,
     urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>&
@@ -325,25 +330,25 @@ void append_feature(
     {
         const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, *builders.ps, constructor.index(), feature.symbol.text);
         concept_features.emplace(feature.symbol.text, view.index());
-        module_data.concept_features.push_back(view.index());
+        module_data.concept_features.emplace_back(view);
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         const auto view = intern_dl_feature<runir::kr::dl::RoleTag>(repository, *builders.ps, constructor.index(), feature.symbol.text);
         role_features.emplace(feature.symbol.text, view.index());
-        module_data.role_features.push_back(view.index());
+        module_data.role_features.emplace_back(view);
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
     {
         const auto view = intern_dl_feature<runir::kr::dl::BooleanTag>(repository, *builders.ps, constructor.index(), feature.symbol.text);
         boolean_features.emplace(feature.symbol.text, view.index());
-        module_data.boolean_features.push_back(view.index());
+        module_data.boolean_features.emplace_back(view);
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
     {
         const auto view = intern_dl_feature<runir::kr::dl::NumericalTag>(repository, *builders.ps, constructor.index(), feature.symbol.text);
         numerical_features.emplace(feature.symbol.text, view.index());
-        module_data.numerical_features.push_back(view.index());
+        module_data.numerical_features.emplace_back(view);
     }
 }
 
@@ -358,6 +363,7 @@ auto parse_do_argument(const ast::SymbolExpression& expression,
 { return require_feature(concept_features, expression.symbol, diagnostics); }
 
 auto parse_call_argument(
+    Repository& repository,
     const ast::SymbolExpression& expression,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>&
         concept_features,
@@ -367,29 +373,29 @@ auto parse_call_argument(
         boolean_features,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&
         numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics) -> CallArgument
+    const runir::kr::parser::DiagnosticContext& diagnostics) -> urd::built_t<CallArgument, Repository>
 {
     const auto& name = expression.symbol.text;
     auto matches = 0;
-    auto result = CallArgument {};
+    auto result = urd::built_t<CallArgument, Repository> {};
     if (const auto it = concept_features.find(name); it != concept_features.end())
     {
-        result = it->second;
+        result = repository.view(it->second);
         ++matches;
     }
     if (const auto it = role_features.find(name); it != role_features.end())
     {
-        result = it->second;
+        result = repository.view(it->second);
         ++matches;
     }
     if (const auto it = boolean_features.find(name); it != boolean_features.end())
     {
-        result = it->second;
+        result = repository.view(it->second);
         ++matches;
     }
     if (const auto it = numerical_features.find(name); it != numerical_features.end())
     {
-        result = it->second;
+        result = repository.view(it->second);
         ++matches;
     }
 
@@ -473,13 +479,13 @@ call_argument_signature_counts(const ast::CallRule& rule, const FeatureSymbolSet
 }
 
 template<RuleKind Kind>
-auto intern_rule_variant(Repository& repository, runir::kr::ps::ext::Builder& builder, urd::data<Rule<Kind>>& data, const std::string& symbol)
+auto intern_rule_variant(Repository& repository, runir::kr::ps::ext::Builder& builder, const urd::builder<Rule<Kind>, Repository>& built, const std::string& symbol)
 {
-    const auto rule = intern(repository, data);
+    const auto rule = intern(repository, builder, built);
     auto variant_data = runir::kr::ps::ext::checkout<ps::Rule<ExtFamilyTag>>(builder);
     variant_data->symbol = symbol;
-    variant_data->variant = rule.index();
-    return intern(repository, *variant_data);
+    variant_data->variant = rule;
+    return intern(repository, builder, *variant_data);
 }
 
 auto require_memory_state(const urd::Store<urd::map<std::string, urd::index<MemoryState<ExtFamilyTag>>>, urd::stable_refs>& memory_states,
@@ -546,8 +552,8 @@ auto parse_binding_rule(
 {
     using Category = RuleCategoryFor<Kind>;
     auto data = runir::kr::ps::ext::checkout<Rule<Kind>>(builder);
-    data->source = source;
-    data->target = target;
+    data->source = repository.view(source);
+    data->target = repository.view(target);
     append_conditions(repository, builder, rule.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
     append_effects(repository, builder, rule.effects, boolean_features, numerical_features, diagnostics, data->effects);
     if constexpr (std::same_as<Kind, ChooseTag<Category>>)
@@ -556,22 +562,22 @@ auto parse_binding_rule(
             auto value = checkout<OrderTerm>(builder);
             value->direction = term.direction;
             if (const auto it = boolean_features.find(term.feature.text); it != boolean_features.end())
-                value->feature = it->second;
+                value->feature = repository.view(it->second);
             else if (const auto numerical_it = numerical_features.find(term.feature.text); numerical_it != numerical_features.end())
-                value->feature = numerical_it->second;
+                value->feature = repository.view(numerical_it->second);
             else
                 diagnostics.throw_at(term.feature, runir::kr::UndefinedSymbolError("Boolean or numerical ordering feature", term.feature.text));
-            data->order.push_back(insert(repository, *value).first.index());
+            data->order.emplace_back(repository.insert(*value, builder).first);
         }
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        data->feature = require_feature(concept_features, rule.feature, diagnostics);
-        data->slot = require_register(references.concept_registers.by_name, rule.slot, diagnostics);
+        data->feature = repository.view(require_feature(concept_features, rule.feature, diagnostics));
+        data->slot = repository.get_dl_repository().view(require_register(references.concept_registers.by_name, rule.slot, diagnostics));
     }
     else
     {
-        data->feature = require_feature(role_features, rule.feature, diagnostics);
-        data->slot = require_register(references.role_registers.by_name, rule.slot, diagnostics);
+        data->feature = repository.view(require_feature(role_features, rule.feature, diagnostics));
+        data->slot = repository.get_dl_repository().view(require_register(references.role_registers.by_name, rule.slot, diagnostics));
     }
     return intern_rule_variant(repository, builder, *data, symbol);
 }
@@ -620,8 +626,8 @@ auto parse_rule(
             else if constexpr (std::same_as<RuleAst, ast::SketchRule>)
             {
                 auto data = runir::kr::ps::ext::checkout<Rule<SketchTag>>(builder);
-                data->source = source;
-                data->target = *target;
+                data->source = repository.view(source);
+                data->target = repository.view(*target);
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 append_effects(repository, builder, concrete.effects, boolean_features, numerical_features, diagnostics, data->effects);
                 return intern_rule_variant(repository, builder, *data, symbol);
@@ -630,14 +636,14 @@ auto parse_rule(
             {
                 validate_do_action(domain, concrete, diagnostics);
                 auto data = runir::kr::ps::ext::checkout<Rule<DoTag>>(builder);
-                data->source = source;
-                data->target = *target;
+                data->source = repository.view(source);
+                data->target = repository.view(*target);
                 data->action_name = concrete.action.text;
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 append_effects(repository, builder, concrete.effects, boolean_features, numerical_features, diagnostics, data->effects);
                 data->arguments.reserve(concrete.arguments.size());
                 for (const auto& argument : concrete.arguments)
-                    data->arguments.push_back(parse_do_argument(argument, concept_features, diagnostics));
+                    data->arguments.emplace_back(repository.view(parse_do_argument(argument, concept_features, diagnostics)));
                 return intern_rule_variant(repository, builder, *data, symbol);
             }
             else if constexpr (std::same_as<RuleAst, ast::ActionRule>)
@@ -653,10 +659,10 @@ auto parse_rule(
                     diagnostics.throw_at(concrete.query_feature,
                                          runir::kr::ArityMismatchError("action " + concrete.action.text, action->get_arity(), query_arity));
                 auto data = runir::kr::ps::ext::checkout<Rule<ActionTag>>(builder);
-                data->source = source;
-                data->target = *target;
+                data->source = repository.view(source);
+                data->target = repository.view(*target);
                 data->action_name = concrete.action.text;
-                data->query_feature = query_feature;
+                data->query_feature = repository.view(query_feature);
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 append_effects(repository, builder, concrete.effects, boolean_features, numerical_features, diagnostics, data->effects);
                 return intern_rule_variant(repository, builder, *data, symbol);
@@ -664,27 +670,27 @@ auto parse_rule(
             else if constexpr (std::same_as<RuleAst, ast::CallRule>)
             {
                 auto data = runir::kr::ps::ext::checkout<Rule<CallTag>>(builder);
-                data->source = source;
-                data->target = *target;
+                data->source = repository.view(source);
+                data->target = repository.view(*target);
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 if (const auto callee = find_module(modules, concrete.callee.text))
-                    data->callee = *callee;
+                    data->callee = repository.view(*callee);
                 else
                 {
                     auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(builder);
                     symbol_data->name = concrete.callee.text;
-                    data->callee = intern(repository, *symbol_data).index();
+                    data->callee = intern(repository, builder, *symbol_data);
                 }
                 data->arguments.reserve(concrete.arguments.size());
                 for (const auto& argument : concrete.arguments)
                     data->arguments.push_back(
-                        parse_call_argument(argument, concept_features, role_features, boolean_features, numerical_features, diagnostics));
+                        parse_call_argument(repository, argument, concept_features, role_features, boolean_features, numerical_features, diagnostics));
                 return intern_rule_variant(repository, builder, *data, symbol);
             }
             else if constexpr (std::same_as<RuleAst, ast::BacktrackRule>)
             {
                 auto data = runir::kr::ps::ext::checkout<Rule<BacktrackTag>>(builder);
-                data->source = source;
+                data->source = repository.view(source);
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 return intern_rule_variant(repository, builder, *data, symbol);
             }
@@ -871,7 +877,7 @@ ModuleView lower_module(const ast::Module& ast,
     {
         auto state_data = runir::kr::ps::ext::checkout<MemoryState<ExtFamilyTag>>(*builders.ps);
         state_data->name = state.value.text;
-        if (!memory_states.emplace(state.value.text, intern(repository, *state_data).index()).second)
+        if (!memory_states.emplace(state.value.text, intern(repository, *builders.ps, *state_data).index()).second)
             diagnostics.throw_at(state.value, runir::kr::DuplicateDefinitionError("memory state", state.value.text));
     }
 
@@ -880,8 +886,8 @@ ModuleView lower_module(const ast::Module& ast,
         diagnostics.throw_at(ast.entry, runir::kr::UndefinedSymbolError("memory state", ast.entry.text));
 
     auto data = runir::kr::ps::ext::checkout<Module>(*builders.ps);
-    data->symbol = module_symbols.at(ast.name.text);
-    data->entry_memory_state = entry->second;
+    data->symbol = repository.view(module_symbols.at(ast.name.text));
+    data->entry_memory_state = repository.view(entry->second);
 
     auto concept_argument = static_cast<ygg::uint_t>(0);
     auto role_argument = static_cast<ygg::uint_t>(0);
@@ -903,8 +909,9 @@ ModuleView lower_module(const ast::Module& ast,
                     auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(*builders.dl);
                     reg_data->name = concrete.symbol.text;
                     reg_data->identifier = runir::kr::dl::RegisterIdentifier<Category>(concept_register++);
-                    const auto index = runir::kr::dl::insert(repository.get_dl_repository(), *reg_data).first.index();
-                    data->concept_registers.push_back(index);
+                    const auto interned = repository.get_dl_repository().insert(*reg_data, *builders.dl).first;
+                    const auto index = interned.index();
+                    data->concept_registers.emplace_back(interned);
                     references.concept_registers.by_name.emplace(concrete.symbol.text, index);
                     references.concept_registers.by_identifier.push_back(index);
                 }
@@ -913,8 +920,9 @@ ModuleView lower_module(const ast::Module& ast,
                     auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(*builders.dl);
                     reg_data->name = concrete.symbol.text;
                     reg_data->identifier = runir::kr::dl::RegisterIdentifier<Category>(role_register++);
-                    const auto index = runir::kr::dl::insert(repository.get_dl_repository(), *reg_data).first.index();
-                    data->role_registers.push_back(index);
+                    const auto interned = repository.get_dl_repository().insert(*reg_data, *builders.dl).first;
+                    const auto index = interned.index();
+                    data->role_registers.emplace_back(interned);
                     references.role_registers.by_name.emplace(concrete.symbol.text, index);
                     references.role_registers.by_identifier.push_back(index);
                 }
@@ -923,7 +931,7 @@ ModuleView lower_module(const ast::Module& ast,
     }
 
     for (const auto& state : ast.memory_states)
-        data->memory_states.push_back(memory_states.at(state.value.text));
+        data->memory_states.emplace_back(repository.view(memory_states.at(state.value.text)));
 
     auto concept_features =
         urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs> {};
@@ -946,7 +954,7 @@ ModuleView lower_module(const ast::Module& ast,
                     const auto query = parse(concrete.expression, domain, context);
                     const auto view = intern_dl_feature<runir::kr::ps::dl::QueryFeature>(repository, *builders.ps, query.index(), concrete.symbol.text);
                     query_features.emplace(concrete.symbol.text, view.index());
-                    data->query_features.push_back(view.index());
+                    data->query_features.emplace_back(view);
                 }
                 else
                     append_feature(repository,
@@ -973,7 +981,7 @@ ModuleView lower_module(const ast::Module& ast,
         const auto source = require_memory_state(memory_states, transition.source, diagnostics);
         const auto target = transition.target ? std::optional(require_memory_state(memory_states, *transition.target, diagnostics)) : std::nullopt;
         for (const auto& rule : transition.rules)
-            parsed_transition.push_back(parse_rule(repository,
+            parsed_transition.emplace_back(parse_rule(repository,
                                                    *builders.ps,
                                                    rule,
                                                    source,
@@ -987,12 +995,10 @@ ModuleView lower_module(const ast::Module& ast,
                                                    query_features,
                                                    references,
                                                    transition.symbol.text,
-                                                   diagnostics)
-                                            .index());
-        ygg::canonicalize(parsed_transition);
+                                                   diagnostics));
     }
 
-    return intern(repository, *data);
+    return intern(repository, *builders.ps, *data);
 }
 
 template<typename Function>
@@ -1104,7 +1110,7 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
     symbol_data->name = ast.name.text;
     auto module_symbols =
         urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs> { { ast.name.text,
-                                                                                                        intern(repository, *symbol_data).index() } };
+                                                                                                        intern(repository, ps_builder, *symbol_data).index() } };
     return lower_module(ast, domain, repository, builders, diagnostics, module_symbols);
 }
 
@@ -1126,7 +1132,7 @@ ProgramView parse_program(const std::string& description, tyr::formalism::planni
     {
         auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(ps_builder);
         symbol_data->name = module_.name.text;
-        module_symbols.emplace(module_.name.text, intern(repository, *symbol_data).index());
+        module_symbols.emplace(module_.name.text, intern(repository, ps_builder, *symbol_data).index());
     }
     auto module_indices_by_name = urd::Store<urd::map<std::string, urd::index<Module>>, urd::stable_refs> {};
     auto data = runir::kr::ps::ext::checkout<Program>(ps_builder);
@@ -1135,12 +1141,12 @@ ProgramView parse_program(const std::string& description, tyr::formalism::planni
     for (const auto& module_ : ast.modules)
     {
         auto view = lower_module(module_, domain, repository, builders, diagnostics, module_symbols);
-        data->modules.push_back(view.index());
+        data->modules.emplace_back(view);
         module_indices_by_name.emplace(module_.name.text, view.index());
     }
 
-    data->entry_mod = module_indices_by_name.at(ast.entry.text);
-    return intern(repository, *data);
+    data->entry_mod = repository.view(module_indices_by_name.at(ast.entry.text));
+    return intern(repository, ps_builder, *data);
 }
 
 urd::Store<urd::sequence<ModuleView>>
@@ -1170,7 +1176,7 @@ parse_modules(const urd::Store<urd::sequence<std::string>>& descriptions, tyr::f
     {
         auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(ps_builder);
         symbol_data->name = ast.name.text;
-        module_symbols.emplace(ast.name.text, intern(repository, *symbol_data).index());
+        module_symbols.emplace(ast.name.text, intern(repository, ps_builder, *symbol_data).index());
     }
     for (std::size_t i = 0; i < asts.size(); ++i)
     {

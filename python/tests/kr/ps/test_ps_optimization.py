@@ -6,7 +6,7 @@ from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pytyr.formalism.planning import Parser, PlanningDomain
 from pytyr.planning import lifted
-from pytyr.planning.ground import State
+from pytyr.planning.ground import StateBuilderShared
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
@@ -32,7 +32,7 @@ _GOALS = (
 def _ground(
     gripper_planning_domain: PlanningDomain,
     ground_gripper_search_context: GroundTaskSearchContext,
-) -> tuple[DomainContext, GroundTaskContext, State]:
+) -> tuple[DomainContext, GroundTaskContext, StateBuilderShared]:
     """Return the gripper domain context, ground task context, and initial state."""
     domain = DomainContext(gripper_planning_domain)
     task = GroundTaskContext(domain, ground_gripper_search_context)

@@ -44,17 +44,26 @@ public:
             return true;
         auto state_context = context.make_dl_context(state);
         const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
+        auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
         for (const auto value : denotation.views())
         {
             if (stop())
                 return false;
-            const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, *context.storage);
+            const auto target_registers = urd::visit_view(state.get_module_state(),
+                                                          [&](const auto& activation)
+                                                          { return bound_registers<Kind>(rule, activation.get_registers(), value, *registers, *context.storage); });
             if (!binding_effects_match(rule, state, planning_state, target_registers, *context.environment))
                 continue;
-            const auto module_ = state.get_module_state();
-            auto target =
-                context.storage->store(planning_state, module_.get_mod(), rule.get_target(), target_registers, module_.get_arguments(), state.get_call_stack());
+            auto target = urd::visit_view(state.get_module_state(),
+                                          [&](const auto& activation)
+                                          {
+                                              return context.storage->store(planning_state,
+                                                                            activation.get_mod(),
+                                                                            rule.get_target(),
+                                                                            target_registers,
+                                                                            activation.get_arguments(),
+                                                                            state.get_call_stack());
+                                          });
             if (!emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, *context.task_context)))
                 return false;
         }

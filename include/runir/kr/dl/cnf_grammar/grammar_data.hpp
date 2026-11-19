@@ -129,11 +129,10 @@ struct data<runir::kr::dl::cnf_grammar::Grammar>
 
 namespace runir::kr::dl::cnf_grammar
 {
-/// The member of a grammar record holding the start non-terminal of a category.
-template<CategoryTag Category>
+/// The member of a grammar record (or of its builder, Data) holding the start non-terminal of a category.
+template<CategoryTag Category, typename Data = urd::data<Grammar>>
 consteval auto start_member() noexcept
 {
-    using Data = urd::data<Grammar>;
     if constexpr (std::same_as<Category, ConceptTag>)
         return &Data::concept_start;
     else if constexpr (std::same_as<Category, RoleTag>)
@@ -144,11 +143,10 @@ consteval auto start_member() noexcept
         return &Data::numerical_start;
 }
 
-/// The member of a grammar record holding the derivation rules of a category.
-template<CategoryTag Category>
+/// The member of a grammar record (or of its builder, Data) holding the derivation rules of a category.
+template<CategoryTag Category, typename Data = urd::data<Grammar>>
 consteval auto derivation_rules_member() noexcept
 {
-    using Data = urd::data<Grammar>;
     if constexpr (std::same_as<Category, ConceptTag>)
         return &Data::concept_derivation_rules;
     else if constexpr (std::same_as<Category, RoleTag>)
@@ -159,11 +157,10 @@ consteval auto derivation_rules_member() noexcept
         return &Data::numerical_derivation_rules;
 }
 
-/// The member of a grammar record holding the substitution rules of a category.
-template<CategoryTag Category>
+/// The member of a grammar record (or of its builder, Data) holding the substitution rules of a category.
+template<CategoryTag Category, typename Data = urd::data<Grammar>>
 consteval auto substitution_rules_member() noexcept
 {
-    using Data = urd::data<Grammar>;
     if constexpr (std::same_as<Category, ConceptTag>)
         return &Data::concept_substitution_rules;
     else if constexpr (std::same_as<Category, RoleTag>)

@@ -77,9 +77,9 @@ template<tyr::TaskKind Kind>
 void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
 {
     auto delta = kr::dl::semantics::incremental::Delta {};
-    auto source_builder = urd::builder<tyr::planning::State<Kind>>();
+    auto source_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     source_builder.assign(source);
-    auto target_builder = urd::builder<tyr::planning::State<Kind>>();
+    auto target_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     target_builder.assign(target);
     const auto borrowed_source = urd::resolve(source_builder, source.context());
     const auto borrowed_target = urd::resolve(target_builder, target.context());
@@ -164,8 +164,8 @@ void check_delta()
     target_registers.role_values.resize(2);
     target_registers.role_values[0] = source_registers.role_values[0];
     target_registers.role_values[1] = cista::pair(Object(2), Object(0));
-    const auto source_register_view = urd::resolve(source_registers, *search->task->get_repository());
-    const auto target_register_view = urd::resolve(target_registers, *search->task->get_repository());
+    const auto source_register_view = urd::resolve(source_registers, denotations);
+    const auto target_register_view = urd::resolve(target_registers, denotations);
 
     auto delta = Delta {};
     const auto registered_registers = denotations.insert(source_registers).first;
@@ -173,9 +173,9 @@ void check_delta()
     EXPECT_TRUE(delta.empty());
 
     // Copied builders exercise the borrowed state path used by NONE and CHOICE search.
-    auto source_builder = urd::builder<tyr::planning::State<Kind>>();
+    auto source_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     source_builder.assign(source);
-    auto target_builder = urd::builder<tyr::planning::State<Kind>>();
+    auto target_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     target_builder.assign(target);
     const auto borrowed_source = urd::resolve(source_builder, *search->state_repository);
     const auto borrowed_target = urd::resolve(target_builder, *search->state_repository);
@@ -221,7 +221,7 @@ void check_delta()
     auto resized_registers = runir::tests::copy_fields(source_registers);
     resized_registers.concept_values.resize(4);
     resized_registers.role_values.resize(4);
-    delta.template assign<Kind>(source, source_register_view, source, urd::resolve(resized_registers, *search->task->get_repository()));
+    delta.template assign<Kind>(source, source_register_view, source, urd::resolve(resized_registers, denotations));
     EXPECT_TRUE(delta.empty());
     EXPECT_TRUE(delta.added.concept_registers.empty());
     EXPECT_TRUE(delta.removed.concept_registers.empty());

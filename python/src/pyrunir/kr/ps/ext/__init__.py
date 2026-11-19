@@ -4,9 +4,12 @@
 """Extended policy sketch modules with choose, call, load and backtrack rules."""
 
 from pyrunir._pyrunir.kr.ps.ext import (
+    CallStack as CallStack,
     CallStackData as CallStackData,
     CallStackIndex as CallStackIndex,
     ConceptChoice as ConceptChoice,
+    ControlBuilder as ControlBuilder,
+    ControlRepository as ControlRepository,
     GroundEvaluationEnvironment as GroundEvaluationEnvironment,
     GroundExecutionBuilder as GroundExecutionBuilder,
     GroundExecutionRepository as GroundExecutionRepository,
@@ -33,12 +36,9 @@ from pyrunir._pyrunir.kr.ps.ext import (
     Module as Module,
     ModuleData as ModuleData,
     ModuleIndex as ModuleIndex,
-    ModuleStateGround as ModuleStateGround,
-    ModuleStateGroundData as ModuleStateGroundData,
-    ModuleStateGroundIndex as ModuleStateGroundIndex,
-    ModuleStateLifted as ModuleStateLifted,
-    ModuleStateLiftedData as ModuleStateLiftedData,
-    ModuleStateLiftedIndex as ModuleStateLiftedIndex,
+    ModuleState as ModuleState,
+    ModuleStateData as ModuleStateData,
+    ModuleStateIndex as ModuleStateIndex,
     ModuleSymbolExt as ModuleSymbolExt,
     ModuleSymbolExtData as ModuleSymbolExtData,
     ModuleSymbolExtIndex as ModuleSymbolExtIndex,
@@ -94,8 +94,6 @@ from pyrunir._pyrunir.kr.ps.ext import (
     evaluate as evaluate,
     find_ground_solution as find_ground_solution,
     find_lifted_solution as find_lifted_solution,
-    ground as ground,
-    lifted as lifted,
     optimize as optimize,
     query_statistics_sampler as query_statistics_sampler,
 )

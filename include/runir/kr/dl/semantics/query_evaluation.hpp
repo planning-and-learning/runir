@@ -20,14 +20,14 @@ namespace runir::kr::dl::semantics::detail
 /// Materialize rows into an empty, matching builder without publishing the root.
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void>)
-void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context, urd::builder<ygg::Relation<ygg::Schema>>& result)
+void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context, ygg::FreeScratchRelation& result)
 {
     auto children = context.child_context();
     if constexpr (std::same_as<Tag, QueryRenameTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_operand(), children);
         for (size_t i = 0; i < child.get_rows().size(); ++i)
-            result.insert(child.row(i));
+            ygg::with_values(child.row(i), [&result](const auto& values) { result.insert(values); });
     }
     else if constexpr (is_atomic_state_tag_v<Tag>)
     {

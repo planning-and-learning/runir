@@ -91,7 +91,7 @@ int run(std::span<char*> args)
         start = std::chrono::steady_clock::now();
         if (!feature)
             feature.emplace(
-                runir::kr::dl::semantics::detail::make_must_pass_feature(builder.get_workspace().get_layer(), must_pass.get_plan(), must_pass.get_edges()));
+                runir::kr::dl::semantics::detail::make_must_pass_feature(builder.get_workspace().get_scratch(), must_pass.get_plan(), must_pass.get_edges()));
         const auto translate_time = seconds_since(start);
         const auto edges = must_pass.get_edges();
         auto slot_time = 0.0;
@@ -103,16 +103,16 @@ int run(std::span<char*> args)
             return rows;
         };
         start = std::chrono::steady_clock::now();
-        auto& heuristic = runir::kr::dl::semantics::detail::must_pass_heuristic(builder.get_workspace().get_layer(),
+        auto& heuristic = runir::kr::dl::semantics::detail::must_pass_heuristic(builder.get_workspace().get_scratch(),
                                                                                 *feature,
                                                                                 runir::kr::dl::semantics::detail::num_objects<Kind>(context),
                                                                                 input,
                                                                                 targets);
         const auto heuristic_time = seconds_since(start);
-        auto out = urd::builder<ygg::Relation<ygg::Schema>>(must_pass.get_schema());
+        auto out = builder.get_workspace().get_scratch().draw(must_pass.get_schema());
         const auto before = feature->must_pass.statistics();
         start = std::chrono::steady_clock::now();
-        feature->must_pass.must_pass(input, sources, targets, probes, out, heuristic);
+        feature->must_pass.must_pass(input, sources, targets, probes, *out, heuristic);
         const auto must_pass_time = seconds_since(start);
         const auto& after = feature->must_pass.statistics();
         fmt::print("repeat {}: arguments {:.3f} s (targets {} rows), translate {:.3f} s, heuristic {:.3f} s, must_pass {:.3f} s (slots {:.3f} s): rows {}, "
@@ -124,7 +124,7 @@ int run(std::span<char*> args)
                    heuristic_time,
                    must_pass_time,
                    slot_time,
-                   out.size(),
+                   out->view().size(),
                    after.keys - before.keys,
                    after.vertices - before.vertices,
                    after.backward - before.backward,

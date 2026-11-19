@@ -22,11 +22,11 @@ struct StaticEvaluator
     explicit StaticEvaluator(ConstructorView<Category> expression_) : expression(expression_) {}
 
     template<StateEvaluationContextConcept<Kind> Context>
-    void initialize(EvaluationGraph<Kind>&, Context& context)
+    void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
         if (!initialized)
         {
-            value.assign(semantics::evaluate<Kind>(expression, context));
+            value.assign(semantics::evaluate<Kind>(expression, context), graph.records(), graph.denotations());
             initialized = true;
         }
     }

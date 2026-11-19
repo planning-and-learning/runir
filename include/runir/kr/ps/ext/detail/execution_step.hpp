@@ -45,9 +45,16 @@ auto planning_step(Storage& storage,
                    MemoryStateView memory_state,
                    const runir::kr::TaskContextPtr<Kind>& task_context)
 {
-    const auto module_ = state.get_module_state();
-    auto target =
-        storage.store(successor.node.get_state(), module_.get_mod(), memory_state, module_.get_registers(), module_.get_arguments(), state.get_call_stack());
+    auto target = urd::visit_view(state.get_module_state(),
+                                  [&](const auto& module_)
+                                  {
+                                      return storage.store(successor.node.get_state(),
+                                                           module_.get_mod(),
+                                                           memory_state,
+                                                           module_.get_registers(),
+                                                           module_.get_arguments(),
+                                                           state.get_call_stack());
+                                  });
     auto step = applied<Kind, Storage>(std::move(target), rule, task_context);
     if constexpr (PackableSuccessor<tyr::planning::LabeledNode<Kind, PS>>)
         step.planning_successor = successor.pack();

@@ -33,8 +33,8 @@ using runir::kr::parser::ext_constructors::ModuleReferences;
 using runir::kr::parser::ext_constructors::parse;
 
 template<typename T>
-auto intern(Repository& repository, urd::data<T>& data)
-{ return insert(repository, data).first; }
+auto intern(Repository& repository, Builder& builder, const urd::builder<T, Repository>& built)
+{ return repository.insert(built, builder).first; }
 
 using runir::kr::parser::observations::append_conditions;
 using runir::kr::parser::observations::append_effects;
@@ -77,11 +77,11 @@ template<typename FeatureTag, typename Expression>
 auto make_feature(Repository& repository, Builder& builder, urd::index<Expression> expression, const std::string& symbol)
 {
     auto concrete = checkout<runir::kr::ps::ConcreteFeature<IcpFamilyTag, DlTag, FeatureTag>>(builder);
-    concrete->feature = expression;
+    concrete->feature = repository.get_dl_repository().view(expression);
     concrete->symbol = symbol;
     auto data = checkout<runir::kr::ps::Feature<IcpFamilyTag, FeatureTag>>(builder);
-    data->variant = intern(repository, *concrete).index();
-    return intern(repository, *data).index();
+    data->variant = intern(repository, builder, *concrete);
+    return intern(repository, builder, *data).index();
 }
 
 ModuleView lower_module(const ast::Module& module,
@@ -95,19 +95,19 @@ ModuleView lower_module(const ast::Module& module,
     auto data = checkout<Module>(builder);
     auto symbol = checkout<ModuleSymbol<IcpFamilyTag>>(builder);
     symbol->name = module.name.text;
-    data->symbol = intern(repository, *symbol).index();
+    data->symbol = intern(repository, builder, *symbol);
 
     auto memories = urd::Store<urd::map<std::string, urd::index<MemoryState<IcpFamilyTag>>>, urd::stable_refs> {};
     for (const auto& memory : module.memory_states)
     {
         auto value = checkout<MemoryState<IcpFamilyTag>>(builder);
         value->name = memory.value.text;
-        const auto index = intern(repository, *value).index();
+        const auto index = intern(repository, builder, *value).index();
         if (!memories.emplace(memory.value.text, index).second)
             diagnostics.throw_at(memory.value, DuplicateDefinitionError("memory state", memory.value.text));
-        data->memory_states.push_back(index);
+        data->memory_states.emplace_back(repository.view(index));
     }
-    data->entry_memory_state = require(memories, module.entry, "memory state", diagnostics);
+    data->entry_memory_state = repository.view(require(memories, module.entry, "memory state", diagnostics));
 
     for (const auto& reg : module.registers)
         boost::apply_visitor(
@@ -128,13 +128,13 @@ ModuleView lower_module(const ast::Module& module,
                 auto value = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(dl_builder);
                 value->name = concrete.symbol.text;
                 value->identifier = runir::kr::dl::RegisterIdentifier<Category>(declarations.by_identifier.size());
-                const auto index = runir::kr::dl::insert(repository.get_dl_repository(), *value).first.index();
+                const auto index = repository.get_dl_repository().insert(*value, dl_builder).first.index();
                 declarations.by_name.emplace(concrete.symbol.text, index);
                 declarations.by_identifier.push_back(index);
                 if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-                    data->concept_registers.push_back(index);
+                    data->concept_registers.emplace_back(repository.get_dl_repository().view(index));
                 else
-                    data->role_registers.push_back(index);
+                    data->role_registers.emplace_back(repository.get_dl_repository().view(index));
             },
             reg.get());
 
@@ -143,6 +143,8 @@ ModuleView lower_module(const ast::Module& module,
     auto booleans = urd::Store<urd::map<std::string, urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
     auto numericals = urd::Store<urd::map<std::string, urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs> {};
     auto feature_names = urd::Store<urd::set<std::string>, urd::stable_refs> {};
+    /// The concept features in their order (the module's), by index: what its reset pairs name.
+    auto concept_feature_indices = std::vector<urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>>> {};
     const auto context = ConstructorContext { repository.get_dl_repository(),
                                               dl_builder,
                                               diagnostics,
@@ -157,7 +159,8 @@ ModuleView lower_module(const ast::Module& module,
                 if constexpr (std::same_as<Concrete, ast::QueryFeature>)
                 {
                     const auto expression = parse(concrete.expression, domain, context);
-                    data->query_features.push_back(make_feature<ps::dl::QueryFeature>(repository, builder, expression.index(), concrete.symbol.text));
+                    data->query_features.emplace_back(
+                        repository.view(make_feature<ps::dl::QueryFeature>(repository, builder, expression.index(), concrete.symbol.text)));
                 }
                 else
                 {
@@ -167,25 +170,26 @@ ModuleView lower_module(const ast::Module& module,
                     {
                         const auto index = make_feature<Category>(repository, builder, expression.index(), concrete.symbol.text);
                         concepts.emplace(concrete.symbol.text, index);
-                        data->concept_features.push_back(index);
+                        data->concept_features.emplace_back(repository.view(index));
+                        concept_feature_indices.push_back(index);
                     }
                     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
                     {
                         const auto index = make_feature<Category>(repository, builder, expression.index(), concrete.symbol.text);
                         roles.emplace(concrete.symbol.text, index);
-                        data->role_features.push_back(index);
+                        data->role_features.emplace_back(repository.view(index));
                     }
                     else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
                     {
                         const auto index = make_feature<runir::kr::dl::BooleanTag>(repository, builder, expression.index(), concrete.symbol.text);
                         booleans.emplace(concrete.symbol.text, index);
-                        data->boolean_features.push_back(index);
+                        data->boolean_features.emplace_back(repository.view(index));
                     }
                     else
                     {
                         const auto index = make_feature<runir::kr::dl::NumericalTag>(repository, builder, expression.index(), concrete.symbol.text);
                         numericals.emplace(concrete.symbol.text, index);
-                        data->numerical_features.push_back(index);
+                        data->numerical_features.emplace_back(repository.view(index));
                     }
                 }
             },
@@ -193,8 +197,8 @@ ModuleView lower_module(const ast::Module& module,
 
     const auto initialize_rule = [&](auto& target, const auto& source, const ast::RuleEntry& entry)
     {
-        target.source = require(memories, entry.source, "memory state", diagnostics);
-        target.target = require(memories, entry.target, "memory state", diagnostics);
+        target.source = repository.view(require(memories, entry.source, "memory state", diagnostics));
+        target.target = repository.view(require(memories, entry.target, "memory state", diagnostics));
         append_conditions(repository, builder, source.conditions, booleans, numericals, diagnostics, target.conditions);
         append_effects(repository, builder, source.effects, booleans, numericals, diagnostics, target.effects);
     };
@@ -236,7 +240,7 @@ ModuleView lower_module(const ast::Module& module,
                             rule->argument_names.emplace_back(argument.text);
                         }
                         const auto object = [&](const ast::Object& source)
-                            -> urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
+                            -> std::variant<ArgumentPosition, urd::child<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::ConstructorRepository>>
                         {
                             // Not a generic visitor lambda: clang 18 crashes on one nested in this lambda.
                             if (const auto* argument = boost::get<ast::ArgumentObject>(&source.get()))
@@ -247,25 +251,25 @@ ModuleView lower_module(const ast::Module& module,
                                 return ArgumentPosition { static_cast<ygg::uint_t>(arguments.position(found)) };
                             }
                             const auto& register_ = boost::get<ast::RegisterObject>(source.get());
-                            return require(references.concept_registers.by_name, register_.name, "concept register", diagnostics);
+                            return repository.get_dl_repository().view(require(references.concept_registers.by_name, register_.name, "concept register", diagnostics));
                         };
                         for (const auto& condition : concrete.xconditions)
                         {
                             auto value = checkout<XCondition>(builder);
                             value->operation = condition.belongs ? ConditionOperation::BELONGS : ConditionOperation::NOT_BELONGS;
                             value->object = object(condition.object);
-                            value->feature = require_feature(concepts, condition.feature, diagnostics);
-                            rule->xconditions.push_back(intern(repository, *value).index());
+                            value->feature = repository.view(require_feature(concepts, condition.feature, diagnostics));
+                            rule->xconditions.emplace_back(intern(repository, builder, *value));
                         }
                         for (const auto& effect : concrete.xeffects)
                         {
                             auto value = checkout<XEffect>(builder);
                             value->operation = effect.enter ? EffectOperation::ENTER : EffectOperation::EXIT;
                             value->object = object(effect.object);
-                            value->feature = require_feature(concepts, effect.feature, diagnostics);
-                            rule->xeffects.push_back(intern(repository, *value).index());
+                            value->feature = repository.view(require_feature(concepts, effect.feature, diagnostics));
+                            rule->xeffects.emplace_back(intern(repository, builder, *value));
                         }
-                        variant->variant = intern(repository, *rule).index();
+                        variant->variant = intern(repository, builder, *rule);
                     }
                     else
                     {
@@ -274,26 +278,26 @@ ModuleView lower_module(const ast::Module& module,
                         initialize_rule(*rule, concrete, entry);
                         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                         {
-                            rule->feature = require_feature(concepts, concrete.feature, diagnostics);
-                            rule->slot = require(references.concept_registers.by_name, concrete.slot, "concept register", diagnostics);
+                            rule->feature = repository.view(require_feature(concepts, concrete.feature, diagnostics));
+                            rule->slot = repository.get_dl_repository().view(require(references.concept_registers.by_name, concrete.slot, "concept register", diagnostics));
                         }
                         else
                         {
-                            rule->feature = require_feature(roles, concrete.feature, diagnostics);
-                            rule->slot = require(references.role_registers.by_name, concrete.slot, "role register", diagnostics);
+                            rule->feature = repository.view(require_feature(roles, concrete.feature, diagnostics));
+                            rule->slot = repository.get_dl_repository().view(require(references.role_registers.by_name, concrete.slot, "role register", diagnostics));
                         }
-                        variant->variant = intern(repository, *rule).index();
+                        variant->variant = intern(repository, builder, *rule);
                     }
-                    data->memory_transitions.back().push_back(intern(repository, *variant).index());
+                    data->memory_transitions.back().emplace_back(intern(repository, builder, *variant));
                 },
                 body.get());
     }
 
-    const auto width = data->concept_features.size();
+    const auto width = concept_feature_indices.size();
     using Successors = urd::Store<urd::set<std::size_t>, urd::dense>;
     auto closure = urd::Store<urd::sequence<Successors>>(width, Successors {});
     const auto ordinal = [&](auto index)
-    { return std::find(data->concept_features.begin(), data->concept_features.end(), index) - data->concept_features.begin(); };
+    { return std::find(concept_feature_indices.begin(), concept_feature_indices.end(), index) - concept_feature_indices.begin(); };
     for (const auto& pair : module.reset_pairs)
     {
         const auto before = ordinal(require_feature(concepts, pair.before, diagnostics));
@@ -309,8 +313,8 @@ ModuleView lower_module(const ast::Module& module,
             diagnostics.throw_at(pair, InvalidExpressionError("Reset precedence must be acyclic and irreflexive."));
     for (std::size_t before = 0; before < width; ++before)
         for (const auto after : closure[before])
-            data->reset_pairs.push_back({ data->concept_features[before], data->concept_features[after] });
-    return intern(repository, *data);
+            data->reset_pairs.push_back({ concept_feature_indices[before], concept_feature_indices[after] });
+    return intern(repository, builder, *data);
 }
 
 }  // namespace
@@ -338,7 +342,7 @@ ProgramView parse_program(const std::string& description, tyr::formalism::planni
         diagnostics.throw_at(node.entry, UndefinedSymbolError("entry module", node.entry.text));
     auto data = urd::data<Program> {};
     data.entry_mod = lower_module(node.module, domain, repository, diagnostics).index();
-    return intern(repository, data);
+    return insert(repository, data).first;
 }
 
 }  // namespace runir::kr::ps::icp::dl

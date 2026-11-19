@@ -27,8 +27,8 @@ size_t EvaluationGraph<Kind>::node_count() const noexcept
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>
-[[nodiscard]] BorrowedDenotationView<Category> EvaluationGraph<Kind>::result(EvaluationIndex<Category> index) const
-{ return node(index).get_result(repository()); }
+[[nodiscard]] DenotationBuilderView<Category> EvaluationGraph<Kind>::result(EvaluationIndex<Category> index) const
+{ return node(index).get_result(denotations()); }
 
 template<tyr::TaskKind Kind>
 ygg::FreeRelationBuilderView EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
@@ -90,9 +90,11 @@ template<BooleanOrNumericalTag Category>
 }
 
 template<tyr::TaskKind Kind>
-EvaluationGraph<Kind>::EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot> roots) : m_task(&task)
+EvaluationGraph<Kind>::EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot> roots) :
+    m_denotations(std::make_unique<DenotationRepository>(task.get_repository())),
+    m_task(&task)
 {
-    m_set_workspace.initialize(ygg::to_uint_t(task.get_task().get_num_objects()));
+    m_set_workspace.initialize(ygg::to_uint_t(task.get_task().get_num_objects()), *m_records, *m_denotations);
     for (const auto& root : roots)
         std::visit([&](auto expression) { prepare(expression); }, root);
 }

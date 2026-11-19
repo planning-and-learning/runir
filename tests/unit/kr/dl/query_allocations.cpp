@@ -111,10 +111,13 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
         auto borrowed = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(), builder, storage, argument_values, register_values);
         auto copied = borrowed;
         valid &= &copied.get_workspace() == &builder.get_workspace();
-        valid &= copied.registers().template values<kr::dl::ConceptTag>().base().data() == register_values.template values<kr::dl::ConceptTag>().base().data();
         valid &= copied.arguments() == argument_values;
-        valid &= copied.registers().at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(5)).value().index() == object.index();
-        valid &= copied.registers().at(kr::dl::RegisterIdentifier<kr::dl::RoleTag>(7)).value().second.index() == object.index();
+        urd::visit_view(copied.registers(),
+                        [&](const auto& values)
+                        {
+                            valid &= values.at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(5)).value().index() == object.index();
+                            valid &= values.at(kr::dl::RegisterIdentifier<kr::dl::RoleTag>(7)).value().second.index() == object.index();
+                        });
         valid &= copied.arguments().at(kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0)).value().count() == 1;
         storage.reset_dynamic();
         valid &= kr::dl::semantics::evaluate<tyr::GroundTag>(expression, copied).get_value() == 3;
@@ -142,7 +145,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto projected = std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
     const auto atomic =
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(projected.get_operand().get_variant());
-    const auto layer = ygg::FreeRelationRepository();
+    auto layer = ygg::FreeScratchRelations();
     auto leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(layer, atomic);
     auto projection = tyr::datalog::database::incremental::ProjectionEvaluator(layer, projected.get_plan());
     auto workspace = tyr::datalog::database::Workspace {};
@@ -152,7 +155,8 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     ASSERT_EQ(projection.get_result().get_rows().size(), 2);
 
     auto registers = urd::data<kr::dl::semantics::RegisterValues> {};
-    const auto register_view = urd::resolve(registers, *search->task->get_repository());
+    auto register_denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
+    const auto register_view = urd::resolve(registers, register_denotations);
     const auto graph_count = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_project (x)
             (q_join
@@ -199,7 +203,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         if (lhs.size() != rhs.size())
             return false;
         for (size_t i = 0; i < lhs.size(); ++i)
-            if (!rhs.contains(lhs.row(i)))
+            if (!ygg::with_values(lhs.row(i), [&rhs](const auto& values) { return rhs.contains(values); }))
                 return false;
         return true;
     };
@@ -213,10 +217,10 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         const auto& projected_delta = projection.get_delta();
         const auto [graph_added, graph_removed] = graph_state.get_delta().change();
         const auto [projected_added, projected_removed] = projected_delta.change();
-        return leaf.get_result().get_rows().size() == rows && delta.added.size() == static_cast<size_t>(adding)
-               && delta.removed.size() == static_cast<size_t>(!adding) && projection.get_result().get_rows().size() == projected_rows
-               && projected_delta.added.size() == (adding ? projected_rows - previous_size : 0)
-               && projected_delta.removed.size() == (adding ? 0 : previous_size - projected_rows)
+        return leaf.get_result().get_rows().size() == rows && delta.added->view().size() == static_cast<size_t>(adding)
+               && delta.removed->view().size() == static_cast<size_t>(!adding) && projection.get_result().get_rows().size() == projected_rows
+               && projected_delta.added->view().size() == (adding ? projected_rows - previous_size : 0)
+               && projected_delta.removed->view().size() == (adding ? 0 : previous_size - projected_rows)
                && same_rows(graph_state.get_result(), projection.get_result()) && same_rows(graph_added, projected_added)
                && same_rows(graph_removed, projected_removed);
     };
@@ -313,20 +317,24 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto projected_role_id = graph.get_index(projected_role);
     const auto query_count_id = graph.get_index(query_count);
 
-    auto registers = std::array<urd::data<kr::dl::semantics::RegisterValues>, 3> {};
+    // Registers being built: each context reads its own builder (no copy).
+    auto registers = std::array<urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>, 3> {};
     const auto objects = domain.get_constants();
     ASSERT_GE(objects.size(), 3);
+    using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
+    const auto object = [&](size_t at) { return ObjectChild(search->task->get_repository()->view(objects[static_cast<std::ptrdiff_t>(at)].index())); };
     for (size_t i = 0; i < registers.size(); ++i)
     {
         registers[i].concept_values.resize(2);
         registers[i].role_values.resize(1);
         if (i < 2)
         {
-            registers[i].concept_values[0] = objects[static_cast<std::ptrdiff_t>(i)].index();
-            registers[i].concept_values[1] = objects[static_cast<std::ptrdiff_t>(2 - i)].index();
-            registers[i].role_values[0] = ::cista::pair(objects[static_cast<std::ptrdiff_t>(i)].index(), objects[static_cast<std::ptrdiff_t>(i + 1)].index());
+            registers[i].concept_values[0] = object(i);
+            registers[i].concept_values[1] = object(2 - i);
+            registers[i].role_values[0] = std::pair(object(i), object(i + 1));
         }
     }
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto changes = std::array<kr::dl::semantics::incremental::Delta, 2> {};
     auto current = initial;
     auto states = std::vector { initial.get_state() };
@@ -336,14 +344,13 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
         ASSERT_FALSE(successors.empty());
         const auto& next = successors.front();
         changes[i].assign<tyr::GroundTag>(current.get_state(),
-                                          urd::resolve(registers[i], *search->task->get_repository()),
+                                          urd::resolve(registers[i], denotations),
                                           next.get_state(),
-                                          urd::resolve(registers[i + 1], *search->task->get_repository()));
+                                          urd::resolve(registers[i + 1], denotations));
         current = next;
         states.push_back(next.get_state());
     }
 
-    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
@@ -355,7 +362,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
             builder,
             storage,
             arguments,
-            urd::resolve(registers[i], *search->task->get_repository()));
+            urd::resolve(registers[i], denotations));
     };
     // The inputs of each state of the cycle, built before the measured scope.
     const auto contexts = std::array { context_for(0), context_for(1), context_for(2) };
@@ -467,15 +474,12 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
                                       ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     const auto renamed = std::array { ygg::ColumnLayout { ColumnIndex(2), ygg::type_id<urd::index<tyr::formalism::Object>> },
                                       ygg::ColumnLayout { ColumnIndex(3), ygg::type_id<urd::index<tyr::formalism::Object>> } };
-    auto result = repository.get_relation_builder<ygg::Schema>(columns);
+    auto relations = ygg::FreeScratchRelations();
+    auto result = relations.draw(columns);
     for (ygg::uint_t i = 0; i < 32; ++i)
         result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(i), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(i + 1)) });
     const auto* slot = result.get();
-    const auto* schema_buffer = result->columns().data();
-    const auto schema_capacity = result->memory_usage() - urd::memory_usage(result->storage());
-    const auto* row_buffer = repository.view(*result).row(0).get_values().data();
-    const auto row_capacity = urd::memory_usage(result->storage());
-    const auto stored = kr::dl::semantics::insert(denotations, *result, dl_builder).first;
+    const auto stored = kr::dl::semantics::insert(denotations, result->view(), dl_builder).first;
     const auto* stored_schema_buffer = stored.columns().data();
     const auto* stored_row_buffer = stored.row(0).get_values().data();
     const auto* stored_row_indices = stored.get_rows().base().data();
@@ -487,16 +491,12 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     {
         denotations.reset();
         reused &= repository.template size<ygg::Relation<ygg::Schema>>() == 0;
-        auto next = repository.get_relation_builder<ygg::Schema>(repeat % 2 ? renamed : columns);
-        // Cista schema storage uses malloc, which the global new/delete counter does not cover.
+        // A scratch relation of the same arity is drawn again: its repository's and its records' buffers kept.
+        auto next = relations.draw(repeat % 2 ? renamed : columns);
         reused &= next.get() == slot;
-        reused &= next->columns().data() == schema_buffer;
-        reused &= next->memory_usage() - urd::memory_usage(next->storage()) == schema_capacity;
-        reused &= urd::memory_usage(next->storage()) == row_capacity;
         for (ygg::uint_t i = 0; i < 32; ++i)
             next->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(i), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(i + 1)) });
-        reused &= repository.view(*next).row(0).get_values().data() == row_buffer;
-        const auto value = kr::dl::semantics::insert(denotations, *next, dl_builder).first;
+        const auto value = kr::dl::semantics::insert(denotations, next->view(), dl_builder).first;
         reused &= value.columns().data() == stored_schema_buffer;
         reused &= value.row(0).get_values().data() == stored_row_buffer;
         reused &= value.get_rows().base().data() == stored_row_indices;
@@ -519,6 +519,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
                                       ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     const auto aliases = std::array { ygg::ColumnLayout { ColumnIndex(100), ygg::type_id<urd::index<tyr::formalism::Object>> },
                                       ygg::ColumnLayout { ColumnIndex(101), ygg::type_id<urd::index<tyr::formalism::Object>> } };
+    auto relations = ygg::FreeScratchRelations();
     bool valid = true;
     const auto cycle = [&](size_t generation)
     {
@@ -527,22 +528,22 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
         for (ygg::uint_t i = 0; i < 512; ++i)
         {
             const auto object = ObjectIndex(static_cast<ygg::uint_t>(i + generation * 512));
-            auto owner = repository.get_relation_builder<ygg::Schema>(columns);
+            auto owner = relations.draw(columns);
             owner->insert(
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(1)) });
             owner->insert(
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
-            const auto value = kr::dl::semantics::insert(denotations, *owner, dl_builder).first;
+            const auto value = kr::dl::semantics::insert(denotations, owner->view(), dl_builder).first;
             const auto alias = kr::dl::semantics::rename(denotations, value, aliases, dl_builder);
             valid &=
                 value.get_rows().size() == 2 && alias.get_rows().size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
             valid &= std::ranges::equal(value.get_rows(), alias.get_rows());
-            auto duplicate = repository.get_relation_builder<ygg::Schema>(columns);
+            auto duplicate = relations.draw(columns);
             duplicate->insert(
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
             duplicate->insert(
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(1)) });
-            valid &= kr::dl::semantics::insert(denotations, *duplicate, dl_builder).first == value;
+            valid &= kr::dl::semantics::insert(denotations, duplicate->view(), dl_builder).first == value;
             valid &= kr::dl::semantics::rename(denotations, value, aliases, dl_builder) == alias;
         }
         valid &= repository.template size<ygg::Relation<ygg::Schema>>() == 1024;

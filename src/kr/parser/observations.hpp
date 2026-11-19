@@ -16,6 +16,7 @@
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
+#include <urd/elements/children.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::parser::observations
@@ -36,16 +37,16 @@ template<typename FeatureTag, typename ObservationTag, runir::kr::FamilyTag Fami
 auto make_condition(Repository& repository, Builder& builder, urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature)
 {
     auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>();
-    concrete_data->feature = feature;
-    return runir::kr::ps::ConditionVariant<Family>(repository.insert(*concrete_data).first.index());
+    concrete_data->feature = repository.view(feature);
+    return urd::built_t<runir::kr::ps::ConditionVariant<Family>, Repository>(repository.insert(*concrete_data, builder).first);
 }
 
 template<typename FeatureTag, typename ObservationTag, runir::kr::FamilyTag Family, typename Repository, typename Builder>
 auto make_effect(Repository& repository, Builder& builder, urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature)
 {
     auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>();
-    concrete_data->feature = feature;
-    return runir::kr::ps::EffectVariant<Family>(repository.insert(*concrete_data).first.index());
+    concrete_data->feature = repository.view(feature);
+    return urd::built_t<runir::kr::ps::EffectVariant<Family>, Repository>(repository.insert(*concrete_data, builder).first);
 }
 
 template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
@@ -152,7 +153,7 @@ void append_conditions(
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
     const runir::kr::parser::DiagnosticContext& diagnostics,
-    runir::kr::ps::ConditionList<Family>& result)
+    urd::built_t<runir::kr::ps::ConditionList<Family>, Repository>& result)
 {
     result.reserve(result.size() + observations.size());
     for (const auto& observation : observations)
@@ -167,7 +168,7 @@ void append_effects(
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
     const runir::kr::parser::DiagnosticContext& diagnostics,
-    runir::kr::ps::EffectList<Family>& result)
+    urd::built_t<runir::kr::ps::EffectList<Family>, Repository>& result)
 {
     result.reserve(result.size() + observations.size());
     for (const auto& observation : observations)

@@ -32,6 +32,11 @@ inline void canonicalize(urd::data<RegisterValues>&) noexcept
     // Trivially canonical
 }
 
+inline bool is_canonical(const urd::data<DenotationBlocks>&) noexcept { return true; }
+
+/// A denotation's words are canonical as computed (their trailing bits zero).
+inline void canonicalize(urd::data<DenotationBlocks>&) noexcept {}
+
 inline bool is_canonical(const urd::data<CallArguments>&) noexcept { return true; }
 
 inline void canonicalize(urd::data<CallArguments>&) noexcept

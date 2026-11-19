@@ -61,6 +61,8 @@ inline void canonicalize(urd::data<Module>& data)
     ygg::canonicalize(data.numerical_features);
     ygg::canonicalize(data.query_features);
     ygg::canonicalize(data.memory_states);
+    for (auto& transitions : data.memory_transitions)
+        ygg::canonicalize(transitions);
 }
 
 inline void canonicalize(urd::data<Program>&) noexcept {}

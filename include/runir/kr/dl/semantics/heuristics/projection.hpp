@@ -75,7 +75,7 @@ public:
 
     /// Recomputes the tables whose abstract targets changed. Callers that know the targets are unchanged skip it, but
     /// update() must have been called once before estimate().
-    template<tyr::datalog::database::RelationViewConcept Targets>
+    template<ygg::RelationViewConcept<ygg::Schema> Targets>
     void update(const Targets& targets)
     {
         for (auto& database : m_databases)
@@ -100,7 +100,7 @@ public:
     /// The tables of every pattern database for other targets, without changing this heuristic's own.
     using Tables = urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::uint_t>>>, urd::monotone>;
 
-    template<tyr::datalog::database::RelationViewConcept Targets>
+    template<ygg::RelationViewConcept<ygg::Schema> Targets>
     Tables tables(const Targets& targets)
     {
         auto result = Tables();
@@ -138,7 +138,7 @@ private:
 
     /// A backward breadth-first search from α_i(T) in the abstract graph. The table is built aside and committed with
     /// its targets only when the search succeeds: a throw leaves computed() false, so the next update() rebuilds it.
-    template<tyr::datalog::database::RelationViewConcept Targets>
+    template<ygg::RelationViewConcept<ygg::Schema> Targets>
     void update_table(PatternDatabase& database, const Targets& targets)
     {
         abstract_targets(database, targets);
@@ -152,12 +152,12 @@ private:
     }
 
     /// α_i(T) into m_abstract_targets.
-    template<tyr::datalog::database::RelationViewConcept Targets>
+    template<ygg::RelationViewConcept<ygg::Schema> Targets>
     void abstract_targets(const PatternDatabase& database, const Targets& targets)
     {
         m_abstract_targets.clear();
         for (size_t r = 0; r < targets.get_rows().size(); ++r)
-            m_abstract_targets.insert(ygg::decode_value<ygg::uint_t>(targets.row(r).value(database.pattern)));
+            m_abstract_targets.insert(ygg::decode_value<ygg::uint_t>(ygg::value_of(targets.row(r), database.pattern)));
     }
 
     Tables::value_type breadth_first(PatternDatabase& database)
@@ -205,12 +205,12 @@ class KeyedProjectionHeuristic
 public:
     KeyedProjectionHeuristic() = default;
 
-    /// Its per-key target relations are read through `layer`, which must outlive it.
-    KeyedProjectionHeuristic(const ygg::FreeRelationRepository& layer,
+    /// Its per-key target relations are drawn from `scratch`, which must outlive it.
+    KeyedProjectionHeuristic(ygg::FreeScratchRelations& scratch,
                              ProjectionHeuristic heuristic,
                              size_t key_size,
                              std::span<const ygg::ColumnLayout> target_columns) :
-        m_layer(&layer),
+        m_scratch(&scratch),
         m_heuristic(std::move(heuristic)),
         m_key_size(key_size),
         m_target_columns(target_columns.begin(), target_columns.end())
@@ -218,7 +218,7 @@ public:
     }
 
     /// Sets the targets (key columns, then a vertex) of every key.
-    template<tyr::datalog::database::RelationViewConcept Targets>
+    template<ygg::RelationViewConcept<ygg::Schema> Targets>
     void update(const Targets& targets)
     {
         if (m_heuristic.blind())
@@ -248,10 +248,10 @@ public:
             auto& entry = m_keys[key];
             if (entry.tables.empty() || entry.targets != rows)
             {
-                auto relation = urd::builder<ygg::Relation<ygg::Schema>>(std::span<const ygg::ColumnLayout>(m_target_columns));
+                auto relation = m_scratch->draw(std::span<const ygg::ColumnLayout>(m_target_columns));
                 for (const auto& vertex : rows)
-                    relation.insert(std::span<const ygg::Value>(vertex));
-                entry.tables = m_heuristic.tables(m_layer->view(relation));
+                    relation->insert(std::span<const ygg::Value>(vertex));
+                entry.tables = m_heuristic.tables(relation->view());
                 entry.targets = std::move(rows);
             }
         }
@@ -274,7 +274,7 @@ private:
         ProjectionHeuristic::Tables tables;
     };
 
-    const ygg::FreeRelationRepository* m_layer = nullptr;
+    ygg::FreeScratchRelations* m_scratch = nullptr;
     ProjectionHeuristic m_heuristic;
     size_t m_key_size = 0;
     urd::Store<urd::sequence<ygg::ColumnLayout>> m_target_columns;  ///< The vertex columns of a target, without the key.
@@ -312,7 +312,7 @@ abstract_edges(dl::detail::QueryTranslator& translator, tyr::datalog::database::
 /// `from` and `to` are the edge columns of an edge's two vertices; `vertices` and `targets` the columns of the vertices
 /// estimated and of the targets.
 template<tyr::datalog::database::SlotRelations SlotRows>
-ProjectionHeuristic make_projection_heuristic(const ygg::FreeRelationRepository& layer,
+ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch,
                                               const EdgeAbstraction& abstraction,
                                               std::span<const ygg::ColumnLayout> from,
                                               std::span<const ygg::ColumnLayout> to,
@@ -326,7 +326,7 @@ ProjectionHeuristic make_projection_heuristic(const ygg::FreeRelationRepository&
     {
         const auto i = abstraction.patterns[r];
         const auto query = abstraction.plan[abstraction.plan.roots()[r]];
-        auto& database = databases.emplace_back(PatternDatabase { i, tyr::datalog::database::bound::QueryEvaluator(layer, query) });
+        auto& database = databases.emplace_back(PatternDatabase { i, tyr::datalog::database::bound::QueryEvaluator(scratch, query) });
         const auto columns = tyr::datalog::database::columns_of(query);
         database.u_position = static_cast<size_t>(std::ranges::find(columns, from[i].label, &ygg::ColumnLayout::label) - columns.begin());
         database.v_position = static_cast<size_t>(std::ranges::find(columns, to[i].label, &ygg::ColumnLayout::label) - columns.begin());
@@ -338,14 +338,14 @@ ProjectionHeuristic make_projection_heuristic(const ygg::FreeRelationRepository&
 }
 
 template<tyr::datalog::database::SlotRelations SlotRows>
-ProjectionHeuristic make_projection_heuristic(const ygg::FreeRelationRepository& layer,
+ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch,
                                               const EdgeAbstraction& abstraction,
                                               const tyr::datalog::database::DistancePlan& plan,
                                               ygg::uint_t num_objects,
                                               const SlotRows& slot_rows)
 {
     const auto columns = plan.edge_columns();
-    return make_projection_heuristic(layer,
+    return make_projection_heuristic(scratch,
                                      abstraction,
                                      columns.first(plan.arity()),
                                      columns.subspan(plan.arity()),

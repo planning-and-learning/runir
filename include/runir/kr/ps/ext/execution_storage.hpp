@@ -3,8 +3,10 @@
 
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/interning.hpp"
+#include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/execution_repository.hpp"
+#include "runir/kr/ps/ext/execution_builder.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
@@ -32,7 +34,8 @@ using StorageStoredState = typename Storage::StoredState;
 template<typename Storage>
 using StorageStateView = typename Storage::StateView;
 
-/// Shared execution operations; each storage chooses its own owned handles and borrowed views.
+/// Shared execution operations; each storage chooses its own owned handles and borrowed views, and the planning states
+/// its successors are generated from (PlanningState).
 template<typename Storage, typename Kind>
 concept ExecutionStorageConcept = requires(Storage& storage,
                                            const Storage& const_storage,
@@ -41,12 +44,14 @@ concept ExecutionStorageConcept = requires(Storage& storage,
                                            StorageStateView<Storage> state,
                                            ModuleView module_,
                                            MemoryStateView memory,
+                                           ModuleStateView module_state,
                                            urd::data<runir::kr::dl::semantics::RegisterValues>& registers,
                                            runir::kr::dl::semantics::RegisterValuesView saved_registers,
                                            runir::kr::dl::semantics::CallArgumentsView arguments,
-                                           std::optional<CallStackView<Kind>> caller,
+                                           std::optional<CallStackView> caller,
+                                           const typename Storage::PlanningState& planning_state,
                                            tyr::formalism::planning::ActionRowView binding,
-                                           tyr::planning::BorrowedActionRowView<Kind> borrowed_binding) {
+                                           tyr::planning::ActionBindingView<Kind> borrowed_binding) {
     requires tyr::TaskKind<Kind>;
     requires std::copyable<StorageStoredState<Storage>>;
     requires ProgramStateViewConcept<StorageStateView<Storage>, Kind>;
@@ -54,19 +59,14 @@ concept ExecutionStorageConcept = requires(Storage& storage,
     { storage.start_state(std::declval<ProgramStateView<Kind>>()) } -> std::same_as<StorageStoredState<Storage>>;
     { const_storage.view(stored) } -> std::same_as<StorageStateView<Storage>>;
     { storage.retain(state) } -> std::same_as<StorageStoredState<Storage>>;
-    { storage.registers(registers) } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
-    {
-        storage.store(state.get_module_state().get_state(), module_, memory, storage.registers(registers), arguments, caller)
-    } -> std::same_as<StorageStoredState<Storage>>;
-    { storage.store(state.get_module_state().get_state(), module_, memory, saved_registers, arguments, caller) } -> std::same_as<StorageStoredState<Storage>>;
-    { storage.save_caller(state, memory) } -> std::same_as<CallStackView<Kind>>;
+    { storage.registers(registers) } -> urd::ReadsAs<runir::kr::dl::semantics::RegisterValues>;
+    { storage.store(planning_state, module_, memory, storage.registers(registers), arguments, caller) } -> std::same_as<StorageStoredState<Storage>>;
+    { storage.store(initial, module_, memory, saved_registers, arguments, caller) } -> std::same_as<StorageStoredState<Storage>>;
+    { storage.store(initial, module_state, caller) } -> std::same_as<StorageStoredState<Storage>>;
+    { storage.save_caller(state, memory) } -> std::same_as<CallStackView>;
     { storage.materialize(state) } -> std::same_as<ProgramStateView<Kind>>;
-    {
-        storage.successor(state.get_module_state().get_state(), binding)
-    } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_module_state().get_state())>>;
-    {
-        storage.successor(state.get_module_state().get_state(), borrowed_binding)
-    } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_module_state().get_state())>>;
+    { storage.successor(planning_state, binding) } -> std::same_as<tyr::planning::Node<Kind, typename Storage::PlanningState>>;
+    { storage.successor(planning_state, borrowed_binding) } -> std::same_as<tyr::planning::Node<Kind, typename Storage::PlanningState>>;
 };
 
 /// Emission consumes this storage's source view; matching may inspect other program-state views.
@@ -83,6 +83,7 @@ class InternedExecutionStorage
 public:
     using StoredState = ProgramStateView<Kind>;
     using StateView = ProgramStateView<Kind>;
+    using PlanningState = tyr::planning::StateView<Kind>;
 
     InternedExecutionStorage(runir::kr::TaskContextPtr<Kind> context, ProgramView program) : m_context(std::move(context)), m_program(program) {}
 
@@ -93,27 +94,40 @@ public:
 
     [[nodiscard]] StoredState retain(StateView state) const noexcept { return state; }
 
-    StoredState store(tyr::planning::StateView<Kind> planning_state,
+    /// A program state in this activation: its planning state (registered) and call stack, the activation shared.
+    StoredState store(const tyr::planning::StateView<Kind>& planning_state, ModuleStateView module_state, std::optional<CallStackView> caller)
+    {
+        auto& builder = m_context->execution_builder;
+        auto program_state = builder.template checkout<ProgramState<Kind>>();
+        program_state->state = m_context->search_context->state_repository->view(planning_state.index());
+        program_state->module_state = module_state;
+        if (caller.has_value())
+            program_state->call_stack.emplace(*caller);
+        return m_context->execution_repository->insert(*program_state, builder).first;
+    }
+
+    /// A program state in a new activation of these parts (each interned).
+    StoredState store(const tyr::planning::StateView<Kind>& planning_state,
                       ModuleView module_,
                       MemoryStateView memory_state,
                       runir::kr::dl::semantics::RegisterValuesView registers,
                       runir::kr::dl::semantics::CallArgumentsView arguments,
-                      std::optional<CallStackView<Kind>> caller)
-    {
-        auto module_data = urd::data<ModuleState<Kind>>(planning_state.index(), module_.index(), memory_state.index(), registers.index(), arguments.index());
-        auto data = urd::data<ProgramState<Kind>>(m_program.index(), insert(*m_context->execution_repository, module_data).first.index(), {});
-        urd::store(data.call_stack, caller);
-        return insert(*m_context->execution_repository, data).first;
-    }
+                      std::optional<CallStackView> caller)
+    { return store(planning_state, activation(module_, memory_state, registers, arguments), caller); }
 
     StoredState initial_state(const tyr::planning::StateView<Kind>& state)
     {
         const auto entry = m_program.get_entry_mod();
-        auto empty = checkout<runir::kr::dl::semantics::RegisterValues>(m_context->dl_builder);
+        auto empty = m_context->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
         empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
         empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
-        auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
-        return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
+        auto arguments = m_context->dl_builder.template scratch<runir::kr::dl::semantics::CallArguments>();
+        return store(state,
+                     entry,
+                     entry.get_entry_memory_state(),
+                     registers(*empty),
+                     insert(*m_context->dl_denotation_repository, *arguments).first,
+                     std::optional<CallStackView>());
     }
 
     /// Continue from an interned program state of this task and program.
@@ -121,20 +135,40 @@ public:
 
     ProgramStateView<Kind> materialize(ProgramStateView<Kind> state) { return state; }
 
-    CallStackView<Kind> save_caller(ProgramStateView<Kind> state, MemoryStateView return_state)
+    /// The caller's frame: its activation, returning to `return_state`, and its own caller.
+    CallStackView save_caller(ProgramStateView<Kind> state, MemoryStateView return_state)
     {
-        const auto module_ = state.get_module_state();
-        auto saved =
-            urd::data<CallStack>(module_.get_mod().index(), return_state.index(), module_.get_registers().index(), module_.get_arguments().index(), {});
-        urd::store(saved.caller, state.get_call_stack());
-        return insert(*m_context->execution_repository, saved).first;
+        const auto current = state.get_module_state();
+        auto& builder = m_context->control_builder;
+        auto frame = builder.template checkout<CallStack>();
+        frame->module_state = activation(current.get_mod(), return_state, current.get_registers(), current.get_arguments());
+        if (const auto caller = state.get_call_stack(); caller.has_value())
+            frame->caller.emplace(*caller);
+        return m_context->control_repository->insert(*frame, builder).first;
     }
 
-    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
-    tyr::planning::Node<Kind> successor(const tyr::planning::StateView<Kind>& state, Binding binding)
+    /// From a planning state of either kind (registered, or being built).
+    template<tyr::planning::StateViewConcept<Kind> S, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    tyr::planning::Node<Kind> successor(const S& state, Binding binding)
     {
         auto& search = *m_context->search_context;
-        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(state, 0), binding, *search.state_repository, *search.axiom_evaluator);
+        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind, S>(state, 0), binding, *search.state_repository, *search.axiom_evaluator);
+    }
+
+private:
+    /// The activation of these parts, interned.
+    ModuleStateView activation(ModuleView module_,
+                               MemoryStateView memory_state,
+                               runir::kr::dl::semantics::RegisterValuesView registers,
+                               runir::kr::dl::semantics::CallArgumentsView arguments)
+    {
+        auto& builder = m_context->control_builder;
+        auto activation = builder.template checkout<ModuleState>();
+        activation->mod = module_;
+        activation->memory_state = memory_state;
+        activation->registers = registers;
+        activation->arguments = arguments;
+        return m_context->control_repository->insert(*activation, builder).first;
     }
 };
 
@@ -146,111 +180,154 @@ public:
 template<tyr::TaskKind Kind>
 class TransientExecutionStorage
 {
-    urd::builder<tyr::planning::State<Kind>> m_planning;
-    urd::Store<urd::slots<urd::builder<ProgramState<Kind>>>> m_program_states;
+    urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>> m_planning;
+    /// The pools the program states' built children come from (urd::handle), each declared before what holds its
+    /// handles, so that it outlives them: planning states and registers, then activations (module states), then
+    /// program states.
+    urd::Store<urd::slots<urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>>> m_planning_states;
+    urd::Store<urd::slots<urd::builder<runir::kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>>> m_registers;
+    urd::Store<urd::slots<urd::builder<ModuleState, ControlRepository>>> m_module_states;
+    urd::Store<urd::slots<urd::builder<ProgramState<Kind>, ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>>> m_program_states;
+    /// The frame being saved: its activation is built from the pools above, so it is this storage's own (a context's
+    /// builder outlives the storage).
+    urd::Store<urd::slots<urd::builder<CallStack, ControlRepository>>> m_frames;
     runir::kr::TaskContextPtr<Kind> m_context;
     ProgramView m_program;
 
 public:
-    using StoredState = std::shared_ptr<urd::builder<ProgramState<Kind>>>;
-    using StateView = BuilderProgramStateView<Kind>;
+    using StoredState = std::shared_ptr<urd::builder<ProgramState<Kind>, ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>>;
+    using StateView = ProgramStateBuilderView<Kind>;
+    using PlanningState = tyr::planning::StateBuilderView<Kind>;
 
     TransientExecutionStorage(runir::kr::TaskContextPtr<Kind> context, ProgramView program) : m_context(std::move(context)), m_program(program) {}
 
     [[nodiscard]] StateView view(const StoredState& state) const noexcept { return urd::resolve(*state, *m_context->execution_repository); }
 
-    StoredState retain(StateView state)
+    StoredState retain(StateView state) { return store(state.get_state(), state.get_module_state(), state.get_call_stack()); }
+
+    runir::kr::dl::semantics::RegisterValuesDataView registers(const urd::data<runir::kr::dl::semantics::RegisterValues>& data)
+    { return urd::resolve(data, *m_context->dl_denotation_repository); }
+
+    /// A program state in this activation (as read: an interned one shared, a built one copied into a builder of its
+    /// own), with this planning state (copied into a builder of its own) and call stack (interned).
+    template<ReadsAsStateView<Kind> S, urd::ReadsAs<ModuleState> M, detail::OptionalCallStack Caller>
+    StoredState store(const S& planning_state, const M& module_state, const Caller& caller)
     {
-        return store(state.get_module_state().get_state(),
-                     state.get_module_state().get_mod(),
-                     state.get_module_state().get_memory_state(),
-                     state.get_module_state().get_registers(),
-                     state.get_module_state().get_arguments(),
-                     state.get_call_stack());
+        auto result = program_state(planning_state, caller);
+        urd::visit_view(module_state,
+                        [&](const auto& activation)
+                        {
+                            if constexpr (std::same_as<std::remove_cvref_t<decltype(activation)>, ModuleStateView>)
+                                result->module_state = activation;
+                            else
+                                write_activation(result->module_state,
+                                                 activation.get_mod(),
+                                                 activation.get_memory_state(),
+                                                 activation.get_registers(),
+                                                 activation.get_arguments());
+                        });
+        return result;
     }
 
-    runir::kr::dl::semantics::BorrowedRegisterValuesView registers(const urd::data<runir::kr::dl::semantics::RegisterValues>& data)
-    { return urd::resolve(data, *m_context->search_context->task->get_repository()); }
-
-    template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
-    StoredState store(const S& planning_state,
-                      ModuleView module_,
-                      MemoryStateView memory_state,
-                      R registers,
-                      runir::kr::dl::semantics::CallArgumentsView arguments,
-                      std::optional<CallStackView<Kind>> caller)
+    /// A program state in a new activation of these parts, each as read (its registers copied into a builder of their
+    /// own, its other parts interned).
+    template<ReadsAsStateView<Kind> S,
+             urd::ReadsAs<Module> M,
+             urd::ReadsAs<MemoryState<runir::kr::ExtFamilyTag>> Memory,
+             urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R,
+             urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A,
+             detail::OptionalCallStack Caller>
+    StoredState store(const S& planning_state, const M& module_, const Memory& memory_state, const R& registers, const A& arguments, const Caller& caller)
     {
-        auto result = m_program_states.make_shared();
-        result->program = m_program.index();
-        // Assign into the destination's existing buffers so released pool slots retain their capacity.
-        auto& target = result->module_state;
-        target.state.builder.assign(planning_state);
-        target.mod = module_.index();
-        target.memory_state = memory_state.index();
-        runir::kr::dl::semantics::assign(target.registers.values, registers);
-        target.arguments = arguments.index();
-        urd::store(result->call_stack, caller);
+        auto result = program_state(planning_state, caller);
+        write_activation(result->module_state, module_, memory_state, registers, arguments);
         return result;
     }
 
     StoredState initial_state(const tyr::planning::StateView<Kind>& state)
     {
         const auto entry = m_program.get_entry_mod();
-        auto empty = checkout<runir::kr::dl::semantics::RegisterValues>(m_context->dl_builder);
+        auto empty = m_context->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
         empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
         empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
-        auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
-        return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
+        auto arguments = m_context->dl_builder.template scratch<runir::kr::dl::semantics::CallArguments>();
+        return store(state,
+                     entry,
+                     entry.get_entry_memory_state(),
+                     registers(*empty),
+                     insert(*m_context->dl_denotation_repository, *arguments).first,
+                     std::optional<CallStackView>());
     }
 
     /// Continue from an interned program state of this task and program.
-    StoredState start_state(ProgramStateView<Kind> state)
-    {
-        const auto module_ = state.get_module_state();
-        return store(module_.get_state(),
-                     module_.get_mod(),
-                     module_.get_memory_state(),
-                     module_.get_registers(),
-                     module_.get_arguments(),
-                     state.get_call_stack());
-    }
+    StoredState start_state(ProgramStateView<Kind> state) { return store(state.get_state(), state.get_module_state(), state.get_call_stack()); }
 
-    ProgramStateView<Kind> materialize(BuilderProgramStateView<Kind> state)
-    {
-        auto& search = *m_context->search_context;
-        const auto planning = search.state_repository->register_extended_state(state.get_module_state().get_state());
-        auto& denotations = *m_context->dl_denotation_repository;
-        auto& dl_builder = m_context->dl_builder;
-        const auto module_ = state.get_module_state();
-        auto data = urd::data<ModuleState<Kind>>(planning.index(),
-                                                 module_.get_mod().index(),
-                                                 module_.get_memory_state().index(),
-                                                 copy(module_.get_registers(), { denotations, dl_builder }).first.index(),
-                                                 module_.get_arguments().index());
-        auto program = urd::data<ProgramState<Kind>>(m_program.index(), insert(*m_context->execution_repository, data).first.index(), {});
-        urd::store(program.call_stack, state.get_call_stack());
-        return insert(*m_context->execution_repository, program).first;
-    }
+    /// The program state interned: its builder's children through the repositories that hold them (its planning
+    /// state registered in the state repository, its registers in the denotation repository), then itself.
+    ProgramStateView<Kind> materialize(ProgramStateBuilderView<Kind> state)
+    { return m_context->execution_repository->insert(state, m_context->execution_builder).first; }
 
-    CallStackView<Kind> save_caller(BuilderProgramStateView<Kind> state, MemoryStateView return_state)
+    /// The caller's frame, interned: its activation, returning to `return_state`, and its own caller.
+    CallStackView save_caller(ProgramStateBuilderView<Kind> state, MemoryStateView return_state)
     {
-        const auto module_ = state.get_module_state();
-        const auto registers = copy(module_.get_registers(), { *m_context->dl_denotation_repository, m_context->dl_builder }).first;
-        auto saved = urd::data<CallStack>(module_.get_mod().index(), return_state.index(), registers.index(), module_.get_arguments().index(), {});
-        urd::store(saved.caller, state.get_call_stack());
-        return insert(*m_context->execution_repository, saved).first;
+        auto frame = m_frames.make_shared();
+        urd::visit_view(state.get_module_state(),
+                        [&](const auto& activation)
+                        { write_activation(frame->module_state, activation.get_mod(), return_state, activation.get_registers(), activation.get_arguments()); });
+        frame->caller.reset();
+        if (const auto caller = state.get_call_stack(); caller.has_value())
+            urd::copy_child(frame->caller.emplace(), *caller);
+        return m_context->control_repository->insert(*frame, m_context->control_builder).first;
     }
 
     /// The returned state borrows scratch storage until the next successor() call.
     /// Consume or copy it before then; the source must not borrow this same scratch storage.
-    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
-    tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>> successor(const tyr::planning::BuilderStateView<Kind>& state, Binding binding)
+    /// From a planning state of either kind (registered, or being built).
+    template<tyr::planning::StateViewConcept<Kind> S, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    tyr::planning::Node<Kind, tyr::planning::StateBuilderView<Kind>> successor(const S& state, Binding binding)
     {
         auto& search = *m_context->search_context;
-        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>>(state, 0),
+        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind, S>(state, 0),
                                                               binding,
                                                               m_planning,
                                                               *search.axiom_evaluator);
+    }
+
+private:
+    /// A program state of this planning state (copied into a builder of its own) and call stack, its activation to write.
+    template<ReadsAsStateView<Kind> S, detail::OptionalCallStack Caller>
+    StoredState program_state(const S& planning_state, const Caller& caller)
+    {
+        auto result = m_program_states.make_shared();
+        // Assign into the destination's existing builders and buffers so released pool slots retain their capacity.
+        urd::visit_view(planning_state,
+                        [&](const auto& state)
+                        { urd::builder_of(result->state, m_planning_states, *m_context->search_context->state_repository).assign(state); });
+        result->call_stack.reset();
+        if (caller.has_value())
+            urd::copy_child(result->call_stack.emplace(), *caller);
+        return result;
+    }
+
+    /// An activation of these parts, each as read, into `target`: a builder of its own, its registers copied into
+    /// theirs, its other parts interned (urd::copy_child).
+    template<urd::ReadsAs<Module> M,
+             urd::ReadsAs<MemoryState<runir::kr::ExtFamilyTag>> Memory,
+             urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R,
+             urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A>
+    void write_activation(urd::child<ModuleState, ControlRepository>& target,
+                          const M& module_,
+                          const Memory& memory_state,
+                          const R& registers,
+                          const A& arguments)
+    {
+        auto& activation = urd::builder_of(target, m_module_states, *m_context->control_repository);
+        urd::copy_child(activation.mod, module_);
+        urd::copy_child(activation.memory_state, memory_state);
+        urd::visit_view(registers,
+                        [&](const auto& values)
+                        { runir::kr::dl::semantics::assign(urd::builder_of(activation.registers, m_registers, *m_context->dl_denotation_repository), values); });
+        urd::copy_child(activation.arguments, arguments);
     }
 };
 

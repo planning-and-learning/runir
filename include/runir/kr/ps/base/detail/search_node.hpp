@@ -28,7 +28,7 @@ struct SearchNode
 
 /// A search's nodes by state; a node stays where it is while others are added.
 template<tyr::TaskKind Kind>
-using SearchNodes = urd::Store<urd::map<urd::index<tyr::planning::PackedState<Kind>>, SearchNode<Kind>>, urd::dense, urd::stable_refs>;
+using SearchNodes = urd::Store<urd::map<urd::index<tyr::planning::State<Kind>>, SearchNode<Kind>>, urd::dense, urd::stable_refs>;
 
 template<tyr::TaskKind Kind>
 SearchNode<Kind>& get_or_create_search_node(const tyr::planning::PackedStateView<Kind>& state, SearchNodes<Kind>& search_nodes)

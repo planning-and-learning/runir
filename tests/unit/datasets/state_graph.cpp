@@ -113,16 +113,16 @@ TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)
     const auto context = make_gripper_ground_context();
     const auto retained = [&]
     {
-        const tyr::planning::FactUnpackedStorage<tyr::GroundTag>* released_storage = nullptr;
+        const void* released_storage = nullptr;
         auto graph = [&]
         {
             const auto node = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator);
-            released_storage = &node.get_state().get_fact_storage();
+            released_storage = &node.get_state().get_numeric_storage().get_values();
             return single_state_graph(node.get_state().pack());
         }();
         {
             const auto recycled_builder = context->state_repository->get_state_builder();
-            EXPECT_EQ(&recycled_builder->fact_storage, released_storage);
+            EXPECT_EQ(&recycled_builder->numeric_storage.values, released_storage);
         }
         const auto annotated = datasets::annotate_state_graph(*context, graph, datasets::StateGraphCostMode::UNIT_COST);
         return annotated->vertex_value(0).state;

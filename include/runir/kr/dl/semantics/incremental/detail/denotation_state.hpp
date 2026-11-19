@@ -17,14 +17,15 @@ class DenotationState;
 template<ConceptOrRoleTag Category>
 class DenotationState<Category>
 {
-    urd::builder<Denotation<Category>> m_result;
+    urd::builder<Denotation<Category>, runir::kr::dl::semantics::DenotationRepository> m_result;
     DenotationDelta<Category> m_delta;
 
 public:
     /// Initialize storage and return its builder for construction without recording changes.
-    auto& initialize(ygg::uint_t num_objects)
+    /// Its words drawn from `records`, read through `denotations`.
+    auto& initialize(ygg::uint_t num_objects, RecordStorage& records, const DenotationRepository& denotations)
     {
-        m_result.initialize(num_objects);
+        m_result.initialize(num_objects, records, denotations);
         m_delta.clear();
         return m_result;
     }
@@ -38,16 +39,11 @@ public:
     [[nodiscard]] size_t size() const noexcept { return m_result.count(); }
 
     /// Copy a complete result while retaining storage and clearing previous changes.
-    auto& assign(DenotationView<Category> source)
+    template<typename Source>
+        requires DenotationViewConcept<Source, Category>
+    auto& assign(Source source, RecordStorage& records, const DenotationRepository& denotations)
     {
-        semantics::assign(m_result, source);
-        m_delta.clear();
-        return m_result;
-    }
-
-    auto& assign(BorrowedDenotationView<Category> source)
-    {
-        semantics::assign(m_result, source);
+        semantics::assign(m_result, source, records, denotations);
         m_delta.clear();
         return m_result;
     }
@@ -107,14 +103,14 @@ public:
             row);
     }
 
-    [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
+    [[nodiscard]] DenotationBuilderView<Category> get_result(const DenotationRepository& repository) const noexcept
     { return urd::resolve(m_result, repository); }
 };
 
 template<BooleanOrNumericalTag Category>
 class DenotationState<Category>
 {
-    urd::builder<Denotation<Category>> m_result;
+    urd::builder<Denotation<Category>, runir::kr::dl::semantics::DenotationRepository> m_result;
     bool m_changed = false;
 
 public:
@@ -132,9 +128,9 @@ public:
 
     [[nodiscard]] bool changed() const noexcept { return m_changed; }
 
-    void assign(DenotationView<Category> source) { initialize(source.get_value()); }
+    void assign(DenotationView<Category> source, RecordStorage&, const DenotationRepository&) { initialize(source.get_value()); }
 
-    void assign(BorrowedDenotationView<Category> source) { initialize(source.value()); }
+    void assign(DenotationBuilderView<Category> source, RecordStorage&, const DenotationRepository&) { initialize(source.value()); }
 
     void set(DenotationElementView<Category> value) noexcept
     {
@@ -142,7 +138,7 @@ public:
         m_result.get() = value;
     }
 
-    [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
+    [[nodiscard]] DenotationBuilderView<Category> get_result(const DenotationRepository& repository) const noexcept
     { return urd::resolve(m_result, repository); }
 };
 

@@ -5,12 +5,14 @@
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
+#include "runir/kr/dl/semantics/register_values_builder.hpp"
 #include "runir/kr/dl/semantics/register_values_view.hpp"
 #include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 
 #include <array>
 #include <concepts>
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <type_traits>
@@ -18,6 +20,7 @@
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view_concepts.hpp>
 #include <utility>
+#include <variant>
 
 namespace runir::kr::dl::semantics
 {
@@ -28,7 +31,7 @@ namespace detail
 /// Defined in the library, so that the contexts need only declarations of their resources.
 EvaluationWorkspace& get_workspace(Builder& builder) noexcept;
 const tyr::formalism::planning::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept;
-const urd::data<RegisterValues>& empty_register_values() noexcept;
+const urd::builder<RegisterValues, DenotationRepository>& empty_register_values() noexcept;
 [[noreturn]] void throw_unbound_register(size_t index, size_t count);
 [[noreturn]] void throw_unbound_argument(size_t index, size_t count);
 [[noreturn]] void throw_unbound_arguments();
@@ -43,7 +46,7 @@ concept StateEvaluationResourcesConcept = tyr::TaskKind<Kind> && requires(Contex
     { context.get_denotation_repository() } -> std::same_as<DenotationRepository&>;
     { context.get_workspace() } -> std::same_as<EvaluationWorkspace&>;
     { context.get_caches() } -> std::same_as<DenotationCaches&>;
-    { const_context.registers() } -> std::same_as<BorrowedRegisterValuesView>;
+    { const_context.registers() } -> std::same_as<RegisterValuesChild>;
     { const_context.has_arguments() } -> std::same_as<bool>;
     { const_context.arguments() } -> std::same_as<CallArgumentsView>;
 };
@@ -62,12 +65,6 @@ concept StateEvaluationContextConcept =
         { context.child_context() } -> StateEvaluationNavigationConcept<Kind>;
     };
 
-/// Registers in the borrowed form, which interned registers provide without copying: their record in their repository.
-inline BorrowedRegisterValuesView borrow_registers(BorrowedRegisterValuesView registers) noexcept { return registers; }
-
-inline BorrowedRegisterValuesView borrow_registers(RegisterValuesView registers)
-{ return BorrowedRegisterValuesView(&registers.context()[registers.index()], &registers.get_formalism_repository()); }
-
 /// Every context carries registers and call arguments. Registers are empty and arguments absent unless a program binds
 /// them; evaluating a register or an argument that the context does not bind throws.
 template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>>
@@ -79,7 +76,9 @@ private:
     DenotationCaches* m_caches;
     std::array<DenotationRepository*, 2> m_denotations;
     EvaluationStorage* m_intermediates;
-    BorrowedRegisterValuesView m_registers;
+    /// Registers as their child holds them (interned, built, or a record not interned yet), read without copying.
+    RegisterValuesChild m_registers;
+
     std::optional<CallArgumentsView> m_arguments;
     bool m_result_is_static = false;
 
@@ -96,7 +95,8 @@ private:
         const auto* repository = m_state.get_formalism_repository().get();
         if (m_arguments && detail::get_formalism_repository(m_arguments->context()) != repository)
             throw std::invalid_argument("Evaluation requires arguments for the same planning task.");
-        if (&m_registers.get_formalism_repository() != repository)
+        if (&urd::visit_view(m_registers, [](const auto& registers) -> const tyr::formalism::planning::Repository& { return registers.get_formalism_repository(); })
+            != repository)
             throw std::invalid_argument("Evaluation requires registers for the same planning task.");
     }
 
@@ -112,7 +112,7 @@ private:
     StateEvaluationContext(S state,
                            Builder& builder,
                            EvaluationStorage& storage,
-                           BorrowedRegisterValuesView registers,
+                           RegisterValuesChild registers,
                            std::optional<CallArgumentsView> arguments) :
         m_state(std::move(state)),
         m_builder(&builder),
@@ -134,7 +134,7 @@ public:
         StateEvaluationContext(state,
                                builder,
                                storage,
-                               BorrowedRegisterValuesView(&detail::empty_register_values(), state.get_formalism_repository().get()),
+                               RegisterValuesBuilderView(&detail::empty_register_values(), &storage.get_denotation_repository(false)),
                                std::nullopt)
     {
     }
@@ -144,19 +144,17 @@ public:
         StateEvaluationContext(state, builder, intermediates)
     { select_roots(caches, repository); }
 
-    template<RegisterValuesViewConcept R>
-    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage, CallArgumentsView arguments, R registers) :
-        StateEvaluationContext(std::move(state), builder, storage, borrow_registers(registers), arguments)
+    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage, CallArgumentsView arguments, RegisterValuesChild registers) :
+        StateEvaluationContext(std::move(state), builder, storage, registers, arguments)
     { validate_inputs(); }
 
-    template<RegisterValuesViewConcept R>
     StateEvaluationContext(S state,
                            Builder& builder,
                            DenotationCaches& caches,
                            DenotationRepository& repository,
                            EvaluationStorage& intermediates,
                            CallArgumentsView arguments,
-                           R registers) :
+                           RegisterValuesChild registers) :
         StateEvaluationContext(std::move(state), builder, intermediates, arguments, registers)
     { select_roots(caches, repository); }
 
@@ -172,7 +170,7 @@ public:
 
     DenotationCaches& get_caches() noexcept { return *m_caches; }
 
-    [[nodiscard]] BorrowedRegisterValuesView registers() const noexcept { return m_registers; }
+    [[nodiscard]] RegisterValuesChild registers() const noexcept { return m_registers; }
 
     [[nodiscard]] bool has_arguments() const noexcept { return m_arguments.has_value(); }
 
@@ -204,10 +202,14 @@ public:
 template<ConceptOrRoleTag Category, typename Context>
 auto register_value(const Context& context, RegisterIdentifier<Category> identifier)
 {
-    const auto values = context.registers().template values<Category>();
-    if (ygg::uint_t(identifier.value) >= values.size())
-        detail::throw_unbound_register(ygg::uint_t(identifier.value), values.size());
-    return values[ygg::uint_t(identifier.value)];
+    return urd::visit_view(context.registers(),
+                           [identifier](const auto& registers)
+                           {
+                               const auto count = static_cast<std::size_t>(std::ranges::size(registers.template values<Category>()));
+                               if (ygg::uint_t(identifier.value) >= count)
+                                   detail::throw_unbound_register(ygg::uint_t(identifier.value), count);
+                               return registers.at(identifier);
+                           });
 }
 
 /// The value of a call argument, which only ext programs bind.

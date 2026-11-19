@@ -60,10 +60,10 @@ struct ClosureWorkspace
 // so later components can reuse it.
 template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
 void evaluate_closure(Tag,
-                      const urd::builder<Denotation<RoleTag>>& result,
-                      BorrowedDenotationView<RoleTag> role,
+                      const urd::builder<Denotation<RoleTag>, runir::kr::dl::semantics::DenotationRepository>& result,
+                      DenotationBuilderView<RoleTag> role,
                       const MarkedRows& dirty,
-                      urd::builder<Denotation<ConceptTag>>& row,
+                      urd::builder<Denotation<ConceptTag>, runir::kr::dl::semantics::DenotationRepository>& row,
                       ClosureWorkspace& scratch,
                       Emit emit)
 {

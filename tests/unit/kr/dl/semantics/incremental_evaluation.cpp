@@ -1,3 +1,4 @@
+#include "denotation_builders.hpp"
 #include "incremental_root_evaluators.hpp"
 #include "planning_fixtures.hpp"
 #include "runir/kr/dl/datas.hpp"
@@ -65,8 +66,8 @@ static_assert(!HasGraphDelta<kr::dl::semantics::incremental::EvaluationIndex<kr:
 static_assert(requires(GroundStateEvaluation& state,
                        kr::dl::semantics::incremental::EvaluationIndex<kr::dl::ConceptTag> concept_index,
                        kr::dl::semantics::incremental::EvaluationIndex<kr::dl::RoleTag> role_index) {
-    { state.evaluate(concept_index) } -> std::same_as<kr::dl::semantics::BorrowedDenotationView<kr::dl::ConceptTag>>;
-    { state.evaluate(role_index) } -> std::same_as<kr::dl::semantics::BorrowedDenotationView<kr::dl::RoleTag>>;
+    { state.evaluate(concept_index) } -> std::same_as<kr::dl::semantics::DenotationBuilderView<kr::dl::ConceptTag>>;
+    { state.evaluate(role_index) } -> std::same_as<kr::dl::semantics::DenotationBuilderView<kr::dl::RoleTag>>;
 });
 
 template<kr::dl::ConceptOrRoleTag Category>
@@ -181,25 +182,29 @@ void check_incremental_evaluation()
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto workspace = tyr::datalog::database::Workspace {};
-    auto register_data = std::array<urd::data<kr::dl::semantics::RegisterValues>, 3> {};
+    // Registers being built: each context reads its own builder (no copy).
+    const auto& formalism = *search->task->get_repository();
+    using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
+    const auto object = [&](auto index) { return ObjectChild(formalism.view(index)); };
+    auto register_data = std::array<urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>, 3> {};
     for (auto& data : register_data)
     {
         data.concept_values.resize(2);
         data.role_values.resize(1);
     }
-    register_data[0].concept_values[0] = a;
-    register_data[0].concept_values[1] = c;
-    register_data[0].role_values[0] = cista::pair(a, b);
-    register_data[1].concept_values[0] = c;
-    register_data[1].concept_values[1] = a;
-    register_data[1].role_values[0] = cista::pair(c, a);
-    const auto registers = [&](size_t i) { return urd::resolve(register_data[i], *search->task->get_repository()); };
+    register_data[0].concept_values[0] = object(a);
+    register_data[0].concept_values[1] = object(c);
+    register_data[0].role_values[0] = std::pair(object(a), object(b));
+    register_data[1].concept_values[0] = object(c);
+    register_data[1].concept_values[1] = object(a);
+    register_data[1].role_values[0] = std::pair(object(c), object(a));
+    const auto registers = [&](size_t i) { return urd::resolve(register_data[i], denotations); };
 
     // Invocation values live outside the repositories reset during ordinary evaluation.
-    auto argument_concept = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3);
-    auto argument_role = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3);
-    auto argument_boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(true);
-    auto argument_numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(7);
+    auto argument_concept = make_denotation<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, builder, denotations);
+    auto argument_role = make_denotation<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, builder, denotations);
+    auto argument_boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository>(true);
+    auto argument_numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository>(7);
     argument_concept.get().set(ygg::uint_t(a.value));
     argument_role.get(a).set(ygg::uint_t(b.value));
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
@@ -347,13 +352,13 @@ void check_incremental_evaluation()
         EXPECT_EQ(before_reset, current);
         storage.reset_all();
         EXPECT_EQ(snapshot(retained_view), before_reset);
-        auto borrowed_builder = urd::builder<tyr::planning::State<Kind>>();
+        auto borrowed_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
         borrowed_builder.assign(nodes.back().get_state());
         auto final_context = context_for(urd::resolve(borrowed_builder, *search->state_repository), 2, other_arguments);
         auto final_state = evaluator.initialize(final_context);
         expect_no_delta(final_state);
         expect_unpublished();
-        EXPECT_TRUE(storage.get_denotation_repository(true).get_vector_repository().empty());
+        EXPECT_EQ(storage.get_denotation_repository(true).template size<kr::dl::semantics::DenotationBlocks>(), 0);
         EXPECT_EQ(storage.get_caches().template size<Category>(true), 0);
         compare_full(final_state, final_context);
 
@@ -582,10 +587,13 @@ void check_incremental_evaluation()
         auto result = urd::Store<urd::sequence<urd::Store<urd::sequence<Object>>>> {};
         for (size_t i = 0; i < relation.get_rows().size(); ++i)
         {
-            const auto row = relation.row(i);
             auto& values = result.emplace_back();
-            for (size_t j = 0; j < row.get_values().size(); ++j)
-                values.emplace_back(ygg::decode_value<ygg::uint_t>(row.value(j)));
+            ygg::with_values(relation.row(i),
+                             [&values](const auto& row_values)
+                             {
+                                 for (const auto value : row_values)
+                                     values.emplace_back(ygg::decode_value<ygg::uint_t>(value));
+                             });
         }
         std::ranges::sort(result);
         return result;
@@ -612,7 +620,7 @@ void check_incremental_evaluation()
     auto initial_context = context_for(nodes.front().get_state(), 0, arguments);
     // Copying the task preserves the formalism repository but changes task identity.
     const auto other_repository = std::make_shared<tyr::planning::StateRepository<Kind>>(std::make_shared<tyr::planning::Task<Kind>>(*search->task));
-    auto borrowed_builder = urd::builder<tyr::planning::State<Kind>>();
+    auto borrowed_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     borrowed_builder.assign(nodes.front().get_state());
     auto foreign_context = context_for(urd::resolve(borrowed_builder, *other_repository), 0, arguments);
     const auto policy_roots = std::array<kr::dl::semantics::incremental::EvaluationRoot, 1> { source_count };
@@ -667,8 +675,8 @@ void check_incremental_evaluation()
         EXPECT_TRUE(unchanged.delta(source_id).removed.empty());
         EXPECT_TRUE(unchanged.delta(edge_id).added.empty());
         EXPECT_TRUE(unchanged.delta(edge_id).removed.empty());
-        EXPECT_TRUE(unchanged.delta(query_id).added.empty());
-        EXPECT_TRUE(unchanged.delta(query_id).removed.empty());
+        EXPECT_TRUE(unchanged.delta(query_id).added->view().empty());
+        EXPECT_TRUE(unchanged.delta(query_id).removed->view().empty());
         for (const auto id : scalar_ids)
             EXPECT_FALSE(unchanged.changed(id));
         EXPECT_EQ(scalar_values(unchanged), after_scalars);

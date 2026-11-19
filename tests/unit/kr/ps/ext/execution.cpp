@@ -32,10 +32,11 @@ using Registers = kr::dl::semantics::RegisterValues;
 static_assert(flat_view_is_nothrow<Constructors, Register>);
 static_assert(flat_view_is_nothrow<Denotations, Registers>);
 static_assert(flat_view_is_nothrow<kr::ps::ext::Repository, kr::ps::MemoryState<kr::ExtFamilyTag>>);
-static_assert(flat_view_is_nothrow<kr::ps::ExecutionRepository<kr::ExtFamilyTag, tyr::GroundTag>, kr::ps::ext::ModuleState<tyr::GroundTag>>);
-static_assert(!indexed_access_is_nothrow<kr::ps::ExecutionRepository<kr::ExtFamilyTag, tyr::GroundTag>, kr::ps::ext::ModuleState<tyr::GroundTag>>);
-static_assert(flat_view_is_nothrow<kr::ps::ExecutionRepository<kr::IcpFamilyTag, tyr::GroundTag>, kr::ps::icp::Histories>);
-static_assert(!indexed_access_is_nothrow<kr::ps::ExecutionRepository<kr::IcpFamilyTag, tyr::GroundTag>, kr::ps::icp::Histories>);
+static_assert(flat_view_is_nothrow<kr::ps::ext::ControlRepository, kr::ps::ext::ModuleState>);
+static_assert(!indexed_access_is_nothrow<kr::ps::ext::ControlRepository, kr::ps::ext::ModuleState>);
+static_assert(flat_view_is_nothrow<kr::ps::icp::ControlRepository, kr::ps::icp::Histories>);
+static_assert(!indexed_access_is_nothrow<kr::ps::icp::ControlRepository, kr::ps::icp::Histories>);
+static_assert(flat_view_is_nothrow<kr::ps::ExecutionRepository<kr::ExtFamilyTag, tyr::GroundTag>, kr::ps::ext::ProgramState<tyr::GroundTag>>);
 
 template<typename Entity, tyr::TaskKind Kind>
 using View = urd::index_view<Entity, kr::ps::ExecutionRepository<kr::ExtFamilyTag, Kind>>;
@@ -74,39 +75,35 @@ concept CallArgumentsContract =
            view.template arguments<kr::dl::NumericalTag>();
        };
 
-template<typename Kind>
-concept ModuleStateContract = tyr::TaskKind<Kind> && IndexedDataView<kr::ps::ext::ModuleState<Kind>, Kind>
-                              && std::same_as<View<kr::ps::ext::ModuleState<Kind>, Kind>, kr::ps::ext::ModuleStateView<Kind>>
-                              && requires(urd::data<kr::ps::ext::ModuleState<Kind>>& data, const kr::ps::ext::ModuleStateView<Kind>& view) {
+/// A control record's view: of the task's control repository, whatever its kind.
+template<typename Entity, typename SharedView>
+concept IndexedControlView = std::same_as<SharedView, urd::index_view<Entity, kr::ps::ext::ControlRepository>>
+                             && std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>>
+                             && std::totally_ordered<urd::data<Entity>> && std::totally_ordered<SharedView>;
+
+template<typename SharedView>
+concept ModuleStateContract = IndexedControlView<kr::ps::ext::ModuleState, SharedView>
+                              && requires(urd::data<kr::ps::ext::ModuleState>& data, const SharedView& view) {
                                      data.index;
-                                     data.state;
                                      data.mod;
                                      data.memory_state;
                                      data.registers;
                                      data.arguments;
                                      view.index();
-                                     view.get_state();
                                      view.get_mod();
                                      view.get_memory_state();
                                      view.get_registers();
                                      view.get_arguments();
                                  };
 
-template<typename Kind>
-concept CallStackContract =
-    tyr::TaskKind<Kind> && IndexedDataView<kr::ps::ext::CallStack, Kind> && std::same_as<View<kr::ps::ext::CallStack, Kind>, kr::ps::ext::CallStackView<Kind>>
-    && requires(urd::data<kr::ps::ext::CallStack>& data, const kr::ps::ext::CallStackView<Kind>& view) {
+template<typename SharedView>
+concept CallStackContract = IndexedControlView<kr::ps::ext::CallStack, SharedView>
+    && requires(urd::data<kr::ps::ext::CallStack>& data, const SharedView& view) {
            data.index;
-           data.mod;
-           data.return_memory_state;
-           data.registers;
-           data.arguments;
+           data.module_state;
            data.caller;
            view.index();
-           view.get_mod();
-           view.get_return_memory_state();
-           view.get_registers();
-           view.get_arguments();
+           view.get_module_state();
            view.get_caller();
        };
 
@@ -118,21 +115,23 @@ concept ProgramStateContract =
     tyr::TaskKind<Kind> && IndexedDataView<ProgramState<Kind>, Kind> && std::same_as<View<ProgramState<Kind>, Kind>, kr::ps::ext::ProgramStateView<Kind>>
     && requires(urd::data<ProgramState<Kind>>& data, const View<ProgramState<Kind>, Kind>& view) {
            data.index;
-           data.program;
-           data.call_stack;
+           data.state;
            data.module_state;
+           data.call_stack;
            view.index();
-           view.get_program();
-           view.get_call_stack();
+           view.get_state();
            view.get_module_state();
+           view.get_call_stack();
        };
 
 template<tyr::TaskKind Kind>
 consteval bool execution_contracts()
-{ return ModuleStateContract<Kind> && CallStackContract<Kind> && ProgramStateContract<Kind>; }
+{ return ProgramStateContract<Kind>; }
 
 static_assert(RegisterValuesContract<kr::dl::semantics::RegisterValuesView>);
 static_assert(CallArgumentsContract<kr::dl::semantics::CallArgumentsView>);
+static_assert(ModuleStateContract<kr::ps::ext::ModuleStateView>);
+static_assert(CallStackContract<kr::ps::ext::CallStackView>);
 static_assert(execution_contracts<tyr::GroundTag>());
 static_assert(execution_contracts<tyr::LiftedTag>());
 

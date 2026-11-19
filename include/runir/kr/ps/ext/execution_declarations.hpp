@@ -15,43 +15,47 @@
 namespace runir::kr::ps::ext
 {
 
-template<tyr::TaskKind Kind>
+/// An activation of a module: its module, memory state, registers and arguments (no planning state), shared by the
+/// program states that run in it.
 struct ModuleState
 {
-    static constexpr std::string_view name = urd::joined_name<"ModuleState", Kind::name>;
+    static constexpr auto name = "ModuleState";
 };
 
+/// A frame of the call stack: the suspended activation (its memory state the one to return to) and its own caller.
 struct CallStack
 {
     static constexpr auto name = "CallStack";
 };
 
+/// A program's state: its planning state, activation and call stack.
 template<tyr::TaskKind Kind>
 struct ProgramState
 {
     static constexpr std::string_view name = urd::joined_name<"ProgramState", Kind::name>;
 };
 
-template<tyr::TaskKind Kind>
-using ExecutionRepositoryTypes = boost::mp11::mp_list<ModuleState<Kind>, CallStack, ProgramState<Kind>>;
+/// The records of a program's control, whatever the task's kind: activations and frames.
+using ControlRepositoryTypes = boost::mp11::mp_list<ModuleState, CallStack>;
 
 template<tyr::TaskKind Kind>
-using ModuleStateView = urd::index_view<ModuleState<Kind>, ExecutionRepository<ExtFamilyTag, Kind>>;
+using ExecutionRepositoryTypes = boost::mp11::mp_list<ProgramState<Kind>>;
 
-template<tyr::TaskKind Kind>
-using CallStackView = urd::index_view<CallStack, ExecutionRepository<ExtFamilyTag, Kind>>;
+using ControlRepository = runir::kr::ps::ControlRepository<ExtFamilyTag>;
+
+using ModuleStateView = urd::index_view<ModuleState, ControlRepository>;
+
+using CallStackView = urd::index_view<CallStack, ControlRepository>;
 
 template<tyr::TaskKind Kind>
 using ProgramStateView = urd::index_view<ProgramState<Kind>, ExecutionRepository<ExtFamilyTag, Kind>>;
 
-template<tyr::TaskKind Kind>
-using BorrowedProgramStateView = urd::borrowed_view<ProgramState<Kind>, ExecutionRepository<ExtFamilyTag, Kind>>;
+using ModuleStateBuilderView = urd::borrowed_view<ModuleState, ControlRepository, urd::builder<ModuleState, ControlRepository>>;
 
 template<tyr::TaskKind Kind>
-using BuilderModuleStateView = urd::borrowed_view<ModuleState<Kind>, ExecutionRepository<ExtFamilyTag, Kind>, urd::builder<ModuleState<Kind>>>;
-
-template<tyr::TaskKind Kind>
-using BuilderProgramStateView = urd::borrowed_view<ProgramState<Kind>, ExecutionRepository<ExtFamilyTag, Kind>, urd::builder<ProgramState<Kind>>>;
+using ProgramStateBuilderView = urd::borrowed_view<ProgramState<Kind>,
+                                                   ExecutionRepository<ExtFamilyTag, Kind>,
+                                                   urd::builder<ProgramState<Kind>, ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>>;
 
 }  // namespace runir::kr::ps::ext
 

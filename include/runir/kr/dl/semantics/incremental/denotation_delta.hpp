@@ -20,6 +20,10 @@ struct DenotationDelta
     }
 
     [[nodiscard]] bool empty() const noexcept { return added.empty() && removed.empty(); }
+
+    /// The (added, removed) change, as a query's delta gives it.
+    [[nodiscard]] std::pair<const DenotationElementViewList<Category>&, const DenotationElementViewList<Category>&> change() const noexcept
+    { return { added, removed }; }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental

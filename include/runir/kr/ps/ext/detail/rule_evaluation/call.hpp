@@ -54,9 +54,10 @@ private:
                                  State state,
                                  const PlanningState& planning_state) const
     {
-        auto result = checkout<runir::kr::dl::semantics::CallArguments>((*context.task_context)->dl_builder);
-        auto state_context =
-            context.environment->make_call_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
+        auto result = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::CallArguments>();
+        auto state_context = urd::visit_view(state.get_module_state(),
+                                             [&](const auto& module_)
+                                             { return context.environment->make_call_context(planning_state, module_.get_arguments(), module_.get_registers()); });
         for_each_call_argument(rule,
                                [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> argument)
                                {
@@ -97,11 +98,11 @@ public:
             return emit(detail::make_step<Kind, Storage>(ProgramOutcome::MALFORMED_CALL, context.storage->retain(state), *context.task_context));
 
         auto caller = context.storage->save_caller(state, rule.get_target());
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
+        auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
         registers->concept_values.resize(callee->template get_registers<runir::kr::dl::ConceptTag>().size());
         registers->role_values.resize(callee->template get_registers<runir::kr::dl::RoleTag>().size());
         auto target =
-            context.storage->store(planning_state, *callee, callee->get_entry_memory_state(), context.storage->registers(*registers), arguments, caller);
+            context.storage->store(planning_state, *callee, callee->get_entry_memory_state(), context.storage->registers(*registers), arguments, std::optional(caller));
         return emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, *context.task_context));
     }
 };

@@ -29,12 +29,12 @@ template<tyr::TaskKind Kind>
 struct QueryMustPassEvaluator : QueryValue
 {
     QueryMustPassEvaluator(QueryView<QueryMustPassTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
-        QueryValue(graph.layer(), expression.get_schema()),
+        QueryValue(graph.scratch(), expression.get_schema()),
         sources(graph.prepare(expression.get_sources(), dependencies)),
         targets(graph.prepare(expression.get_targets(), dependencies)),
         probes(graph.prepare(expression.get_probes(), dependencies)),
-        feature(semantics::detail::make_must_pass_feature(graph.layer(), expression.get_plan(), expression.get_edges())),
-        computed(expression.get_schema())
+        feature(semantics::detail::make_must_pass_feature(graph.scratch(), expression.get_plan(), expression.get_edges())),
+        computed(graph.scratch().draw(expression.get_schema()))
     {
         const auto edges = expression.get_edges();
         for (const auto& slot : feature.slots)
@@ -57,22 +57,22 @@ struct QueryMustPassEvaluator : QueryValue
         if (!modified(graph, sources) && !modified(graph, targets) && !modified(graph, probes)
             && std::ranges::none_of(slots, [&](auto slot) { return modified(graph, slot); }))
             return;
-        computed.clear();
-        compute(graph, computed);
-        const auto row_size = this->result.columns().size();
+        computed->clear();
+        compute(graph, *computed);
+        const auto row_size = this->get_result().arity();
         const auto previous = this->get_result();
         removed.clear();
         for (size_t r = 0; r < previous.size(); ++r)
-            if (const auto row = previous.row(r); !computed.contains(row))
+            if (const auto row = previous.row(r); !ygg::with_values(row, [this](const auto& values) { return computed->view().contains(values); }))
             {
                 const auto values = tyr::datalog::database::vertex_values(row, scratch);
                 removed.insert(removed.end(), values.begin(), values.end());
             }
         for (size_t offset = 0; offset < removed.size(); offset += row_size)
             this->set(std::span<const ygg::Value>(removed).subspan(offset, row_size), false);
-        const auto recomputed = this->layer->view(computed);
+        const auto recomputed = computed->view();
         for (size_t r = 0; r < recomputed.size(); ++r)
-            this->set(recomputed.row(r).get_values(), true);
+            ygg::with_values(recomputed.row(r), [this](const auto& values) { this->set(values, true); });
     }
 
 private:
@@ -81,15 +81,15 @@ private:
     QueryEvaluationIndex probes;
     MustPassFeature feature;
     urd::Store<urd::sequence<QueryEvaluationIndex>> slots;  ///< The graph node of each input slot.
-    urd::builder<ygg::Relation<ygg::Schema>> computed;      ///< The recomputed result; kept to avoid allocations.
+    urd::handle<ygg::FreeScratchRelation> computed;          ///< The recomputed result; kept to avoid allocations.
     urd::Store<urd::sequence<ygg::Value>> removed;          ///< Rows of the previous result that are gone, their values.
     urd::Store<urd::sequence<ygg::Value>> scratch;          ///< A row's values, as read.
 
     ygg::uint_t num_objects = 0;
 
-    void compute(EvaluationGraph<Kind>& graph, urd::builder<ygg::Relation<ygg::Schema>>& out)
+    void compute(EvaluationGraph<Kind>& graph, ygg::FreeScratchRelation& out)
     {
-        auto& heuristic = semantics::detail::must_pass_heuristic(graph.layer(), feature, num_objects, input(graph), graph.result(targets));
+        auto& heuristic = semantics::detail::must_pass_heuristic(graph.scratch(), feature, num_objects, input(graph), graph.result(targets));
         feature.must_pass.must_pass(input(graph), graph.result(sources), graph.result(targets), graph.result(probes), out, heuristic);
     }
 
@@ -99,7 +99,7 @@ private:
     }
 
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
-    { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }
+    { return !graph.change(index).added->view().empty() || !graph.change(index).removed->view().empty(); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

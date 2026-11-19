@@ -42,9 +42,13 @@ class EvaluationGraph
     friend class IncrementalEvaluation;
     friend class detail::GraphBuilder<Kind>;
 
-    /// The layer the query nodes' builders are read through; declared first, so it outlives them, and behind a pointer,
-    /// so it stays where it is when the graph moves.
-    std::unique_ptr<ygg::FreeRelationRepository> m_layer = std::make_unique<ygg::FreeRelationRepository>();
+    /// The scratch relations the query nodes draw; declared first, so it outlives them, and behind a pointer, so it stays
+    /// where it is when the graph moves.
+    std::unique_ptr<ygg::FreeScratchRelations> m_scratch = std::make_unique<ygg::FreeScratchRelations>();
+    /// The storage the nodes' denotations draw their words from, and the denotation repository they are read through
+    /// (over the task's planning repository); behind pointers, as the scratch relations.
+    std::unique_ptr<RecordStorage> m_records = std::make_unique<RecordStorage>();
+    std::unique_ptr<DenotationRepository> m_denotations;
     urd::Store<urd::sequence<std::variant<detail::FeatureNode<Kind, ConceptTag>,
                                           detail::FeatureNode<Kind, RoleTag>,
                                           detail::FeatureNode<Kind, BooleanTag>,
@@ -109,7 +113,7 @@ class EvaluationGraph
         if (!index)
         {
             index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
-            m_nodes.emplace_back(detail::QueryNode<Kind>(*m_layer, argument, columns));
+            m_nodes.emplace_back(detail::QueryNode<Kind>(*m_scratch, argument, columns));
             m_lifts.insert({ lifted, *index });
         }
         dependencies.push_back(static_cast<ygg::uint_t>((*index).value));
@@ -140,7 +144,7 @@ public:
     /// The results and changes of nodes, read by evaluators from their children (brought to the current state first,
     /// see IncrementalEvaluation).
     template<CategoryTag Category>
-    [[nodiscard]] BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const;
+    [[nodiscard]] DenotationBuilderView<Category> result(EvaluationIndex<Category> index) const;
     [[nodiscard]] ygg::FreeRelationBuilderView result(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     [[nodiscard]] const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
@@ -158,7 +162,11 @@ public:
 
     [[nodiscard]] const tyr::formalism::planning::Repository& repository() const { return *m_task->get_repository(); }
 
-    [[nodiscard]] const ygg::FreeRelationRepository& layer() const noexcept { return *m_layer; }
+    [[nodiscard]] ygg::FreeScratchRelations& scratch() noexcept { return *m_scratch; }
+
+    [[nodiscard]] RecordStorage& records() noexcept { return *m_records; }
+
+    [[nodiscard]] const DenotationRepository& denotations() const noexcept { return *m_denotations; }
 
     detail::SetOperationWorkspace& set_workspace() noexcept { return m_set_workspace; }
 };
@@ -175,7 +183,7 @@ class GraphBuilder
 public:
     explicit GraphBuilder(EvaluationGraph<Kind>& graph) noexcept : m_graph(&graph) {}
 
-    [[nodiscard]] const ygg::FreeRelationRepository& layer() const noexcept { return m_graph->layer(); }
+    [[nodiscard]] ygg::FreeScratchRelations& scratch() const noexcept { return m_graph->scratch(); }
 
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression)
@@ -303,7 +311,7 @@ public:
 private:
     /// Results of nodes evaluated in the current state, read through StateEvaluation, which demands them first.
     template<CategoryTag Category>
-    [[nodiscard]] BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const
+    [[nodiscard]] DenotationBuilderView<Category> get_result(EvaluationIndex<Category> index) const
     { return m_graph.result(index); }
 
     [[nodiscard]] ygg::FreeRelationBuilderView get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
@@ -366,7 +374,7 @@ public:
     [[nodiscard]] const Context& context() const noexcept { return m_context; }
 
     template<CategoryTag Category>
-    BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index)
+    DenotationBuilderView<Category> evaluate(EvaluationIndex<Category> index)
     { return current(static_cast<ygg::uint_t>(index.value)).get_result(index); }
 
     ygg::FreeRelationBuilderView evaluate(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index.value)).get_result(index); }

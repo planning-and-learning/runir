@@ -107,15 +107,15 @@ public:
 
 private:
     template<typename Tag>
-    YggQuery insert(urd::data<tyr::datalog::database::Query<Tag>>& data)
-    { return tyr::datalog::database::insert_query(m_repository, m_builder, data); }
+    YggQuery insert(const urd::builder<tyr::datalog::database::Query<Tag>, tyr::datalog::database::QueryRepository>& built)
+    { return tyr::datalog::database::insert_query(m_repository, m_builder, built); }
 
     template<typename Tag>
     YggQuery binary(YggQuery lhs, YggQuery rhs)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
-        out->left_operand = lhs.index();
-        out->right_operand = rhs.index();
+        out->left_operand = lhs;
+        out->right_operand = rhs;
         return insert(*out);
     }
 
@@ -123,8 +123,8 @@ private:
     YggQuery unary(YggQuery arg, std::span<const Label> labels)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
-        out->operand = arg.index();
-        out->labels.set(labels.begin(), labels.end());
+        out->operand = arg;
+        out->labels.assign(labels.begin(), labels.end());
         return insert(*out);
     }
 

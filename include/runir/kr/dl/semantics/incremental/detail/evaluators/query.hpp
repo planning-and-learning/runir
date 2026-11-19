@@ -30,11 +30,11 @@ struct QueryValue : tyr::datalog::database::incremental::detail::QueryValue
 {
     using tyr::datalog::database::incremental::detail::QueryValue::QueryValue;
 
-    auto& clear() noexcept
+    ygg::FreeScratchRelation& clear() noexcept
     {
-        result.clear();
+        result->clear();
         delta.clear();
-        return result;
+        return *result;
     }
 };
 
@@ -44,8 +44,8 @@ struct QueryStaticEvaluator : QueryValue
     QueryView<> expression;
     bool initialized = false;
 
-    QueryStaticEvaluator(const ygg::FreeRelationRepository& layer_, QueryView<> expression_) :
-        QueryValue(layer_, schema_of(expression_)),
+    QueryStaticEvaluator(ygg::FreeScratchRelations& scratch_, QueryView<> expression_) :
+        QueryValue(scratch_, schema_of(expression_)),
         expression(expression_)
     {
     }
@@ -69,7 +69,7 @@ struct QueryStaticEvaluator : QueryValue
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact>
 struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
 {
-    QueryAtomicEvaluator(const ygg::FreeRelationRepository& layer, QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(layer, expression)
+    QueryAtomicEvaluator(ygg::FreeScratchRelations& scratch, QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(scratch, expression)
     {
     }
 
@@ -91,8 +91,8 @@ struct QueryProjectionEvaluator : tyr::datalog::database::incremental::Projectio
 {
     QueryEvaluationIndex argument;
 
-    QueryProjectionEvaluator(const ygg::FreeRelationRepository& layer, QueryEvaluationIndex argument_, const tyr::datalog::database::ProjectionPlan& plan) :
-        tyr::datalog::database::incremental::ProjectionEvaluator(layer, plan),
+    QueryProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex argument_, const tyr::datalog::database::ProjectionPlan& plan) :
+        tyr::datalog::database::incremental::ProjectionEvaluator(scratch, plan),
         argument(argument_)
     {
     }
@@ -111,11 +111,11 @@ struct QueryJoinEvaluator : tyr::datalog::database::incremental::JoinEvaluator
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QueryJoinEvaluator(const ygg::FreeRelationRepository& layer,
+    QueryJoinEvaluator(ygg::FreeScratchRelations& scratch,
                        QueryEvaluationIndex lhs_,
                        QueryEvaluationIndex rhs_,
                        const tyr::datalog::database::JoinPlan& plan) :
-        tyr::datalog::database::incremental::JoinEvaluator(layer, plan),
+        tyr::datalog::database::incremental::JoinEvaluator(scratch, plan),
         lhs(lhs_),
         rhs(rhs_)
     {
@@ -134,10 +134,10 @@ struct QueryGenericJoinEvaluator : tyr::datalog::database::incremental::GenericJ
 {
     urd::Store<urd::sequence<QueryEvaluationIndex>> args;
 
-    QueryGenericJoinEvaluator(const ygg::FreeRelationRepository& layer,
+    QueryGenericJoinEvaluator(ygg::FreeScratchRelations& scratch,
                               urd::Store<urd::sequence<QueryEvaluationIndex>> args_,
                               const tyr::datalog::database::GenericJoinPlan& plan) :
-        tyr::datalog::database::incremental::GenericJoinEvaluator(layer, plan),
+        tyr::datalog::database::incremental::GenericJoinEvaluator(scratch, plan),
         args(std::move(args_))
     {
     }
@@ -161,8 +161,8 @@ struct QueryFromDenotationEvaluator : QueryValue
 {
     EvaluationIndex<Category> argument;
 
-    QueryFromDenotationEvaluator(const ygg::FreeRelationRepository& layer_, EvaluationIndex<Category> argument_, std::span<const ygg::ColumnLayout> columns) :
-        QueryValue(layer_, columns),
+    QueryFromDenotationEvaluator(ygg::FreeScratchRelations& scratch_, EvaluationIndex<Category> argument_, std::span<const ygg::ColumnLayout> columns) :
+        QueryValue(scratch_, columns),
         argument(argument_)
     {
     }
@@ -198,17 +198,17 @@ struct QuerySetCombinationEvaluator : QueryValue
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QuerySetCombinationEvaluator(const ygg::FreeRelationRepository& layer_,
+    QuerySetCombinationEvaluator(ygg::FreeScratchRelations& scratch_,
                                  QueryEvaluationIndex lhs_,
                                  QueryEvaluationIndex rhs_,
                                  std::span<const ygg::ColumnLayout> columns) :
-        QueryValue(layer_, columns),
+        QueryValue(scratch_, columns),
         lhs(lhs_),
         rhs(rhs_)
     {
     }
 
-    template<tyr::datalog::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0)), bool> Emit>
+    template<ygg::RelationViewConcept<ygg::Schema> Rows, std::invocable<decltype(std::declval<const Rows&>().row(0)), bool> Emit>
     void evaluate_rows(EvaluationGraph<Kind>& graph, const Rows& rows, Emit emit)
     {
         const auto left_operand = graph.result(lhs);
@@ -216,8 +216,13 @@ struct QuerySetCombinationEvaluator : QueryValue
         for (size_t i = 0; i < rows.size(); ++i)
         {
             const auto row = rows.row(i);
-            const auto present = std::same_as<Tag, QueryUnionTag> ? left_operand.contains(row) || right_operand.contains(row) :
-                                                                    left_operand.contains(row) && !right_operand.contains(row);
+            const auto present = ygg::with_values(row,
+                                                  [&](const auto& values)
+                                                  {
+                                                      return std::same_as<Tag, QueryUnionTag> ?
+                                                                 left_operand.contains(values) || right_operand.contains(values) :
+                                                                 left_operand.contains(values) && !right_operand.contains(values);
+                                                  });
             // Children hold their final contents: a row mentioned by both
             // deltas must not produce a temporary removal/addition pair.
             emit(row, present);
@@ -231,7 +236,7 @@ struct QuerySetCombinationEvaluator : QueryValue
         const auto emit = [&output](auto row, bool present)
         {
             if (present)
-                output.insert(row);
+                ygg::with_values(row, [&output](const auto& values) { output.insert(values); });
         };
         evaluate_rows(graph, graph.result(lhs), emit);
         if constexpr (std::same_as<Tag, QueryUnionTag>)
@@ -243,7 +248,7 @@ struct QuerySetCombinationEvaluator : QueryValue
         this->delta.clear();
         const auto [left_added, left_removed] = graph.change(lhs).change();
         const auto [right_added, right_removed] = graph.change(rhs).change();
-        const auto emit = [this](auto row, bool present) { this->set(row.get_values(), present); };
+        const auto emit = [this](auto row, bool present) { ygg::with_values(row, [this, present](const auto& values) { this->set(values, present); }); };
         evaluate_rows(graph, left_added, emit);
         evaluate_rows(graph, left_removed, emit);
         evaluate_rows(graph, right_added, emit);
@@ -257,14 +262,14 @@ struct QuerySelectionEvaluator : QueryValue
     QueryEvaluationIndex argument;
     QueryView<Tag> expression;
 
-    QuerySelectionEvaluator(const ygg::FreeRelationRepository& layer_, QueryEvaluationIndex argument_, QueryView<Tag> expression_) :
-        QueryValue(layer_, expression_.get_schema()),
+    QuerySelectionEvaluator(ygg::FreeScratchRelations& scratch_, QueryEvaluationIndex argument_, QueryView<Tag> expression_) :
+        QueryValue(scratch_, expression_.get_schema()),
         argument(argument_),
         expression(expression_)
     {
     }
 
-    template<tyr::datalog::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0))> Emit>
+    template<ygg::RelationViewConcept<ygg::Schema> Rows, std::invocable<decltype(std::declval<const Rows&>().row(0))> Emit>
     void evaluate_rows(const Rows& rows, Emit emit)
     {
         for (size_t i = 0; i < rows.size(); ++i)
@@ -273,13 +278,13 @@ struct QuerySelectionEvaluator : QueryValue
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
             {
                 const auto& plan = expression.get_plan();
-                if (row.value(plan.left_position()) != row.value(plan.right_position()))
+                if (ygg::value_of(row, plan.left_position()) != ygg::value_of(row, plan.right_position()))
                     continue;
             }
             else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
             {
                 const auto& plan = expression.get_plan();
-                if (row.value(plan.position()) != plan.value())
+                if (ygg::value_of(row, plan.position()) != plan.value())
                     continue;
             }
             emit(row);
@@ -290,15 +295,15 @@ struct QuerySelectionEvaluator : QueryValue
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         auto& output = this->clear();
-        evaluate_rows(graph.result(argument), [&output](auto row) { output.insert(row); });
+        evaluate_rows(graph.result(argument), [&output](auto row) { ygg::with_values(row, [&output](const auto& values) { output.insert(values); }); });
     }
 
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
         const auto [added, removed] = graph.change(argument).change();
-        evaluate_rows(removed, [this](auto row) { this->set(row.get_values(), false); });
-        evaluate_rows(added, [this](auto row) { this->set(row.get_values(), true); });
+        evaluate_rows(removed, [this](auto row) { ygg::with_values(row, [this](const auto& values) { this->set(values, false); }); });
+        evaluate_rows(added, [this](auto row) { ygg::with_values(row, [this](const auto& values) { this->set(values, true); }); });
     }
 };
 

@@ -16,9 +16,8 @@ namespace ygg::serialization
 {
 
 template<typename Archive, ::tyr::TaskKind Kind>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleStateView<Kind>>)
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleStateView>)
 {
-    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.get_state()); });
     ar.field("mod", [](const auto& value) -> decltype(auto) { return (value.get_mod()); });
     ar.field("memory_state", [](const auto& value) -> decltype(auto) { return (value.get_memory_state()); });
     ar.field("registers", [](const auto& value) -> decltype(auto) { return (value.get_registers()); });
@@ -26,19 +25,16 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::Modul
 }
 
 template<typename Archive, ::tyr::TaskKind Kind>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallStackView<Kind>>)
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallStackView>)
 {
-    ar.field("mod", [](const auto& value) -> decltype(auto) { return (value.get_mod()); });
-    ar.field("return_memory_state", [](const auto& value) -> decltype(auto) { return (value.get_return_memory_state()); });
-    ar.field("registers", [](const auto& value) -> decltype(auto) { return (value.get_registers()); });
-    ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_arguments()); });
+    ar.field("module_state", [](const auto& value) -> decltype(auto) { return (value.get_module_state()); });
     ar.field("caller", [](const auto& value) -> decltype(auto) { return (value.get_caller()); });
 }
 
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ProgramStateView<Kind>>)
 {
-    ar.field("program", [](const auto& value) -> decltype(auto) { return (value.get_program()); });
+    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.get_state()); });
     ar.field("module_state", [](const auto& value) -> decltype(auto) { return (value.get_module_state()); });
     ar.field("call_stack", [](const auto& value) -> decltype(auto) { return (value.get_call_stack()); });
 }

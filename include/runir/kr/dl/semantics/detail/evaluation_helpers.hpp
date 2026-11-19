@@ -47,11 +47,11 @@ auto num_objects(const Context& context) noexcept -> ygg::uint_t
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto make_concept_builder(Context& context)
-{ return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Kind>(context)); }
+{ return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Kind>(context), context.get_denotation_repository()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto make_role_builder(Context& context)
-{ return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context)); }
+{ return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context), context.get_denotation_repository()); }
 
 template<tyr::formalism::FactKind T>
 auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) -> urd::index<tyr::formalism::Object>
@@ -60,7 +60,7 @@ auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 void evaluate_atomic_state_concept(urd::index_view<Concept<SemanticFamily, AtomicStateTag<T>>, C> constructor,
                                    Context& context,
-                                   urd::builder<Denotation<ConceptTag>>& result)
+                                   urd::builder<Denotation<ConceptTag>, runir::kr::dl::semantics::DenotationRepository>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
@@ -77,7 +77,7 @@ void evaluate_atomic_state_concept(urd::index_view<Concept<SemanticFamily, Atomi
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 void evaluate_atomic_goal_concept(urd::index_view<Concept<SemanticFamily, AtomicGoalTag<T>>, C> constructor,
                                   Context& context,
-                                  urd::builder<Denotation<ConceptTag>>& result)
+                                  urd::builder<Denotation<ConceptTag>, runir::kr::dl::semantics::DenotationRepository>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
@@ -94,7 +94,7 @@ void evaluate_atomic_goal_concept(urd::index_view<Concept<SemanticFamily, Atomic
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicStateTag<T>>, C> constructor,
                                 Context& context,
-                                urd::builder<Denotation<RoleTag>>& result)
+                                urd::builder<Denotation<RoleTag>, runir::kr::dl::semantics::DenotationRepository>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -112,7 +112,7 @@ void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicState
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTag<T>>, C> constructor,
                                Context& context,
-                               urd::builder<Denotation<RoleTag>>& result)
+                               urd::builder<Denotation<RoleTag>, runir::kr::dl::semantics::DenotationRepository>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -228,7 +228,7 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 
 /// Inserts a concept's objects or a role's pairs as rows of a 1- or 2-column relation.
 template<ConceptOrRoleTag Category, DenotationViewConcept<Category> Denotation>
-void insert_denotation_rows(const Denotation& denotation, urd::builder<ygg::Relation<ygg::Schema>>& result)
+void insert_denotation_rows(const Denotation& denotation, ygg::FreeScratchRelation& result)
 {
     for (const auto element : denotation.indices())
     {
@@ -252,10 +252,9 @@ template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextCo
 auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::span<const ygg::ColumnLayout> columns, Context& context) -> QueryDenotationView
 {
     const auto denotation = evaluate<Kind>(argument, context);
-    auto& relations = context.get_denotation_repository().get_relation_repository();
-    auto result = relations.template get_relation_builder<ygg::Schema>(columns);
+    auto result = context.get_workspace().get_scratch().draw(columns);
     insert_denotation_rows<Category>(denotation, *result);
-    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
+    return insert(context.get_denotation_repository(), result->view(), context.get_builder()).first;
 }
 
 }  // namespace runir::kr::dl::semantics::detail

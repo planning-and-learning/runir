@@ -79,7 +79,7 @@ template<kr::dl::CategoryTag Category>
 constexpr bool denotation_views()
 {
     return kr::dl::semantics::DenotationViewConcept<kr::dl::semantics::DenotationView<Category>, Category>
-           && kr::dl::semantics::DenotationViewConcept<const kr::dl::semantics::BorrowedDenotationView<Category>&, Category>
+           && kr::dl::semantics::DenotationViewConcept<const kr::dl::semantics::DenotationBuilderView<Category>&, Category>
            && !kr::dl::semantics::DenotationViewConcept<int, Category>;
 }
 
@@ -91,7 +91,7 @@ static_assert(denotation_views<kr::dl::RoleTag>());
 template<kr::FamilyTag Family, tyr::TaskKind Kind>
 constexpr bool evaluation_policies_accept_borrowed_states()
 {
-    using Inputs = kr::dl::semantics::StateEvaluationContext<Kind, tyr::planning::BuilderStateView<Kind>>;
+    using Inputs = kr::dl::semantics::StateEvaluationContext<Kind, tyr::planning::StateBuilderView<Kind>>;
     return kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<Kind>, Kind>
            && kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<Kind>, Kind>
            && kr::dl::semantics::EvaluationContextConcept<Inputs, Kind>

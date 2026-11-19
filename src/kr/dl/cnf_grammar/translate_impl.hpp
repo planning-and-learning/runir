@@ -20,7 +20,8 @@ namespace runir::kr::dl::cnf_grammar::detail
 
 struct TranslationContext
 {
-    using GrammarData = ygg::formalism::BuilderHandle<Grammar>;
+    using GrammarBuilder = urd::builder<Grammar, ConstructorRepository>;
+    using GrammarData = urd::handle<GrammarBuilder>;
 
     const runir::kr::dl::grammar::GrammarView& source;
     ConstructorRepository& repository;
@@ -73,12 +74,15 @@ private:
     {
         auto data = runir::kr::dl::cnf_grammar::checkout<T>(m_context->builder);
         std::forward<Initialize>(initialize)(*data);
-        return runir::kr::dl::cnf_grammar::insert(repository(), *data).first;
+        return repository().insert(*data, m_context->builder).first;
     }
 
+    /// A constructor of Category, as a derivation rule's right-hand side holds it (a child of its concrete kind).
+    using ConstructorChild = urd::built_t<Constructor<Category>, ConstructorRepository>;
+
     template<typename T, typename Initialize>
-    Constructor<Category> intern_concrete(Initialize&& initialize)
-    { return intern<T>(std::forward<Initialize>(initialize)).index(); }
+    ConstructorChild intern_concrete(Initialize&& initialize)
+    { return intern<T>(std::forward<Initialize>(initialize)); }
 
     template<typename T>
     auto intern_nullary()
@@ -89,7 +93,7 @@ private:
     template<typename T, typename Operand>
     auto intern_unary(Operand operand)
     {
-        return intern_concrete<T>([&](auto& data) { data.operand = operand; });
+        return intern_concrete<T>([&](auto& data) { data.operand = std::move(operand); });
     }
 
     template<typename T, typename Left, typename Right>
@@ -168,18 +172,18 @@ private:
         data->name = name;
         non_terminal_names().insert(std::move(name));
 
-        return runir::kr::dl::cnf_grammar::insert(repository(), *data).first;
+        return repository().insert(*data, m_context->builder).first;
     }
 
-    void add_derivation_rule(NonTerminalView<Category> lhs, Constructor<Category> rhs)
+    void add_derivation_rule(NonTerminalView<Category> lhs, ConstructorChild rhs)
     {
         const auto rule = intern<DerivationRule<Category>>(
             [&](auto& data)
             {
-                data.lhs = lhs.index();
-                data.rhs = rhs;
+                data.lhs = lhs;
+                data.rhs = std::move(rhs);
             });
-        urd::append(this->data().*derivation_rules_member<Category>(), rule);
+        urd::append(this->data().*derivation_rules_member<Category, TranslationContext::GrammarBuilder>(), rule);
     }
 
     void add_substitution_rule(NonTerminalView<Category> lhs, NonTerminalView<Category> rhs)
@@ -187,10 +191,10 @@ private:
         const auto rule = intern<SubstitutionRule<Category>>(
             [&](auto& data)
             {
-                data.lhs = lhs.index();
-                data.rhs = rhs.index();
+                data.lhs = lhs;
+                data.rhs = rhs;
             });
-        urd::append(this->data().*substitution_rules_member<Category>(), rule);
+        urd::append(this->data().*substitution_rules_member<Category, TranslationContext::GrammarBuilder>(), rule);
     }
 
 public:
@@ -202,7 +206,7 @@ public:
         data->name = source.get_name().str();
         non_terminal_names().insert(std::string(data->name.str()));
 
-        return runir::kr::dl::cnf_grammar::insert(repository(), *data).first;
+        return repository().insert(*data, m_context->builder).first;
     }
 
     NonTerminalView<Category> translate_to_non_terminal(runir::kr::dl::grammar::ConstructorOrNonTerminalView<Category> source)
@@ -216,16 +220,16 @@ public:
                 }
                 else
                 {
-                    const auto constructor = translate_constructor(value);
+                    auto constructor = translate_constructor(value);
                     const auto non_terminal = make_fresh_non_terminal();
-                    add_derivation_rule(non_terminal, constructor);
+                    add_derivation_rule(non_terminal, std::move(constructor));
                     return non_terminal;
                 }
             },
             source);
     }
 
-    Constructor<Category> translate_constructor(runir::kr::dl::grammar::ConstructorView<Category> source)
+    ConstructorChild translate_constructor(runir::kr::dl::grammar::ConstructorView<Category> source)
     {
         return std::visit([&](auto value) { return translate_concrete_constructor(value); }, source);
     }
@@ -273,107 +277,107 @@ public:
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::IntersectionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto lhs = translate_to_non_terminal(source.get_left_operand()).index();
-        const auto rhs = translate_to_non_terminal(source.get_right_operand()).index();
+        const auto lhs = translate_to_non_terminal(source.get_left_operand());
+        const auto rhs = translate_to_non_terminal(source.get_right_operand());
         return intern_binary<Concept<CnfGrammarFamily, runir::kr::dl::IntersectionTag>>(lhs, rhs);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::UnionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto lhs = translate_to_non_terminal(source.get_left_operand()).index();
-        const auto rhs = translate_to_non_terminal(source.get_right_operand()).index();
+        const auto lhs = translate_to_non_terminal(source.get_left_operand());
+        const auto rhs = translate_to_non_terminal(source.get_right_operand());
         return intern_binary<Concept<CnfGrammarFamily, runir::kr::dl::UnionTag>>(lhs, rhs);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::NegationTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto arg = translate_to_non_terminal(source.get_operand()).index();
+        const auto arg = translate_to_non_terminal(source.get_operand());
         return intern_unary<Concept<CnfGrammarFamily, runir::kr::dl::NegationTag>>(arg);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::ValueRestrictionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
-        const auto qualifier = translate_to_non_terminal(source.get_qualifier()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
+        const auto qualifier = translate_to_non_terminal(source.get_qualifier());
         return intern_qualified<Concept<CnfGrammarFamily, runir::kr::dl::ValueRestrictionTag>>(role, qualifier);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::ExistentialQuantificationTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
-        const auto qualifier = translate_to_non_terminal(source.get_qualifier()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
+        const auto qualifier = translate_to_non_terminal(source.get_qualifier());
         return intern_qualified<Concept<CnfGrammarFamily, runir::kr::dl::ExistentialQuantificationTag>>(role, qualifier);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtLeastNumberRestrictionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
         return intern_number<Concept<CnfGrammarFamily, runir::kr::dl::AtLeastNumberRestrictionTag>>(source.get_n(), role);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtMostNumberRestrictionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
         return intern_number<Concept<CnfGrammarFamily, runir::kr::dl::AtMostNumberRestrictionTag>>(source.get_n(), role);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::ExactNumberRestrictionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
         return intern_number<Concept<CnfGrammarFamily, runir::kr::dl::ExactNumberRestrictionTag>>(source.get_n(), role);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
-        const auto qualifier = translate_to_non_terminal(source.get_qualifier()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
+        const auto qualifier = translate_to_non_terminal(source.get_qualifier());
         return intern_qualified_number<Concept<CnfGrammarFamily, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>(source.get_n(), role, qualifier);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::QualifiedAtMostNumberRestrictionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
-        const auto qualifier = translate_to_non_terminal(source.get_qualifier()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
+        const auto qualifier = translate_to_non_terminal(source.get_qualifier());
         return intern_qualified_number<Concept<CnfGrammarFamily, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>(source.get_n(), role, qualifier);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::QualifiedExactNumberRestrictionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
-        const auto qualifier = translate_to_non_terminal(source.get_qualifier()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
+        const auto qualifier = translate_to_non_terminal(source.get_qualifier());
         return intern_qualified_number<Concept<CnfGrammarFamily, runir::kr::dl::QualifiedExactNumberRestrictionTag>>(source.get_n(), role, qualifier);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleValueMapTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto lhs = translate_child<runir::kr::dl::RoleTag>(source.get_left_operand()).index();
-        const auto rhs = translate_child<runir::kr::dl::RoleTag>(source.get_right_operand()).index();
+        const auto lhs = translate_child<runir::kr::dl::RoleTag>(source.get_left_operand());
+        const auto rhs = translate_child<runir::kr::dl::RoleTag>(source.get_right_operand());
         return intern_binary<Concept<CnfGrammarFamily, runir::kr::dl::RoleValueMapTag>>(lhs, rhs);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AgreementTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto lhs = translate_child<runir::kr::dl::RoleTag>(source.get_left_operand()).index();
-        const auto rhs = translate_child<runir::kr::dl::RoleTag>(source.get_right_operand()).index();
+        const auto lhs = translate_child<runir::kr::dl::RoleTag>(source.get_left_operand());
+        const auto rhs = translate_child<runir::kr::dl::RoleTag>(source.get_right_operand());
         return intern_binary<Concept<CnfGrammarFamily, runir::kr::dl::AgreementTag>>(lhs, rhs);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleFillersTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role()).index();
+        const auto role = translate_child<runir::kr::dl::RoleTag>(source.get_role());
         return intern_concrete<Concept<CnfGrammarFamily, runir::kr::dl::RoleFillersTag>>(
             [&](auto& data)
             {
@@ -417,67 +421,67 @@ public:
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::IntersectionTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto lhs = translate_to_non_terminal(source.get_left_operand()).index();
-        const auto rhs = translate_to_non_terminal(source.get_right_operand()).index();
+        const auto lhs = translate_to_non_terminal(source.get_left_operand());
+        const auto rhs = translate_to_non_terminal(source.get_right_operand());
         return intern_binary<Role<CnfGrammarFamily, runir::kr::dl::IntersectionTag>>(lhs, rhs);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::UnionTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto lhs = translate_to_non_terminal(source.get_left_operand()).index();
-        const auto rhs = translate_to_non_terminal(source.get_right_operand()).index();
+        const auto lhs = translate_to_non_terminal(source.get_left_operand());
+        const auto rhs = translate_to_non_terminal(source.get_right_operand());
         return intern_binary<Role<CnfGrammarFamily, runir::kr::dl::UnionTag>>(lhs, rhs);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::ComplementTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto arg = translate_to_non_terminal(source.get_operand()).index();
+        const auto arg = translate_to_non_terminal(source.get_operand());
         return intern_unary<Role<CnfGrammarFamily, runir::kr::dl::ComplementTag>>(arg);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::InverseTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto arg = translate_to_non_terminal(source.get_operand()).index();
+        const auto arg = translate_to_non_terminal(source.get_operand());
         return intern_unary<Role<CnfGrammarFamily, runir::kr::dl::InverseTag>>(arg);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::CompositionTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto lhs = translate_to_non_terminal(source.get_left_operand()).index();
-        const auto rhs = translate_to_non_terminal(source.get_right_operand()).index();
+        const auto lhs = translate_to_non_terminal(source.get_left_operand());
+        const auto rhs = translate_to_non_terminal(source.get_right_operand());
         return intern_binary<Role<CnfGrammarFamily, runir::kr::dl::CompositionTag>>(lhs, rhs);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::TransitiveClosureTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto arg = translate_to_non_terminal(source.get_operand()).index();
+        const auto arg = translate_to_non_terminal(source.get_operand());
         return intern_unary<Role<CnfGrammarFamily, runir::kr::dl::TransitiveClosureTag>>(arg);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::ReflexiveTransitiveClosureTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto arg = translate_to_non_terminal(source.get_operand()).index();
+        const auto arg = translate_to_non_terminal(source.get_operand());
         return intern_unary<Role<CnfGrammarFamily, runir::kr::dl::ReflexiveTransitiveClosureTag>>(arg);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::RestrictionTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto role = translate_to_non_terminal(source.get_role()).index();
-        const auto qualifier = translate_child<runir::kr::dl::ConceptTag>(source.get_qualifier()).index();
+        const auto role = translate_to_non_terminal(source.get_role());
+        const auto qualifier = translate_child<runir::kr::dl::ConceptTag>(source.get_qualifier());
         return intern_qualified<Role<CnfGrammarFamily, runir::kr::dl::RestrictionTag>>(role, qualifier);
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::IdentityTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        const auto arg = translate_child<runir::kr::dl::ConceptTag>(source.get_operand()).index();
+        const auto arg = translate_child<runir::kr::dl::ConceptTag>(source.get_operand());
         return intern_unary<Role<CnfGrammarFamily, runir::kr::dl::IdentityTag>>(arg);
     }
 
@@ -494,41 +498,41 @@ public:
     auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::NonemptyTag> source)
         requires std::same_as<Category, runir::kr::dl::BooleanTag>
     {
-        const auto arg = std::visit(
-            [&]<typename View>(View value) -> decltype(urd::data<Boolean<CnfGrammarFamily, runir::kr::dl::NonemptyTag>>::operand)
+        auto arg = std::visit(
+            [&]<typename View>(View value) -> urd::built_t<decltype(urd::data<Boolean<CnfGrammarFamily, runir::kr::dl::NonemptyTag>>::operand), ConstructorRepository>
             {
                 if constexpr (std::same_as<View, runir::kr::dl::grammar::ConstructorOrNonTerminalView<runir::kr::dl::ConceptTag>>)
-                    return translate_child<runir::kr::dl::ConceptTag>(value).index();
+                    return translate_child<runir::kr::dl::ConceptTag>(value);
                 else
-                    return translate_child<runir::kr::dl::RoleTag>(value).index();
+                    return translate_child<runir::kr::dl::RoleTag>(value);
             },
             source.get_operand());
 
-        return intern_unary<Boolean<CnfGrammarFamily, runir::kr::dl::NonemptyTag>>(arg);
+        return intern_unary<Boolean<CnfGrammarFamily, runir::kr::dl::NonemptyTag>>(std::move(arg));
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::NumericalView<runir::kr::dl::CountTag> source)
         requires std::same_as<Category, runir::kr::dl::NumericalTag>
     {
-        const auto arg = std::visit(
-            [&]<typename View>(View value) -> decltype(urd::data<Numerical<CnfGrammarFamily, runir::kr::dl::CountTag>>::operand)
+        auto arg = std::visit(
+            [&]<typename View>(View value) -> urd::built_t<decltype(urd::data<Numerical<CnfGrammarFamily, runir::kr::dl::CountTag>>::operand), ConstructorRepository>
             {
                 if constexpr (std::same_as<View, runir::kr::dl::grammar::ConstructorOrNonTerminalView<runir::kr::dl::ConceptTag>>)
-                    return translate_child<runir::kr::dl::ConceptTag>(value).index();
+                    return translate_child<runir::kr::dl::ConceptTag>(value);
                 else
-                    return translate_child<runir::kr::dl::RoleTag>(value).index();
+                    return translate_child<runir::kr::dl::RoleTag>(value);
             },
             source.get_operand());
 
-        return intern_unary<Numerical<CnfGrammarFamily, runir::kr::dl::CountTag>>(arg);
+        return intern_unary<Numerical<CnfGrammarFamily, runir::kr::dl::CountTag>>(std::move(arg));
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::NumericalView<runir::kr::dl::DistanceTag> source)
         requires std::same_as<Category, runir::kr::dl::NumericalTag>
     {
-        const auto sources = translate_child<runir::kr::dl::ConceptTag>(source.get_sources()).index();
-        const auto edges = translate_child<runir::kr::dl::RoleTag>(source.get_edges()).index();
-        const auto targets = translate_child<runir::kr::dl::ConceptTag>(source.get_targets()).index();
+        const auto sources = translate_child<runir::kr::dl::ConceptTag>(source.get_sources());
+        const auto edges = translate_child<runir::kr::dl::RoleTag>(source.get_edges());
+        const auto targets = translate_child<runir::kr::dl::ConceptTag>(source.get_targets());
         return intern_concrete<Numerical<CnfGrammarFamily, runir::kr::dl::DistanceTag>>(
             [&](auto& data)
             {
@@ -552,7 +556,7 @@ void translate_category(TranslationContext& context)
     auto translator = Translator<Category>(context);
 
     if (auto start = context.source.template get_start<Category>())
-        urd::store((*context.data).*start_member<Category>(), translator.translate_non_terminal(*start));
+        urd::store((*context.data).*start_member<Category, TranslationContext::GrammarBuilder>(), translator.translate_non_terminal(*start));
 
     for (const auto rule : context.source.template get_derivation_rules<Category>())
         translator.translate_rule(rule);
@@ -567,7 +571,7 @@ inline auto translate_impl(const runir::kr::dl::grammar::GrammarView& grammar, C
     translate_category<runir::kr::dl::BooleanTag>(context);
     translate_category<runir::kr::dl::NumericalTag>(context);
 
-    return runir::kr::dl::cnf_grammar::insert(repository, *context.data).first;
+    return repository.insert(*context.data, context.builder).first;
 }
 
 }  // namespace runir::kr::dl::cnf_grammar::detail

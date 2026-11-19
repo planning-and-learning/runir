@@ -24,7 +24,7 @@ void for_changed(const DenotationDelta<Category>& delta, Function function)
 }
 
 template<ConceptOrRoleTag Category>
-bool contains(BorrowedDenotationView<Category> input, DenotationElementView<Category> value)
+bool contains(DenotationBuilderView<Category> input, DenotationElementView<Category> value)
 {
     if constexpr (std::same_as<Category, ConceptTag>)
         return input.value().test(static_cast<ygg::uint_t>(value.index().value));
@@ -37,7 +37,7 @@ inline void mark_sources(SetOperationWorkspace& workspace, const DenotationDelta
     for_changed(delta, [&](auto edge) { workspace.mark(edge.first.index()); });
 }
 
-inline void mark_predecessors(SetOperationWorkspace& workspace, BorrowedDenotationView<RoleTag> role, urd::index<tyr::formalism::Object> target)
+inline void mark_predecessors(SetOperationWorkspace& workspace, DenotationBuilderView<RoleTag> role, urd::index<tyr::formalism::Object> target)
 {
     const auto index = static_cast<ygg::uint_t>(target.value);
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
@@ -46,7 +46,7 @@ inline void mark_predecessors(SetOperationWorkspace& workspace, BorrowedDenotati
 }
 
 template<ConceptOrRoleTag Category>
-void mark_predecessors(SetOperationWorkspace& workspace, BorrowedDenotationView<RoleTag> role, const DenotationDelta<Category>& delta)
+void mark_predecessors(SetOperationWorkspace& workspace, DenotationBuilderView<RoleTag> role, const DenotationDelta<Category>& delta)
 {
     if (delta.empty())
         return;
@@ -91,8 +91,8 @@ bool number_restriction(size_t count, ygg::uint_t threshold)
 
 template<std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
 void evaluate_rows(RestrictionTag,
-                   BorrowedDenotationView<RoleTag> role,
-                   BorrowedDenotationView<ConceptTag> concept_,
+                   DenotationBuilderView<RoleTag> role,
+                   DenotationBuilderView<ConceptTag> concept_,
                    SetOperationWorkspace& workspace,
                    Emit emit)
 {
@@ -106,7 +106,7 @@ void evaluate_rows(RestrictionTag,
 }
 
 template<BaseConceptConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, bool> Emit>
-void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> role, BorrowedDenotationView<ConceptTag> concept_, SetOperationWorkspace& workspace, Emit emit)
+void evaluate_rows(Tag, DenotationBuilderView<RoleTag> role, DenotationBuilderView<ConceptTag> concept_, SetOperationWorkspace& workspace, Emit emit)
 {
     static_assert(std::same_as<Tag, ValueRestrictionTag> || std::same_as<Tag, ExistentialQuantificationTag>);
     for (const auto source : workspace.rows)
@@ -118,7 +118,7 @@ void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> role, BorrowedDenotation
 }
 
 template<BaseConceptConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, bool> Emit>
-void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> role, ygg::uint_t threshold, SetOperationWorkspace& workspace, Emit emit)
+void evaluate_rows(Tag, DenotationBuilderView<RoleTag> role, ygg::uint_t threshold, SetOperationWorkspace& workspace, Emit emit)
 {
     for (const auto source : workspace.rows)
         emit(source, number_restriction<Tag>(role.value(source).count(), threshold));
@@ -126,8 +126,8 @@ void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> role, ygg::uint_t thresh
 
 template<BaseConceptConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, bool> Emit>
 void evaluate_rows(Tag,
-                   BorrowedDenotationView<RoleTag> role,
-                   BorrowedDenotationView<ConceptTag> concept_,
+                   DenotationBuilderView<RoleTag> role,
+                   DenotationBuilderView<ConceptTag> concept_,
                    ygg::uint_t threshold,
                    SetOperationWorkspace& workspace,
                    Emit emit)
@@ -140,7 +140,7 @@ void evaluate_rows(Tag,
 }
 
 template<BaseConceptConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, bool> Emit>
-void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> lhs, BorrowedDenotationView<RoleTag> rhs, SetOperationWorkspace& workspace, Emit emit)
+void evaluate_rows(Tag, DenotationBuilderView<RoleTag> lhs, DenotationBuilderView<RoleTag> rhs, SetOperationWorkspace& workspace, Emit emit)
 {
     static_assert(std::same_as<Tag, RoleValueMapTag> || std::same_as<Tag, AgreementTag>);
     for (const auto source : workspace.rows)
@@ -155,7 +155,7 @@ template<typename Objects, typename Emit>
              && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
              && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
              && std::invocable<Emit, urd::index<tyr::formalism::Object>, bool>
-void evaluate_rows(RoleFillersTag, BorrowedDenotationView<RoleTag> role, const Objects& fillers, SetOperationWorkspace& workspace, Emit emit)
+void evaluate_rows(RoleFillersTag, DenotationBuilderView<RoleTag> role, const Objects& fillers, SetOperationWorkspace& workspace, Emit emit)
 {
     for (const auto source : workspace.rows)
     {
@@ -171,7 +171,7 @@ void evaluate_rows(RoleFillersTag, BorrowedDenotationView<RoleTag> role, const O
 }
 
 template<std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
-void evaluate_rows(CompositionTag, BorrowedDenotationView<RoleTag> lhs, BorrowedDenotationView<RoleTag> rhs, SetOperationWorkspace& workspace, Emit emit)
+void evaluate_rows(CompositionTag, DenotationBuilderView<RoleTag> lhs, DenotationBuilderView<RoleTag> rhs, SetOperationWorkspace& workspace, Emit emit)
 {
     for (const auto source : workspace.rows)
     {
@@ -184,19 +184,23 @@ void evaluate_rows(CompositionTag, BorrowedDenotationView<RoleTag> lhs, Borrowed
 }
 
 template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
-void evaluate_rows(Tag, const urd::builder<Denotation<RoleTag>>& result, BorrowedDenotationView<RoleTag> role, SetOperationWorkspace& workspace, Emit emit)
+void evaluate_rows(Tag,
+                   const urd::builder<Denotation<RoleTag>, runir::kr::dl::semantics::DenotationRepository>& result,
+                   DenotationBuilderView<RoleTag> role,
+                   SetOperationWorkspace& workspace,
+                   Emit emit)
 { evaluate_closure(Tag {}, result, role, workspace.rows, workspace.row, workspace.closure, emit); }
 
 template<ConceptOrRoleTag Category>
 void initialize_set(IntersectionTag,
                     DenotationState<Category>& output,
-                    BorrowedDenotationView<Category> lhs,
+                    DenotationBuilderView<Category> lhs,
                     const DenotationDelta<Category>&,
-                    BorrowedDenotationView<Category> rhs,
+                    DenotationBuilderView<Category> rhs,
                     const DenotationDelta<Category>&,
-                    SetOperationWorkspace&)
+                    SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(lhs.get_num_objects());
+    auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
     auto bits = result.storage_bits();
     bits.copy_from(lhs.storage_bits());
     bits &= rhs.storage_bits();
@@ -205,11 +209,11 @@ void initialize_set(IntersectionTag,
 template<ConceptOrRoleTag Category>
 void update_set(IntersectionTag,
                 DenotationState<Category>& output,
-                BorrowedDenotationView<Category> lhs,
+                DenotationBuilderView<Category> lhs,
                 const DenotationDelta<Category>& lhs_delta,
-                BorrowedDenotationView<Category> rhs,
+                DenotationBuilderView<Category> rhs,
                 const DenotationDelta<Category>& rhs_delta,
-                SetOperationWorkspace&)
+                SetOperationWorkspace& workspace)
 {
     output.clear_delta();
     const auto update = [&](DenotationElementView<Category> value) { output.set(value, contains(lhs, value) && contains(rhs, value)); };
@@ -220,13 +224,13 @@ void update_set(IntersectionTag,
 template<ConceptOrRoleTag Category>
 void initialize_set(UnionTag,
                     DenotationState<Category>& output,
-                    BorrowedDenotationView<Category> lhs,
+                    DenotationBuilderView<Category> lhs,
                     const DenotationDelta<Category>&,
-                    BorrowedDenotationView<Category> rhs,
+                    DenotationBuilderView<Category> rhs,
                     const DenotationDelta<Category>&,
-                    SetOperationWorkspace&)
+                    SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(lhs.get_num_objects());
+    auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
     auto bits = result.storage_bits();
     bits.copy_from(lhs.storage_bits());
     bits |= rhs.storage_bits();
@@ -235,11 +239,11 @@ void initialize_set(UnionTag,
 template<ConceptOrRoleTag Category>
 void update_set(UnionTag,
                 DenotationState<Category>& output,
-                BorrowedDenotationView<Category> lhs,
+                DenotationBuilderView<Category> lhs,
                 const DenotationDelta<Category>& lhs_delta,
-                BorrowedDenotationView<Category> rhs,
+                DenotationBuilderView<Category> rhs,
                 const DenotationDelta<Category>& rhs_delta,
-                SetOperationWorkspace&)
+                SetOperationWorkspace& workspace)
 {
     output.clear_delta();
     const auto update = [&](DenotationElementView<Category> value) { output.set(value, contains(lhs, value) || contains(rhs, value)); };
@@ -249,45 +253,45 @@ void update_set(UnionTag,
 
 inline void initialize_set(NegationTag,
                            DenotationState<ConceptTag>& output,
-                           BorrowedDenotationView<ConceptTag> input,
+                           DenotationBuilderView<ConceptTag> input,
                            const DenotationDelta<ConceptTag>&,
-                           SetOperationWorkspace&)
-{ output.assign(input).flip(); }
+                           SetOperationWorkspace& workspace)
+{ output.assign(input, *workspace.records, *workspace.denotations).flip(); }
 
 inline void update_set(NegationTag,
                        DenotationState<ConceptTag>& output,
-                       BorrowedDenotationView<ConceptTag> input,
+                       DenotationBuilderView<ConceptTag> input,
                        const DenotationDelta<ConceptTag>& delta,
-                       SetOperationWorkspace&)
+                       SetOperationWorkspace& workspace)
 {
     output.clear_delta();
     for_changed(delta, [&](auto value) { output.set(value, !contains(input, value)); });
 }
 
 inline void
-initialize_set(ComplementTag, DenotationState<RoleTag>& output, BorrowedDenotationView<RoleTag> input, const DenotationDelta<RoleTag>&, SetOperationWorkspace&)
-{ output.assign(input).flip(); }
+initialize_set(ComplementTag, DenotationState<RoleTag>& output, DenotationBuilderView<RoleTag> input, const DenotationDelta<RoleTag>&, SetOperationWorkspace& workspace)
+{ output.assign(input, *workspace.records, *workspace.denotations).flip(); }
 
 inline void update_set(ComplementTag,
                        DenotationState<RoleTag>& output,
-                       BorrowedDenotationView<RoleTag> input,
+                       DenotationBuilderView<RoleTag> input,
                        const DenotationDelta<RoleTag>& delta,
-                       SetOperationWorkspace&)
+                       SetOperationWorkspace& workspace)
 {
     output.clear_delta();
     for_changed(delta, [&](auto value) { output.set(value, !contains(input, value)); });
 }
 
 inline void
-initialize_set(InverseTag, DenotationState<RoleTag>& output, BorrowedDenotationView<RoleTag> input, const DenotationDelta<RoleTag>&, SetOperationWorkspace&)
+initialize_set(InverseTag, DenotationState<RoleTag>& output, DenotationBuilderView<RoleTag> input, const DenotationDelta<RoleTag>&, SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(input.get_num_objects());
+    auto& result = output.initialize(input.get_num_objects(), *workspace.records, *workspace.denotations);
     for (const auto [source, target] : input.indices())
         result.set(target, source, true);
 }
 
 inline void
-update_set(InverseTag, DenotationState<RoleTag>& output, BorrowedDenotationView<RoleTag> input, const DenotationDelta<RoleTag>& delta, SetOperationWorkspace&)
+update_set(InverseTag, DenotationState<RoleTag>& output, DenotationBuilderView<RoleTag> input, const DenotationDelta<RoleTag>& delta, SetOperationWorkspace& workspace)
 {
     output.clear_delta();
     for_changed(delta, [&](auto edge) { output.set({ edge.second, edge.first }, contains(input, edge)); });
@@ -295,20 +299,20 @@ update_set(InverseTag, DenotationState<RoleTag>& output, BorrowedDenotationView<
 
 inline void initialize_set(IdentityTag,
                            DenotationState<RoleTag>& output,
-                           BorrowedDenotationView<ConceptTag> input,
+                           DenotationBuilderView<ConceptTag> input,
                            const DenotationDelta<ConceptTag>&,
-                           SetOperationWorkspace&)
+                           SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(input.get_num_objects());
+    auto& result = output.initialize(input.get_num_objects(), *workspace.records, *workspace.denotations);
     for (const auto object : input.indices())
         result.set(object, object, true);
 }
 
 inline void update_set(IdentityTag,
                        DenotationState<RoleTag>& output,
-                       BorrowedDenotationView<ConceptTag> input,
+                       DenotationBuilderView<ConceptTag> input,
                        const DenotationDelta<ConceptTag>& delta,
-                       SetOperationWorkspace&)
+                       SetOperationWorkspace& workspace)
 {
     output.clear_delta();
     for_changed(delta, [&](auto object) { output.set({ object, object }, contains(input, object)); });
@@ -316,22 +320,22 @@ inline void update_set(IdentityTag,
 
 inline void initialize_set(RestrictionTag,
                            DenotationState<RoleTag>& output,
-                           BorrowedDenotationView<RoleTag> role,
+                           DenotationBuilderView<RoleTag> role,
                            const DenotationDelta<RoleTag>&,
-                           BorrowedDenotationView<ConceptTag> concept_,
+                           DenotationBuilderView<ConceptTag> concept_,
                            const DenotationDelta<ConceptTag>&,
                            SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects());
+    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(RestrictionTag {}, role, concept_, workspace, [&](auto source, auto row) { result.assign_row(source, row); });
 }
 
 inline void update_set(RestrictionTag,
                        DenotationState<RoleTag>& output,
-                       BorrowedDenotationView<RoleTag> role,
+                       DenotationBuilderView<RoleTag> role,
                        const DenotationDelta<RoleTag>& role_delta,
-                       BorrowedDenotationView<ConceptTag> concept_,
+                       DenotationBuilderView<ConceptTag> concept_,
                        const DenotationDelta<ConceptTag>& concept_delta,
                        SetOperationWorkspace& workspace)
 {
@@ -339,19 +343,19 @@ inline void update_set(RestrictionTag,
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
     mark_predecessors(workspace, role, concept_delta);
-    evaluate_rows(RestrictionTag {}, role, concept_, workspace, [&](auto source, auto row) { output.update_row(source, row, role.context()); });
+    evaluate_rows(RestrictionTag {}, role, concept_, workspace, [&](auto source, auto row) { output.update_row(source, row, role.context().get_formalism_repository()); });
 }
 
 template<BaseConceptConstructorTag Tag>
 void initialize_set(Tag,
                     DenotationState<ConceptTag>& output,
-                    BorrowedDenotationView<RoleTag> role,
+                    DenotationBuilderView<RoleTag> role,
                     const DenotationDelta<RoleTag>&,
-                    BorrowedDenotationView<ConceptTag> concept_,
+                    DenotationBuilderView<ConceptTag> concept_,
                     const DenotationDelta<ConceptTag>&,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects());
+    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, role, concept_, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -359,9 +363,9 @@ void initialize_set(Tag,
 template<BaseConceptConstructorTag Tag>
 void update_set(Tag,
                 DenotationState<ConceptTag>& output,
-                BorrowedDenotationView<RoleTag> role,
+                DenotationBuilderView<RoleTag> role,
                 const DenotationDelta<RoleTag>& role_delta,
-                BorrowedDenotationView<ConceptTag> concept_,
+                DenotationBuilderView<ConceptTag> concept_,
                 const DenotationDelta<ConceptTag>& concept_delta,
                 SetOperationWorkspace& workspace)
 {
@@ -369,18 +373,18 @@ void update_set(Tag,
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
     mark_predecessors(workspace, role, concept_delta);
-    evaluate_rows(Tag {}, role, concept_, workspace, [&](auto source, bool present) { output.set(source, present, role.context()); });
+    evaluate_rows(Tag {}, role, concept_, workspace, [&](auto source, bool present) { output.set(source, present, role.context().get_formalism_repository()); });
 }
 
 template<BaseConceptConstructorTag Tag>
 void initialize_set(Tag,
                     DenotationState<ConceptTag>& output,
-                    BorrowedDenotationView<RoleTag> role,
+                    DenotationBuilderView<RoleTag> role,
                     const DenotationDelta<RoleTag>&,
                     ygg::uint_t threshold,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects());
+    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, role, threshold, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -388,7 +392,7 @@ void initialize_set(Tag,
 template<BaseConceptConstructorTag Tag>
 void update_set(Tag,
                 DenotationState<ConceptTag>& output,
-                BorrowedDenotationView<RoleTag> role,
+                DenotationBuilderView<RoleTag> role,
                 const DenotationDelta<RoleTag>& delta,
                 ygg::uint_t threshold,
                 SetOperationWorkspace& workspace)
@@ -396,20 +400,20 @@ void update_set(Tag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, delta);
-    evaluate_rows(Tag {}, role, threshold, workspace, [&](auto source, bool present) { output.set(source, present, role.context()); });
+    evaluate_rows(Tag {}, role, threshold, workspace, [&](auto source, bool present) { output.set(source, present, role.context().get_formalism_repository()); });
 }
 
 template<BaseConceptConstructorTag Tag>
 void initialize_set(Tag,
                     DenotationState<ConceptTag>& output,
-                    BorrowedDenotationView<RoleTag> role,
+                    DenotationBuilderView<RoleTag> role,
                     const DenotationDelta<RoleTag>&,
-                    BorrowedDenotationView<ConceptTag> concept_,
+                    DenotationBuilderView<ConceptTag> concept_,
                     const DenotationDelta<ConceptTag>&,
                     ygg::uint_t threshold,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects());
+    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, role, concept_, threshold, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -417,9 +421,9 @@ void initialize_set(Tag,
 template<BaseConceptConstructorTag Tag>
 void update_set(Tag,
                 DenotationState<ConceptTag>& output,
-                BorrowedDenotationView<RoleTag> role,
+                DenotationBuilderView<RoleTag> role,
                 const DenotationDelta<RoleTag>& role_delta,
-                BorrowedDenotationView<ConceptTag> concept_,
+                DenotationBuilderView<ConceptTag> concept_,
                 const DenotationDelta<ConceptTag>& concept_delta,
                 ygg::uint_t threshold,
                 SetOperationWorkspace& workspace)
@@ -428,19 +432,19 @@ void update_set(Tag,
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
     mark_predecessors(workspace, role, concept_delta);
-    evaluate_rows(Tag {}, role, concept_, threshold, workspace, [&](auto source, bool present) { output.set(source, present, role.context()); });
+    evaluate_rows(Tag {}, role, concept_, threshold, workspace, [&](auto source, bool present) { output.set(source, present, role.context().get_formalism_repository()); });
 }
 
 template<BaseConceptConstructorTag Tag>
 void initialize_set(Tag,
                     DenotationState<ConceptTag>& output,
-                    BorrowedDenotationView<RoleTag> lhs,
+                    DenotationBuilderView<RoleTag> lhs,
                     const DenotationDelta<RoleTag>&,
-                    BorrowedDenotationView<RoleTag> rhs,
+                    DenotationBuilderView<RoleTag> rhs,
                     const DenotationDelta<RoleTag>&,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(lhs.get_num_objects());
+    auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, lhs, rhs, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -448,9 +452,9 @@ void initialize_set(Tag,
 template<BaseConceptConstructorTag Tag>
 void update_set(Tag,
                 DenotationState<ConceptTag>& output,
-                BorrowedDenotationView<RoleTag> lhs,
+                DenotationBuilderView<RoleTag> lhs,
                 const DenotationDelta<RoleTag>& lhs_delta,
-                BorrowedDenotationView<RoleTag> rhs,
+                DenotationBuilderView<RoleTag> rhs,
                 const DenotationDelta<RoleTag>& rhs_delta,
                 SetOperationWorkspace& workspace)
 {
@@ -458,7 +462,7 @@ void update_set(Tag,
     workspace.clear_rows();
     mark_sources(workspace, lhs_delta);
     mark_sources(workspace, rhs_delta);
-    evaluate_rows(Tag {}, lhs, rhs, workspace, [&](auto source, bool present) { output.set(source, present, lhs.context()); });
+    evaluate_rows(Tag {}, lhs, rhs, workspace, [&](auto source, bool present) { output.set(source, present, lhs.context().get_formalism_repository()); });
 }
 
 template<typename Objects>
@@ -467,12 +471,12 @@ template<typename Objects>
              && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
 void initialize_set(RoleFillersTag,
                     DenotationState<ConceptTag>& output,
-                    BorrowedDenotationView<RoleTag> role,
+                    DenotationBuilderView<RoleTag> role,
                     const DenotationDelta<RoleTag>&,
                     const Objects& fillers,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects());
+    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(RoleFillersTag {}, role, fillers, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -483,7 +487,7 @@ template<typename Objects>
              && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
 void update_set(RoleFillersTag,
                 DenotationState<ConceptTag>& output,
-                BorrowedDenotationView<RoleTag> role,
+                DenotationBuilderView<RoleTag> role,
                 const DenotationDelta<RoleTag>& delta,
                 const Objects& fillers,
                 SetOperationWorkspace& workspace)
@@ -491,27 +495,27 @@ void update_set(RoleFillersTag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, delta);
-    evaluate_rows(RoleFillersTag {}, role, fillers, workspace, [&](auto source, bool present) { output.set(source, present, role.context()); });
+    evaluate_rows(RoleFillersTag {}, role, fillers, workspace, [&](auto source, bool present) { output.set(source, present, role.context().get_formalism_repository()); });
 }
 
 inline void initialize_set(CompositionTag,
                            DenotationState<RoleTag>& output,
-                           BorrowedDenotationView<RoleTag> lhs,
+                           DenotationBuilderView<RoleTag> lhs,
                            const DenotationDelta<RoleTag>&,
-                           BorrowedDenotationView<RoleTag> rhs,
+                           DenotationBuilderView<RoleTag> rhs,
                            const DenotationDelta<RoleTag>&,
                            SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(lhs.get_num_objects());
+    auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { result.assign_row(source, row); });
 }
 
 inline void update_set(CompositionTag,
                        DenotationState<RoleTag>& output,
-                       BorrowedDenotationView<RoleTag> lhs,
+                       DenotationBuilderView<RoleTag> lhs,
                        const DenotationDelta<RoleTag>& lhs_delta,
-                       BorrowedDenotationView<RoleTag> rhs,
+                       DenotationBuilderView<RoleTag> rhs,
                        const DenotationDelta<RoleTag>& rhs_delta,
                        SetOperationWorkspace& workspace)
 {
@@ -520,17 +524,17 @@ inline void update_set(CompositionTag,
     mark_sources(workspace, lhs_delta);
     mark_predecessors(workspace, lhs, rhs_delta);
     // ponytail: affected rows are rebuilt; retain witness counts if dense rows dominate profiling.
-    evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { output.update_row(source, row, lhs.context()); });
+    evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { output.update_row(source, row, lhs.context().get_formalism_repository()); });
 }
 
 template<BaseRoleConstructorTag Tag>
 void initialize_set(Tag,
                     DenotationState<RoleTag>& output,
-                    BorrowedDenotationView<RoleTag> role,
+                    DenotationBuilderView<RoleTag> role,
                     const DenotationDelta<RoleTag>&,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects());
+    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, result, role, workspace, [&](auto source, auto row) { result.assign_row(source, row); });
 }
@@ -538,7 +542,7 @@ void initialize_set(Tag,
 template<BaseRoleConstructorTag Tag>
 void update_set(Tag,
                 DenotationState<RoleTag>& output,
-                BorrowedDenotationView<RoleTag> role,
+                DenotationBuilderView<RoleTag> role,
                 const DenotationDelta<RoleTag>& delta,
                 SetOperationWorkspace& workspace)
 {
@@ -546,8 +550,8 @@ void update_set(Tag,
     workspace.clear_rows();
     // Read all dirty predecessors from the old closure before modifying it.
     mark_sources(workspace, delta);
-    mark_predecessors(workspace, output.get_result(role.context()), delta);
-    evaluate_rows(Tag {}, output.get_builder(), role, workspace, [&](auto source, auto row) { output.update_row(source, row, role.context()); });
+    mark_predecessors(workspace, output.get_result(*workspace.denotations), delta);
+    evaluate_rows(Tag {}, output.get_builder(), role, workspace, [&](auto source, auto row) { output.update_row(source, row, role.context().get_formalism_repository()); });
 }
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

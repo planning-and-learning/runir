@@ -112,16 +112,16 @@ def _state_context(
     arguments: CallArguments,
     registers: RegisterValues,
 ) -> DlContext:
-    if isinstance(state, ground.State):
+    if isinstance(state, ground.StateBuilderShared):
         return semantics.GroundStateEvaluationContext(state, builder, storage, arguments, registers)
     return semantics.LiftedStateEvaluationContext(state, builder, storage, arguments, registers)
 
 
 def _same_state(first: PlanningState, second: PlanningState) -> bool:
-    if isinstance(first, ground.State):
-        assert isinstance(second, ground.State)
+    if isinstance(first, ground.StateBuilderShared):
+        assert isinstance(second, ground.StateBuilderShared)
         return first == second
-    assert isinstance(second, lifted.State)
+    assert isinstance(second, lifted.StateBuilderShared)
     return first == second
 
 
@@ -257,24 +257,23 @@ def test_module_state_and_suspended_caller_preserve_fields_and_dependencies(kind
     task_context, program, expander, loaded = _loaded_frame(kind)
     references = sys.getrefcount(loaded)
     module_state = loaded.get_module_state()
-    assert isinstance(module_state, ext.ModuleStateGround if kind == "ground" else ext.ModuleStateLifted)
+    assert isinstance(module_state, ext.ModuleState)
     assert sys.getrefcount(loaded) > references
     assert len({module_state, loaded.get_module_state()}) == 1
-    assert _same_state(module_state.get_state().unpack(), loaded.get_module_state().get_state().unpack())
     assert module_state.get_memory_state().get_name() == "m2"
     caller = loaded.get_call_stack()
-    assert isinstance(caller, ext.ground.CallStack if kind == "ground" else ext.lifted.CallStack)
-    assert caller.get_mod() == program.get_entry_mod()
-    assert caller.get_return_memory_state().get_name() == "m1"
+    assert isinstance(caller, ext.CallStack)
+    assert caller.get_module_state().get_mod() == program.get_entry_mod()
+    assert caller.get_module_state().get_memory_state().get_name() == "m1"
     assert caller.get_caller() is None
-    assert caller.get_registers().get_concept_values() == []
-    assert caller.get_arguments().get_concept_arguments() == []
+    assert caller.get_module_state().get_registers().get_concept_values() == []
+    assert caller.get_module_state().get_arguments().get_concept_arguments() == []
     del task_context, program, expander, loaded
     gc.collect()
     assert len(module_state.get_arguments().get_concept_arguments()) == 1
     assert module_state.get_registers().get_concept_values()[0] is not None
     assert module_state.get_registers().get_role_values()[0] is not None
-    assert caller.get_return_memory_state().get_name() == "m1"
+    assert caller.get_module_state().get_memory_state().get_name() == "m1"
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -329,7 +328,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     other_concept = collect_steps(expander, child)[1].target
     other_frame = collect_steps(expander, other_concept)[0].target
     assert _same_state(
-        other_frame.get_module_state().get_state().unpack(), loaded.get_module_state().get_state().unpack()
+        other_frame.get_state().unpack(), loaded.get_state().unpack()
     )
     environment.reset_source()
     other_dl_context = make_dl_context(environment, other_frame)
@@ -462,7 +461,7 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     assert len({register_view, loaded.get_module_state().get_registers()}) == 1
     storage = semantics.EvaluationStorage(repository)
     context = _state_context(
-        loaded.get_module_state().get_state().unpack(), task_context.dl_builder, storage, argument_view, register_view
+        loaded.get_state().unpack(), task_context.dl_builder, storage, argument_view, register_view
     )
     assert ext.evaluate(features["argument_count"], context).get_value() == 2
     assert ext.evaluate(features["concept_register_size"], context).get_value() == 1
@@ -475,7 +474,7 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     assert ext.evaluate(features["concept_register_size"], context).get_value() == 1
     assert ext.evaluate(features["role_register_size"], context).get_value() == 1
     context = _state_context(
-        loaded.get_module_state().get_state().unpack(),
+        loaded.get_state().unpack(),
         task_context.dl_builder,
         storage,
         argument_view,
@@ -554,7 +553,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
         assert step.target.get_module_state().get_registers().get_role_values()[0] is None
         for role_step in role_steps:
             assert _same_state(
-                role_step.target.get_module_state().get_state().unpack(), child.get_module_state().get_state().unpack()
+                role_step.target.get_state().unpack(), child.get_state().unpack()
             )
             assert role_step.target.get_module_state().get_registers().get_role_values()[0] is not None
 

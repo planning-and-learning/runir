@@ -114,11 +114,11 @@ struct SearchStorage<Kind, StateMemorization::NONE>
 
     explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(&options_) {}
 
-    std::optional<ProgramStateView<Kind>> initial_memo_state(BuilderProgramStateView<Kind>) { return std::nullopt; }
+    std::optional<ProgramStateView<Kind>> initial_memo_state(ProgramStateBuilderView<Kind>) { return std::nullopt; }
 
     std::optional<ProgramStateView<Kind>> choice_memo_state(auto&&) { return std::nullopt; }
 
-    bool admit(BuilderProgramStateView<Kind>, auto&&)
+    bool admit(ProgramStateBuilderView<Kind>, auto&&)
     {
         if (num_reached == options->max_num_states)
             return false;
@@ -126,8 +126,8 @@ struct SearchStorage<Kind, StateMemorization::NONE>
         return true;
     }
 
-    bool record_transition(BuilderProgramStateView<Kind>,
-                           BuilderProgramStateView<Kind> target,
+    bool record_transition(ProgramStateBuilderView<Kind>,
+                           ProgramStateBuilderView<Kind> target,
                            std::optional<tyr::formalism::planning::ActionRowView>,
                            std::optional<RuleVariantView>,
                            std::size_t,
@@ -136,9 +136,9 @@ struct SearchStorage<Kind, StateMemorization::NONE>
 
     std::optional<bool> completed(ProgramStateView<Kind>) { return std::nullopt; }
 
-    auto classify(BuilderProgramStateView<Kind> state, auto&& classify) { return classify(state); }
+    auto classify(ProgramStateBuilderView<Kind> state, auto&& classify) { return classify(state); }
 
-    void record_flags(BuilderProgramStateView<Kind>, const auto&) {}
+    void record_flags(ProgramStateBuilderView<Kind>, const auto&) {}
 
     void memorize(ProgramStateView<Kind>) {}
 

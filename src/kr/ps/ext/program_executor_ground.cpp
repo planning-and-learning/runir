@@ -26,18 +26,18 @@ SuccessorExpander<tyr::GroundTag>::apply_choice<runir::kr::dl::RoleTag, ProgramS
                                                                                                           ProgramSearchStatistics&);
 
 template ProgramStateView<tyr::GroundTag>
-SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::materialize<BuilderProgramStateView<tyr::GroundTag>>(
-    const BuilderProgramStateView<tyr::GroundTag>&);
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::materialize<ProgramStateBuilderView<tyr::GroundTag>>(
+    const ProgramStateBuilderView<tyr::GroundTag>&);
 
 template ProgramStep<ExtFamilyTag, tyr::GroundTag, StorageStoredState<TransientExecutionStorage<tyr::GroundTag>>>
-SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::ConceptTag, BuilderProgramStateView<tyr::GroundTag>>(
-    BuilderProgramStateView<tyr::GroundTag>,
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::ConceptTag, ProgramStateBuilderView<tyr::GroundTag>>(
+    ProgramStateBuilderView<tyr::GroundTag>,
     const detail::Choice<runir::kr::dl::ConceptTag>&,
     ProgramSearchStatistics&);
 
 template ProgramStep<ExtFamilyTag, tyr::GroundTag, StorageStoredState<TransientExecutionStorage<tyr::GroundTag>>>
-SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::RoleTag, BuilderProgramStateView<tyr::GroundTag>>(
-    BuilderProgramStateView<tyr::GroundTag>,
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::RoleTag, ProgramStateBuilderView<tyr::GroundTag>>(
+    ProgramStateBuilderView<tyr::GroundTag>,
     const detail::Choice<runir::kr::dl::RoleTag>&,
     ProgramSearchStatistics&);
 

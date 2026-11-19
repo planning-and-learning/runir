@@ -113,6 +113,7 @@ struct runir::kr::ps::FamilyTypes<runir::kr::IcpFamilyTag>
 {
     using Repository = runir::kr::ps::icp::Repository;
     using ConcreteRuleTypes = runir::kr::ps::icp::ConcreteRuleTypes;
+    using ControlRepositoryTypes = runir::kr::ps::icp::ControlRepositoryTypes;
     template<tyr::TaskKind Kind>
     using ExecutionRepositoryTypes = runir::kr::ps::icp::ExecutionRepositoryTypes<Kind>;
     template<tyr::TaskKind Kind>

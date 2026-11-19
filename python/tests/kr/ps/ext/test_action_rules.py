@@ -126,9 +126,9 @@ def _same_state(left: ProgramState, right: ProgramState) -> bool:
 def _same_planning_state(left: ProgramState, right: ProgramState) -> bool:
     if isinstance(left, ext.ProgramStateGround):
         assert isinstance(right, ext.ProgramStateGround)
-        return left.get_module_state().get_state() == right.get_module_state().get_state()
+        return left.get_state() == right.get_state()
     assert isinstance(right, ext.ProgramStateLifted)
-    return left.get_module_state().get_state() == right.get_module_state().get_state()
+    return left.get_state() == right.get_state()
 
 
 def _successor(step: ExecutionStep) -> Successor:
@@ -193,8 +193,8 @@ def test_expander_rejects_foreign_states_programs_and_candidates(kind: str) -> N
     with pytest.raises(ValueError, match="domain context repository"):
         make_expander(task_context, foreign_program)
     with pytest.raises(ValueError, match="selected task's state repository"):
-        initial_program_state(expander, foreign_state.get_module_state().get_state().unpack())
-    for wrong_state, message in ((foreign_state, "selected task"), (other_state, "selected program")):
+        initial_program_state(expander, foreign_state.get_state().unpack())
+    for wrong_state, message in ((foreign_state, "selected task"), (other_state, "prepared program")):
         statistics = ext.ProgramSearchStatistics()
         with pytest.raises(ValueError, match=message):
             collect_steps(expander, wrong_state, statistics)
@@ -361,7 +361,7 @@ def _retained(
     context: DlContext
     if isinstance(state, ext.ProgramStateGround):
         context = semantics.GroundStateEvaluationContext(
-            state.get_module_state().get_state().unpack(),
+            state.get_state().unpack(),
             task_context.dl_builder,
             caches,
             repository,
@@ -371,7 +371,7 @@ def _retained(
         )
     else:
         context = semantics.LiftedStateEvaluationContext(
-            state.get_module_state().get_state().unpack(),
+            state.get_state().unpack(),
             task_context.dl_builder,
             caches,
             repository,

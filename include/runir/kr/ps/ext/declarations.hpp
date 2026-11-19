@@ -187,6 +187,7 @@ struct runir::kr::ps::FamilyTypes<runir::kr::ExtFamilyTag>
 {
     using Repository = runir::kr::ps::ext::Repository;
     using ConcreteRuleTypes = runir::kr::ps::ext::ConcreteRuleTypes;
+    using ControlRepositoryTypes = runir::kr::ps::ext::ControlRepositoryTypes;
     template<tyr::TaskKind Kind>
     using ExecutionRepositoryTypes = runir::kr::ps::ext::ExecutionRepositoryTypes<Kind>;
     template<tyr::TaskKind Kind>

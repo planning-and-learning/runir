@@ -39,14 +39,16 @@ TaskContext<Kind>::TaskContext(DomainContextPtr domain_context_, runir::datasets
     search_context(std::move(search_context_)),
     dl_builder(),
     dl_denotation_repository(std::make_shared<runir::kr::dl::semantics::DenotationRepository>(search_context->task->get_repository())),
+    control_builder(),
+    control_repository(std::make_shared<runir::kr::ps::ControlRepository<runir::kr::ExtFamilyTag>>(dl_denotation_repository, domain_context->ext_repository)),
     execution_builder(),
-    execution_repository(std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>(search_context->state_repository,
-                                                                                                             dl_denotation_repository,
-                                                                                                             domain_context->ext_repository)),
+    execution_repository(
+        std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>(search_context->state_repository, control_repository)),
+    icp_control_builder(),
+    icp_control_repository(std::make_shared<runir::kr::ps::ControlRepository<runir::kr::IcpFamilyTag>>(dl_denotation_repository, domain_context->icp_repository)),
     icp_execution_builder(),
-    icp_execution_repository(std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, Kind>>(search_context->state_repository,
-                                                                                                                 dl_denotation_repository,
-                                                                                                                 domain_context->icp_repository))
+    icp_execution_repository(
+        std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, Kind>>(search_context->state_repository, icp_control_repository))
 {
 }
 
@@ -56,11 +58,15 @@ template struct TaskContext<tyr::LiftedTag>;
 }  // namespace runir::kr
 
 // The symbols and builders of the library's repositories, which its other sources only declare.
-YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::ext::GroundExecutionRepository, 3)
-YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::ext::LiftedExecutionRepository, 3)
-YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::GroundExecutionRepository, 2)
-YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::LiftedExecutionRepository, 2)
-YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::GroundExecutionBuilder, 3)
-YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::LiftedExecutionBuilder, 3)
-YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::GroundExecutionBuilder, 2)
-YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::LiftedExecutionBuilder, 2)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::ext::ControlRepository, 2)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::ControlRepository, 1)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::ext::GroundExecutionRepository, 1)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::ext::LiftedExecutionRepository, 1)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::GroundExecutionRepository, 1)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::LiftedExecutionRepository, 1)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::ControlBuilder, 9)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::ControlBuilder, 8)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::GroundExecutionBuilder, 10)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::LiftedExecutionBuilder, 10)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::GroundExecutionBuilder, 9)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::LiftedExecutionBuilder, 9)

@@ -1304,13 +1304,13 @@ void check_state_memorization()
                 ++grandchild_states;
                 const auto saved_child = state.get_call_stack();
                 ASSERT_TRUE(saved_child);
-                EXPECT_EQ(saved_child->get_mod().get_symbol().get_name(), "child");
-                EXPECT_EQ(saved_child->get_return_memory_state().get_name(), "m2");
+                EXPECT_EQ(saved_child->get_module_state().get_mod().get_symbol().get_name(), "child");
+                EXPECT_EQ(saved_child->get_module_state().get_memory_state().get_name(), "m2");
                 const auto saved_main = saved_child->get_caller();
                 ASSERT_TRUE(saved_main);
-                EXPECT_EQ(saved_main->get_mod().get_symbol().get_name(), "main");
-                EXPECT_EQ(saved_main->get_return_memory_state().get_name(), "m2");
-                EXPECT_EQ(saved_main->get_registers().template values<kr::dl::ConceptTag>().at(0).value().get_name(), "goal");
+                EXPECT_EQ(saved_main->get_module_state().get_mod().get_symbol().get_name(), "main");
+                EXPECT_EQ(saved_main->get_module_state().get_memory_state().get_name(), "m2");
+                EXPECT_EQ(saved_main->get_module_state().get_registers().template values<kr::dl::ConceptTag>().at(0).value().get_name(), "goal");
                 EXPECT_FALSE(saved_main->get_caller());
             }
             EXPECT_GT(grandchild_states, 0);
@@ -1392,8 +1392,8 @@ void check_state_memorization()
                 options.universal = true;
                 const auto result = run(diamond, options);
                 EXPECT_EQ(result.status, body == choose_empty() ? Status::FAILURE : Status::SUCCESS);
-                expansions.push_back(result.statistics.num_expanded);
-                generated.push_back(result.statistics.num_generated);
+                expansions.emplace_back(result.statistics.num_expanded);  // push_back: GCC 13 finds both overloads viable here
+                generated.emplace_back(result.statistics.num_generated);
             }
             // A cached source still starts expansion. An ordinary outcome emitted before its
             // first Choose counts as work, but must be discarded rather than explored again.
@@ -1445,39 +1445,30 @@ namespace
 {
 
 template<tyr::TaskKind Kind>
-struct ReferenceModuleStateAccess : kr::ps::ext::ModuleStateView<Kind>
-{
-    [[nodiscard]] const tyr::planning::StateView<Kind>& get_state() const;
-    [[nodiscard]] const kr::dl::semantics::RegisterValuesView& get_registers() const;
-};
-
-template<tyr::TaskKind Kind>
 struct ReferenceProgramStateAccess : kr::ps::ext::ProgramStateView<Kind>
 {
     [[nodiscard]] const tyr::planning::StateView<Kind>& get_state() const;
-    [[nodiscard]] const ReferenceModuleStateAccess<Kind>& get_module_state() const;
+    [[nodiscard]] const kr::ps::ext::ModuleStateView& get_module_state() const;
 };
 
 template<tyr::TaskKind Kind>
 void check_transient_builder_values_and_reuse()
 {
     static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesView>);
-    static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::BorrowedRegisterValuesView>);
+    static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesDataView>);
     static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateView<Kind>, Kind>);
-    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::BorrowedProgramStateView<Kind>, Kind>);
-    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::BuilderProgramStateView<Kind>, Kind>);
+    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateBuilderView<Kind>, Kind>);
     static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesView&>);
-    static_assert(kr::dl::semantics::RegisterValuesViewConcept<const kr::dl::semantics::BorrowedRegisterValuesView&>);
+    static_assert(kr::dl::semantics::RegisterValuesViewConcept<const kr::dl::semantics::RegisterValuesDataView&>);
     static_assert(!kr::dl::semantics::RegisterValuesViewConcept<volatile kr::dl::semantics::RegisterValuesView&>);
-    static_assert(kr::ps::ext::ModuleStateViewConcept<kr::ps::ext::ModuleStateView<Kind>&, Kind>);
-    static_assert(kr::ps::ext::ModuleStateViewConcept<const kr::ps::ext::BuilderModuleStateView<Kind>&, Kind>);
-    static_assert(!kr::ps::ext::ModuleStateViewConcept<volatile kr::ps::ext::ModuleStateView<Kind>&, Kind>);
+    static_assert(urd::ReadsAs<kr::ps::ext::ModuleStateView&, kr::ps::ext::ModuleState>);
+    static_assert(urd::ReadsAs<const kr::ps::ext::ModuleStateBuilderView&, kr::ps::ext::ModuleState>);
     static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateView<Kind>&, Kind>);
-    static_assert(kr::ps::ext::ProgramStateViewConcept<const kr::ps::ext::BuilderProgramStateView<Kind>&, Kind>);
+    static_assert(kr::ps::ext::ProgramStateViewConcept<const kr::ps::ext::ProgramStateBuilderView<Kind>&, Kind>);
     static_assert(!kr::ps::ext::ProgramStateViewConcept<volatile kr::ps::ext::ProgramStateView<Kind>&, Kind>);
     static_assert(kr::ps::ext::ProgramStateViewConcept<ReferenceProgramStateAccess<Kind>, Kind>);
     constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.index(); }; };
-    static_assert(!has_index.template operator()<kr::ps::ext::BuilderProgramStateView<Kind>>());
+    static_assert(!has_index.template operator()<kr::ps::ext::ProgramStateBuilderView<Kind>>());
     const auto directory = benchmark_path("classical/tests/gripper");
     const auto search = [&]()
     {
@@ -1492,124 +1483,170 @@ void check_transient_builder_values_and_reuse()
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
                                       search->task->get_domain().get_domain(),
                                       repository);
-    const auto program = create_program(repository, module_, { module_ });
-    auto pool = urd::Store<urd::slots<urd::builder<kr::ps::ext::ProgramState<Kind>>>> {};
+    using ProgramStateBuilder = urd::builder<kr::ps::ext::ProgramState<Kind>, kr::ps::ExecutionRepository<kr::ExtFamilyTag, Kind>>;
+    using ModuleStateBuilder = urd::builder<kr::ps::ext::ModuleState, kr::ps::ext::ControlRepository>;
+    using CallStackView = kr::ps::ext::CallStackView;
+    auto& executions = *context->execution_repository;
+    auto& controls = *context->control_repository;
+    auto& denotations = *context->dl_denotation_repository;
+    auto& states = *search->state_repository;
+    // The pools the built children come from, before the program states that hold them.
+    auto state_pool = urd::Store<urd::slots<urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>>> {};
+    auto register_pool = urd::Store<urd::slots<urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>>> {};
+    auto module_pool = urd::Store<urd::slots<ModuleStateBuilder>> {};
+    auto pool = urd::Store<urd::slots<ProgramStateBuilder>> {};
+    const auto& formalism = *search->task->get_repository();
+    const auto object = [&formalism](ygg::uint_t at) { return formalism.view(urd::index<tyr::formalism::Object>(at)); };
+    using Object = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
     auto first = pool.make_shared();
-    first->program = program.index();
-    auto& first_module = first->module_state;
-    first_module.mod = module_.index();
-    first_module.memory_state = module_.get_entry_memory_state().index();
-    auto arguments = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(context->dl_builder);
-    const auto argument_view = kr::dl::semantics::insert(*context->dl_denotation_repository, *arguments).first;
-    first_module.arguments = argument_view.index();
-    const auto program_state = urd::resolve(*first, *context->execution_repository);
-    const auto module_state = program_state.get_module_state();
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ProgramView> {}(program_state.get_program(), program));
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(module_state.get_mod(), module_));
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(module_state.get_memory_state(), module_.get_entry_memory_state()));
-    EXPECT_EQ(&module_state.get_mod().context(), &repository);
-    EXPECT_EQ(&*module_state.get_state().context().get_task(), search->task.get());
-    EXPECT_EQ(&module_state.get_state().get_fact_storage(), &first_module.state.builder.fact_storage);
-    EXPECT_TRUE(urd::EqualTo<kr::dl::semantics::CallArgumentsView> {}(module_state.get_arguments(), argument_view));
-    EXPECT_EQ(&module_state.get_arguments().context(), context->dl_denotation_repository.get());
+    auto& first_state = urd::builder_of(first->state, state_pool, states);
+    auto& first_module = urd::builder_of(first->module_state, module_pool, controls);
+    auto& first_registers = urd::builder_of(first_module.registers, register_pool, denotations);
+    first_module.mod = module_;
+    first_module.memory_state = module_.get_entry_memory_state();
+    auto arguments = context->dl_builder.template scratch<kr::dl::semantics::CallArguments>();
+    const auto argument_view = kr::dl::semantics::insert(denotations, *arguments).first;
+    first_module.arguments = argument_view;
+    const auto program_state = urd::resolve(*first, executions);
+    // A transient state holds its planning state, its activation and its registers built.
+    const auto module_state = std::get<kr::ps::ext::ModuleStateBuilderView>(program_state.get_module_state());
+    const auto registers_of = [](const auto& activation)
+    { return std::get<kr::dl::semantics::RegisterValuesBuilderView>(activation.get_registers()); };
+    EXPECT_TRUE(urd::is_interned_as(module_state.get_mod(), module_));
+    EXPECT_TRUE(urd::is_interned_as(module_state.get_memory_state(), module_.get_entry_memory_state()));
+    const auto planning_state = std::get<tyr::planning::StateBuilderView<Kind>>(program_state.get_state());
+    EXPECT_EQ(&*planning_state.context().get_task(), search->task.get());
+    EXPECT_EQ(&planning_state.get_numeric_storage().get_values(), &first_state.numeric_storage.values);
+    EXPECT_TRUE(urd::is_interned_as(module_state.get_arguments(), argument_view));
     EXPECT_FALSE(program_state.get_call_stack());
-    first_module.registers.values.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
-    first_module.registers.values.role_values.emplace_back(
-        urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>(urd::index<tyr::formalism::Object>(0),
-                                                                                               urd::index<tyr::formalism::Object>(1)));
-    EXPECT_EQ(module_state.get_registers().template values<kr::dl::ConceptTag>().base().data(), first_module.registers.values.concept_values.data());
-    const auto registered_registers = kr::dl::semantics::insert(*context->dl_denotation_repository, first_module.registers.values).first;
-    const auto borrowed_registers = module_state.get_registers();
+    first_registers.concept_values.emplace_back(std::in_place, object(0));
+    first_registers.role_values.emplace_back(std::in_place, Object(object(0)), Object(object(1)));
+    ASSERT_EQ(std::ranges::size(registers_of(module_state).template values<kr::dl::ConceptTag>()), 1U);
+    const auto registered_registers = kr::dl::semantics::copy(registers_of(module_state), { denotations, context->dl_builder }).first;
+    const auto built_registers = registers_of(module_state);
     const auto concept_id = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0);
     const auto role_id = kr::dl::RegisterIdentifier<kr::dl::RoleTag>(0);
-    EXPECT_EQ(borrowed_registers.at(concept_id).value().index(), registered_registers.at(concept_id).value().index());
-    EXPECT_EQ(&borrowed_registers.at(concept_id).value().context(), &registered_registers.at(concept_id).value().context());
-    EXPECT_EQ(borrowed_registers.at(role_id).value().first.index(), registered_registers.at(role_id).value().first.index());
-    EXPECT_EQ(borrowed_registers.at(role_id).value().second.index(), registered_registers.at(role_id).value().second.index());
-    auto& facts = first_module.state.builder.fact_storage;
+    EXPECT_EQ(built_registers.at(concept_id).value().index(), registered_registers.at(concept_id).value().index());
+    EXPECT_EQ(&built_registers.at(concept_id).value().context(), &registered_registers.at(concept_id).value().context());
+    EXPECT_EQ(built_registers.at(role_id).value().first.index(), registered_registers.at(role_id).value().first.index());
+    EXPECT_EQ(built_registers.at(role_id).value().second.index(), registered_registers.at(role_id).value().second.index());
+    auto& facts = first_state.fact_storage;
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
         facts.values = { 1, 0 };
     else
     {
         facts.indices.insert(0);
     }
-    first_module.state.builder.numeric_storage.values = { 3.0 };
+    first_state.numeric_storage.values = { 3.0 };
 
-    // Transient module values use the same interned callers as registered execution states.
-    auto tail_data = urd::data<kr::ps::ext::CallStack>(first_module.mod, first_module.memory_state, registered_registers.index(), first_module.arguments, {});
-    const auto tail = kr::ps::ext::insert(*context->execution_repository, tail_data).first;
-    auto head_registers = runir::tests::copy_fields(first_module.registers.values);
+    // Transient program states use the same interned frames as registered ones: an activation and its caller.
+    const auto activation_of = [&](kr::dl::semantics::RegisterValuesView values)
+    {
+        auto data = context->control_builder.template scratch<kr::ps::ext::ModuleState>();
+        data->mod = module_.index();
+        data->memory_state = module_.get_entry_memory_state().index();
+        data->registers = values.index();
+        data->arguments = argument_view.index();
+        return kr::ps::ext::insert(controls, *data).first;
+    };
+    const auto frame_of = [&](kr::ps::ext::ModuleStateView activation, std::optional<CallStackView> caller_)
+    {
+        auto data = context->control_builder.template scratch<kr::ps::ext::CallStack>();
+        data->module_state = activation.index();
+        if (caller_.has_value())
+            data->caller = caller_->index();
+        return kr::ps::ext::insert(controls, *data).first;
+    };
+    const auto tail = frame_of(activation_of(registered_registers), std::nullopt);
+    auto head_registers = urd::data<kr::dl::semantics::RegisterValues>();
+    kr::dl::semantics::assign(head_registers, registers_of(module_state));
     head_registers.concept_values.front() = urd::index<tyr::formalism::Object>(1);
-    const auto head_register_values = kr::dl::semantics::insert(*context->dl_denotation_repository, head_registers).first;
-    auto head_data = urd::data<kr::ps::ext::CallStack>(first_module.mod, first_module.memory_state, head_register_values.index(), first_module.arguments, {});
-    head_data.caller = tail.index();
-    const auto head = kr::ps::ext::insert(*context->execution_repository, head_data).first;
-    first->call_stack = head.index();
-    EXPECT_EQ(kr::ps::ext::insert(*context->execution_repository, head_data).first.index(), head.index());
-    static_assert(std::same_as<decltype(program_state.get_call_stack()), std::optional<kr::ps::ext::CallStackView<Kind>>>);
+    const auto head_register_values = kr::dl::semantics::insert(denotations, head_registers).first;
+    const auto head = frame_of(activation_of(head_register_values), tail);
+    first->call_stack.emplace(head);
+    EXPECT_EQ(frame_of(activation_of(head_register_values), tail).index(), head.index());
     const auto stack = program_state.get_call_stack();
     ASSERT_TRUE(stack);
-    EXPECT_EQ(stack.value().index(), head.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(stack.value().get_mod(), module_));
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(stack.value().get_return_memory_state(), module_.get_entry_memory_state()));
-    EXPECT_TRUE(urd::EqualTo<kr::dl::semantics::CallArgumentsView> {}(stack.value().get_arguments(), argument_view));
-    EXPECT_EQ(stack.value().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(1));
-    const auto caller = stack.value().get_caller();
+    const auto head_frame = urd::interned_view(*stack);
+    EXPECT_EQ(head_frame.index(), head.index());
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(head_frame.get_module_state().get_mod(), module_));
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(head_frame.get_module_state().get_memory_state(), module_.get_entry_memory_state()));
+    EXPECT_TRUE(urd::EqualTo<kr::dl::semantics::CallArgumentsView> {}(head_frame.get_module_state().get_arguments(), argument_view));
+    EXPECT_EQ(head_frame.get_module_state().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(1));
+    const auto caller = head_frame.get_caller();
     ASSERT_TRUE(caller);
     EXPECT_EQ(caller.value().index(), tail.index());
-    EXPECT_EQ(caller.value().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(0));
+    EXPECT_EQ(caller.value().get_module_state().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(0));
     EXPECT_FALSE(caller.value().get_caller());
 
-    // Program copies own their mutable module values and share immutable callers.
+    // Program copies own their mutable values and share immutable frames. Two copies hold the same values when their
+    // planning states, registers and frames do (a module's builder is not compared: modules are recursive kinds).
+    using RegistersBuilder = urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>;
+    const auto same = [&](const ProgramStateBuilder& lhs, const ProgramStateBuilder& rhs)
+    {
+        const auto& lhs_module = std::get<urd::built_child<kr::ps::ext::ModuleState, kr::ps::ext::ControlRepository>>(lhs.module_state).held();
+        const auto& rhs_module = std::get<urd::built_child<kr::ps::ext::ModuleState, kr::ps::ext::ControlRepository>>(rhs.module_state).held();
+        return urd::EqualTo<decltype(lhs.state)> {}(lhs.state, rhs.state) && urd::EqualTo<decltype(lhs_module.registers)> {}(lhs_module.registers, rhs_module.registers)
+               && urd::interned_view(lhs_module.memory_state) == urd::interned_view(rhs_module.memory_state)
+               && lhs.call_stack.has_value() == rhs.call_stack.has_value()
+               && (!lhs.call_stack.has_value() || urd::interned_view(*lhs.call_stack).index() == urd::interned_view(*rhs.call_stack).index());
+    };
+    static_assert(urd::EqualityComparableByEqualTo<RegistersBuilder>);
     auto separate = pool.make_shared();
-    separate->program = first->program;
-    auto& separate_module = separate->module_state;
-    separate_module.state = first_module.state;
-    separate_module.mod = first_module.mod;
-    separate_module.memory_state = first_module.memory_state;
-    separate_module.registers.values = runir::tests::copy_fields(first_module.registers.values);
-    separate_module.arguments = first_module.arguments;
-    separate->call_stack = first->call_stack;
-    EXPECT_NE(std::ranges::data(separate_module.state.builder.numeric_storage.values), std::ranges::data(first_module.state.builder.numeric_storage.values));
-    EXPECT_NE(separate_module.registers.values.concept_values.data(), first_module.registers.values.concept_values.data());
-    EXPECT_EQ(*separate->call_stack, *first->call_stack);
-    EXPECT_TRUE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
-    EXPECT_EQ(urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
-    separate_module.state.builder.atom_storage.indices.insert(0);
-    EXPECT_TRUE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
-    EXPECT_EQ(urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
+    auto& separate_state = urd::builder_of(separate->state, state_pool, states);
+    auto& separate_module = urd::builder_of(separate->module_state, module_pool, controls);
+    auto& separate_registers = urd::builder_of(separate_module.registers, register_pool, denotations);
+    separate_state = first_state;
+    separate_module.mod = module_;
+    separate_module.memory_state = module_.get_entry_memory_state();
+    kr::dl::semantics::assign(separate_registers, registers_of(module_state));
+    separate_module.arguments = argument_view;
+    separate->call_stack.emplace(head);
+    EXPECT_NE(std::ranges::data(separate_state.numeric_storage.values), std::ranges::data(first_state.numeric_storage.values));
+    EXPECT_NE(separate_registers.concept_values.data(), first_registers.concept_values.data());
+    EXPECT_EQ(urd::interned_view(*separate->call_stack).index(), urd::interned_view(*first->call_stack).index());
+    EXPECT_TRUE(same(*first, *separate));
+    EXPECT_EQ(urd::Hash<decltype(first->state)> {}(first->state), urd::Hash<decltype(separate->state)> {}(separate->state));
+    separate_state.atom_storage.indices.insert(0);
+    EXPECT_TRUE(same(*first, *separate));
+    EXPECT_EQ(urd::Hash<decltype(first->state)> {}(first->state), urd::Hash<decltype(separate->state)> {}(separate->state));
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
-        separate_module.state.builder.fact_storage.values.front() = 0;
+        separate_state.fact_storage.values.front() = 0;
     else
-        separate_module.state.builder.fact_storage.indices.erase(0);
-    EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
-    separate_module.state.builder = first_module.state.builder;
-    separate_module.state.builder.numeric_storage.values.front() = 4.0;
-    EXPECT_EQ(first_module.state.builder.numeric_storage.values.front(), 3.0);
-    EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
-    separate_module.state.builder = first_module.state.builder;
-    separate_module.registers.values.concept_values.front() = urd::index<tyr::formalism::Object>(1);
-    EXPECT_EQ(first_module.registers.values.concept_values.front().value(), urd::index<tyr::formalism::Object>(0));
-    EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
-    separate_module.registers.values = runir::tests::copy_fields(first_module.registers.values);
-    separate->call_stack = tail.index();
-    EXPECT_EQ(program_state.get_call_stack().value().index(), head.index());
-    EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
+        separate_state.fact_storage.indices.erase(0);
+    EXPECT_FALSE(same(*first, *separate));
+    separate_state = first_state;
+    separate_state.numeric_storage.values.front() = 4.0;
+    EXPECT_EQ(first_state.numeric_storage.values.front(), 3.0);
+    EXPECT_FALSE(same(*first, *separate));
+    separate_state = first_state;
+    separate_registers.concept_values.front().emplace(object(1));
+    const auto& first_concept = first_registers.concept_values.front();
+    ASSERT_TRUE(first_concept.has_value());
+    EXPECT_EQ(first_concept.has_value() ? urd::interned_view(*first_concept).index() : urd::index<tyr::formalism::Object>(), urd::index<tyr::formalism::Object>(0));
+    EXPECT_FALSE(same(*first, *separate));
+    kr::dl::semantics::assign(separate_registers, registers_of(module_state));
+    separate->call_stack.emplace(tail);
+    EXPECT_EQ(urd::interned_view(*program_state.get_call_stack()).index(), head.index());
+    EXPECT_FALSE(same(*first, *separate));
 
-    // Releasing a program retains its mutable module buffers for reuse.
+    // Releasing a program retains its mutable builders and their buffers for reuse.
     const auto slot = separate.get();
-    const auto buffer = std::ranges::data(separate_module.state.builder.numeric_storage.values);
-    const auto capacity = separate_module.state.builder.numeric_storage.values.capacity();
-    const auto concept_buffer = separate_module.registers.values.concept_values.data();
-    const auto role_buffer = separate_module.registers.values.role_values.data();
+    const auto buffer = std::ranges::data(separate_state.numeric_storage.values);
+    const auto capacity = separate_state.numeric_storage.values.capacity();
+    const auto concept_buffer = separate_registers.concept_values.data();
+    const auto role_buffer = separate_registers.role_values.data();
     separate = {};
     auto reused = pool.make_shared();
     EXPECT_EQ(reused.get(), slot);
-    EXPECT_EQ(std::ranges::data(reused->module_state.state.builder.numeric_storage.values), buffer);
-    EXPECT_EQ(reused->module_state.state.builder.numeric_storage.values.capacity(), capacity);
-    EXPECT_EQ(reused->module_state.registers.values.concept_values.data(), concept_buffer);
-    EXPECT_EQ(reused->module_state.registers.values.role_values.data(), role_buffer);
-    EXPECT_EQ(caller.value().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(0));
+    auto& reused_state = urd::builder_of(reused->state, state_pool, states);
+    auto& reused_module = urd::builder_of(reused->module_state, module_pool, controls);
+    auto& reused_registers = urd::builder_of(reused_module.registers, register_pool, denotations);
+    EXPECT_EQ(std::ranges::data(reused_state.numeric_storage.values), buffer);
+    EXPECT_EQ(reused_state.numeric_storage.values.capacity(), capacity);
+    EXPECT_EQ(reused_registers.concept_values.data(), concept_buffer);
+    EXPECT_EQ(reused_registers.role_values.data(), role_buffer);
+    EXPECT_EQ(caller.value().get_module_state().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(0));
 }
 
 }  // namespace

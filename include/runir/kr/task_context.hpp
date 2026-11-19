@@ -22,9 +22,13 @@ struct TaskContext
     runir::datasets::TaskSearchContextPtr<Kind> search_context;
     runir::kr::dl::semantics::Builder dl_builder;
     runir::kr::dl::semantics::DenotationRepositoryPtr dl_denotation_repository;
+    runir::kr::ps::ext::ControlBuilder control_builder;
+    runir::kr::ps::ControlRepositoryPtr<runir::kr::ExtFamilyTag> control_repository;
     runir::kr::ps::ext::ExecutionBuilder<Kind> execution_builder;
     runir::kr::ps::ExecutionRepositoryPtr<runir::kr::ExtFamilyTag, Kind> execution_repository;
 
+    runir::kr::ps::icp::ControlBuilder icp_control_builder;
+    runir::kr::ps::ControlRepositoryPtr<runir::kr::IcpFamilyTag> icp_control_repository;
     runir::kr::ps::icp::ExecutionBuilder<Kind> icp_execution_builder;
     runir::kr::ps::ExecutionRepositoryPtr<runir::kr::IcpFamilyTag, Kind> icp_execution_repository;
 

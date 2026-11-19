@@ -12,6 +12,7 @@ add_library(kr SHARED
     dl/semantics/repository.cpp
     dl/semantics/state_evaluation_context.cpp
     dl/semantics/syntactic_complexity.cpp
+    dl/cnf_grammar/builder.cpp
     dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/generate.cpp
     dl/cnf_grammar/symbol_repositories.cpp

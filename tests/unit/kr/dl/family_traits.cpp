@@ -50,10 +50,14 @@ consteval bool execution_interning_contracts()
 {
     using ExtRepository = kr::ps::ExecutionRepository<kr::ExtFamilyTag, Kind>;
     using IcpRepository = kr::ps::ExecutionRepository<kr::IcpFamilyTag, Kind>;
-    return InternsData<ExtRepository, kr::ps::ext::ProgramState<Kind>> && InternsData<IcpRepository, kr::ps::icp::Histories>
+    return InternsData<ExtRepository, kr::ps::ext::ProgramState<Kind>> && InternsData<IcpRepository, kr::ps::icp::ProgramState<Kind>>
            && rejects_symbol<ExtRepository, kr::ps::ext::Module>() && rejects_symbol<IcpRepository, kr::ps::icp::Module>();
 }
 
+static_assert(InternsData<kr::ps::ext::ControlRepository, kr::ps::ext::ModuleState>);
+static_assert(InternsData<kr::ps::ext::ControlRepository, kr::ps::ext::CallStack>);
+static_assert(InternsData<kr::ps::icp::ControlRepository, kr::ps::icp::Histories>);
+static_assert(rejects_symbol<kr::ps::ext::ControlRepository, kr::ps::ext::ProgramState<tyr::GroundTag>>());
 static_assert(execution_interning_contracts<tyr::GroundTag>());
 static_assert(execution_interning_contracts<tyr::LiftedTag>());
 

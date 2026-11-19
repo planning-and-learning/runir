@@ -119,8 +119,6 @@ template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
     using namespace nb::literals;
-    using LocalStateView = ModuleStateView<Kind>;
-    using StackView = CallStackView<Kind>;
     using StateView = ProgramStateView<Kind>;
     using VertexLabel = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
     using Graph = ProgramProofGraph<ExtFamilyTag, Kind>;
@@ -154,20 +152,15 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     bind_feature_evaluation<Kind, runir::kr::dl::NumericalTag>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
 
-    // The records are bound first (bind_data, bind_program_executor). The planning state of a module or program state:
-    // the registered state, not the index its record holds.
-    urd::python::bind_view<LocalStateView>(m);
-    // A call stack's record has no task kind: the views of its ground and lifted repositories are bound in a module of
-    // their own (ground, lifted), where each has its name.
-    auto kind_module = m.def_submodule(std::string(prefix) == "Ground" ? "ground" : "lifted");
-    urd::python::bind_view<StackView>(kind_module);
+    // The records are bound first (bind_data, bind_program_executor), and the control views (no task kind) once, before
+    // the kinds. The planning state of a program state: the registered state, not the index its record holds.
     urd::python::bind_view<StateView>(m);
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)
                             .def_prop_ro(
                                 "state",
-                                [](const VertexLabel& self) { return self.program_state.get_module_state().get_state(); },
+                                [](const VertexLabel& self) { return self.program_state.get_state(); },
                                 nb::keep_alive<0, 1>())
                             .def_ro("is_initial", &VertexLabel::is_initial)
                             .def_ro("is_goal", &VertexLabel::is_goal)
@@ -286,11 +279,15 @@ void bind_program_executor(nb::module_& m)
     m.attr("GroundProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedProgramProofEdgeLabel") = edge_label;
 
-    urd::python::bind_data<ModuleState<tyr::GroundTag>>(m);
-    urd::python::bind_data<ModuleState<tyr::LiftedTag>>(m);
+    urd::python::bind_data<ModuleState>(m);
     urd::python::bind_data<CallStack>(m);
     urd::python::bind_data<ProgramState<tyr::GroundTag>>(m);
     urd::python::bind_data<ProgramState<tyr::LiftedTag>>(m);
+    // Registered without methods so Python can hold and pass these handles.
+    nb::class_<ControlRepository>(m, "ControlRepository");
+    nb::class_<ControlBuilder>(m, "ControlBuilder");
+    urd::python::bind_view<ModuleStateView>(m);
+    urd::python::bind_view<CallStackView>(m);
     bind_execution_types<tyr::GroundTag>(m, "Ground");
     bind_execution_types<tyr::LiftedTag>(m, "Lifted");
 

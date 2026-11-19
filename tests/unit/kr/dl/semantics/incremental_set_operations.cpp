@@ -1,3 +1,5 @@
+#include "denotation_builders.hpp"
+
 #include <array>
 #include <gtest/gtest.h>
 #include <random>
@@ -24,25 +26,26 @@ void check_composition_and_closures()
         (void) repository->insert(data);
     }
     const auto object = [&](ygg::uint_t index) { return repository->view(urd::index<tyr::formalism::Object>(index)); };
-    auto lhs = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
-    auto rhs = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    auto words = Words(repository);
+    auto lhs = words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    auto rhs = words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
     for (ygg::uint_t i = 0; i < size; ++i)
     {
         lhs.get(urd::index<tyr::formalism::Object>(i)).set((i + 1) % size);
         rhs.get(urd::index<tyr::formalism::Object>(i)).set((i + 2) % size);
     }
-    auto previous_lhs = lhs;
-    auto previous_rhs = rhs;
+    auto previous_lhs = copy_denotation(lhs, words.storage, words.repository);
+    auto previous_rhs = copy_denotation(rhs, words.storage, words.repository);
     auto composition = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto transitive = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto reflexive = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
-    workspace.initialize(size);
-    const auto lhs_view = urd::resolve(lhs, *repository);
-    const auto rhs_view = urd::resolve(rhs, *repository);
+    workspace.initialize(size, words.storage.records(), words.repository);
+    const auto lhs_view = urd::resolve(lhs, words.repository);
+    const auto rhs_view = urd::resolve(rhs, words.repository);
 
     const auto check_result = [&](const kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>& output,
-                                  const urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>& previous,
+                                  const urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>, runir::kr::dl::semantics::DenotationRepository>& previous,
                                   const std::array<bool, cells>& expected,
                                   bool initialized)
     {
@@ -93,9 +96,12 @@ void check_composition_and_closures()
                     (rhs.get(urd::index<tyr::formalism::Object>(source))[target] ? rhs_delta.added : rhs_delta.removed)
                         .emplace_back(object(source), object(target));
             }
-        const auto old_composition = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : composition.get_builder();
-        const auto old_transitive = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : transitive.get_builder();
-        const auto old_reflexive = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : reflexive.get_builder();
+        const auto old_composition =
+            initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : copy_denotation(composition.get_builder(), words.storage, words.repository);
+        const auto old_transitive =
+            initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : copy_denotation(transitive.get_builder(), words.storage, words.repository);
+        const auto old_reflexive =
+            initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : copy_denotation(reflexive.get_builder(), words.storage, words.repository);
         if (initialize)
         {
             kr::dl::semantics::incremental::detail::initialize_set(kr::dl::CompositionTag {}, composition, lhs_view, lhs_delta, rhs_view, rhs_delta, workspace);
@@ -130,8 +136,8 @@ void check_composition_and_closures()
         for (ygg::uint_t object_index = 0; object_index < size; ++object_index)
             expected_closure[object_index * size + object_index] = true;
         check_result(reflexive, old_reflexive, expected_closure, initialize);
-        previous_lhs = lhs;
-        previous_rhs = rhs;
+        previous_lhs = copy_denotation(lhs, words.storage, words.repository);
+        previous_rhs = copy_denotation(rhs, words.storage, words.repository);
     };
     check(true);
     for (const auto* output : { &composition, &transitive, &reflexive })
@@ -188,8 +194,8 @@ void check_composition_and_closures()
     for (size_t iteration = 0; iteration < 200; ++iteration)
     {
         SCOPED_TRACE(iteration);
-        const auto saved_lhs = lhs;
-        const auto saved_rhs = rhs;
+        const auto saved_lhs = copy_denotation(lhs, words.storage, words.repository);
+        const auto saved_rhs = copy_denotation(rhs, words.storage, words.repository);
         for (size_t change = 0; change < 20; ++change)
         {
             const auto source = static_cast<ygg::uint_t>(random() % size);
@@ -205,8 +211,8 @@ void check_composition_and_closures()
         check();  // No changes must clear previous output deltas.
         if (iteration % 3 == 0)
         {
-            lhs = saved_lhs;
-            rhs = saved_rhs;
+            lhs = copy_denotation(saved_lhs, words.storage, words.repository);
+            rhs = copy_denotation(saved_rhs, words.storage, words.repository);
             check();
         }
     }
@@ -229,20 +235,21 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
         (void) repository->insert(data);
     }
     const auto object = [&](ygg::uint_t i) { return repository->view(urd::index<tyr::formalism::Object>(i)); };
+    auto words = Words(repository);
     const auto check = [&](auto tag)
     {
         constexpr auto intersection = std::same_as<decltype(tag), kr::dl::IntersectionTag>;
         SCOPED_TRACE(intersection);
-        auto lhs = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size), rhs = lhs;
+        auto lhs = words.make<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size), rhs = words.make<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
         for (const auto i : { digits - 1, digits, digits + 1 })
             lhs.get().set(i);
         for (const auto i : { ygg::uint_t { 0 }, digits, digits + 1 })
             rhs.get().set(i);
-        const auto left = urd::resolve(lhs, *repository), right = urd::resolve(rhs, *repository);
+        const auto left = urd::resolve(lhs, words.repository), right = urd::resolve(rhs, words.repository);
         auto lhs_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::ConceptTag>(), rhs_delta = lhs_delta;
         auto output = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::ConceptTag>();
         auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
-        workspace.initialize(size);
+        workspace.initialize(size, words.storage.records(), words.repository);
         kr::dl::semantics::incremental::detail::initialize_set(tag, output, left, lhs_delta, right, rhs_delta, workspace);
         EXPECT_TRUE(output.get_delta().empty());
         EXPECT_EQ(output.size(), intersection ? 2 : 4);
@@ -277,8 +284,9 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
         (void) repository->insert(data);
     }
     const auto object = [&](ygg::uint_t i) { return repository->view(urd::index<tyr::formalism::Object>(i)); };
-    auto role = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
-    auto concept_ = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
+    auto words = Words(repository);
+    auto role = words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    auto concept_ = words.make<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
     role.get(urd::index<tyr::formalism::Object>(0)).set(1);
     role.get(urd::index<tyr::formalism::Object>(1)).set(size - 1);
     role.get(urd::index<tyr::formalism::Object>(2)).set(1);
@@ -290,9 +298,9 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
     auto restricted = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto existential = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::ConceptTag>();
     auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
-    workspace.initialize(size);
-    const auto role_view = urd::resolve(role, *repository);
-    const auto concept_view = urd::resolve(concept_, *repository);
+    workspace.initialize(size, words.storage.records(), words.repository);
+    const auto role_view = urd::resolve(role, words.repository);
+    const auto concept_view = urd::resolve(concept_, words.repository);
     kr::dl::semantics::incremental::detail::initialize_set(kr::dl::RestrictionTag {},
                                                            restricted,
                                                            role_view,
@@ -346,15 +354,16 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
         (void) repository->insert(data);
     }
     const auto object = [&](ygg::uint_t index) { return repository->view(urd::index<tyr::formalism::Object>(index)); };
-    auto role = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    auto words = Words(repository);
+    auto role = words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
     role.get(urd::index<tyr::formalism::Object>(0)).set(size - 1);
     role.get(urd::index<tyr::formalism::Object>(size - 1)).set(1);
     auto inverse = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto complement = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::RoleTag>();
     auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
-    workspace.initialize(size);
-    const auto view = urd::resolve(role, *repository);
+    workspace.initialize(size, words.storage.records(), words.repository);
+    const auto view = urd::resolve(role, words.repository);
     kr::dl::semantics::incremental::detail::initialize_set(kr::dl::InverseTag {}, inverse, view, delta, workspace);
     kr::dl::semantics::incremental::detail::initialize_set(kr::dl::ComplementTag {}, complement, view, delta, workspace);
     for (const auto* output : { &inverse, &complement })

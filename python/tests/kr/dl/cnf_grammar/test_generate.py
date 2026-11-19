@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser, PlanningDomain
-from pytyr.planning.ground import PackedState
+from pytyr.planning.ground import State
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
 
@@ -36,7 +36,7 @@ def _make_gripper_context(
 
 def _generate(
     grammar_description: str,
-    states: Sequence[PackedState],
+    states: Sequence[State],
     planning_domain: PlanningDomain,
     task_context: GroundTaskContext,
     max_syntactic_complexity: int,
@@ -57,7 +57,7 @@ def _generate(
 
 
 def _concept_vector(
-    concept: semantics.ConstructorConcept, states: Sequence[PackedState], task_context: GroundTaskContext
+    concept: semantics.ConstructorConcept, states: Sequence[State], task_context: GroundTaskContext
 ) -> tuple[tuple[str, ...], ...]:
     result: list[tuple[str, ...]] = []
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)

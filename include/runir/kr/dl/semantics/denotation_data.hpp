@@ -11,14 +11,22 @@
 #include <utility>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::kr::dl::semantics
-{
-/// The blocks of a concept's or role's denotation, interned in its DenotationRepository: the record's blocks field is their handle.
-using DenotationBlocks = urd::Store<urd::sequence<ygg::uint_t>, urd::frozen>;
-}
-
 namespace urd
 {
+
+/// A denotation's words: its bitset's blocks, the trailing bits zero.
+template<>
+struct data<runir::kr::dl::semantics::DenotationBlocks>
+{
+    urd::index<runir::kr::dl::semantics::DenotationBlocks> index;
+    urd::flat_vector<ygg::uint_t> words;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"words", &data::words>> {}; }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::words> {}; }
+};
 
 template<>
 struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>

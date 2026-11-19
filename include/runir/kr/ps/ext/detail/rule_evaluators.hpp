@@ -93,6 +93,15 @@ class RuleEvaluators
             return LoadRuleEvaluator<Kind, RuleCategoryFor<Tag>>(rule, variant);
     }
 
+    /// The rules of a state's module from its memory state (each interned: urd::interned_view).
+    template<ProgramStateViewConcept<Kind> S>
+    [[nodiscard]] auto source_rules(S state) const
+    {
+        return urd::visit_view(state.get_module_state(),
+                               [this](const auto& module_state)
+                               { return source_rules(urd::interned_view(module_state.get_mod()), urd::interned_view(module_state.get_memory_state())); });
+    }
+
     [[nodiscard]] auto source_rules(ModuleView module_, MemoryStateView memory_state) const
     {
         const auto modules = m_program.get_modules();
@@ -135,11 +144,12 @@ class RuleEvaluators
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(const Evaluator& evaluator,
                  RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
-                 const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate)
+                 const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate)
     {
         using Tag = typename Evaluator::RuleTag;
         if constexpr (std::same_as<Tag, ActionTag> || std::same_as<Tag, DoTag> || std::same_as<Tag, SketchTag>)
@@ -198,7 +208,7 @@ public:
             backtracked = true;
             return emit(std::forward<Failure>(failure));
         };
-        for (const auto rule : source_rules(state.get_module_state().get_mod(), state.get_module_state().get_memory_state()))
+        for (const auto rule : source_rules(state))
         {
             if (stop())
                 return false;
@@ -215,7 +225,7 @@ public:
             if (backtracked)
                 return true;
         }
-        for (const auto rule : source_rules(state.get_module_state().get_mod(), state.get_module_state().get_memory_state()))
+        for (const auto rule : source_rules(state))
         {
             if (stop())
                 return false;
@@ -239,12 +249,12 @@ public:
             return true;
         // Each successor is generated once for the complete effectful Sketch batch.
         auto& generator = *m_task_context->search_context->successor_generator;
-        const auto visit = [&](tyr::planning::BorrowedActionRowView<Kind> binding)
+        const auto visit = [&](tyr::planning::ActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
             const auto candidate = context.storage->successor(planning_state, binding);
-            const auto borrowed_candidate = tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionRowView<Kind>> { binding, candidate };
+            const auto borrowed_candidate = tyr::planning::LabeledNode<Kind, typename Storage::PlanningState, tyr::planning::ActionBindingView<Kind>> { binding, candidate };
             context.environment->reset_target();
             auto label = std::optional<tyr::formalism::planning::ActionRowView> {};
             for (const auto& evaluator : m_sketch_rules)
@@ -257,7 +267,7 @@ public:
                     return false;
                 if (!label)
                     label = generator.materialize_action_binding(binding);
-                const auto labeled = tyr::planning::LabeledNode<Kind, PlanningState> { *label, candidate };
+                const auto labeled = tyr::planning::LabeledNode<Kind, typename Storage::PlanningState> { *label, candidate };
                 if (!emit(detail::planning_step(*context.storage,
                                                 state,
                                                 labeled,
@@ -271,19 +281,20 @@ public:
         return generator.for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0), std::ref(visit));
     }
 
-    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
+    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate>
     std::optional<RuleVariantView> matching_rule(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                                  State state,
-                                                 const tyr::planning::LabeledNode<Kind, PlanningState>& candidate)
+                                                 const tyr::planning::LabeledNode<Kind, Candidate>& candidate)
     {
-        for (const auto rule : source_rules(state.get_module_state().get_mod(), state.get_module_state().get_memory_state()))
+        for (const auto rule : source_rules(state))
         {
             const auto variant = rule.get_variant();
             if (std::holds_alternative<ext::RuleView<BacktrackTag>>(variant)
                 && ext::rule_is_applicable(std::get<ext::RuleView<BacktrackTag>>(variant), state, context.planning_state, *context.environment))
                 return std::nullopt;
         }
-        for (const auto rule : source_rules(state.get_module_state().get_mod(), state.get_module_state().get_memory_state()))
+        for (const auto rule : source_rules(state))
         {
             const auto matched = with_rule(rule,
                                            [&](const auto& concrete) -> std::optional<RuleVariantView>
@@ -298,11 +309,12 @@ public:
         return std::nullopt;
     }
 
-    template<ExecutionStorageConcept<Kind> Storage, ExecutionStateViewConcept<Storage> State, tyr::planning::StateViewConcept<Kind> PlanningState>
+    template<ExecutionStorageConcept<Kind> Storage, ExecutionStateViewConcept<Storage> State, tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate>
     auto apply(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                State state,
                RuleVariantView rule,
-               const std::optional<tyr::planning::LabeledNode<Kind, PlanningState>>& candidate)
+               const std::optional<tyr::planning::LabeledNode<Kind, Candidate>>& candidate)
     {
         using Result = std::optional<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>>;
         return with_rule(

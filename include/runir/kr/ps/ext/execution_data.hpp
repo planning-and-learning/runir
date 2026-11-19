@@ -19,11 +19,11 @@
 namespace urd
 {
 
-template<tyr::TaskKind Kind>
-struct data<runir::kr::ps::ext::ModuleState<Kind>>
+/// An activation: its module, memory state, registers and arguments.
+template<>
+struct data<runir::kr::ps::ext::ModuleState>
 {
-    urd::index<runir::kr::ps::ext::ModuleState<Kind>> index;
-    urd::index<tyr::planning::State<Kind>> state;
+    urd::index<runir::kr::ps::ext::ModuleState> index;
     urd::index<runir::kr::ps::ext::Module> mod;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
@@ -31,15 +31,12 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
 
     data() = default;
 
-    // The referenced indices live in different repositories, hence the separate context parameters.
-    data(urd::index<tyr::planning::State<Kind>> state_,
-         urd::index<runir::kr::ps::ext::Module> module_index,
+    data(urd::index<runir::kr::ps::ext::Module> mod_,
          urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state_,
          urd::index<runir::kr::dl::semantics::RegisterValues> registers_,
          urd::index<runir::kr::dl::semantics::CallArguments> arguments_) :
         index(),
-        state(std::move(state_)),
-        mod(module_index),
+        mod(mod_),
         memory_state(memory_state_),
         registers(registers_),
         arguments(arguments_)
@@ -54,90 +51,67 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
 
     static constexpr auto fields() noexcept
     {
-        return urd::Fields<urd::field<"state", &data::state>,
-                           urd::field<"mod", &data::mod>,
+        return urd::Fields<urd::field<"mod", &data::mod>,
                            urd::field<"memory_state", &data::memory_state>,
                            urd::field<"registers", &data::registers>,
                            urd::field<"arguments", &data::arguments>> {};
     }
 
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::state, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
-    static constexpr auto cista_members() noexcept
-    { return urd::Members<&data::index, &data::state, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
 };
 
+/// A frame: the suspended activation (its memory state the one to return to) and its caller.
 template<>
 struct data<runir::kr::ps::ext::CallStack>
 {
     urd::index<runir::kr::ps::ext::CallStack> index;
-    urd::index<runir::kr::ps::ext::Module> mod;
-    urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> return_memory_state;
-    urd::index<runir::kr::dl::semantics::RegisterValues> registers;
-    urd::index<runir::kr::dl::semantics::CallArguments> arguments;
+    urd::index<runir::kr::ps::ext::ModuleState> module_state;
     urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller;
 
     data() = default;
 
-    // The referenced indices live in different repositories, hence the separate context parameters.
-    data(urd::index<runir::kr::ps::ext::Module> module_index,
-         urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> return_memory_state_,
-         urd::index<runir::kr::dl::semantics::RegisterValues> registers_,
-         urd::index<runir::kr::dl::semantics::CallArguments> arguments_,
-         urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller_) :
+    data(urd::index<runir::kr::ps::ext::ModuleState> module_state_, urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller_) :
         index(),
-        mod(module_index),
-        return_memory_state(return_memory_state_),
-        registers(registers_),
-        arguments(arguments_),
+        module_state(module_state_),
         caller(std::move(caller_))
     {
     }
-
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
     data& operator=(data&& other) = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"mod", &data::mod>,
-                           urd::field<"return_memory_state", &data::return_memory_state>,
-                           urd::field<"registers", &data::registers>,
-                           urd::field<"arguments", &data::arguments>,
-                           urd::field<"caller", &data::caller>> {};
-    }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"module_state", &data::module_state>, urd::field<"caller", &data::caller>> {}; }
 
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::mod, &data::return_memory_state, &data::registers, &data::arguments, &data::caller> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
-    static constexpr auto cista_members() noexcept
-    { return urd::Members<&data::index, &data::mod, &data::return_memory_state, &data::registers, &data::arguments, &data::caller> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::module_state, &data::caller> {}; }
 };
 
+/// A program state: its planning state, activation and call stack (its program is its creator's: an expander's, an
+/// evaluation environment's).
 template<tyr::TaskKind Kind>
 struct data<runir::kr::ps::ext::ProgramState<Kind>>
 {
     urd::index<runir::kr::ps::ext::ProgramState<Kind>> index;
-    urd::index<runir::kr::ps::ext::Program> program;
-    urd::index<runir::kr::ps::ext::ModuleState<Kind>> module_state;
+    urd::index<tyr::planning::State<Kind>> state;
+    urd::index<runir::kr::ps::ext::ModuleState> module_state;
     urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack;
 
     data() = default;
 
-    // The referenced indices live in different repositories, hence the separate context parameters.
-    data(urd::index<runir::kr::ps::ext::Program> program_,
-         urd::index<runir::kr::ps::ext::ModuleState<Kind>> module_state_,
+    data(urd::index<tyr::planning::State<Kind>> state_,
+         urd::index<runir::kr::ps::ext::ModuleState> module_state_,
          urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack_) :
         index(),
-        program(program_),
-        module_state(std::move(module_state_)),
+        state(state_),
+        module_state(module_state_),
         call_stack(std::move(call_stack_))
     {
     }
-
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -146,13 +120,15 @@ struct data<runir::kr::ps::ext::ProgramState<Kind>>
 
     static constexpr auto fields() noexcept
     {
-        return urd::
-            Fields<urd::field<"program", &data::program>, urd::field<"module_state", &data::module_state>, urd::field<"call_stack", &data::call_stack>> {};
+        return urd::Fields<urd::field<"state", &data::state>,
+                           urd::field<"module_state", &data::module_state>,
+                           urd::field<"call_stack", &data::call_stack>> {};
     }
 
-    static constexpr auto identifying_members() noexcept { return urd::Members<&data::program, &data::module_state, &data::call_stack> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::program, &data::module_state, &data::call_stack> {}; }
+    static constexpr auto cista_members() noexcept
+    { return urd::Members<&data::index, &data::state, &data::module_state, &data::call_stack> {}; }
 };
 
 }  // namespace urd

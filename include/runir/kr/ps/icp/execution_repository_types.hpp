@@ -1,7 +1,10 @@
 #ifndef RUNIR_KR_PS_ICP_EXECUTION_REPOSITORY_TYPES_HPP_
 #define RUNIR_KR_PS_ICP_EXECUTION_REPOSITORY_TYPES_HPP_
 
+#include "runir/kr/ps/icp/execution_builder.hpp"
 #include "runir/kr/ps/icp/execution_data.hpp"
+
+#include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <boost/mp11.hpp>
 #include <tyr/declarations.hpp>
@@ -10,8 +13,19 @@
 namespace runir::kr::ps::icp
 {
 
+/// The builders and scratch records of the control records, and the scratch records of the denotation repository's
+/// records, which interning a control record's builder interns there (its registers, its arguments).
+using ControlBuilder = boost::mp11::mp_apply<
+    ygg::formalism::BuilderStorage,
+    boost::mp11::mp_push_front<boost::mp11::mp_append<ControlRepositoryTypes, runir::kr::dl::semantics::DenotationRecordTypes>, ControlRepository>>;
+
+/// The builders and scratch records of the execution records, and the scratch records of the control and denotation
+/// repositories' records, which interning an execution record's builder interns there (its activation, its frames).
 template<tyr::TaskKind Kind>
-using ExecutionBuilder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ExecutionRepositoryTypes<Kind>>;
+using ExecutionBuilder = boost::mp11::mp_apply<
+    ygg::formalism::BuilderStorage,
+    boost::mp11::mp_push_front<boost::mp11::mp_append<ExecutionRepositoryTypes<Kind>, ControlRepositoryTypes, runir::kr::dl::semantics::DenotationRecordTypes>,
+                               runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, Kind>>>;
 
 /// The execution repositories of the icp family, by task kind.
 using GroundExecutionRepository = runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, tyr::GroundTag>;

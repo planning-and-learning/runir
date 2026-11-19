@@ -650,7 +650,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                             EXPECT_EQ(rule.get_effects().size(), expected_effects);
                             auto data = runir::tests::copy_fields(rule.context()[rule.index()]);
                             EXPECT_TRUE(kr::ps::ext::is_canonical(data));
-                            urd::clear_members(data);
+                            urd::clear_fields(data);
                             EXPECT_TRUE(data.effects.empty());
                         }
                         else

@@ -34,10 +34,10 @@ struct CountEvaluator
         value.set(std::visit(
             [&](auto index)
             {
-                const auto& delta = graph.change(index);
+                const auto [added, removed] = graph.change(index).change();
                 // The numerical result retains the count; only net membership changes are needed.
-                const auto remaining = static_cast<size_t>(value.get_value()) - delta.removed.size();
-                return ygg::to_uint_t(remaining + delta.added.size());
+                const auto remaining = static_cast<size_t>(value.get_value()) - std::ranges::size(removed);
+                return ygg::to_uint_t(remaining + std::ranges::size(added));
             },
             child));
     }

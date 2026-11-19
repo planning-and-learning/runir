@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_SET_OPERATION_WORKSPACE_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_SET_OPERATION_WORKSPACE_HPP_
 
+#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/closure.hpp"
 
@@ -14,20 +15,25 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-/// Scratch shared by sequential constructor updates; no denotation owns it.
+/// Scratch shared by sequential constructor updates; no denotation owns it. Its denotations' words, and those of the
+/// results it initializes, are drawn from `records` and read through `denotations` (the graph's).
 struct SetOperationWorkspace
 {
+    RecordStorage* records = nullptr;
+    const DenotationRepository* denotations = nullptr;
     MarkedRows rows { urd::layer { 0 } };
     ygg::uint_t num_objects = 0;
-    urd::builder<Denotation<ConceptTag>> row;
+    urd::builder<Denotation<ConceptTag>, runir::kr::dl::semantics::DenotationRepository> row;
     ClosureWorkspace closure;
 
-    void initialize(ygg::uint_t num_objects_)
+    void initialize(ygg::uint_t num_objects_, RecordStorage& records_, const DenotationRepository& denotations_)
     {
+        records = &records_;
+        denotations = &denotations_;
         num_objects = num_objects_;
         rows.clear();
         rows.reserve(num_objects);
-        row.initialize(num_objects);
+        row.initialize(num_objects, records_, denotations_);
         closure.initialize(num_objects);
     }
 

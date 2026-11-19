@@ -76,7 +76,8 @@ template<FamilyTag Family, typename RepositoryTypes>
 class BasicRepository;
 
 /// A family's own types, specialized in the family's declarations.hpp: `Repository` for the policy families; the
-/// program families (ext, icp) also name `ConcreteRuleTypes`, `ExecutionRepositoryTypes<Kind>` and `ProgramState<Kind>`.
+/// program families (ext, icp) also name `ConcreteRuleTypes`, `ControlRepositoryTypes`, `ExecutionRepositoryTypes<Kind>` and
+/// `ProgramState<Kind>`.
 template<FamilyTag Family>
 struct FamilyTypes;
 
@@ -106,6 +107,14 @@ struct ModuleSymbol
 {
     static constexpr std::string_view name = urd::joined_name<"ModuleSymbol", Family::name>;
 };
+
+/// A task's records of a program's control that hold no planning state (activations, frames, histories), whatever the
+/// task's kind; its execution repository refers into it.
+template<ProgramFamilyTag Family>
+class ControlRepository;
+
+template<ProgramFamilyTag Family>
+using ControlRepositoryPtr = std::shared_ptr<ControlRepository<Family>>;
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
 class ExecutionRepository;

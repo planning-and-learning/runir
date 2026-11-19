@@ -19,7 +19,7 @@ ProgramState: TypeAlias = ext.ProgramStateGround | ext.ProgramStateLifted
 EvaluationEnvironment: TypeAlias = ext.GroundEvaluationEnvironment | ext.LiftedEvaluationEnvironment
 ExecutionStep: TypeAlias = ext.GroundProgramExecutionStep | ext.LiftedProgramExecutionStep
 Outcome: TypeAlias = ExecutionStep | ext.ConceptChoice | ext.RoleChoice
-PlanningState: TypeAlias = ground.State | lifted.State
+PlanningState: TypeAlias = ground.StateBuilderShared | lifted.StateBuilderShared
 DlContext: TypeAlias = semantics.GroundStateEvaluationContext | semantics.LiftedStateEvaluationContext
 
 
@@ -48,9 +48,9 @@ def make_environment(task_context: TaskContext, program: ext.Program) -> Evaluat
 def initial_program_state(expander: Expander, state: PlanningState) -> ProgramState:
     """Return the program state that starts `expander`'s program in the planning `state` of the same kind."""
     if isinstance(expander, ext.GroundSuccessorExpander):
-        assert isinstance(state, ground.State)
+        assert isinstance(state, ground.StateBuilderShared)
         return expander.initial_state(state)
-    assert isinstance(state, lifted.State)
+    assert isinstance(state, lifted.StateBuilderShared)
     return expander.initial_state(state)
 
 

@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_DL_TRANSITION_EVALUATION_CONTEXT_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 

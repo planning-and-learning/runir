@@ -53,14 +53,14 @@ static_assert(execution_storage_constraints_match<WrongRetainStorage, tyr::Groun
 static_assert(!kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::ProgramStateView<tyr::GroundTag>, int>);
 static_assert(!kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::ProgramStateView<tyr::GroundTag>, kr::ps::ext::TransientExecutionStorage<tyr::GroundTag>>);
 static_assert(
-    !kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::BuilderProgramStateView<tyr::GroundTag>, kr::ps::ext::InternedExecutionStorage<tyr::GroundTag>>);
+    !kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::ProgramStateBuilderView<tyr::GroundTag>, kr::ps::ext::InternedExecutionStorage<tyr::GroundTag>>);
 
 static_assert(kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::ProgramStateView<tyr::GroundTag>, kr::ps::ext::InternedExecutionStorage<tyr::GroundTag>>);
 static_assert(kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::ProgramStateView<tyr::LiftedTag>, kr::ps::ext::InternedExecutionStorage<tyr::LiftedTag>>);
 static_assert(
-    kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::BuilderProgramStateView<tyr::GroundTag>, kr::ps::ext::TransientExecutionStorage<tyr::GroundTag>>);
+    kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::ProgramStateBuilderView<tyr::GroundTag>, kr::ps::ext::TransientExecutionStorage<tyr::GroundTag>>);
 static_assert(
-    kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::BuilderProgramStateView<tyr::LiftedTag>, kr::ps::ext::TransientExecutionStorage<tyr::LiftedTag>>);
+    kr::ps::ext::ExecutionStateViewConcept<kr::ps::ext::ProgramStateBuilderView<tyr::LiftedTag>, kr::ps::ext::TransientExecutionStorage<tyr::LiftedTag>>);
 static_assert(!kr::ps::ext::ExecutionStateViewConcept<int, kr::ps::ext::InternedExecutionStorage<tyr::GroundTag>>);
 static_assert(!kr::ps::ext::ExecutionStateViewConcept<int, kr::ps::ext::InternedExecutionStorage<tyr::LiftedTag>>);
 static_assert(!kr::ps::ext::ExecutionStateViewConcept<int, kr::ps::ext::TransientExecutionStorage<tyr::GroundTag>>);
@@ -257,7 +257,12 @@ TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
         for (const auto binding : expected)
         {
             const auto target = expander.apply_choice(expander.view(initial), parent.front(), statistics).get_target();
-            const auto selected = expander.view(target).get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
+            const auto selected = urd::visit_view(expander.view(target).get_module_state(),
+                                                  [](const auto& activation)
+                                                  {
+                                                      return urd::visit_view(activation.get_registers(),
+                                                                             [](const auto& registers) { return registers.template values<kr::dl::ConceptTag>()[0]; });
+                                                  });
             ASSERT_TRUE(selected);
             EXPECT_EQ(*selected, binding);
             parent.front().advance();
@@ -336,7 +341,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         const auto target_state = step.get_target();
-        EXPECT_EQ(target_state.get_module_state().get_state().index(), initial_state.get_module_state().get_state().index());
+        EXPECT_EQ(target_state.get_state().index(), initial_state.get_state().index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().index(), target.index());
         const auto loaded = target_state.get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
         ASSERT_TRUE(loaded);
@@ -406,7 +411,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         const auto target_state = step.get_target();
-        EXPECT_EQ(target_state.get_module_state().get_state().index(), initial_state.get_module_state().get_state().index());
+        EXPECT_EQ(target_state.get_state().index(), initial_state.get_state().index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().get_name(), "target");
         const auto loaded = target_state.get_module_state().get_registers().template values<kr::dl::RoleTag>()[0];
         ASSERT_TRUE(loaded);
@@ -589,14 +594,12 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     const auto initial_context = environment.make_dl_context(initial_state);
     EXPECT_TRUE(initial_context.arguments().template arguments<kr::dl::ConceptTag>().empty());
     EXPECT_EQ(evaluation_context.arguments(), arguments);
-    EXPECT_EQ(evaluation_context.registers().template values<kr::dl::ConceptTag>().base().data(),
-              module_state.get_registers().template values<kr::dl::ConceptTag>().base().data());
     EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::ConceptTag>()[0].index(), concept_arguments[0].index());
     EXPECT_TRUE(evaluation_context.arguments().template arguments<kr::dl::BooleanTag>()[0].get_value());
     EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::NumericalTag>()[0].get_value(), numerical_arguments[0].get_value());
 
-    auto evaluation_transition = environment.make_dl_transition_context(call_target.get_module_state().get_state(),
-                                                                        call_target.get_module_state().get_state(),
+    auto evaluation_transition = environment.make_dl_transition_context(call_target.get_state(),
+                                                                        call_target.get_state(),
                                                                         arguments,
                                                                         module_state.get_registers(),
                                                                         module_state.get_registers());
@@ -723,7 +726,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
         ASSERT_TRUE(step.planning_successor.has_value());
         EXPECT_EQ(step.planning_successor.value().label.get_relation().get_name(), "pick");
         EXPECT_EQ(step.get_target().get_module_state().get_memory_state().index(), target.index());
-        EXPECT_NE(step.get_target().get_module_state().get_state().index(), initial_state.get_module_state().get_state().index());
+        EXPECT_NE(step.get_target().get_state().index(), initial_state.get_state().index());
     }
 
     auto greedy_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
@@ -738,7 +741,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     const auto edge = greedy.graph->out_edges(0).front();
     const auto selected = greedy.graph->vertex_value(greedy.graph->target(edge)).program_state;
-    EXPECT_EQ(selected.get_module_state().get_state().index(), steps.front().get_target().get_module_state().get_state().index());
+    EXPECT_EQ(selected.get_state().index(), steps.front().get_target().get_state().index());
     EXPECT_EQ(selected.get_module_state().get_memory_state().index(), steps.front().get_target().get_module_state().get_memory_state().index());
 }
 
@@ -762,7 +765,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     const auto steps = collect_steps(expander, initial_state);
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
-    EXPECT_EQ(steps.front().get_target().get_module_state().get_state().index(), initial_state.get_module_state().get_state().index());
+    EXPECT_EQ(steps.front().get_target().get_state().index(), initial_state.get_state().index());
 
     auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     options.universal = true;

@@ -62,7 +62,6 @@ template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
     using namespace nb::literals;
-    using HistoryView = HistoriesView<Kind>;
     using StateView = ProgramStateView<Kind>;
     using VertexLabel = ProgramProofVertexLabel<IcpFamilyTag, Kind>;
     using Graph = ProgramProofGraph<IcpFamilyTag, Kind>;
@@ -96,11 +95,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     bind_feature_evaluation<Kind, runir::kr::dl::NumericalTag>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
 
-    // The records are bound first (bind_data, bind_program_executor).
-    // Histories have no task kind: the views of their ground and lifted repositories are bound in a module of their own
-    // (ground, lifted), where each has its name.
-    auto kind_module = m.def_submodule(std::string(prefix) == "Ground" ? "ground" : "lifted");
-    urd::python::bind_view<HistoryView>(kind_module);
+    // The records are bound first (bind_data, bind_program_executor), and the histories' view (no task kind) once,
+    // before the kinds.
     // The planning state of a program state: the registered state, not the index its record holds.
     urd::python::bind_view<StateView>(m);
 
@@ -194,6 +190,10 @@ void bind_program_executor(nb::module_& m)
     urd::python::bind_data<Histories>(m);
     urd::python::bind_data<ProgramState<tyr::GroundTag>>(m);
     urd::python::bind_data<ProgramState<tyr::LiftedTag>>(m);
+    // Registered without methods so Python can hold and pass these handles.
+    nb::class_<ControlRepository>(m, "ControlRepository");
+    nb::class_<ControlBuilder>(m, "ControlBuilder");
+    urd::python::bind_view<HistoriesView>(m);
     bind_execution_types<tyr::GroundTag>(m, "Ground");
     bind_execution_types<tyr::LiftedTag>(m, "Lifted");
 

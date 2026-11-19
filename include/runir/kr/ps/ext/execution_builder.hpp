@@ -2,92 +2,76 @@
 #define RUNIR_KR_PS_EXT_EXECUTION_BUILDER_HPP_
 
 #include "runir/kr/dl/semantics/declarations.hpp"
-#include "runir/kr/dl/semantics/register_values_data.hpp"
-#include "runir/kr/dl/semantics/register_values_view.hpp"
-#include "runir/kr/ps/ext/declarations.hpp"
-#include "runir/kr/ps/ext/execution_declarations.hpp"
+#include "runir/kr/ps/ext/control_view.hpp"
+#include "runir/kr/ps/ext/execution_data.hpp"
+#include "runir/kr/ps/ext/module_view.hpp"
+#include "runir/kr/ps/memory_state_view.hpp"
 
-#include <cista/containers/optional.h>
-#include <tuple>
-#include <tyr/planning/state_builder.hpp>
+#include <optional>
+#include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
-#include <urd/elements/flat.hpp>
-
-namespace runir::kr::ps::ext
-{
-/// The planning state a module state is built over: a state builder, which its views read through the task's state
-/// repository (urd::resolution below), not through the execution repository the module state is read through.
-template<tyr::TaskKind Kind>
-struct BuiltState
-{
-    urd::builder<tyr::planning::State<Kind>> builder;
-
-    static constexpr auto identifying_members() noexcept { return urd::Members<&BuiltState::builder> {}; }
-};
-
-/// The register values a module state is built with, which its views read through the task's formalism repository
-/// (urd::resolution below), not through the execution repository the module state is read through.
-struct BuiltRegisters
-{
-    urd::data<runir::kr::dl::semantics::RegisterValues> values;
-
-    static constexpr auto identifying_members() noexcept { return urd::Members<&BuiltRegisters::values> {}; }
-};
-}  // namespace runir::kr::ps::ext
-
-/// A built state read through an execution repository: its builder's view through the repository's state repository.
-template<tyr::TaskKind Kind>
-struct urd::resolution<runir::kr::ps::ext::BuiltState<Kind>>
-{
-    template<typename C>
-    static tyr::planning::BuilderStateView<Kind> of(const runir::kr::ps::ext::BuiltState<Kind>& member, const C& context) noexcept
-    { return urd::resolve(member.builder, context.get_state_repository()); }
-
-    template<typename C>
-    static void of(const runir::kr::ps::ext::BuiltState<Kind>&& member, const C& context) = delete;
-};
-
-/// Built registers read through an execution repository: their view through the repository's formalism repository.
-template<>
-struct urd::resolution<runir::kr::ps::ext::BuiltRegisters>
-{
-    template<typename C>
-    static runir::kr::dl::semantics::BorrowedRegisterValuesView of(const runir::kr::ps::ext::BuiltRegisters& member, const C& context) noexcept
-    { return urd::resolve(member.values, context.get_formalism_repository()); }
-
-    template<typename C>
-    static void of(const runir::kr::ps::ext::BuiltRegisters&& member, const C& context) = delete;
-};
+#include <urd/elements/builder.hpp>
+#include <urd/elements/children.hpp>
+#include <utility>
+#include <variant>
+#include <vector>
 
 namespace urd
 {
 
-/// Owned children use urd::builder<T> where available, otherwise urd::data<T>.
-/// References to immutable definitions and interned arguments remain repository indices.
-/// Views construct semantic accessors with urd::resolve.
-template<tyr::TaskKind Kind>
-struct builder<runir::kr::ps::ext::ModuleState<Kind>>
+/// The builder of ModuleState: its record's members, each in its built form (urd::built_t).
+template<typename C>
+struct builder<runir::kr::ps::ext::ModuleState, C>
 {
-    runir::kr::ps::ext::BuiltState<Kind> state;
-    urd::index<runir::kr::ps::ext::Module> mod;
-    urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state;
-    runir::kr::ps::ext::BuiltRegisters registers;
-    urd::index<runir::kr::dl::semantics::CallArguments> arguments;
+    urd::index<runir::kr::ps::ext::ModuleState> index;
+    urd::built_t<urd::index<runir::kr::ps::ext::Module>, ::runir::kr::ps::ext::Repository> mod;
+    urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, ::runir::kr::ps::ext::Repository> memory_state;
+    urd::built_t<urd::index<runir::kr::dl::semantics::RegisterValues>, ::runir::kr::dl::semantics::DenotationRepository> registers;
+    urd::built_t<urd::index<runir::kr::dl::semantics::CallArguments>, ::runir::kr::dl::semantics::DenotationRepository> arguments;
 
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&builder::state, &builder::mod, &builder::memory_state, &builder::registers, &builder::arguments> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"mod", &builder::mod>,
+                           urd::field<"memory_state", &builder::memory_state>,
+                           urd::field<"registers", &builder::registers>,
+                           urd::field<"arguments", &builder::arguments>> {};
+    }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
-/// Owns mutable module values and references an interned caller chain.
-/// Views borrow this value and its repository context.
-template<tyr::TaskKind Kind>
-struct builder<runir::kr::ps::ext::ProgramState<Kind>>
+/// The builder of CallStack: its record's members, each in its built form (urd::built_t).
+template<typename C>
+struct builder<runir::kr::ps::ext::CallStack, C>
 {
-    urd::index<runir::kr::ps::ext::Program> program;
-    urd::builder<runir::kr::ps::ext::ModuleState<Kind>> module_state;
-    urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack;
+    urd::index<runir::kr::ps::ext::CallStack> index;
+    urd::built_t<urd::index<runir::kr::ps::ext::ModuleState>, C> module_state;
+    urd::built_t<urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>>, C> caller;
 
-    static constexpr auto identifying_members() noexcept { return urd::Members<&builder::program, &builder::module_state, &builder::call_stack> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"module_state", &builder::module_state>, urd::field<"caller", &builder::caller>> {};
+    }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+};
+
+/// The builder of ProgramState: its record's members, each in its built form (urd::built_t).
+template<tyr::TaskKind Kind, typename C>
+struct builder<runir::kr::ps::ext::ProgramState<Kind>, C>
+{
+    urd::index<runir::kr::ps::ext::ProgramState<Kind>> index;
+    urd::built_t<urd::index<tyr::planning::State<Kind>>, ::tyr::planning::StateRepository<Kind>> state;
+    urd::built_t<urd::index<runir::kr::ps::ext::ModuleState>, ::runir::kr::ps::ext::ControlRepository> module_state;
+    urd::built_t<urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>>, ::runir::kr::ps::ext::ControlRepository> call_stack;
+
+    static constexpr auto fields() noexcept
+    {
+        return urd::
+            Fields<urd::field<"state", &builder::state>, urd::field<"module_state", &builder::module_state>, urd::field<"call_stack", &builder::call_stack>> {};
+    }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 }  // namespace urd

@@ -71,7 +71,7 @@ private:
     template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding, typename ConceptDenotations>
     static bool action_matches_do_arguments(RuleView<DoTag> rule, Binding action, const ConceptDenotations& denotations)
     {
-        if (action.get_relation().get_name() != rule.get_action_name())
+        if (urd::visit_view(action.get_relation(), [](const auto& relation) { return relation.get_name(); }) != rule.get_action_name())
             return false;
         if (action.get_values().size() != denotations.size())
             return false;
@@ -86,18 +86,20 @@ private:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate>
     bool do_effects_match(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                           RuleView<DoTag> rule,
                           State state,
                           const PlanningState& planning_state,
-                          const PlanningState& target_state) const
+                          const Candidate& target_state) const
     {
-        auto transition = context.environment->make_dl_transition_context(planning_state,
-                                                                          target_state,
-                                                                          state.get_module_state().get_arguments(),
-                                                                          state.get_module_state().get_registers(),
-                                                                          state.get_module_state().get_registers());
+        auto transition = urd::visit_view(state.get_module_state(),
+                                          [&](const auto& activation)
+                                          {
+                                              return context.environment->make_dl_transition_context(
+                                                  planning_state, target_state, activation.get_arguments(), activation.get_registers(), activation.get_registers());
+                                          });
         return is_compatible_with<Kind>(rule, transition);
     }
 
@@ -105,6 +107,7 @@ private:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool do_rule_matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                          DoRuleWorkspace& workspace,
@@ -112,7 +115,7 @@ private:
                          State state,
                          const PlanningState& planning_state,
                          Binding action,
-                         const PlanningState& target_state) const
+                         const Candidate& target_state) const
     {
         if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment))
             return false;
@@ -140,8 +143,8 @@ public:
         if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.count() == 0; }))
             return true;
         auto& search = *(*context.task_context)->search_context;
-        const auto accept = [&](tyr::planning::BorrowedActionRowView<Kind> binding) { return action_matches_do_arguments(rule, binding, denotations); };
-        const auto visit = [&](tyr::planning::BorrowedActionRowView<Kind> binding)
+        const auto accept = [&](tyr::planning::ActionBindingView<Kind> binding) { return action_matches_do_arguments(rule, binding, denotations); };
+        const auto visit = [&](tyr::planning::ActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
@@ -151,7 +154,7 @@ public:
                 return true;
             if (stop())
                 return false;
-            const auto labeled = tyr::planning::LabeledNode<Kind, PlanningState> { search.successor_generator->materialize_action_binding(binding), candidate };
+            const auto labeled = tyr::planning::LabeledNode<Kind, typename Storage::PlanningState> { search.successor_generator->materialize_action_binding(binding), candidate };
             return emit(detail::planning_step(*context.storage, state, labeled, rule_variant, rule.get_target(), *context.task_context));
         };
         return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
@@ -165,10 +168,11 @@ public:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
-                 const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
+                 const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate) const
     {
         const auto& planning_state = context.planning_state;
         return do_rule_matches(context, *context.do_workspace, m_rule, state, planning_state, candidate.label, candidate.node.get_state());

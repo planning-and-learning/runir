@@ -52,9 +52,9 @@ private:
 
     /// The features of a constructor, by its repository's address and layer and its index, as positions in their sequence.
     using FeaturePositions = urd::Store<urd::map<std::tuple<std::uintptr_t, size_t, ygg::uint_t>, size_t>, urd::multi>;
-    /// The layer the features' input snapshots come from (ygg::FreeRelationRepository::get_relation_builder); declared
-    /// first, so it outlives them, and behind a pointer, so it stays where it is when the workspace moves.
-    std::unique_ptr<ygg::FreeRelationRepository> m_layer = std::make_unique<ygg::FreeRelationRepository>();
+    /// The scratch relations evaluation draws (the features' input snapshots among them); declared first, so it outlives
+    /// them, and behind a pointer, so it stays where it is when the workspace moves.
+    std::unique_ptr<ygg::FreeScratchRelations> m_scratch = std::make_unique<ygg::FreeScratchRelations>();
     urd::Store<urd::sequence<KeyedFeature<FullDistanceFeature>>, urd::stable_refs>
         m_distance_features;  ///< Stable references: callers keep the features they get.
     FeaturePositions m_distance_feature_positions;
@@ -104,7 +104,7 @@ public:
 
     auto& get_values() noexcept { return m_values; }
 
-    [[nodiscard]] const ygg::FreeRelationRepository& get_layer() const noexcept { return *m_layer; }
+    [[nodiscard]] ygg::FreeScratchRelations& get_scratch() noexcept { return *m_scratch; }
 
     /// The feature of a distance constructor of a constructor repository over a formalism repository, made by
     /// make() at first use. References stay valid while this workspace lives.

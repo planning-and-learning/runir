@@ -20,7 +20,10 @@ bool conditions_are_compatible(urd::index_view<Rule<Tag>, C> rule, Context& cont
 
 template<tyr::TaskKind Kind, RuleKind RuleKindT, typename C, ProgramStateViewConcept<Kind> S>
 bool has_current_source(urd::index_view<Rule<RuleKindT>, C> rule, S state)
-{ return rule.get_source() == state.get_module_state().get_memory_state(); }
+{
+    return rule.get_source()
+           == urd::visit_view(state.get_module_state(), [](const auto& activation) { return urd::interned_view(activation.get_memory_state()); });
+}
 
 // Reject the source memory before evaluating conditions in the reusable environment.
 template<tyr::TaskKind Kind,
@@ -34,8 +37,12 @@ bool rule_is_applicable(urd::index_view<Rule<RuleKindT>, C> rule, S state, const
     if (!has_current_source<Kind>(rule, state))
         return false;
     environment.select_source(state);
-    auto state_context = environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
-    return conditions_are_compatible<Kind>(rule, state_context);
+    return urd::visit_view(state.get_module_state(),
+                           [&](const auto& module_)
+                           {
+                               auto state_context = environment.make_dl_context(planning_state, module_.get_arguments(), module_.get_registers());
+                               return conditions_are_compatible<Kind>(rule, state_context);
+                           });
 }
 
 template<tyr::TaskKind Kind, RuleKind Tag, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<ExtFamilyTag, Kind> Context>

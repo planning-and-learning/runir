@@ -57,14 +57,18 @@ public:
             return failure;
         }
         const auto rule = m_rule;
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
-        const auto module_ = state.get_module_state();
-        auto target = context.storage->store(context.planning_state,
-                                             module_.get_mod(),
-                                             rule.get_target(),
-                                             bound_registers<Kind>(rule, module_.get_registers(), choice.current(), *registers, *context.storage),
-                                             module_.get_arguments(),
-                                             state.get_call_stack());
+        auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
+        auto target = urd::visit_view(state.get_module_state(),
+                                      [&](const auto& module_)
+                                      {
+                                          return context.storage->store(
+                                              context.planning_state,
+                                              module_.get_mod(),
+                                              rule.get_target(),
+                                              bound_registers<Kind>(rule, module_.get_registers(), choice.current(), *registers, *context.storage),
+                                              module_.get_arguments(),
+                                              state.get_call_stack());
+                                      });
         return detail::applied<Kind, Storage>(std::move(target), choice.get_rule(), *context.task_context);
     }
 
@@ -105,14 +109,16 @@ private:
             return false;
         if (!rule.get_effects().empty())
         {
-            auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
+            auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
             auto& bindings = choice.bindings();
             auto admitted = bindings.begin();
             for (const auto& value : bindings)
             {
                 if (stop())
                     return false;
-                const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, *context.storage);
+                const auto target_registers = urd::visit_view(state.get_module_state(),
+                                                              [&](const auto& module_)
+                                                              { return bound_registers<Kind>(rule, module_.get_registers(), value, *registers, *context.storage); });
                 if (binding_effects_match(rule, state, planning_state, target_registers, *context.environment))
                     *admitted++ = value;
             }
@@ -127,18 +133,21 @@ private:
         workspace.order_scores.clear();
         workspace.order_indices.clear();
         const auto width = rule.get_order().size();
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
+        auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
         for (const auto& value : choice.bindings())
         {
             if (stop())
                 return false;
-            const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, *context.storage);
+            const auto target_registers = urd::visit_view(state.get_module_state(),
+                                                          [&](const auto& activation)
+                                                          { return bound_registers<Kind>(rule, activation.get_registers(), value, *registers, *context.storage); });
             context.environment->reset_target();
-            auto transition = context.environment->make_dl_transition_context(planning_state,
-                                                                              planning_state,
-                                                                              state.get_module_state().get_arguments(),
-                                                                              state.get_module_state().get_registers(),
-                                                                              target_registers);
+            auto transition = urd::visit_view(state.get_module_state(),
+                                              [&](const auto& activation)
+                                              {
+                                                  return context.environment->make_dl_transition_context(
+                                                      planning_state, planning_state, activation.get_arguments(), activation.get_registers(), target_registers);
+                                              });
             for (auto term : rule.get_order())
             {
                 if (stop())
