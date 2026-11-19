@@ -52,7 +52,7 @@ public:
 private:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
-             ProgramStateViewConcept<Kind> State,
+             urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
     auto& evaluate_do_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                 DoRuleWorkspace& workspace,
@@ -85,7 +85,7 @@ private:
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
-             ProgramStateViewConcept<Kind> State,
+             urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate>
     bool do_effects_match(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
@@ -105,7 +105,7 @@ private:
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
-             ProgramStateViewConcept<Kind> State,
+             urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
@@ -166,7 +166,7 @@ public:
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
-             ProgramStateViewConcept<Kind> State,
+             urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>

@@ -1445,28 +1445,19 @@ namespace
 {
 
 template<tyr::TaskKind Kind>
-struct ReferenceProgramStateAccess : kr::ps::ext::ProgramStateView<Kind>
-{
-    [[nodiscard]] const tyr::planning::StateView<Kind>& get_state() const;
-    [[nodiscard]] const kr::ps::ext::ModuleStateView& get_module_state() const;
-};
-
-template<tyr::TaskKind Kind>
 void check_transient_builder_values_and_reuse()
 {
     static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesView>);
     static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesDataView>);
-    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateView<Kind>, Kind>);
-    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateBuilderView<Kind>, Kind>);
+    static_assert(urd::ViewOf<kr::ps::ext::ProgramStateView<Kind>, kr::ps::ext::ProgramState<Kind>>);
+    static_assert(urd::ViewOf<kr::ps::ext::ProgramStateBuilderView<Kind>, kr::ps::ext::ProgramState<Kind>>);
     static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesView&>);
     static_assert(kr::dl::semantics::RegisterValuesViewConcept<const kr::dl::semantics::RegisterValuesDataView&>);
     static_assert(!kr::dl::semantics::RegisterValuesViewConcept<volatile kr::dl::semantics::RegisterValuesView&>);
     static_assert(urd::ReadsAs<kr::ps::ext::ModuleStateView&, kr::ps::ext::ModuleState>);
     static_assert(urd::ReadsAs<const kr::ps::ext::ModuleStateBuilderView&, kr::ps::ext::ModuleState>);
-    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateView<Kind>&, Kind>);
-    static_assert(kr::ps::ext::ProgramStateViewConcept<const kr::ps::ext::ProgramStateBuilderView<Kind>&, Kind>);
-    static_assert(!kr::ps::ext::ProgramStateViewConcept<volatile kr::ps::ext::ProgramStateView<Kind>&, Kind>);
-    static_assert(kr::ps::ext::ProgramStateViewConcept<ReferenceProgramStateAccess<Kind>, Kind>);
+    static_assert(urd::ViewOf<kr::ps::ext::ProgramStateView<Kind>&, kr::ps::ext::ProgramState<Kind>>);
+    static_assert(urd::ViewOf<const kr::ps::ext::ProgramStateBuilderView<Kind>&, kr::ps::ext::ProgramState<Kind>>);
     constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.index(); }; };
     static_assert(!has_index.template operator()<kr::ps::ext::ProgramStateBuilderView<Kind>>());
     const auto directory = benchmark_path("classical/tests/gripper");

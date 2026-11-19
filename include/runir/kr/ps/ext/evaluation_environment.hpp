@@ -7,6 +7,7 @@
 #include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
+#include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/task_context.hpp"
@@ -120,18 +121,18 @@ public:
             m_current->policy.reset_target();
     }
 
-    template<ProgramStateViewConcept<Kind> S>
+    template<urd::ViewOf<ProgramState<Kind>> S>
     void select_source(S state)
     {
         // The invocation is the interned module, arguments and caller its state reads (a state being built holds them
         // interned: urd::interned_view).
-        const auto caller = state.get_call_stack();
+        const auto caller = call_stack(state);
         const auto invocation = urd::visit_view(state.get_module_state(),
                                                 [&](const auto& module_)
                                                 {
                                                     return Invocation { urd::interned_view(module_.get_mod()),
                                                                         urd::interned_view(module_.get_arguments()),
-                                                                        caller.has_value() ? std::optional(urd::interned_view(*caller)) : std::nullopt };
+                                                                        caller };
                                                 });
         if (m_invocation == invocation)
             return;
@@ -145,19 +146,15 @@ public:
 
     /// Contexts borrow stored register and argument data. Cache invalidation remains explicit. A state of another
     /// program is rejected by select_source (its module is not one of the program's).
-    template<ProgramStateViewConcept<Kind> S>
+    template<urd::ViewOf<ProgramState<Kind>> S>
     auto make_dl_context(S state)
     {
         if (&state.context() != m_execution_repository)
             throw std::invalid_argument("EvaluationEnvironment requires an execution state from the selected task.");
         select_source(state);
-        return urd::visit_view(state.get_state(),
-                               [&](const auto& planning_state)
-                               {
-                                   return urd::visit_view(state.get_module_state(),
-                                                          [&](const auto& activation)
-                                                          { return make_dl_context(planning_state, activation.get_arguments(), activation.get_registers()); });
-                               });
+        const auto planning = planning_state(state);
+        return urd::visit_view(state.get_module_state(),
+                               [&](const auto& activation) { return make_dl_context(planning, activation.get_arguments(), activation.get_registers()); });
     }
 
     /// Over a planning state, its module's arguments and registers, each as read (a view, or a state builder's child).

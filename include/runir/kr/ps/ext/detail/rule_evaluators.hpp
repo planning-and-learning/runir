@@ -94,7 +94,7 @@ class RuleEvaluators
     }
 
     /// The rules of a state's module from its memory state (each interned: urd::interned_view).
-    template<ProgramStateViewConcept<Kind> S>
+    template<urd::ViewOf<ProgramState<Kind>> S>
     [[nodiscard]] auto source_rules(S state) const
     {
         return urd::visit_view(state.get_module_state(),
@@ -142,7 +142,7 @@ class RuleEvaluators
 
     template<typename Evaluator,
              ExecutionStorageConcept<Kind> Storage,
-             ProgramStateViewConcept<Kind> State,
+             urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
@@ -281,7 +281,7 @@ public:
         return generator.for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0), std::ref(visit));
     }
 
-    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState,
+    template<ExecutionStorageConcept<Kind> Storage, urd::ViewOf<ProgramState<Kind>> State, tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate>
     std::optional<RuleVariantView> matching_rule(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                                  State state,

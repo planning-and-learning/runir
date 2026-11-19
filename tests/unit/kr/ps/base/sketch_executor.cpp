@@ -15,7 +15,7 @@
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
-#include <runir/kr/ps/base/successor_expander.hpp>
+#include <runir/kr/ps/base/detail/successor_expander_impl.hpp>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/axiom_evaluator.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>

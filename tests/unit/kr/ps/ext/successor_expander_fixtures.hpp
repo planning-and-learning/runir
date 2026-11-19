@@ -175,7 +175,7 @@ void expect_module_return_preserves_callee_planning_state()
         const auto moved = move.get_target();
         ASSERT_TRUE(move.planning_successor);
         ASSERT_NE(moved.get_state().index(), initial.get_state().index());
-        EXPECT_EQ(move.planning_successor->node.get_state(), moved.get_state().pack());
+        EXPECT_EQ(move.planning_successor->node.get_state(), kr::ps::ext::planning_state(moved).pack());
         const auto returns = collect_steps(expander, moved);
         ASSERT_EQ(returns.size(), 1);
         EXPECT_EQ(returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
@@ -238,7 +238,7 @@ void expect_borrowed_query_evaluation()
         const auto successors = search.successor_generator->get_labeled_successor_nodes(initial, *search.state_repository, *search.axiom_evaluator);
         ASSERT_FALSE(successors.empty());
         const auto stack = state.get_module_state();
-        auto transition = environment.make_dl_transition_context(state.get_state(),
+        auto transition = environment.make_dl_transition_context(kr::ps::ext::planning_state(state),
                                                                  successors.front().node.get_state(),
                                                                  stack.get_arguments(),
                                                                  stack.get_registers(),
@@ -638,7 +638,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto frame = urd::interned_view(caller.value());  // a frame is interned
     EXPECT_EQ(frame.index(), inner_caller.index());
     // Return: the frame's activation and caller over the current planning state.
-    const auto returned = storage.store(storage.view(copy).get_state(), frame.get_module_state(), frame.get_caller());
+    const auto returned = storage.store(kr::ps::ext::planning_state(storage.view(copy)), frame.get_module_state(), frame.get_caller());
     const auto& returned_call_stack = returned->call_stack;
     ASSERT_TRUE(returned_call_stack.has_value());
     EXPECT_EQ(returned_call_stack.has_value() ? urd::interned_view(*returned_call_stack).index() : urd::index<kr::ps::ext::CallStack>(), outer_caller.index());
@@ -1075,7 +1075,7 @@ void expect_query_action_existential_binding()
     ASSERT_EQ(objects.size(), 2);
     EXPECT_EQ(objects[0].get_name(), "start");
     EXPECT_EQ(objects[1].get_name(), "proof");
-    EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
+    EXPECT_TRUE(is_planning_goal(expander, kr::ps::ext::planning_state(steps.front().get_target())));
     EXPECT_TRUE(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}).is_successful());
 }
 
@@ -1115,7 +1115,7 @@ void expect_query_action_nullary_binding()
             EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
             ASSERT_TRUE(steps.front().planning_successor.has_value());
             EXPECT_TRUE(steps.front().planning_successor.value().label.get_objects().empty());
-            EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
+            EXPECT_TRUE(is_planning_goal(expander, kr::ps::ext::planning_state(steps.front().get_target())));
             EXPECT_THROW(collect_steps(expander, steps.front().get_target()), std::logic_error);
             EXPECT_THROW(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}), std::invalid_argument);
         }

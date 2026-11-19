@@ -67,15 +67,4 @@ public:
 };
 }  // namespace urd
 
-namespace runir::kr::ps::ext
-{
-/// Calls `function` with each argument of the call rule `rule`, as its feature view.
-template<typename V, typename F>
-void for_each_call_argument(const V& rule, F function)
-{
-    for (const auto& argument : rule.get_arguments())
-        std::visit(function, argument);
-}
-}  // namespace runir::kr::ps::ext
-
 #endif

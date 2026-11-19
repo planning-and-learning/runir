@@ -35,7 +35,7 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
     ext::detail::ChooseRuleWorkspace* choose_workspace;
     PlanningState planning_state;
 
-    template<ext::ProgramStateViewConcept<Kind> State>
+    template<urd::ViewOf<ext::ProgramState<Kind>> State>
     auto make_dl_context(State state)
     {
         environment->select_source(state);
@@ -45,7 +45,7 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
 
     /// From this context's planning state to a candidate's (its storage's successor: of another state type, where this
     /// one is registered and the storage builds its successors).
-    template<ext::ProgramStateViewConcept<Kind> State,
+    template<urd::ViewOf<ext::ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     auto make_dl_transition_context(State state, const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate)

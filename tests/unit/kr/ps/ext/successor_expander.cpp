@@ -598,8 +598,8 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     EXPECT_TRUE(evaluation_context.arguments().template arguments<kr::dl::BooleanTag>()[0].get_value());
     EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::NumericalTag>()[0].get_value(), numerical_arguments[0].get_value());
 
-    auto evaluation_transition = environment.make_dl_transition_context(call_target.get_state(),
-                                                                        call_target.get_state(),
+    auto evaluation_transition = environment.make_dl_transition_context(kr::ps::ext::planning_state(call_target),
+                                                                        kr::ps::ext::planning_state(call_target),
                                                                         arguments,
                                                                         module_state.get_registers(),
                                                                         module_state.get_registers());

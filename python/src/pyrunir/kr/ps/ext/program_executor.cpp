@@ -160,7 +160,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                             .def_ro("program_state", &VertexLabel::program_state)
                             .def_prop_ro(
                                 "state",
-                                [](const VertexLabel& self) { return self.program_state.get_state(); },
+                                [](const VertexLabel& self) { return planning_state(self.program_state); },
                                 nb::keep_alive<0, 1>())
                             .def_ro("is_initial", &VertexLabel::is_initial)
                             .def_ro("is_goal", &VertexLabel::is_goal)

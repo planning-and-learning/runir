@@ -55,7 +55,7 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::start_state(Pr
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-template<ProgramStateViewConcept<Kind> S>
+template<urd::ViewOf<ProgramState<Kind>> S>
 ProgramStateView<Kind> SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::materialize(const S& state)
 {
     validate_source(state);
@@ -63,7 +63,7 @@ ProgramStateView<Kind> SuccessorExpander<Kind, ExecutionStorage, EvaluationPolic
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
+template<urd::ViewOf<ProgramState<Kind>> S, typename Emit, StopConcept Stop>
     requires EmitConcept<Emit, ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>>
              && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
 bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_successor(S state,
@@ -85,31 +85,23 @@ bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_succe
             statistics.num_generated += expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER;
         return emit(std::forward<Expansion>(expansion));
     };
-    return urd::visit_view(state.get_state(),
-                           [&](const auto& planning_state)
-                           {
-                               auto context = m_rule_evaluators.make_context(m_storage, planning_state);
-                               if (!m_rule_evaluators.for_each_successor(context, state, emit_expansion, stop))
-                                   return false;
-                               if (stop())
-                                   return false;
-                               return emitted || emit_expansion(fallback(state, context.planning_state));
-                           });
+    auto context = m_rule_evaluators.make_context(m_storage, planning_state(state));
+    if (!m_rule_evaluators.for_each_successor(context, state, emit_expansion, stop))
+        return false;
+    if (stop())
+        return false;
+    return emitted || emit_expansion(fallback(state, context.planning_state));
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-template<runir::kr::dl::CategoryTag Category, ProgramStateViewConcept<Kind> S>
+template<runir::kr::dl::CategoryTag Category, urd::ViewOf<ProgramState<Kind>> S>
 auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply_choice(S state,
                                                                                const detail::Choice<Category>& choice,
                                                                                ProgramSearchStatistics& statistics) -> Step
 {
     validate_source(state);
-    auto step = urd::visit_view(state.get_state(),
-                                [&](const auto& planning_state)
-                                {
-                                    auto context = m_rule_evaluators.make_context(m_storage, planning_state);
-                                    return m_rule_evaluators.apply_choice(context, state, choice);
-                                });
+    auto context = m_rule_evaluators.make_context(m_storage, planning_state(state));
+    auto step = m_rule_evaluators.apply_choice(context, state, choice);
     statistics.num_generated += step.status == ProgramOutcome::APPLIED;
     return step;
 }
@@ -123,7 +115,7 @@ std::optional<RuleVariantView> SuccessorExpander<Kind, ExecutionStorage, Evaluat
     get_environment().reset_source();
     get_environment().select_source(state);
     get_environment().reset_target();
-    auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
+    auto context = m_rule_evaluators.make_context(m_storage, planning_state(state));
     return m_rule_evaluators.matching_rule(context, state, candidate);
 }
 
@@ -138,12 +130,8 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply(StorageS
     get_environment().reset_source();
     get_environment().select_source(state);
     get_environment().reset_target();
-    return urd::visit_view(state.get_state(),
-                           [&](const auto& planning_state)
-                           {
-                               auto context = m_rule_evaluators.make_context(m_storage, planning_state);
-                               return m_rule_evaluators.apply(context, state, rule, candidate);
-                           });
+    auto context = m_rule_evaluators.make_context(m_storage, planning_state(state));
+    return m_rule_evaluators.apply(context, state, rule, candidate);
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
@@ -155,7 +143,7 @@ void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_plann
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-template<ProgramStateViewConcept<Kind> S>
+template<urd::ViewOf<ProgramState<Kind>> S>
 void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_source(S state) const
 {
     // A state of another program is rejected where its module is selected (EvaluationEnvironment::select_source).
@@ -164,14 +152,13 @@ void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_sourc
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+template<urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateViewConcept<Kind> PS>
 auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::fallback(S state, const PS& planning_state) -> Step
 {
-    if (const auto caller = state.get_call_stack())
+    if (const auto caller = call_stack(state))
     {
         // Return: the caller's activation (at its return memory state) and its caller, over the current planning state.
-        auto target = urd::visit_view(*caller,
-                                      [&](const auto& frame) { return m_storage.store(planning_state, frame.get_module_state(), frame.get_caller()); });
+        auto target = m_storage.store(planning_state, caller->get_module_state(), caller->get_caller());
         return detail::make_step<Kind, ExecutionStorage>(ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
     }
     return detail::make_step<Kind, ExecutionStorage>(ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);

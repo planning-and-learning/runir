@@ -45,7 +45,7 @@ public:
     StoredState start_state(ProgramStateView<Kind> state);
 
     /// Intern selected output states and, in CHOICE mode, sources with Choose obligations.
-    template<ProgramStateViewConcept<Kind> S>
+    template<urd::ViewOf<ProgramState<Kind>> S>
     ProgramStateView<Kind> materialize(const S& state);
 
     /// Emit a program step or a compact Choose obligation in natural rule and binding order.
@@ -53,13 +53,13 @@ public:
     /// Return true on exhaustion; emit returning false or stop returning true ends enumeration.
     /// Count applied successors and caller returns, not Choice descriptors or failure markers.
     /// Callbacks may materialize the source, but must not generate successors or apply choices. Apply choices after enumeration.
-    template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
+    template<urd::ViewOf<ProgramState<Kind>> S, typename Emit, StopConcept Stop>
         requires EmitConcept<Emit, ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>>
                  && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
     bool for_each_successor(S state, ProgramSearchStatistics& statistics, const Emit& emit, const Stop& stop);
 
     /// Apply the current admitted binding without advancing its cursor; an exhausted choice reports FAILURE.
-    template<runir::kr::dl::CategoryTag Category, ProgramStateViewConcept<Kind> S>
+    template<runir::kr::dl::CategoryTag Category, urd::ViewOf<ProgramState<Kind>> S>
     Step apply_choice(S state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics);
 
     /// Find the first rule that admits this planning successor; control-only rules do not match planning actions.
@@ -76,12 +76,12 @@ private:
     template<tyr::planning::StateViewConcept<Kind> S>
     void validate_planning_state(const S& state) const;
 
-    template<ProgramStateViewConcept<Kind> S>
+    template<urd::ViewOf<ProgramState<Kind>> S>
     void validate_source(S state) const;
 
     /// With no emitted rule outcome, return to the caller or report an open top-level state.
     /// Restore caller control and bindings while retaining the planning state reached by the callee.
-    template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    template<urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateViewConcept<Kind> PS>
     Step fallback(S state, const PS& planning_state);
 
     runir::kr::TaskContextPtr<Kind> m_task_context;

@@ -1,6 +1,7 @@
 #ifndef RUNIR_SERIALIZATION_KR_PS_EXT_EXECUTION_VIEW_HPP_
 #define RUNIR_SERIALIZATION_KR_PS_EXT_EXECUTION_VIEW_HPP_
 
+#include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/serialization/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/serialization/kr/dl/semantics/denotation_view.hpp"
@@ -15,7 +16,7 @@
 namespace ygg::serialization
 {
 
-template<typename Archive, ::tyr::TaskKind Kind>
+template<typename Archive>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleStateView>)
 {
     ar.field("mod", [](const auto& value) -> decltype(auto) { return (value.get_mod()); });
@@ -24,7 +25,7 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::Modul
     ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_arguments()); });
 }
 
-template<typename Archive, ::tyr::TaskKind Kind>
+template<typename Archive>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallStackView>)
 {
     ar.field("module_state", [](const auto& value) -> decltype(auto) { return (value.get_module_state()); });
@@ -34,7 +35,7 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallS
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ProgramStateView<Kind>>)
 {
-    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.get_state()); });
+    ar.field("state", [](const auto& value) { return ::runir::kr::ps::ext::planning_state(value); });
     ar.field("module_state", [](const auto& value) -> decltype(auto) { return (value.get_module_state()); });
     ar.field("call_stack", [](const auto& value) -> decltype(auto) { return (value.get_call_stack()); });
 }

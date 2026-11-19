@@ -25,7 +25,7 @@ auto bound_registers(RuleView<Tag> rule,
 
 template<tyr::TaskKind Kind,
          BindingRuleKind Tag,
-         ProgramStateViewConcept<Kind> S,
+         urd::ViewOf<ProgramState<Kind>> S,
          tyr::planning::StateViewConcept<Kind> PS,
          urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>

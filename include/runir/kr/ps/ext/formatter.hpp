@@ -90,9 +90,8 @@ void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule
     {
         os << ygg::print_indent << "(:callee " << view.get_callee().get_name() << ")\n";
         os << ygg::print_indent << "(:arguments";
-        runir::kr::ps::ext::for_each_call_argument(view,
-                                                   [&](auto argument)
-                                                   { os << ' ' << std::visit([](auto concrete) { return concrete.get_symbol(); }, argument.get_variant()); });
+        for (const auto& argument : view.get_arguments())
+            std::visit([&](auto feature) { os << ' ' << std::visit([](auto concrete) { return concrete.get_symbol(); }, feature.get_variant()); }, argument);
         os << ")\n";
     }
 }

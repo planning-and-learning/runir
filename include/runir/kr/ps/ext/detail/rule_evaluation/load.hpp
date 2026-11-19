@@ -62,7 +62,7 @@ public:
                                                                             rule.get_target(),
                                                                             target_registers,
                                                                             activation.get_arguments(),
-                                                                            state.get_call_stack());
+                                                                            call_stack(state));
                                           });
             if (!emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, *context.task_context)))
                 return false;

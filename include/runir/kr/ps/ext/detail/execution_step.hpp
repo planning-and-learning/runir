@@ -37,7 +37,7 @@ applied(StorageStoredState<Storage> state, RuleVariantView rule, const runir::kr
     return step;
 }
 
-template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage, urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateViewConcept<Kind> PS>
 auto planning_step(Storage& storage,
                    S state,
                    const tyr::planning::LabeledNode<Kind, PS>& successor,
@@ -53,7 +53,7 @@ auto planning_step(Storage& storage,
                                                            memory_state,
                                                            module_.get_registers(),
                                                            module_.get_arguments(),
-                                                           state.get_call_stack());
+                                                           call_stack(state));
                                   });
     auto step = applied<Kind, Storage>(std::move(target), rule, task_context);
     if constexpr (PackableSuccessor<tyr::planning::LabeledNode<Kind, PS>>)

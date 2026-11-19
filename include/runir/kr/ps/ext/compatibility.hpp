@@ -18,7 +18,7 @@ template<tyr::TaskKind Kind, RuleKind Tag, typename C, CompatibilityContext<ExtF
 bool conditions_are_compatible(urd::index_view<Rule<Tag>, C> rule, Context& context)
 { return all_compatible<Kind, ExtFamilyTag>(rule.get_conditions(), context); }
 
-template<tyr::TaskKind Kind, RuleKind RuleKindT, typename C, ProgramStateViewConcept<Kind> S>
+template<tyr::TaskKind Kind, RuleKind RuleKindT, typename C, urd::ViewOf<ProgramState<Kind>> S>
 bool has_current_source(urd::index_view<Rule<RuleKindT>, C> rule, S state)
 {
     return rule.get_source()
@@ -29,7 +29,7 @@ bool has_current_source(urd::index_view<Rule<RuleKindT>, C> rule, S state)
 template<tyr::TaskKind Kind,
          RuleKind RuleKindT,
          typename C,
-         ProgramStateViewConcept<Kind> S,
+         urd::ViewOf<ProgramState<Kind>> S,
          tyr::planning::StateViewConcept<Kind> PS,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 bool rule_is_applicable(urd::index_view<Rule<RuleKindT>, C> rule, S state, const PS& planning_state, EvaluationEnvironment<Kind, EvaluationPolicy>& environment)

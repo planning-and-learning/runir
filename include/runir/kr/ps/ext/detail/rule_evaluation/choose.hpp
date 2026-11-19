@@ -67,7 +67,7 @@ public:
                                               rule.get_target(),
                                               bound_registers<Kind>(rule, module_.get_registers(), choice.current(), *registers, *context.storage),
                                               module_.get_arguments(),
-                                              state.get_call_stack());
+                                              call_stack(state));
                                       });
         return detail::applied<Kind, Storage>(std::move(target), choice.get_rule(), *context.task_context);
     }
@@ -89,7 +89,7 @@ private:
              ExecutionStorageConcept<Kind> Storage,
              EmitConcept<Choice<Category>> Emit,
              StopConcept Stop,
-             ProgramStateViewConcept<Kind> State,
+             urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              typename Denotation>
         requires std::ranges::input_range<Denotation>

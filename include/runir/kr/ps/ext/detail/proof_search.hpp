@@ -78,16 +78,13 @@ ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, Evaluat
     auto next = PathPtr {};
     auto completed = std::optional<bool> {};
     const auto out_of_time = [&] { return stopwatch && stopwatch->has_finished(); };
-    const auto classify = [&](ProgramStateViewConcept<Kind> auto state)
+    const auto classify = [&](urd::ViewOf<ProgramState<Kind>> auto state)
     {
-        return urd::visit_view(state.get_state(),
-                               [&](const auto& planning_state)
-                               {
-                                   const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_state, planning_state);
-                                   return std::pair(goal, !goal && classifier.is_unsolvable(planning_state));
-                               });
+        const auto planning = planning_state(state);
+        const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_state, planning);
+        return std::pair(goal, !goal && classifier.is_unsolvable(planning));
     };
-    const auto record_transition = [&](ProgramStateViewConcept<Kind> auto source, const Step& step, std::size_t choice_width)
+    const auto record_transition = [&](urd::ViewOf<ProgramState<Kind>> auto source, const Step& step, std::size_t choice_width)
     {
         const auto& transition = step.get_state_transition();
         const auto action = transition ? std::optional(transition->action) : std::nullopt;

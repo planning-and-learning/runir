@@ -5,7 +5,7 @@
 #include "runir/kr/ps/base/detail/search_node.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_executor_decl.hpp"
-#include "runir/kr/ps/base/successor_expander.hpp"
+#include "runir/kr/ps/base/detail/successor_expander_impl.hpp"
 #include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
 #include "runir/kr/task_context.hpp"

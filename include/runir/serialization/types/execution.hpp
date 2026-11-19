@@ -10,12 +10,11 @@
 namespace runir::serialization
 {
 
+/// The views of the control records (no task kind).
+using ControlViews = boost::mp11::mp_list<kr::ps::ext::ModuleStateView, kr::ps::ext::CallStackView, kr::ps::icp::HistoriesView>;
+
 template<tyr::TaskKind Kind>
-using ExecutionViews = boost::mp11::mp_list<kr::ps::ext::ModuleStateView,
-                                            kr::ps::ext::CallStackView,
-                                            kr::ps::ext::ProgramStateView<Kind>,
-                                            kr::ps::icp::ProgramStateView<Kind>,
-                                            kr::ps::icp::HistoriesView>;
+using ExecutionViews = boost::mp11::mp_list<kr::ps::ext::ProgramStateView<Kind>, kr::ps::icp::ProgramStateView<Kind>>;
 
 }  // namespace runir::serialization
 

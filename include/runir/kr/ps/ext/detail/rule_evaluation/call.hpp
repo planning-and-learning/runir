@@ -47,7 +47,7 @@ private:
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
-             ProgramStateViewConcept<Kind> State,
+             urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
     auto evaluate_call_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                  RuleView<CallTag> rule,
@@ -58,20 +58,21 @@ private:
         auto state_context = urd::visit_view(state.get_module_state(),
                                              [&](const auto& module_)
                                              { return context.environment->make_call_context(planning_state, module_.get_arguments(), module_.get_registers()); });
-        for_each_call_argument(rule,
-                               [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> argument)
-                               {
-                                   const auto denotation =
-                                       evaluate<Kind>(std::visit([](auto concrete) { return concrete.get_feature(); }, argument.get_variant()), state_context);
-                                   if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-                                       result->concept_arguments.push_back(denotation.index());
-                                   else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
-                                       result->role_arguments.push_back(denotation.index());
-                                   else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
-                                       result->boolean_arguments.push_back(denotation.index());
-                                   else
-                                       result->numerical_arguments.push_back(denotation.index());
-                               });
+        for (const auto& argument : rule.get_arguments())
+            std::visit(
+                [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> feature)
+                {
+                    const auto denotation = evaluate<Kind>(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()), state_context);
+                    if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
+                        result->concept_arguments.push_back(denotation.index());
+                    else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
+                        result->role_arguments.push_back(denotation.index());
+                    else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
+                        result->boolean_arguments.push_back(denotation.index());
+                    else
+                        result->numerical_arguments.push_back(denotation.index());
+                },
+                argument);
         return insert(*(*context.task_context)->dl_denotation_repository, *result).first;
     }
 

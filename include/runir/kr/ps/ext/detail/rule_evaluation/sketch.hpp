@@ -52,14 +52,14 @@ public:
                                                                         m_rule.get_target(),
                                                                         activation.get_registers(),
                                                                         activation.get_arguments(),
-                                                                        state.get_call_stack());
+                                                                        call_stack(state));
                                       });
         return emit(detail::applied<Kind, Storage>(std::move(target), m_variant, *context.task_context));
     }
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
-             ProgramStateViewConcept<Kind> State,
+             urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
