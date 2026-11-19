@@ -456,9 +456,9 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
         {
             EXPECT_EQ(&copy.get_workspace(), &builder.get_workspace());
             EXPECT_EQ(copy.arguments(), arguments);
-            const auto first_concept = urd::visit_view(copy.registers(),
-                                                       [](const auto& registers)
-                                                       { return registers.at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0)).value().index(); });
+            const auto first_concept =
+                urd::visit_view(copy.registers(),
+                                [](const auto& values) { return values.at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0)).value().index(); });
             EXPECT_EQ(first_concept, registers_data.concept_values[0].value());
         }
     }

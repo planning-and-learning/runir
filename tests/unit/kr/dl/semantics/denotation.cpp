@@ -302,7 +302,6 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
         (void) planning_repository->insert(data);
     }
     auto words = Words(planning_repository);
-    auto& repository = words.repository;
 
     auto concept_builder = words.make<Concept>(3);
     concept_builder.get().set(0);

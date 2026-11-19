@@ -6,6 +6,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/formatter.hpp>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <urd/python/bindings.hpp>
 

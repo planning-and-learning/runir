@@ -1,6 +1,8 @@
 #ifndef RUNIR_KR_PS_PROOF_STATUS_HPP_
 #define RUNIR_KR_PS_PROOF_STATUS_HPP_
 
+#include "runir/formatter.hpp"
+
 #include <cstdint>
 #include <fmt/format.h>
 #include <stdexcept>
@@ -36,11 +38,11 @@ constexpr std::string_view to_string(ProofStatus status)
 
 }  // namespace runir::kr::ps
 
+/// A proof status: its name (to_string); defined in src/kr/ps/formatter.cpp.
 template<>
-struct fmt::formatter<runir::kr::ps::ProofStatus> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::ProofStatus> : runir::detail::without_format_spec
 {
-    auto format(runir::kr::ps::ProofStatus status, format_context& ctx) const
-    { return fmt::formatter<std::string_view>::format(runir::kr::ps::to_string(status), ctx); }
+    fmt::format_context::iterator format(runir::kr::ps::ProofStatus value, fmt::format_context& context) const;
 };
 
 #endif

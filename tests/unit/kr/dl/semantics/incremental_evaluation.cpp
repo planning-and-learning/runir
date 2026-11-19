@@ -762,12 +762,12 @@ void check_incremental_evaluation()
         auto invalid = kr::dl::semantics::incremental::Delta {};
         for (const auto index : { a, b })
         {
-            const auto object = search->task->get_repository()->view(index);
+            const auto object_view = search->task->get_repository()->view(index);
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
-                invalid.added.concept_registers.emplace_back(kr::dl::RegisterIdentifier<Category>(0), object);
+                invalid.added.concept_registers.emplace_back(kr::dl::RegisterIdentifier<Category>(0), object_view);
             else
                 invalid.added.role_registers.emplace_back(kr::dl::RegisterIdentifier<Category>(0),
-                                                          std::pair(object, urd::resolve(c, *search->task->get_repository())));
+                                                          std::pair(object_view, urd::resolve(c, *search->task->get_repository())));
         }
         EXPECT_THROW(evaluator.update(invocation_context, invalid, workspace), std::invalid_argument);
         // The failed root is initialized, not updated, in the next state.

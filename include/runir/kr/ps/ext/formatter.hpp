@@ -1,254 +1,72 @@
 #ifndef RUNIR_KR_PS_EXT_FORMATTER_HPP_
 #define RUNIR_KR_PS_EXT_FORMATTER_HPP_
 
-#include "runir/kr/ps/dl/condition_view.hpp"
-#include "runir/kr/ps/dl/effect_view.hpp"
+#include "runir/formatter.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
-#include "runir/kr/ps/ext/execution_view.hpp"
-#include "runir/kr/ps/ext/module_view.hpp"
-#include "runir/kr/ps/ext/program_executor_data.hpp"
-#include "runir/kr/ps/ext/program_view.hpp"
-#include "runir/kr/ps/ext/rule_view.hpp"
-#include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/formatter.hpp"
-#include "runir/kr/ps/memory_state_view.hpp"
-#include "runir/kr/ps/module_symbol_view.hpp"
-#include "runir/kr/ps/rule_variant_view.hpp"
 
-#include <concepts>
 #include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <iterator>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <tyr/formalism/planning/formatter.hpp>
-#include <urd/elements/flat.hpp>
-#include <yggdrasil/core/config.hpp>
-#include <yggdrasil/io/iostream.hpp>
+#include <tyr/declarations.hpp>
 
 namespace runir::kr::ps::ext
 {
-
-/// An order direction as fmt writes it (format_as).
-inline const char* format_as(OrderDirection direction) noexcept { return direction == OrderDirection::MIN ? "min" : "max"; }
-
-template<runir::kr::ps::ext::RuleKind Kind, typename C>
-void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule<Kind>, C> view)
-{
-    append_conditions(os, view.get_conditions());
-    if constexpr (runir::kr::ps::ext::BindingRuleKind<Kind>)
-    {
-        using Category = RuleCategoryFor<Kind>;
-        os << ygg::print_indent << "(:" << Category::keyword << ' '
-           << std::visit([](auto concrete) { return concrete.get_symbol(); }, view.get_feature().get_variant()) << ")\n";
-        os << ygg::print_indent << "(:register\n";
-        {
-            ygg::IndentScope scope(os);
-            os << ygg::print_indent << "(:" << Category::keyword << ' ' << view.get_slot().get_name() << ")\n";
-        }
-        os << ygg::print_indent << ")\n";
-        if (!view.get_effects().empty())
-            append_effects(os, view.get_effects());
-        if constexpr (std::same_as<Kind, ChooseTag<Category>>)
-            if (!view.get_order().empty())
-                append_inline_section(os,
-                                      "order",
-                                      view.get_order(),
-                                      [](std::ostream& output, auto term)
-                                      {
-                                          output << '(' << format_as(term.get_direction()) << ' ';
-                                          std::visit([&](auto feature)
-                                                     { output << std::visit([](auto concrete) { return concrete.get_symbol(); }, feature.get_variant()); },
-                                                     term.get_feature());
-                                          output << ')';
-                                      });
-    }
-    else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
-    {
-        append_effects(os, view.get_effects());
-    }
-    else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
-    {
-        os << ygg::print_indent << "(:action " << fmt::format("{:?}", view.get_action_name().view()) << ")\n";
-        append_inline_section(os,
-                              "arguments",
-                              view.get_arguments(),
-                              [](std::ostream& output, auto argument)
-                              { output << std::visit([](auto concrete) { return concrete.get_symbol(); }, argument.get_variant()); });
-        append_effects(os, view.get_effects());
-    }
-    else if constexpr (std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
-    {
-        os << ygg::print_indent << "(:action " << fmt::format("{:?}", view.get_action_name().view()) << ")\n";
-        os << ygg::print_indent << "(:query " << std::visit([](auto concrete) { return concrete.get_symbol(); }, view.get_query_feature().get_variant())
-           << ")\n";
-        append_effects(os, view.get_effects());
-    }
-    else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
-    {
-        os << ygg::print_indent << "(:callee " << view.get_callee().get_name() << ")\n";
-        os << ygg::print_indent << "(:arguments";
-        for (const auto& argument : view.get_arguments())
-            std::visit([&](auto feature) { os << ' ' << std::visit([](auto concrete) { return concrete.get_symbol(); }, feature.get_variant()); }, argument);
-        os << ")\n";
-    }
-}
-
-template<runir::kr::ps::ext::RuleKind Kind, typename C>
-void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule<Kind>, C> view)
-{
-    os << ygg::print_indent << "(:" << Kind::keyword << "\n";
-    {
-        ygg::IndentScope scope(os);
-        append_rule_body(os, view);
-    }
-    os << ygg::print_indent << ')';
-}
-
-template<typename C>
-void append_module(std::ostream& os, urd::index_view<runir::kr::ps::ext::Module, C> view)
-{
-    os << ygg::print_indent << "(:module\n";
-    {
-        ygg::IndentScope scope(os);
-        os << ygg::print_indent << "(:symbol " << view.get_symbol().get_name() << ")\n";
-
-        os << ygg::print_indent << "(:arguments";
-        append_declarations<runir::kr::dl::ConceptTag>(os, view.template get_arguments<runir::kr::dl::ConceptTag>());
-        append_declarations<runir::kr::dl::RoleTag>(os, view.template get_arguments<runir::kr::dl::RoleTag>());
-        append_declarations<runir::kr::dl::BooleanTag>(os, view.template get_arguments<runir::kr::dl::BooleanTag>());
-        append_declarations<runir::kr::dl::NumericalTag>(os, view.template get_arguments<runir::kr::dl::NumericalTag>());
-        os << ")\n";
-
-        append_module_body(os, view);
-    }
-    os << ygg::print_indent << ')';
-}
-
-template<typename C>
-void append_program(std::ostream& os, urd::index_view<runir::kr::ps::ext::Program, C> view)
-{
-    os << ygg::print_indent << "(:program\n";
-    {
-        ygg::IndentScope scope(os);
-        os << ygg::print_indent << "(:entry " << view.get_entry_mod().get_symbol().get_name() << ")\n";
-        for (auto module_ : view.get_modules())
-        {
-            append_module(os, module_);
-            os << '\n';
-        }
-    }
-    os << ygg::print_indent << ')';
-}
-
+template<tyr::TaskKind Kind>
+struct ProgramProofResults;
 }  // namespace runir::kr::ps::ext
 
-template<runir::kr::ps::ext::RuleKind Kind, typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Rule<Kind>, C>> : fmt::formatter<std::string_view>
+// The ext family as its parser reads it: each formatter's format is defined in src/kr/ps/ext/formatter.cpp and
+// explicitly instantiated there for each rule kind and task kind. A rule, a module and a program are written one section
+// per line, nested sections indented by four spaces.
+
+/// An order direction: min or max.
+template<>
+struct fmt::formatter<runir::kr::ps::ext::OrderDirection> : runir::detail::without_format_spec
 {
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::rule(view), context); }
+    fmt::format_context::iterator format(runir::kr::ps::ext::OrderDirection value, fmt::format_context& context) const;
 };
 
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Module, C>> : fmt::formatter<std::string_view>
+/// A rule: (:kind its conditions, its kind's sections, its effects), one per line.
+template<runir::kr::ps::ext::RuleKind Kind>
+struct fmt::formatter<runir::kr::ps::ext::RuleView<Kind>> : runir::detail::without_format_spec
 {
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::module(view), context); }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::RuleView<Kind>& value, fmt::format_context& context) const;
 };
 
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Program, C>> : fmt::formatter<std::string_view>
+/// A rule of any kind: as its concrete rule.
+template<>
+struct fmt::formatter<runir::kr::ps::ext::RuleVariantView> : runir::detail::without_format_spec
 {
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::program(view), context); }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::RuleVariantView& value, fmt::format_context& context) const;
 };
 
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ModuleState, C>>
+/// A module: (:module its symbol, arguments, registers, entry, memory, features and rules), one per line.
+template<>
+struct fmt::formatter<runir::kr::ps::ext::ModuleView> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const auto& value, format_context& context) const
-    {
-        return fmt::format_to(context.out(),
-                              "ModuleState(mod={}, memory_state={}, registers={}, arguments={})",
-                              value.get_mod().get_symbol().get_name(),
-                              value.get_memory_state(),
-                              value.get_registers(),
-                              value.get_arguments());
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::ModuleView& value, fmt::format_context& context) const;
 };
 
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::CallStack, C>>
+/// A program: (:program its entry and its modules), one per line.
+template<>
+struct fmt::formatter<runir::kr::ps::ext::ProgramView> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const auto& value, format_context& context) const -> format_context::iterator
-    {
-        return fmt::format_to(context.out(),
-                              "CallStack(module_state={}, caller={})",
-                              value.get_module_state(),
-                              value.get_caller());
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::ProgramView& value, fmt::format_context& context) const;
 };
 
-template<tyr::TaskKind Kind, typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ProgramState<Kind>, C>>
-{
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const auto& value, format_context& context) const
-    {
-        return fmt::format_to(context.out(),
-                              "ProgramState(state={}, module_state={}, call_stack={})",
-                              value.get_state().index(),
-                              value.get_module_state(),
-                              value.get_call_stack());
-    }
-};
-
+/// A proof graph's vertex: state=... module=... initial=... goal=... alive=... unsolvable=...
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>>
+struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const auto& label, format_context& context) const
-    {
-        const auto state = label.program_state;
-        return fmt::format_to(context.out(),
-                              "state={} module={} initial={} goal={} alive={} unsolvable={}",
-                              state.get_state().index(),
-                              state.get_module_state().get_mod().get_symbol().get_name(),
-                              label.is_initial,
-                              label.is_goal,
-                              label.is_alive,
-                              label.is_unsolvable);
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>& value,
+                                         fmt::format_context& context) const;
 };
 
+/// A proof search's outcome: ProgramProofResults(status=..., its graph's size, its state sets' sizes and statistics).
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>>
+struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const auto& result, format_context& context) const
-    {
-        return fmt::format_to(context.out(),
-                              "ProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={}, "
-                              "num_expanded={}, num_generated={}, num_backtracks={}, choice_depth={}, choice_width={})",
-                              runir::kr::ps::to_string(result.status),
-                              result.graph ? result.graph->num_vertices() : 0,
-                              result.graph ? result.graph->num_edges() : 0,
-                              result.deadend_states.size(),
-                              result.open_states.size(),
-                              result.cycle.size(),
-                              result.statistics.num_expanded,
-                              result.statistics.num_generated,
-                              result.statistics.num_backtracks,
-                              result.statistics.choice_depth,
-                              result.statistics.choice_width);
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::ProgramProofResults<Kind>& value, fmt::format_context& context) const;
 };
 
 #endif

@@ -1,66 +1,36 @@
 #ifndef RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 
+#include "runir/formatter.hpp"
 #include "runir/kr/ps/base/dl/structural_termination_data.hpp"
-#include "runir/kr/ps/base/repository.hpp"
-#include "runir/kr/ps/dl/condition_view.hpp"
-#include "runir/kr/ps/dl/effect_view.hpp"
-#include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/formatter.hpp"
 
 #include <fmt/format.h>
-#include <iterator>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <urd/format.hpp>
-#include <yggdrasil/io/iostream.hpp>
 
-namespace runir::kr::ps::base::dl
-{
+// The base family's structural termination results and policy graph labels, as a log line writes them: each formatter's
+// format is defined in src/kr/ps/base/dl/formatter.cpp.
 
-inline std::string symbol_section(std::string_view value) { return fmt::format("(:symbol {})", value); }
-
-}  // namespace runir::kr::ps::base::dl
-
+/// A policy graph's vertex: (booleans=..., numericals=...).
 template<>
-struct fmt::formatter<runir::kr::ps::base::dl::PolicyGraphVertexLabel, char> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::base::dl::PolicyGraphVertexLabel, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::kr::ps::base::dl::PolicyGraphVertexLabel& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("(booleans={}, numericals={})", label.boolean_values, label.numerical_values);
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::base::dl::PolicyGraphVertexLabel& value, fmt::format_context& context) const;
 };
 
+/// A sketch's result: terminating, or non-terminating with its counterexample's size.
 template<>
-struct fmt::formatter<runir::kr::ps::base::dl::StructuralTerminationResult, char> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::base::dl::StructuralTerminationResult, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::kr::ps::base::dl::StructuralTerminationResult& result, FormatContext& ctx) const
-    {
-        const auto text = result.is_terminating() ? std::string { "StructuralTerminationResult(terminating)" } :
-                                                    fmt::format("StructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
-                                                                result.sieve_result->counterexample->num_vertices(),
-                                                                result.sieve_result->counterexample->num_edges());
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::base::dl::StructuralTerminationResult& value, fmt::format_context& context) const;
 };
 
+/// A sketch's incomplete result: terminating, or unknown with its number of surviving rules.
 template<>
-struct fmt::formatter<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>, char> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>& result, FormatContext& ctx) const
-    {
-        const auto text = result.is_terminating() ?
-                              std::string { "IncompleteStructuralTerminationResult(terminating)" } :
-                              fmt::format("IncompleteStructuralTerminationResult(unknown, {} surviving rules)", result.surviving_rules.size());
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>& value,
+                                         fmt::format_context& context) const;
 };
 
 #endif

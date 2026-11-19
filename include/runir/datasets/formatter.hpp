@@ -4,138 +4,92 @@
 #include "runir/datasets/equivalence_graph.hpp"
 #include "runir/datasets/object_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
+#include "runir/formatter.hpp"
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <string>
-#include <string_view>
-#include <tyr/formalism/planning/formatter.hpp>
-#include <urd/dot.hpp>
-#include <utility>
-#include <variant>
-#include <yggdrasil/formatting/cista_formatters.hpp>
 
-namespace runir::datasets
-{
-
-/// A predicate context as fmt writes it (format_as).
-inline const char* format_as(PredicateContext context) noexcept { return context == PredicateContext::STATE ? "state" : "goal"; }
-
-}  // namespace runir::datasets
+// The datasets' graphs, colors and graph labels: each has an fmt::formatter whose format is defined in
+// src/datasets/formatter.cpp, and explicitly instantiated there for each fact or task kind.
 
 namespace fmt
 {
 
-/// A runir graph prints as DOT (urd::to_dot: each vertex and edge labelled by its label).
-template<runir::labeled_graph G>
-struct formatter<G, char> : formatter<std::string_view>
+/// A state graph, as DOT (urd::to_dot): each vertex and edge labelled by its label.
+template<tyr::TaskKind Kind>
+struct formatter<runir::datasets::StateGraph<Kind>, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const G& graph, FormatContext& ctx) const
-    { return formatter<std::string_view>::format(urd::to_dot(graph, urd::vertex_data, urd::edge_data), ctx); }
+    fmt::format_context::iterator format(const runir::datasets::StateGraph<Kind>& value, fmt::format_context& context) const;
 };
 
+/// An equivalence graph, as DOT (urd::to_dot): each vertex and edge labelled by its label.
+template<>
+struct formatter<runir::datasets::EquivalenceGraph, char> : runir::detail::without_format_spec
+{
+    fmt::format_context::iterator format(const runir::datasets::EquivalenceGraph& value, fmt::format_context& context) const;
+};
+
+/// A predicate context: state or goal.
+template<>
+struct formatter<runir::datasets::PredicateContext, char> : runir::detail::without_format_spec
+{
+    fmt::format_context::iterator format(const runir::datasets::PredicateContext& value, fmt::format_context& context) const;
+};
+
+/// A predicate color: context:predicate[argument position].
 template<::tyr::formalism::FactKind T>
-struct formatter<urd::index_view<runir::datasets::PredicateColor<T>, runir::datasets::ColorRepository>, char> : formatter<std::string_view>
+struct formatter<urd::index_view<runir::datasets::PredicateColor<T>, runir::datasets::ColorRepository>, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const urd::index_view<runir::datasets::PredicateColor<T>, runir::datasets::ColorRepository>& color, FormatContext& ctx) const
-    {
-        const auto predicate = color.get_predicate();
-        const auto context = format_as(color.get_context());
-        const auto text = fmt::format("{}:{}[{}]", context, predicate, color.get_argument_position());
-        return formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const urd::index_view<runir::datasets::PredicateColor<T>, runir::datasets::ColorRepository>& value,
+                                         fmt::format_context& context) const;
 };
 
+/// A color: its values as a list.
 template<>
-struct formatter<runir::datasets::ColorView, char> : formatter<std::string_view>
+struct formatter<runir::datasets::ColorView, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::datasets::ColorView& color, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("{}", color.get_values());
-        return formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::datasets::ColorView& value, fmt::format_context& context) const;
 };
 
+/// A state graph's vertex: state=index.
 template<tyr::TaskKind Kind>
-struct formatter<runir::datasets::StateGraphVertexLabel<Kind>, char> : formatter<std::string_view>
+struct formatter<runir::datasets::StateGraphVertexLabel<Kind>, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::datasets::StateGraphVertexLabel<Kind>& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("state={}", label.state.index());
-        return formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::datasets::StateGraphVertexLabel<Kind>& value, fmt::format_context& context) const;
 };
 
+/// An annotated state graph's vertex: state, goal_distance, initial, goal, alive and unsolvable, one per line.
 template<tyr::TaskKind Kind>
-struct formatter<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>, char> : formatter<std::string_view>
+struct formatter<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::datasets::AnnotatedStateGraphVertexLabel<Kind>& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("state={}\ngoal_distance={}\ninitial={}\ngoal={}\nalive={}\nunsolvable={}",
-                                      label.state.index(),
-                                      label.goal_distance,
-                                      label.is_initial,
-                                      label.is_goal,
-                                      label.is_alive,
-                                      label.is_unsolvable);
-        return formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::datasets::AnnotatedStateGraphVertexLabel<Kind>& value, fmt::format_context& context) const;
 };
 
+/// A state graph's edge: its action as a plan lists it, then cost=c on the next line.
 template<>
-struct formatter<runir::datasets::StateGraphEdgeLabel, char> : formatter<std::string_view>
+struct formatter<runir::datasets::StateGraphEdgeLabel, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::datasets::StateGraphEdgeLabel& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("{}\ncost={}", std::make_pair(label.action, tyr::formalism::planning::PlanFormatting {}), label.cost);
-        return formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::datasets::StateGraphEdgeLabel& value, fmt::format_context& context) const;
 };
 
+/// An equivalence graph's vertex: state_graph and state_vertex, one per line.
 template<>
-struct formatter<runir::datasets::EquivalenceVertexLabel, char> : formatter<std::string_view>
+struct formatter<runir::datasets::EquivalenceVertexLabel, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::datasets::EquivalenceVertexLabel& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("state_graph={}\nstate_vertex={}", label.state_graph_index, label.state_vertex_index);
-        return formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::datasets::EquivalenceVertexLabel& value, fmt::format_context& context) const;
 };
 
+/// An annotated equivalence graph's vertex: state_graph, state_vertex, goal_distance, initial, goal, alive and unsolvable, one per line.
 template<>
-struct formatter<runir::datasets::AnnotatedEquivalenceVertexLabel, char> : formatter<std::string_view>
+struct formatter<runir::datasets::AnnotatedEquivalenceVertexLabel, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::datasets::AnnotatedEquivalenceVertexLabel& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("state_graph={}\nstate_vertex={}\ngoal_distance={}\ninitial={}\ngoal={}\nalive={}\nunsolvable={}",
-                                      label.state_graph_index,
-                                      label.state_vertex_index,
-                                      label.goal_distance,
-                                      label.is_initial,
-                                      label.is_goal,
-                                      label.is_alive,
-                                      label.is_unsolvable);
-        return formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::datasets::AnnotatedEquivalenceVertexLabel& value, fmt::format_context& context) const;
 };
 
+/// An equivalence graph's edge: state_graph and state_edge, one per line.
 template<>
-struct formatter<runir::datasets::EquivalenceEdgeLabel, char> : formatter<std::string_view>
+struct formatter<runir::datasets::EquivalenceEdgeLabel, char> : runir::detail::without_format_spec
 {
-    template<typename FormatContext>
-    auto format(const runir::datasets::EquivalenceEdgeLabel& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("state_graph={}\nstate_edge={}", label.state_graph_index, label.state_edge_index);
-        return formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::datasets::EquivalenceEdgeLabel& value, fmt::format_context& context) const;
 };
 
 }  // namespace fmt

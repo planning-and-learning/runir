@@ -1,90 +1,49 @@
 #ifndef RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 
+#include "runir/formatter.hpp"
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination_data.hpp"
-#include "runir/kr/ps/ext/repository.hpp"
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <urd/config.hpp>
-#include <urd/format.hpp>
-#include <yggdrasil/formatting/cista_formatters.hpp>
 
+// The ext family's structural termination results and policy graph labels, as a log line writes them: each formatter's
+// format is defined in src/kr/ps/ext/dl/formatter.cpp.
+
+/// A module policy graph's vertex: (booleans=..., numericals=..., memory=name).
 template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel>
+struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel& label, format_context& context) const
-    {
-        return fmt::format_to(context.out(),
-                              "(booleans={}, numericals={}, memory={})",
-                              label.boolean_values,
-                              label.numerical_values,
-                              label.memory_state.get_name());
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel& value, fmt::format_context& context) const;
 };
 
+/// A module's result: terminating, or non-terminating with its counterexample's size.
 template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ModuleStructuralTerminationResult>
+struct fmt::formatter<runir::kr::ps::ext::dl::ModuleStructuralTerminationResult> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const runir::kr::ps::ext::dl::ModuleStructuralTerminationResult& result, format_context& context) const
-    {
-        if (result.is_terminating())
-            return fmt::format_to(context.out(), "ModuleStructuralTerminationResult(terminating)");
-        // A non-terminating module has a SIEVE counterexample.
-        URD_ASSUME(result.sieve_result.has_value());
-        return fmt::format_to(context.out(),
-                              "ModuleStructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
-                              result.sieve_result->counterexample->num_vertices(),
-                              result.sieve_result->counterexample->num_edges());
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::dl::ModuleStructuralTerminationResult& value, fmt::format_context& context) const;
 };
 
+/// A program's result: its verdict, its number of modules and of recursive calls.
 template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ProgramStructuralTerminationResult>
+struct fmt::formatter<runir::kr::ps::ext::dl::ProgramStructuralTerminationResult> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const runir::kr::ps::ext::dl::ProgramStructuralTerminationResult& result, format_context& context) const
-    {
-        return fmt::format_to(context.out(),
-                              "ProgramStructuralTerminationResult({}, {} modules, {} recursive calls)",
-                              result.is_terminating() ? "terminating" : "non-terminating",
-                              result.module_results.size(),
-                              result.recursive_call_rules.size());
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::dl::ProgramStructuralTerminationResult& value, fmt::format_context& context) const;
 };
 
+/// A module's incomplete result: terminating, or unknown with its number of surviving rules.
 template<>
-struct fmt::formatter<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>>
+struct fmt::formatter<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>& result, format_context& context) const
-    {
-        if (result.is_terminating())
-            return fmt::format_to(context.out(), "ModuleIncompleteStructuralTerminationResult(terminating)");
-        return fmt::format_to(context.out(), "ModuleIncompleteStructuralTerminationResult(unknown, {} surviving rules)", result.surviving_rules.size());
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>& value,
+                                         fmt::format_context& context) const;
 };
 
+/// A program's incomplete result: its verdict, its number of modules and of recursive calls.
 template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ProgramIncompleteStructuralTerminationResult>
+struct fmt::formatter<runir::kr::ps::ext::dl::ProgramIncompleteStructuralTerminationResult> : runir::detail::without_format_spec
 {
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const runir::kr::ps::ext::dl::ProgramIncompleteStructuralTerminationResult& result, format_context& context) const
-    {
-        return fmt::format_to(context.out(),
-                              "ProgramIncompleteStructuralTerminationResult({}, {} modules, {} recursive calls)",
-                              result.is_terminating() ? "terminating" : "unknown",
-                              result.module_results.size(),
-                              result.recursive_call_rules.size());
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::ext::dl::ProgramIncompleteStructuralTerminationResult& value, fmt::format_context& context) const;
 };
 
 #endif

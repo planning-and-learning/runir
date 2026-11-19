@@ -1,5 +1,6 @@
 add_library(datasets SHARED
     equivalence_graph.cpp
+    formatter.cpp
     object_graph.cpp
     state_graph.cpp
 )

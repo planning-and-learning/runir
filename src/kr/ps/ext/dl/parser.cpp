@@ -653,8 +653,9 @@ auto parse_rule(
                     diagnostics.throw_at(concrete.action,
                                          runir::kr::UndefinedSymbolError("action in domain '" + domain.get_name().str() + "'", concrete.action.text));
                 const auto query_feature = require_feature(query_features, concrete.query_feature, diagnostics);
-                const auto query_arity =
-                    schema_of(std::visit([](auto concrete) { return concrete.get_feature(); }, urd::resolve(query_feature, repository).get_variant())).size();
+                const auto query_arity = schema_of(std::visit([](auto concrete_query) { return concrete_query.get_feature(); },
+                                                              urd::resolve(query_feature, repository).get_variant()))
+                                             .size();
                 if (query_arity != action->get_arity())
                     diagnostics.throw_at(concrete.query_feature,
                                          runir::kr::ArityMismatchError("action " + concrete.action.text, action->get_arity(), query_arity));

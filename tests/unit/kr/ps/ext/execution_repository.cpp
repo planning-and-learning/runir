@@ -86,7 +86,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto caller = create_module(*repository, "caller", caller_entry, { caller_entry, caller_return });
     const auto callee = create_module(*repository, "callee", callee_entry, { callee_entry });
 
-    const auto program = create_program(*repository, caller, { caller, callee });
+    (void) create_program(*repository, caller, { caller, callee });
     auto& execution_builder = task_context->execution_builder;
     auto& control_builder = task_context->control_builder;
     auto control_repository = task_context->control_repository;

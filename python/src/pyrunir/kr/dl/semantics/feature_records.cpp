@@ -9,6 +9,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
+#include <tyr/datalog/lifted/database/syntax/formatter.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <urd/python/bindings.hpp>
 #include <urd/python/sequences/sequence.hpp>

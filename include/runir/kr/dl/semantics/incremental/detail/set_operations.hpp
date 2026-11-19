@@ -213,7 +213,7 @@ void update_set(IntersectionTag,
                 const DenotationDelta<Category>& lhs_delta,
                 DenotationBuilderView<Category> rhs,
                 const DenotationDelta<Category>& rhs_delta,
-                SetOperationWorkspace& workspace)
+                SetOperationWorkspace& /*workspace*/)
 {
     output.clear_delta();
     const auto update = [&](DenotationElementView<Category> value) { output.set(value, contains(lhs, value) && contains(rhs, value)); };
@@ -243,7 +243,7 @@ void update_set(UnionTag,
                 const DenotationDelta<Category>& lhs_delta,
                 DenotationBuilderView<Category> rhs,
                 const DenotationDelta<Category>& rhs_delta,
-                SetOperationWorkspace& workspace)
+                SetOperationWorkspace& /*workspace*/)
 {
     output.clear_delta();
     const auto update = [&](DenotationElementView<Category> value) { output.set(value, contains(lhs, value) || contains(rhs, value)); };
@@ -262,7 +262,7 @@ inline void update_set(NegationTag,
                        DenotationState<ConceptTag>& output,
                        DenotationBuilderView<ConceptTag> input,
                        const DenotationDelta<ConceptTag>& delta,
-                       SetOperationWorkspace& workspace)
+                       SetOperationWorkspace& /*workspace*/)
 {
     output.clear_delta();
     for_changed(delta, [&](auto value) { output.set(value, !contains(input, value)); });
@@ -276,7 +276,7 @@ inline void update_set(ComplementTag,
                        DenotationState<RoleTag>& output,
                        DenotationBuilderView<RoleTag> input,
                        const DenotationDelta<RoleTag>& delta,
-                       SetOperationWorkspace& workspace)
+                       SetOperationWorkspace& /*workspace*/)
 {
     output.clear_delta();
     for_changed(delta, [&](auto value) { output.set(value, !contains(input, value)); });
@@ -290,8 +290,11 @@ initialize_set(InverseTag, DenotationState<RoleTag>& output, DenotationBuilderVi
         result.set(target, source, true);
 }
 
-inline void
-update_set(InverseTag, DenotationState<RoleTag>& output, DenotationBuilderView<RoleTag> input, const DenotationDelta<RoleTag>& delta, SetOperationWorkspace& workspace)
+inline void update_set(InverseTag,
+                       DenotationState<RoleTag>& output,
+                       DenotationBuilderView<RoleTag> input,
+                       const DenotationDelta<RoleTag>& delta,
+                       SetOperationWorkspace& /*workspace*/)
 {
     output.clear_delta();
     for_changed(delta, [&](auto edge) { output.set({ edge.second, edge.first }, contains(input, edge)); });
@@ -312,7 +315,7 @@ inline void update_set(IdentityTag,
                        DenotationState<RoleTag>& output,
                        DenotationBuilderView<ConceptTag> input,
                        const DenotationDelta<ConceptTag>& delta,
-                       SetOperationWorkspace& workspace)
+                       SetOperationWorkspace& /*workspace*/)
 {
     output.clear_delta();
     for_changed(delta, [&](auto object) { output.set({ object, object }, contains(input, object)); });

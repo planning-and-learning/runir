@@ -2,181 +2,57 @@
 #define RUNIR_KR_PS_BASE_FORMATTER_HPP_
 
 #include "runir/datasets/formatter.hpp"
+#include "runir/formatter.hpp"
+#include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/base/dl/formatter.hpp"
-#include "runir/kr/ps/base/rule_view.hpp"
-#include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
-#include "runir/kr/ps/base/sketch_view.hpp"
-#include "runir/kr/ps/feature_view.hpp"
+#include "runir/kr/ps/formatter.hpp"
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <tyr/formalism/planning/formatter.hpp>
-#include <yggdrasil/io/iostream.hpp>
+#include <tyr/declarations.hpp>
 
 namespace runir::kr::ps::base
 {
-
-template<typename Features>
-void append_features(std::ostream& os, Features features)
-{
-    for (auto feature : features)
-    {
-        runir::kr::ps::append_feature(os, feature);
-        os << "\n";
-    }
-}
-
-template<typename Values, typename FormatValue>
-void append_list_section(std::ostream& os, std::string_view name, Values values, FormatValue format_value)
-{
-    if (values.empty())
-    {
-        os << ygg::print_indent << fmt::format("(:{})", name) << "\n";
-        return;
-    }
-
-    if (values.size() == 1)
-    {
-        os << ygg::print_indent << "(:" << name << " " << format_value(values.front()) << ")\n";
-        return;
-    }
-
-    os << ygg::print_indent << fmt::format("(:{}\n", name);
-    {
-        ygg::IndentScope scope(os);
-        for (auto value : values)
-            os << ygg::print_indent << format_value(value) << "\n";
-    }
-    os << ygg::print_indent << ")\n";
-}
-
-template<typename C>
-void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> view)
-{
-    os << ygg::print_indent << "(:rule\n";
-    {
-        ygg::IndentScope scope(os);
-        os << ygg::print_indent << runir::kr::ps::base::dl::symbol_section(view.get_symbol()) << "\n";
-        os << ygg::print_indent << "(:expression\n";
-        {
-            ygg::IndentScope expression_scope(os);
-            append_list_section(os, "conditions", view.get_conditions(), [](auto item) { return fmt::format("{}", item); });
-            append_list_section(os, "effects", view.get_effects(), [](auto item) { return fmt::format("{}", item); });
-        }
-        os << ygg::print_indent << ")\n";
-    }
-    os << ygg::print_indent << ")";
-}
-
-template<typename C>
-std::string rule(urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> view)
-{
-    auto os = std::ostringstream {};
-    append_rule(os, view);
-    return os.str();
-}
-
-template<typename C>
-std::string sketch(urd::index_view<runir::kr::ps::base::Sketch, C> view)
-{
-    auto os = std::ostringstream {};
-
-    os << "(:sketch\n";
-    {
-        ygg::IndentScope scope(os);
-
-        os << ygg::print_indent << "(:features\n";
-        {
-            ygg::IndentScope feature_scope(os);
-            append_features(os, view.template get_features<runir::kr::dl::BooleanTag>());
-            append_features(os, view.template get_features<runir::kr::dl::NumericalTag>());
-        }
-        os << ygg::print_indent << ")\n";
-
-        os << ygg::print_indent << "(:rules\n";
-        {
-            ygg::IndentScope rule_scope(os);
-            for (auto item : view.get_rules())
-            {
-                append_rule(os, item);
-                os << "\n";
-            }
-        }
-        os << ygg::print_indent << ")\n";
-    }
-    os << ")\n";
-
-    return os.str();
-}
-
 template<tyr::TaskKind Kind>
-std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<Kind>& result)
-{
-    return fmt::format("SketchProofResults(status={}, num_expanded={}, num_generated={}, graph_vertices={}, graph_edges={}, "
-                       "deadend_states={}, open_states={}, cycle={})",
-                       runir::kr::ps::to_string(result.status),
-                       result.statistics.num_expanded,
-                       result.statistics.num_generated,
-                       result.graph ? result.graph->num_vertices() : 0,
-                       result.graph ? result.graph->num_edges() : 0,
-                       result.deadend_states.size(),
-                       result.open_states.size(),
-                       result.cycle.size());
-}
-
+struct SketchProofResults;
 }  // namespace runir::kr::ps::base
 
+// The base family as its parser reads it: each formatter's format is defined in src/kr/ps/base/formatter.cpp and
+// explicitly instantiated there for the repositories that hold its records (its own, and ext's, which holds them too).
+
+/// A rule: (:rule its symbol and (:expression its conditions and effects)), one section per line.
 template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>> : runir::detail::without_format_spec
 {
-    using View = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>;
-
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::rule(view), ctx); }
+    fmt::format_context::iterator format(const urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>& value, fmt::format_context& context) const;
 };
 
+/// A sketch: (:sketch its features and its rules), one per line, and a final newline.
 template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::base::Sketch, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::base::Sketch, C>> : runir::detail::without_format_spec
 {
-    using View = urd::index_view<runir::kr::ps::base::Sketch, C>;
-
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch(view), ctx); }
+    fmt::format_context::iterator format(const urd::index_view<runir::kr::ps::base::Sketch, C>& value, fmt::format_context& context) const;
 };
 
+/// A proof search's outcome: SketchProofResults(status=..., its statistics, its graph's size and its state sets' sizes).
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : runir::detail::without_format_spec
 {
-    auto format(const runir::kr::ps::base::SketchProofResults<Kind>& result, format_context& ctx) const
-    { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch_proof_results(result), ctx); }
+    fmt::format_context::iterator format(const runir::kr::ps::base::SketchProofResults<Kind>& value, fmt::format_context& context) const;
 };
 
+/// A proof graph's vertex: state=... initial=... goal=... alive=... unsolvable=...
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::base::SketchProofVertexLabel<Kind>> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::base::SketchProofVertexLabel<Kind>> : runir::detail::without_format_spec
 {
-    auto format(const runir::kr::ps::base::SketchProofVertexLabel<Kind>& label, format_context& ctx) const
-    {
-        return fmt::format_to(ctx.out(),
-                              "state={} initial={} goal={} alive={} unsolvable={}",
-                              label.state.index(),
-                              label.is_initial,
-                              label.is_goal,
-                              label.is_alive,
-                              label.is_unsolvable);
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::base::SketchProofVertexLabel<Kind>& value, fmt::format_context& context) const;
 };
 
+/// A proof graph's edge: rule=symbol action=...
 template<>
-struct fmt::formatter<runir::kr::ps::base::SketchProofEdgeLabel> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::base::SketchProofEdgeLabel> : runir::detail::without_format_spec
 {
-    auto format(const runir::kr::ps::base::SketchProofEdgeLabel& label, format_context& ctx) const
-    {
-        const auto text = fmt::format("rule={} action={}", label.rule.get_symbol(), label.action);
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
+    fmt::format_context::iterator format(const runir::kr::ps::base::SketchProofEdgeLabel& value, fmt::format_context& context) const;
 };
 
 #endif

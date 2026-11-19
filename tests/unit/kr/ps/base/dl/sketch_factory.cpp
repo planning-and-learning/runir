@@ -78,17 +78,6 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     EXPECT_EQ(fmt::format("{}", first_rule.get_conditions().front()), "(positive r)");
     EXPECT_EQ(fmt::format("{}", first_rule.get_effects().front()), "(negative r)");
 
-    const auto check_format_specs = [](auto view)
-    {
-        const auto text = fmt::format("{}", view);
-        EXPECT_EQ(fmt::format("{:>24}", view), fmt::format("{:>24}", text));
-        EXPECT_EQ(fmt::format("{:.4}", view), fmt::format("{:.4}", text));
-    };
-    for (auto condition : first_rule.get_conditions())
-        std::visit(check_format_specs, condition);
-    for (auto effect : first_rule.get_effects())
-        std::visit(check_format_specs, effect);
-
     const auto formatted = fmt::format("{}", sketch);
     EXPECT_EQ(fmt::format("{}", kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository)), formatted);
     const auto feature = sketch.template get_features<kr::dl::BooleanTag>().front();

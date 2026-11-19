@@ -498,33 +498,33 @@ public:
     auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::NonemptyTag> source)
         requires std::same_as<Category, runir::kr::dl::BooleanTag>
     {
-        auto arg = std::visit(
-            [&]<typename View>(View value) -> urd::built_t<decltype(urd::data<Boolean<CnfGrammarFamily, runir::kr::dl::NonemptyTag>>::operand), ConstructorRepository>
+        // The operand interned as the non-terminal view it is, not as a constructor child (a variant that may own a pool
+        // handle), so that nothing is moved through a variant.
+        return std::visit(
+            [&]<typename View>(View value)
             {
                 if constexpr (std::same_as<View, runir::kr::dl::grammar::ConstructorOrNonTerminalView<runir::kr::dl::ConceptTag>>)
-                    return translate_child<runir::kr::dl::ConceptTag>(value);
+                    return intern_unary<Boolean<CnfGrammarFamily, runir::kr::dl::NonemptyTag>>(translate_child<runir::kr::dl::ConceptTag>(value));
                 else
-                    return translate_child<runir::kr::dl::RoleTag>(value);
+                    return intern_unary<Boolean<CnfGrammarFamily, runir::kr::dl::NonemptyTag>>(translate_child<runir::kr::dl::RoleTag>(value));
             },
             source.get_operand());
-
-        return intern_unary<Boolean<CnfGrammarFamily, runir::kr::dl::NonemptyTag>>(std::move(arg));
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::NumericalView<runir::kr::dl::CountTag> source)
         requires std::same_as<Category, runir::kr::dl::NumericalTag>
     {
-        auto arg = std::visit(
-            [&]<typename View>(View value) -> urd::built_t<decltype(urd::data<Numerical<CnfGrammarFamily, runir::kr::dl::CountTag>>::operand), ConstructorRepository>
+        // The operand interned as the non-terminal view it is, not as a constructor child (a variant that may own a pool
+        // handle), so that nothing is moved through a variant.
+        return std::visit(
+            [&]<typename View>(View value)
             {
                 if constexpr (std::same_as<View, runir::kr::dl::grammar::ConstructorOrNonTerminalView<runir::kr::dl::ConceptTag>>)
-                    return translate_child<runir::kr::dl::ConceptTag>(value);
+                    return intern_unary<Numerical<CnfGrammarFamily, runir::kr::dl::CountTag>>(translate_child<runir::kr::dl::ConceptTag>(value));
                 else
-                    return translate_child<runir::kr::dl::RoleTag>(value);
+                    return intern_unary<Numerical<CnfGrammarFamily, runir::kr::dl::CountTag>>(translate_child<runir::kr::dl::RoleTag>(value));
             },
             source.get_operand());
-
-        return intern_unary<Numerical<CnfGrammarFamily, runir::kr::dl::CountTag>>(std::move(arg));
     }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::NumericalView<runir::kr::dl::DistanceTag> source)

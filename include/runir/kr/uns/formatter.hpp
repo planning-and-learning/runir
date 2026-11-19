@@ -1,108 +1,33 @@
 #ifndef RUNIR_KR_UNS_FORMATTER_HPP_
 #define RUNIR_KR_UNS_FORMATTER_HPP_
 
-#include "runir/kr/ps/feature_view.hpp"
-#include "runir/kr/ps/formatter.hpp"
-#include "runir/kr/uns/classifier_view.hpp"
+#include "runir/formatter.hpp"
+#include "runir/kr/uns/declarations.hpp"
 
 #include <fmt/format.h>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <urd/elements/flat.hpp>
-#include <yggdrasil/io/iostream.hpp>
 
-namespace runir::kr::uns
+// A classifier as its parser reads it: each view (through runir::kr::uns::Repository) has an fmt::formatter whose format
+// is defined in src/kr/uns/formatter.cpp.
+
+/// A classifier literal: its feature's symbol, or (not symbol).
+template<>
+struct fmt::formatter<runir::kr::uns::ClassifierLiteralView> : runir::detail::without_format_spec
 {
-
-template<typename C>
-std::string literal(urd::index_view<runir::kr::uns::ClassifierLiteral, C> view)
-{
-    const auto symbol =
-        std::visit([](auto feature) { return std::visit([](auto concrete) { return concrete.get_symbol(); }, feature.get_variant()); }, view.get_feature());
-    return view.get_polarity() ? symbol.str() : fmt::format("(not {})", symbol);
-}
-
-template<typename C>
-std::string clause(urd::index_view<runir::kr::uns::ClassifierClause, C> view)
-{
-    auto os = std::ostringstream {};
-    os << "(and";
-    for (auto item : view.get_literals())
-        os << ' ' << literal(item);
-    os << ")";
-    return os.str();
-}
-
-template<typename C>
-std::string classifier(urd::index_view<runir::kr::uns::Classifier, C> view)
-{
-    auto os = std::ostringstream {};
-    os << "(:classifier\n";
-    {
-        ygg::IndentScope scope(os);
-        os << ygg::print_indent << fmt::format("(:symbol {})", view.get_symbol()) << "\n";
-
-        os << ygg::print_indent << "(:features\n";
-        {
-            ygg::IndentScope feature_scope(os);
-            for (auto item : view.get_features())
-            {
-                runir::kr::ps::append_feature(os, item);
-                os << "\n";
-            }
-        }
-        os << ygg::print_indent << ")\n";
-
-        if (view.get_clauses().empty())
-        {
-            os << ygg::print_indent << "(:expression (or))\n";
-        }
-        else
-        {
-            os << ygg::print_indent << "(:expression\n";
-            {
-                ygg::IndentScope expression_scope(os);
-                os << ygg::print_indent << "(or\n";
-                {
-                    ygg::IndentScope clause_scope(os);
-                    for (auto item : view.get_clauses())
-                        os << ygg::print_indent << clause(item) << "\n";
-                }
-                os << ygg::print_indent << ")\n";
-            }
-            os << ygg::print_indent << ")\n";
-        }
-    }
-    os << ")";
-    return os.str();
-}
-
-}  // namespace runir::kr::uns
-
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::uns::ClassifierLiteral, C>> : fmt::formatter<std::string_view>
-{
-    using View = urd::index_view<runir::kr::uns::ClassifierLiteral, C>;
-
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::literal(view), ctx); }
+    fmt::format_context::iterator format(const runir::kr::uns::ClassifierLiteralView& value, fmt::format_context& context) const;
 };
 
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::uns::ClassifierClause, C>> : fmt::formatter<std::string_view>
+/// A classifier clause: (and literals...).
+template<>
+struct fmt::formatter<runir::kr::uns::ClassifierClauseView> : runir::detail::without_format_spec
 {
-    using View = urd::index_view<runir::kr::uns::ClassifierClause, C>;
-
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::clause(view), ctx); }
+    fmt::format_context::iterator format(const runir::kr::uns::ClassifierClauseView& value, fmt::format_context& context) const;
 };
 
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::uns::Classifier, C>> : fmt::formatter<std::string_view>
+/// A classifier: (:classifier (:symbol s) (:features ...) (:expression (or clauses...))), one section per line, indented by 4 spaces per level.
+template<>
+struct fmt::formatter<runir::kr::uns::ClassifierView> : runir::detail::without_format_spec
 {
-    using View = urd::index_view<runir::kr::uns::Classifier, C>;
-
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::classifier(view), ctx); }
+    fmt::format_context::iterator format(const runir::kr::uns::ClassifierView& value, fmt::format_context& context) const;
 };
 
 #endif

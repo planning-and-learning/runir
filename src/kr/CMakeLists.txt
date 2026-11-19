@@ -1,6 +1,7 @@
 add_library(kr SHARED
     domain_context.cpp
     task_context.cpp
+    dl/formatter.cpp
     dl/optimization.cpp
     dl/query_construction.cpp
     dl/repository.cpp
@@ -14,16 +15,19 @@ add_library(kr SHARED
     dl/semantics/syntactic_complexity.cpp
     dl/cnf_grammar/builder.cpp
     dl/cnf_grammar/constructor_repository.cpp
+    dl/cnf_grammar/formatter.cpp
     dl/cnf_grammar/generate.cpp
     dl/cnf_grammar/symbol_repositories.cpp
     dl/cnf_grammar/translate.cpp
     dl/grammar/constructor_repository.cpp
+    dl/grammar/formatter.cpp
     dl/grammar/base/grammar_factory.cpp
     dl/grammar/base/parser.cpp
     dl/grammar/parser/parser.cpp
     dl/grammar/parser/parser_instantiations.cpp
     dl/grammar/symbol_repositories.cpp
     dl/symbol_repositories.cpp
+    ps/base/dl/formatter.cpp
     ps/base/dl/parser.cpp
     ps/base/dl/parser/parser.cpp
     ps/base/dl/parser/parser_instantiations.cpp
@@ -33,7 +37,9 @@ add_library(kr SHARED
     ps/base/dl/structural_termination/analysis.cpp
     ps/base/dl/structural_termination/incomplete_result.cpp
     ps/base/dl/structural_termination/result.cpp
+    ps/base/formatter.cpp
     ps/base/sketch_executor.cpp
+    ps/ext/dl/formatter.cpp
     ps/ext/dl/incomplete_structural_termination.cpp
     ps/ext/dl/program_structural_termination.cpp
     ps/ext/dl/module_factory.cpp
@@ -44,11 +50,14 @@ add_library(kr SHARED
     ps/ext/dl/structural_termination/analysis.cpp
     ps/ext/dl/structural_termination/incomplete_result.cpp
     ps/ext/dl/structural_termination/result.cpp
+    ps/ext/formatter.cpp
     ps/ext/program_executor_ground.cpp
     ps/ext/program_executor_lifted.cpp
     ps/icp/dl/parser.cpp
     ps/icp/dl/parser/parser.cpp
+    ps/icp/formatter.cpp
     ps/icp/program_executor.cpp
+    ps/formatter.cpp
     ps/repository.cpp
     ps/structural_termination.cpp
     ps/structural_termination/incomplete.cpp
@@ -58,6 +67,7 @@ add_library(kr SHARED
     uns/dl/classifier_factory.cpp
     uns/dl/parser.cpp
     uns/dl/parser/parser.cpp
+    uns/formatter.cpp
     uns/dl/parser/parser_instantiations.cpp
 )
 add_library(runir::kr ALIAS kr)
