@@ -45,18 +45,18 @@ struct NumericalTag
     static constexpr auto keyword = "numerical";
 };
 
-template<typename T>
-concept CategoryTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTag> || std::same_as<T, BooleanTag> || std::same_as<T, NumericalTag>;
-
-template<typename T>
-concept ConceptOrRoleTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTag>;
-
-template<typename T>
-concept BooleanOrNumericalTag = std::same_as<T, BooleanTag> || std::same_as<T, NumericalTag>;
-
 using CategoryTags = boost::mp11::mp_list<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
 using ConceptOrRoleTags = boost::mp11::mp_list<ConceptTag, RoleTag>;
 using BooleanOrNumericalTags = boost::mp11::mp_list<BooleanTag, NumericalTag>;
+
+template<typename T>
+concept CategoryTag = boost::mp11::mp_contains<CategoryTags, T>::value;
+
+template<typename T>
+concept ConceptOrRoleTag = CategoryTag<T> && boost::mp11::mp_contains<ConceptOrRoleTags, T>::value;
+
+template<typename T>
+concept BooleanOrNumericalTag = CategoryTag<T> && boost::mp11::mp_contains<BooleanOrNumericalTags, T>::value;
 
 /**
  * Truth values
