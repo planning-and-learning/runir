@@ -34,9 +34,9 @@ struct NonemptyEvaluator
             [&](auto index)
             {
                 const auto [added, removed] = graph.change(index).change();
-                if (!std::ranges::empty(added))
+                if (change_size(added) != 0)
                     return true;
-                if (std::ranges::empty(removed))
+                if (change_size(removed) == 0)
                     return value.get_value();
                 return graph.nonempty(index);
             },

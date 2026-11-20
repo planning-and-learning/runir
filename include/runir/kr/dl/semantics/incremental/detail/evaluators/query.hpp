@@ -30,7 +30,7 @@ struct QueryValue : tyr::datalog::database::incremental::detail::QueryValue
 {
     using tyr::datalog::database::incremental::detail::QueryValue::QueryValue;
 
-    ygg::FreeScratchRelation& clear() noexcept
+    ygg::FreeScratchRelation& clear()
     {
         result->clear();
         delta.clear();
@@ -44,9 +44,7 @@ struct QueryStaticEvaluator : QueryValue
     QueryView<> expression;
     bool initialized = false;
 
-    QueryStaticEvaluator(ygg::FreeScratchRelations& scratch_, QueryView<> expression_) :
-        QueryValue(scratch_, schema_of(expression_)),
-        expression(expression_)
+    QueryStaticEvaluator(ygg::FreeScratchRelations& scratch_, QueryView<> expression_) : QueryValue(scratch_, schema_of(expression_)), expression(expression_)
     {
     }
 
@@ -69,9 +67,7 @@ struct QueryStaticEvaluator : QueryValue
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact>
 struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
 {
-    QueryAtomicEvaluator(ygg::FreeScratchRelations& scratch, QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(scratch, expression)
-    {
-    }
+    QueryAtomicEvaluator(ygg::FreeScratchRelations& scratch, QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(scratch, expression) {}
 
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
@@ -111,10 +107,7 @@ struct QueryJoinEvaluator : tyr::datalog::database::incremental::JoinEvaluator
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QueryJoinEvaluator(ygg::FreeScratchRelations& scratch,
-                       QueryEvaluationIndex lhs_,
-                       QueryEvaluationIndex rhs_,
-                       const tyr::datalog::database::JoinPlan& plan) :
+    QueryJoinEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, const tyr::datalog::database::JoinPlan& plan) :
         tyr::datalog::database::incremental::JoinEvaluator(scratch, plan),
         lhs(lhs_),
         rhs(rhs_)
@@ -161,7 +154,9 @@ struct QueryFromDenotationEvaluator : QueryValue
 {
     EvaluationIndex<Category> argument;
 
-    QueryFromDenotationEvaluator(ygg::FreeScratchRelations& scratch_, EvaluationIndex<Category> argument_, std::span<const ygg::ColumnLayout> columns) :
+    QueryFromDenotationEvaluator(ygg::FreeScratchRelations& scratch_,
+                                 EvaluationIndex<Category> argument_,
+                                 std::span<const urd::data<ygg::ColumnLayout>> columns) :
         QueryValue(scratch_, columns),
         argument(argument_)
     {
@@ -201,7 +196,7 @@ struct QuerySetCombinationEvaluator : QueryValue
     QuerySetCombinationEvaluator(ygg::FreeScratchRelations& scratch_,
                                  QueryEvaluationIndex lhs_,
                                  QueryEvaluationIndex rhs_,
-                                 std::span<const ygg::ColumnLayout> columns) :
+                                 std::span<const urd::data<ygg::ColumnLayout>> columns) :
         QueryValue(scratch_, columns),
         lhs(lhs_),
         rhs(rhs_)
@@ -213,7 +208,7 @@ struct QuerySetCombinationEvaluator : QueryValue
     {
         const auto left_operand = graph.result(lhs);
         const auto right_operand = graph.result(rhs);
-        for (size_t i = 0; i < rows.size(); ++i)
+        for (size_t i = 0; i < rows.get_rows().size(); ++i)
         {
             const auto row = rows.row(i);
             const auto present = ygg::with_values(row,
@@ -272,7 +267,7 @@ struct QuerySelectionEvaluator : QueryValue
     template<ygg::RelationViewConcept<ygg::Schema> Rows, std::invocable<decltype(std::declval<const Rows&>().row(0))> Emit>
     void evaluate_rows(const Rows& rows, Emit emit)
     {
-        for (size_t i = 0; i < rows.size(); ++i)
+        for (size_t i = 0; i < rows.get_rows().size(); ++i)
         {
             const auto row = rows.row(i);
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)

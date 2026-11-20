@@ -132,7 +132,7 @@ public:
                  || std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag> || std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
     { return self().template member<&urd::record_of<V>::plan>(); }
 
-    [[nodiscard]] std::span<const ygg::ColumnLayout> get_schema() const noexcept
+    [[nodiscard]] std::span<const urd::data<ygg::ColumnLayout>> get_schema() const noexcept
         requires(!std::same_as<Tag, void>)
     {
         if constexpr (requires { self().template member<&urd::record_of<V>::plan>().output_columns(); })
@@ -184,7 +184,7 @@ auto columns_of(QueryView<Tag> view)
 
 /// The schema of a query, read through its variant for a query of any operation (its operation's).
 template<typename Tag>
-std::span<const ygg::ColumnLayout> schema_of(QueryView<Tag> view)
+std::span<const urd::data<ygg::ColumnLayout>> schema_of(QueryView<Tag> view)
 {
     if constexpr (std::same_as<Tag, void>)
         return std::visit([](auto concrete) { return concrete.get_schema(); }, view.get_variant());

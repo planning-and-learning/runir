@@ -25,6 +25,7 @@ void bind_constructor_view(nb::module_& m)
 {
     using View = urd::index_view<Constructor<Category>, ConstructorRepository>;
     urd::python::bind_view<View>(m);
+    urd::python::bind_builder<Constructor<Category>, ConstructorRepository>(m);
     runir::kr::python::bind_evaluate<View>(m);
     runir::kr::python::bind_optimize<View>(m);
 }
@@ -33,9 +34,13 @@ void bind_constructor_view(nb::module_& m)
 
 void bind_semantics_constructor(nb::module_& m)
 {
+    urd::python::bind_index<Constructor<ConceptTag>>(m);
     urd::python::bind_data<Constructor<ConceptTag>>(m);
+    urd::python::bind_index<Constructor<RoleTag>>(m);
     urd::python::bind_data<Constructor<RoleTag>>(m);
+    urd::python::bind_index<Constructor<BooleanTag>>(m);
     urd::python::bind_data<Constructor<BooleanTag>>(m);
+    urd::python::bind_index<Constructor<NumericalTag>>(m);
     urd::python::bind_data<Constructor<NumericalTag>>(m);
 
     bind_constructor_view<ConceptTag>(m);

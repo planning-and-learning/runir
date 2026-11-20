@@ -49,12 +49,12 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
     const auto feature = parse_constructor(node.feature, domain, context);
     auto concrete_data =
         runir::kr::uns::checkout<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(builder);
-    concrete_data->feature = feature;
+    urd::store(concrete_data->feature, feature);
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, builder, *concrete_data);
 
     auto data = runir::kr::uns::checkout<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>(builder);
-    data->variant = concrete;
+    urd::store(data->variant, concrete);
     return intern(repository, builder, *data);
 }
 
@@ -87,7 +87,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
         const auto wrapper = parse_feature(feature, domain, repository, dl_builder, builder, diagnostics);
         if (!symbol_to_feature.emplace(feature.symbol.text, wrapper.index()).second)
             diagnostics.throw_at(feature.symbol, runir::kr::DuplicateDefinitionError("feature", feature.symbol.text));
-        data->features.emplace_back(wrapper);
+        urd::append(data->features, wrapper);
     }
 
     const auto parse_literal = [&]<typename Literal>(const Literal& literal)
@@ -98,7 +98,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
 
         constexpr auto polarity = std::same_as<Literal, runir::kr::uns::dl::ast::PositiveLiteral>;
         auto literal_data = runir::kr::uns::checkout<runir::kr::uns::ClassifierLiteral>(builder);
-        literal_data->feature = repository.view(it->second);
+        urd::store(literal_data->feature, repository.view(it->second));
         literal_data->polarity = polarity;
         return intern(repository, builder, *literal_data);
     };
@@ -108,8 +108,8 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
         auto clause_data = runir::kr::uns::checkout<runir::kr::uns::ClassifierClause>(builder);
         clause_data->literals.reserve(ast_clause.literals.size());
         for (const auto& ast_literal : ast_clause.literals)
-            clause_data->literals.emplace_back(boost::apply_visitor(parse_literal, ast_literal.get()));
-        data->clauses.emplace_back(intern(repository, builder, *clause_data));
+            urd::append(clause_data->literals, boost::apply_visitor(parse_literal, ast_literal.get()));
+        urd::append(data->clauses, intern(repository, builder, *clause_data));
     }
 
     return intern(repository, builder, *data);

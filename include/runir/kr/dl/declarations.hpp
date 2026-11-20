@@ -396,11 +396,13 @@ struct ArgumentTag
 template<ConceptOrRoleTag Category>
 struct RegisterSlot
 {
+    static constexpr std::string_view name = urd::joined_name<"RegisterSlot", Category::name>;
 };
 
 template<CategoryTag Category>
 struct ArgumentSlot
 {
+    static constexpr std::string_view name = urd::joined_name<"ArgumentSlot", Category::name>;
 };
 
 template<ConceptOrRoleTag Category>

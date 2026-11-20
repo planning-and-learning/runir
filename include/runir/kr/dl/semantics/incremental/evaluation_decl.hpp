@@ -97,12 +97,14 @@ class EvaluationGraph
 
     /// The relation of a query, or of a concept or role lifted into the given columns. Identical
     /// lifts share one node.
-    QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::ColumnLayout>, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    QueryEvaluationIndex
+    prepare_relation(QueryView<> expression, std::span<const urd::data<ygg::ColumnLayout>>, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return prepare(expression, dependencies); }
 
     template<ConceptOrRoleTag Category>
-    QueryEvaluationIndex
-    prepare_relation(ConstructorView<Category> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    QueryEvaluationIndex prepare_relation(ConstructorView<Category> expression,
+                                          std::span<const urd::data<ygg::ColumnLayout>> columns,
+                                          urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     {
         const auto argument = prepare(expression);
         const auto lifted = static_cast<ygg::uint_t>(argument.value);
@@ -199,12 +201,13 @@ public:
     { return m_graph->prepare(expression, dependencies); }
 
     QueryEvaluationIndex
-    prepare_relation(QueryView<> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    prepare_relation(QueryView<> expression, std::span<const urd::data<ygg::ColumnLayout>> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return m_graph->prepare_relation(expression, columns, dependencies); }
 
     template<ConceptOrRoleTag Category>
-    QueryEvaluationIndex
-    prepare_relation(ConstructorView<Category> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    QueryEvaluationIndex prepare_relation(ConstructorView<Category> expression,
+                                          std::span<const urd::data<ygg::ColumnLayout>> columns,
+                                          urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return m_graph->prepare_relation(expression, columns, dependencies); }
 };
 }  // namespace detail

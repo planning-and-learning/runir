@@ -33,7 +33,7 @@ struct SetOperationWorkspace
         num_objects = num_objects_;
         rows.clear();
         rows.reserve(num_objects);
-        row.initialize(num_objects, records_, denotations_);
+        semantics::initialize(row, num_objects, records_);
         closure.initialize(num_objects);
     }
 

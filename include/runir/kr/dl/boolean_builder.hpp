@@ -61,9 +61,7 @@ struct builder<runir::kr::dl::Boolean<F, Tag>, C>
     urd::built_t<runir::kr::dl::operand_t<F, runir::kr::dl::comparison_operand_t<Tag>>, C> right_operand;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"left_operand", &builder::left_operand>, urd::field<"right_operand", &builder::right_operand>> {};
-    }
+    { return urd::Fields<urd::field<"left_operand", &builder::left_operand>, urd::field<"right_operand", &builder::right_operand>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
@@ -89,9 +87,7 @@ struct builder<runir::kr::dl::Boolean<F, Tag>, C>
     urd::built_t<runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>, C> right_operand;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"left_operand", &builder::left_operand>, urd::field<"right_operand", &builder::right_operand>> {};
-    }
+    { return urd::Fields<urd::field<"left_operand", &builder::left_operand>, urd::field<"right_operand", &builder::right_operand>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };

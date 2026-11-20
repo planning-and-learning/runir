@@ -65,7 +65,7 @@ QueryTranslator::YggQuery QueryTranslator::translate(DlQuery query)
 QueryTranslator::YggQuery QueryTranslator::project(YggQuery query, std::span<const Label> labels)
 {
     auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QueryProjectTag>>(m_builder);
-    out->operand = query;
+    urd::store(out->operand, query);
     out->labels.assign(labels.begin(), labels.end());
     return insert(*out);
 }
@@ -91,7 +91,7 @@ QueryTranslator::YggQuery QueryTranslator::input(QuerySlot slot)
     return insert(*out);
 }
 
-std::span<const ygg::ColumnLayout> QueryTranslator::schema(DlQuery query)
+std::span<const urd::data<ygg::ColumnLayout>> QueryTranslator::schema(DlQuery query)
 {
     return std::visit([](auto concrete) { return concrete.get_schema(); }, query.get_variant());
 }
@@ -129,7 +129,7 @@ std::optional<QueryTranslator::YggQuery> QueryTranslator::rewrite_complements(Dl
                                                                   [&](DlQuery positive)
                                                                   {
                                                                       const auto columns = schema(positive);
-                                                                      return std::ranges::find(columns, column.label, &ygg::ColumnLayout::label)
+                                                                      return std::ranges::find(columns, column.label, &urd::data<ygg::ColumnLayout>::label)
                                                                              != columns.end();
                                                                   });
                                    });
@@ -194,7 +194,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectEqualTag>>(m_builder);
-        out->operand = translate(concrete.get_operand());
+        urd::store(out->operand, translate(concrete.get_operand()));
         out->left_column = Label(concrete.get_left_column().index().value);
         out->right_column = Label(concrete.get_right_column().index().value);
         return insert(*out);
@@ -203,7 +203,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     {
         using Object = urd::index<ygg::formalism::Object>;
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectValueTag>>(m_builder);
-        out->operand = translate(concrete.get_operand());
+        urd::store(out->operand, translate(concrete.get_operand()));
         out->column = Label(concrete.get_column().index().value);
         out->constant = ygg::encode_value(Object(concrete.get_object().index().value));
         out->constant_type = ygg::type_id<Object>;
@@ -213,7 +213,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QueryGenericJoinTag>>(m_builder);
         for (const auto arg : concrete.get_args())
-            out->inputs.emplace_back(translate(arg));
+            urd::append(out->inputs, translate(arg));
         const auto variable_order = query_labels(concrete.get_variable_order());
         const auto output_order = query_labels(concrete.get_output_order());
         out->variable_order.assign(variable_order.begin(), variable_order.end());

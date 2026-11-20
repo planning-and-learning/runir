@@ -58,7 +58,7 @@ public:
         m_rule(rule),
         m_variant(variant),
         m_action(action)
-    { m_offer.relation = action; }
+    { urd::store(m_offer.relation, action); }
 
     auto get_rule() const noexcept { return m_rule; }
 

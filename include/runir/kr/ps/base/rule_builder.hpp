@@ -24,9 +24,7 @@ struct builder<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>
     urd::built_t<runir::kr::ps::EffectList<runir::kr::BaseFamilyTag>, C> effects;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"symbol", &builder::symbol>, urd::field<"conditions", &builder::conditions>, urd::field<"effects", &builder::effects>> {};
-    }
+    { return urd::Fields<urd::field<"symbol", &builder::symbol>, urd::field<"conditions", &builder::conditions>, urd::field<"effects", &builder::effects>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::symbol, &builder::conditions, &builder::effects> {}; }
 };

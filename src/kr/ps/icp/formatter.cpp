@@ -239,7 +239,7 @@ fmt::formatter<rp::ProgramProofVertexLabel<rk::IcpFamilyTag, Kind>>::format(cons
 {
     return fmt::format_to(context.out(),
                           "state={} initial={} goal={} alive={} unsolvable={}",
-                          value.program_state.get_state().index(),
+                          value.program_state.get_state().pack().index(),
                           value.is_initial,
                           value.is_goal,
                           value.is_alive,

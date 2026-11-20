@@ -83,8 +83,8 @@ void expect_net_delta(auto& evaluator, const auto& before)
 
 void expect_empty_delta(auto& evaluator)
 {
-    EXPECT_TRUE(evaluator.get_delta().added->view().empty());
-    EXPECT_TRUE(evaluator.get_delta().removed->view().empty());
+    EXPECT_TRUE(evaluator.get_delta().added->view().get_rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().removed->view().get_rows().empty());
 }
 
 template<tyr::TaskKind Kind>
@@ -199,8 +199,8 @@ void check_atomic_projection()
     initialize(initial.get_state());
     update(first_delta, first->node.get_state());
     // The first action removes both ready and a triple; each leaf filters the other predicate.
-    EXPECT_EQ(triple_leaf.get_delta().removed->view().size(), 1);
-    EXPECT_EQ(ready_leaf.get_delta().removed->view().size(), 1);
+    EXPECT_EQ(triple_leaf.get_delta().removed->view().get_rows().size(), 1);
+    EXPECT_EQ(ready_leaf.get_delta().removed->view().get_rows().size(), 1);
     EXPECT_TRUE(ready_leaf.get_delta().removed->view().contains(std::array<ygg::Value, 0> {}));
     EXPECT_TRUE(triple_projection.get_result().contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
     expect_empty_delta(triple_projection);

@@ -25,8 +25,10 @@ namespace runir::kr::ps::ext
 
 void bind_program(nb::module_& m, RepositoryBinding& repository)
 {
+    urd::python::bind_index<Program>(m);
     urd::python::bind_data<Program>(m);
     urd::python::bind_view<ProgramView>(m);
+    urd::python::bind_builder<Program, Repository>(m);
     runir::kr::python::bind_ps_optimize<runir::kr::ExtFamilyTag, Repository, ProgramView>(m);
     ygg::bind_insert<Program>(repository);
 }

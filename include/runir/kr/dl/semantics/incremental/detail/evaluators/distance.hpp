@@ -28,8 +28,10 @@ namespace runir::kr::dl::semantics::incremental::detail
 
 /// The graph node of a distance argument (sources, edges or targets), lifted into `columns`.
 template<tyr::TaskKind Kind, typename Argument>
-QueryEvaluationIndex
-prepare_argument(Argument argument, std::span<const ygg::ColumnLayout> columns, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+QueryEvaluationIndex prepare_argument(Argument argument,
+                                      std::span<const urd::data<ygg::ColumnLayout>> columns,
+                                      GraphBuilder<Kind>& graph,
+                                      urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
 {
     return std::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, argument);
 }
@@ -154,7 +156,7 @@ private:
     }
 
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
-    { return !graph.change(index).added->view().empty() || !graph.change(index).removed->view().empty(); }
+    { return !graph.change(index).added->view().get_rows().empty() || !graph.change(index).removed->view().get_rows().empty(); }
 
     void set_targets(const EvaluationGraph<Kind>& graph)
     {

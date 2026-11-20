@@ -95,7 +95,9 @@ private:
         const auto* repository = m_state.get_formalism_repository().get();
         if (m_arguments && detail::get_formalism_repository(m_arguments->context()) != repository)
             throw std::invalid_argument("Evaluation requires arguments for the same planning task.");
-        if (&urd::visit_view(m_registers, [](const auto& registers) -> const tyr::formalism::planning::Repository& { return registers.get_formalism_repository(); })
+        if (&urd::visit_view(m_registers,
+                             [](const auto& registers) -> const tyr::formalism::planning::Repository&
+                             { return registers.context().get_formalism_repository(); })
             != repository)
             throw std::invalid_argument("Evaluation requires registers for the same planning task.");
     }
@@ -109,11 +111,7 @@ private:
         m_denotations = { &repository, &repository };
     }
 
-    StateEvaluationContext(S state,
-                           Builder& builder,
-                           EvaluationStorage& storage,
-                           RegisterValuesChild registers,
-                           std::optional<CallArgumentsView> arguments) :
+    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage, RegisterValuesChild registers, std::optional<CallArgumentsView> arguments) :
         m_state(std::move(state)),
         m_builder(&builder),
         m_caches(&storage.get_caches()),

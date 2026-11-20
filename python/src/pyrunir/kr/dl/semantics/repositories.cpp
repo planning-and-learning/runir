@@ -44,10 +44,14 @@ void bind_constructors(nb::class_<ConstructorRepository>& repository, boost::mp1
 void bind_semantics_repositories(nb::module_& m)
 {
     using DenotationRepository = semantics::DenotationRepository;
+    urd::python::bind_index<semantics::CallArguments>(m);
     urd::python::bind_data<semantics::CallArguments>(m);
+    urd::python::bind_index<semantics::RegisterValues>(m);
     urd::python::bind_data<semantics::RegisterValues>(m);
     urd::python::bind_view<semantics::RegisterValuesView>(m);
+    urd::python::bind_builder<semantics::RegisterValues, semantics::DenotationRepository>(m);
     urd::python::bind_view<semantics::CallArgumentsView>(m);
+    urd::python::bind_builder<semantics::CallArguments, semantics::DenotationRepository>(m);
 
     nb::class_<runir::kr::dl::semantics::Builder>(m, "Builder").def(nb::init<>());
 

@@ -7,6 +7,7 @@
 #include <concepts>
 #include <cstddef>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -19,13 +20,14 @@
 
 namespace runir::kr::dl::semantics::detail
 {
-/// A register's object, interned: one of the task's (a built object has no index in the task: throws std::logic_error).
+/// A register's object, interned: one of the task's, read through its repository (a built object has no index in the
+/// task: throws std::logic_error).
 struct object_of
 {
-    tyr::formalism::planning::ObjectView operator()(const auto& object) const
+    tyr::formalism::planning::ObjectView operator()(const tyr::formalism::planning::Repository* repository, const auto& object) const
     {
         if (const auto* interned = std::get_if<urd::interned_child<tyr::formalism::Object, tyr::formalism::planning::Repository>>(&object))
-            return *interned;
+            return urd::resolve(*interned, *repository);
         throw std::logic_error("a register's object is one of the task's: interned");
     }
 };
@@ -33,15 +35,16 @@ struct object_of
 /// A concept register's value, its object interned.
 struct concept_value_of
 {
-    std::optional<tyr::formalism::planning::ObjectView> operator()(const auto& value) const
-    { return value.has_value() ? std::optional(object_of {}(*value)) : std::nullopt; }
+    std::optional<tyr::formalism::planning::ObjectView> operator()(const tyr::formalism::planning::Repository* repository, const auto& value) const
+    { return value.has_value() ? std::optional(object_of {}(repository, *value)) : std::nullopt; }
 };
 
 /// A role register's value, its objects interned.
 struct role_value_of
 {
-    std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>> operator()(const auto& value) const
-    { return value.has_value() ? std::optional(std::pair(object_of {}(value->first), object_of {}(value->second))) : std::nullopt; }
+    std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>
+    operator()(const tyr::formalism::planning::Repository* repository, const auto& value) const
+    { return value.has_value() ? std::optional(std::pair(object_of {}(repository, value->first), object_of {}(repository, value->second))) : std::nullopt; }
 };
 }  // namespace runir::kr::dl::semantics::detail
 
@@ -58,9 +61,6 @@ public:
 
     auto get_role_values() const noexcept { return self().template member<&urd::record_of<V>::role_values>(); }
 
-    /// The formalism repository its objects belong to: its denotation repository's.
-    const auto& get_formalism_repository() const noexcept { return self().context().get_formalism_repository(); }
-
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto values() const noexcept
     {
@@ -70,14 +70,20 @@ public:
             return get_role_values();
     }
 
+    /// The value of register `reg` (std::out_of_range beyond its registers).
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto at(runir::kr::dl::RegisterIdentifier<Category> reg) const
-    { return values<Category>().at(static_cast<size_t>(ygg::uint_t(reg.value))); }
+    {
+        auto registers = values<Category>();
+        const auto position = static_cast<std::size_t>(ygg::uint_t(reg.value));
+        if (position >= std::ranges::size(registers))
+            throw std::out_of_range("RegisterValues::at: no such register");
+        return registers[static_cast<std::ptrdiff_t>(position)];
+    }
 
     static constexpr auto functions() noexcept
     {
-        return urd::Functions<urd::function<"get_formalism_repository", &view_mixin::get_formalism_repository>,
-                              urd::function<"at", &view_mixin::template at<runir::kr::dl::ConceptTag>, urd::arg<"reg">>,
+        return urd::Functions<urd::function<"at", &view_mixin::template at<runir::kr::dl::ConceptTag>, urd::arg<"reg">>,
                               urd::function<"at", &view_mixin::template at<runir::kr::dl::RoleTag>, urd::arg<"reg">>> {};
     }
 };
@@ -92,10 +98,18 @@ private:
 
 public:
     auto get_concept_values() const noexcept
-    { return urd::transform(self().template member<&urd::record_of<V>::concept_values>(), runir::kr::dl::semantics::detail::concept_value_of {}); }
+    {
+        return urd::transform(urd::detail::view_access::record(self()).concept_values,
+                              &self().context().get_formalism_repository(),
+                              runir::kr::dl::semantics::detail::concept_value_of {});
+    }
 
     auto get_role_values() const noexcept
-    { return urd::transform(self().template member<&urd::record_of<V>::role_values>(), runir::kr::dl::semantics::detail::role_value_of {}); }
+    {
+        return urd::transform(urd::detail::view_access::record(self()).role_values,
+                              &self().context().get_formalism_repository(),
+                              runir::kr::dl::semantics::detail::role_value_of {});
+    }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto values() const noexcept
@@ -106,14 +120,20 @@ public:
             return get_role_values();
     }
 
+    /// The value of register `reg` (std::out_of_range beyond its registers).
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto at(runir::kr::dl::RegisterIdentifier<Category> reg) const
-    { return values<Category>().at(static_cast<size_t>(ygg::uint_t(reg.value))); }
+    {
+        auto registers = values<Category>();
+        const auto position = static_cast<std::size_t>(ygg::uint_t(reg.value));
+        if (position >= std::ranges::size(registers))
+            throw std::out_of_range("RegisterValues::at: no such register");
+        return registers[static_cast<std::ptrdiff_t>(position)];
+    }
 
     static constexpr auto functions() noexcept
     {
-        return urd::Functions<urd::function<"get_formalism_repository", &view_mixin::get_formalism_repository>,
-                              urd::function<"at", &view_mixin::template at<runir::kr::dl::ConceptTag>, urd::arg<"reg">>,
+        return urd::Functions<urd::function<"at", &view_mixin::template at<runir::kr::dl::ConceptTag>, urd::arg<"reg">>,
                               urd::function<"at", &view_mixin::template at<runir::kr::dl::RoleTag>, urd::arg<"reg">>> {};
     }
 };

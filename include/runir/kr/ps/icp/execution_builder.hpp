@@ -52,9 +52,7 @@ struct builder<runir::kr::ps::icp::ProgramState<Kind>, C>
     }
 
     static constexpr auto identifying_members() noexcept
-    {
-        return urd::Members<&builder::program, &builder::memory_state, &builder::registers, &builder::histories, &builder::state> {};
-    }
+    { return urd::Members<&builder::program, &builder::memory_state, &builder::registers, &builder::histories, &builder::state> {}; }
 };
 
 }  // namespace urd

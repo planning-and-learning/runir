@@ -50,12 +50,14 @@ using StateBuilder = urd::builder<tyr::planning::State<Kind>, tyr::planning::Sta
 /// registers built).
 template<typename T, typename C, typename K>
 auto& built_of(urd::child<T, C, K>& child)
-{ return std::get<urd::built_child<T, C>>(child).held(); }
+{ return (*std::get<urd::built_child<T, C>>(child)); }
 
 /// A program state's memory state (interned, as its activation holds it in either form).
 template<typename S>
 auto memory_state_of(const S& state)
-{ return urd::visit_view(state.get_module_state(), [](const auto& activation) { return urd::interned_view(activation.get_memory_state()); }); }
+{
+    return urd::visit_view(state.get_module_state(), [](const auto& activation) { return urd::interned_view(activation.get_memory_state()); });
+}
 
 /// A stored program state's planning state, as built.
 template<typename P>
@@ -613,10 +615,11 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto* scratch = &first.get_state().get_numeric_storage().get_values();
     auto expected = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
     expected.assign(first.get_state());
-    const auto retained = storage.store(first.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), std::optional(inner_caller));
+    const auto retained =
+        storage.store(first.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), std::optional(inner_caller));
     const auto& retained_call_stack = retained->call_stack;
     ASSERT_TRUE(retained_call_stack.has_value());
-    EXPECT_EQ(retained_call_stack.has_value() ? urd::interned_view(*retained_call_stack).index() : urd::index<kr::ps::ext::CallStack>(), inner_caller.index());
+    EXPECT_EQ(retained_call_stack.has_value() ? std::get<0>(*retained_call_stack) : urd::index<kr::ps::ext::CallStack>(), inner_caller.index());
 
     // Generating another candidate overwrites scratch, but not the accepted program state.
     const auto second = storage.successor(source, bindings.back());
@@ -632,7 +635,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto copy = storage.retain(storage.view(retained));
     const auto& copy_call_stack = copy->call_stack;
     ASSERT_TRUE(copy_call_stack.has_value());
-    EXPECT_EQ(copy_call_stack.has_value() ? urd::interned_view(*copy_call_stack).index() : urd::index<kr::ps::ext::CallStack>(), inner_caller.index());
+    EXPECT_EQ(copy_call_stack.has_value() ? std::get<0>(*copy_call_stack) : urd::index<kr::ps::ext::CallStack>(), inner_caller.index());
     const auto caller = storage.view(copy).get_call_stack();
     ASSERT_TRUE(caller);
     const auto frame = urd::interned_view(caller.value());  // a frame is interned
@@ -641,7 +644,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto returned = storage.store(kr::ps::ext::planning_state(storage.view(copy)), frame.get_module_state(), frame.get_caller());
     const auto& returned_call_stack = returned->call_stack;
     ASSERT_TRUE(returned_call_stack.has_value());
-    EXPECT_EQ(returned_call_stack.has_value() ? urd::interned_view(*returned_call_stack).index() : urd::index<kr::ps::ext::CallStack>(), outer_caller.index());
+    EXPECT_EQ(returned_call_stack.has_value() ? std::get<0>(*returned_call_stack) : urd::index<kr::ps::ext::CallStack>(), outer_caller.index());
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(memory_state_of(storage.view(returned)), inner_return));
 
     const auto materialized = storage.materialize(storage.view(retained));

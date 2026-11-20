@@ -121,10 +121,10 @@ public:
     {
         auto& builder = m_context->execution_builder;
         auto program_state = builder.template checkout<ProgramState<Kind>>();
-        program_state->state = m_context->search_context->state_repository->view(planning_state.index());
-        program_state->module_state = module_state;
+        program_state->state = planning_state.pack().index();
+        urd::store(program_state->module_state, module_state);
         if (caller.has_value())
-            program_state->call_stack.emplace(*caller);
+            urd::store(program_state->call_stack, *caller);
         return m_context->execution_repository->insert(*program_state, builder).first;
     }
 
@@ -163,9 +163,9 @@ public:
         const auto current = state.get_module_state();
         auto& builder = m_context->control_builder;
         auto frame = builder.template checkout<CallStack>();
-        frame->module_state = activation(current.get_mod(), return_state, current.get_registers(), current.get_arguments());
+        urd::store(frame->module_state, activation(current.get_mod(), return_state, current.get_registers(), current.get_arguments()));
         if (const auto caller = state.get_call_stack(); caller.has_value())
-            frame->caller.emplace(*caller);
+            urd::store(frame->caller, *caller);
         return m_context->control_repository->insert(*frame, builder).first;
     }
 
@@ -174,7 +174,10 @@ public:
     tyr::planning::Node<Kind> successor(const S& state, Binding binding)
     {
         auto& search = *m_context->search_context;
-        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind, S>(state, 0), binding, *search.state_repository, *search.axiom_evaluator);
+        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind, S>(state, 0),
+                                                              binding,
+                                                              *search.state_repository,
+                                                              *search.axiom_evaluator);
     }
 
 private:
@@ -186,10 +189,10 @@ private:
     {
         auto& builder = m_context->control_builder;
         auto activation = builder.template checkout<ModuleState>();
-        activation->mod = module_;
-        activation->memory_state = memory_state;
-        activation->registers = registers;
-        activation->arguments = arguments;
+        urd::store(activation->mod, module_);
+        urd::store(activation->memory_state, memory_state);
+        urd::store(activation->registers, registers);
+        urd::store(activation->arguments, arguments);
         return m_context->control_repository->insert(*activation, builder).first;
     }
 };
@@ -240,7 +243,7 @@ public:
                         [&](const auto& activation)
                         {
                             if constexpr (std::same_as<std::remove_cvref_t<decltype(activation)>, ModuleStateView>)
-                                result->module_state = activation;
+                                urd::store(result->module_state, activation);
                             else
                                 write_activation(result->module_state,
                                                  activation.get_mod(),
@@ -298,7 +301,7 @@ public:
                         { write_activation(frame->module_state, activation.get_mod(), return_state, activation.get_registers(), activation.get_arguments()); });
         frame->caller.reset();
         if (const auto caller = call_stack(state); caller.has_value())
-            frame->caller.emplace(*caller);
+            urd::store(frame->caller, *caller);
         return m_context->control_repository->insert(*frame, m_context->control_builder).first;
     }
 
@@ -309,10 +312,7 @@ public:
     tyr::planning::Node<Kind, tyr::planning::StateBuilderView<Kind>> successor(const S& state, Binding binding)
     {
         auto& search = *m_context->search_context;
-        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind, S>(state, 0),
-                                                              binding,
-                                                              m_planning,
-                                                              *search.axiom_evaluator);
+        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind, S>(state, 0), binding, m_planning, *search.axiom_evaluator);
     }
 
 private:
@@ -322,10 +322,10 @@ private:
     {
         auto result = m_program_states.make_shared();
         // Assign into the destination's existing builders and buffers so released pool slots retain their capacity.
-        urd::builder_of(result->state, m_planning_states, *m_context->search_context->state_repository).assign(planning_state);
+        urd::builder_of(result->state, m_planning_states).assign(planning_state);
         result->call_stack.reset();
         if (caller.has_value())
-            result->call_stack.emplace(*caller);
+            urd::store(result->call_stack, *caller);
         return result;
     }
 
@@ -335,18 +335,13 @@ private:
              urd::ReadsAs<MemoryState<runir::kr::ExtFamilyTag>> Memory,
              urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R,
              urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A>
-    void write_activation(urd::child<ModuleState, ControlRepository>& target,
-                          const M& module_,
-                          const Memory& memory_state,
-                          const R& registers,
-                          const A& arguments)
+    void
+    write_activation(urd::child<ModuleState, ControlRepository>& target, const M& module_, const Memory& memory_state, const R& registers, const A& arguments)
     {
-        auto& activation = urd::builder_of(target, m_module_states, *m_context->control_repository);
+        auto& activation = urd::builder_of(target, m_module_states);
         urd::copy_child(activation.mod, module_);
         urd::copy_child(activation.memory_state, memory_state);
-        urd::visit_view(registers,
-                        [&](const auto& values)
-                        { runir::kr::dl::semantics::assign(urd::builder_of(activation.registers, m_registers, *m_context->dl_denotation_repository), values); });
+        urd::visit_view(registers, [&](const auto& values) { runir::kr::dl::semantics::assign(urd::builder_of(activation.registers, m_registers), values); });
         urd::copy_child(activation.arguments, arguments);
     }
 };

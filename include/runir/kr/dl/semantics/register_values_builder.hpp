@@ -29,9 +29,7 @@ struct builder<runir::kr::dl::semantics::RegisterValues, C>
         role_values;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"concept_values", &builder::concept_values>, urd::field<"role_values", &builder::role_values>> {};
-    }
+    { return urd::Fields<urd::field<"concept_values", &builder::concept_values>, urd::field<"role_values", &builder::role_values>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::concept_values, &builder::role_values> {}; }
 };
@@ -41,23 +39,21 @@ struct builder<runir::kr::dl::semantics::RegisterValues, C>
 namespace runir::kr::dl::semantics
 {
 
-/// Replace a register builder's values with source's, each object as its interned view, retaining buffers. Each value
+/// Replace a register builder's values with source's, each object as its key, retaining buffers. Each value
 /// is written at its position after it is read, so a view of the builder itself leaves it as it is.
 template<RegisterValuesViewConcept R>
 urd::builder<RegisterValues, DenotationRepository>& assign(urd::builder<RegisterValues, DenotationRepository>& built, R source)
 {
-    using Object = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;  // an object: the planning repository's
     const auto concept_values = source.template values<ConceptTag>();
     built.concept_values.resize(std::ranges::size(concept_values));
     auto concept_at = std::size_t { 0 };
     for (const auto& value : concept_values)
-        built.concept_values[concept_at++] = value.has_value() ? std::optional<Object>(std::in_place, *value) : std::optional<Object>();
+        urd::store(built.concept_values[concept_at++], value);
     const auto role_values = source.template values<RoleTag>();
     built.role_values.resize(std::ranges::size(role_values));
     auto role_at = std::size_t { 0 };
     for (const auto& value : role_values)
-        built.role_values[role_at++] = value.has_value() ? std::optional<std::pair<Object, Object>>(std::in_place, value->first, value->second) :
-                                                           std::optional<std::pair<Object, Object>>();
+        urd::store(built.role_values[role_at++], value);
     built.index = {};
     return built;
 }

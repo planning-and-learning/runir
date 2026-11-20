@@ -200,9 +200,9 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
 
     const auto same_rows = [](const auto& lhs, const auto& rhs)
     {
-        if (lhs.size() != rhs.size())
+        if (lhs.get_rows().size() != rhs.get_rows().size())
             return false;
-        for (size_t i = 0; i < lhs.size(); ++i)
+        for (size_t i = 0; i < lhs.get_rows().size(); ++i)
             if (!ygg::with_values(lhs.row(i), [&rhs](const auto& values) { return rhs.contains(values); }))
                 return false;
         return true;
@@ -217,10 +217,10 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         const auto& projected_delta = projection.get_delta();
         const auto [graph_added, graph_removed] = graph_state.get_delta().change();
         const auto [projected_added, projected_removed] = projected_delta.change();
-        return leaf.get_result().get_rows().size() == rows && delta.added->view().size() == static_cast<size_t>(adding)
-               && delta.removed->view().size() == static_cast<size_t>(!adding) && projection.get_result().get_rows().size() == projected_rows
-               && projected_delta.added->view().size() == (adding ? projected_rows - previous_size : 0)
-               && projected_delta.removed->view().size() == (adding ? 0 : previous_size - projected_rows)
+        return leaf.get_result().get_rows().size() == rows && delta.added->view().get_rows().size() == static_cast<size_t>(adding)
+               && delta.removed->view().get_rows().size() == static_cast<size_t>(!adding) && projection.get_result().get_rows().size() == projected_rows
+               && projected_delta.added->view().get_rows().size() == (adding ? projected_rows - previous_size : 0)
+               && projected_delta.removed->view().get_rows().size() == (adding ? 0 : previous_size - projected_rows)
                && same_rows(graph_state.get_result(), projection.get_result()) && same_rows(graph_added, projected_added)
                && same_rows(graph_removed, projected_removed);
     };
@@ -322,7 +322,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto objects = domain.get_constants();
     ASSERT_GE(objects.size(), 3);
     using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
-    const auto object = [&](size_t at) { return ObjectChild(search->task->get_repository()->view(objects[static_cast<std::ptrdiff_t>(at)].index())); };
+    const auto object = [&](size_t at) { return ObjectChild(objects[static_cast<std::ptrdiff_t>(at)].index()); };
     for (size_t i = 0; i < registers.size(); ++i)
     {
         registers[i].concept_values.resize(2);
@@ -357,12 +357,11 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
     const auto context_for = [&](size_t i)
     {
-        return kr::dl::semantics::StateEvaluationContext<tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>(
-            states[i],
-            builder,
-            storage,
-            arguments,
-            urd::resolve(registers[i], denotations));
+        return kr::dl::semantics::StateEvaluationContext<tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>(states[i],
+                                                                                                                   builder,
+                                                                                                                   storage,
+                                                                                                                   arguments,
+                                                                                                                   urd::resolve(registers[i], denotations));
     };
     // The inputs of each state of the cycle, built before the measured scope.
     const auto contexts = std::array { context_for(0), context_for(1), context_for(2) };
@@ -470,10 +469,10 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
     auto dl_builder = kr::dl::semantics::Builder();
-    const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> },
-                                      ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
-    const auto renamed = std::array { ygg::ColumnLayout { ColumnIndex(2), ygg::type_id<urd::index<tyr::formalism::Object>> },
-                                      ygg::ColumnLayout { ColumnIndex(3), ygg::type_id<urd::index<tyr::formalism::Object>> } };
+    const auto columns = std::array { urd::data<ygg::ColumnLayout> { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                      urd::data<ygg::ColumnLayout> { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
+    const auto renamed = std::array { urd::data<ygg::ColumnLayout> { ColumnIndex(2), ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                      urd::data<ygg::ColumnLayout> { ColumnIndex(3), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     auto relations = ygg::FreeScratchRelations();
     auto result = relations.draw(columns);
     for (ygg::uint_t i = 0; i < 32; ++i)
@@ -515,10 +514,10 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
     auto dl_builder = kr::dl::semantics::Builder();
-    const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> },
-                                      ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
-    const auto aliases = std::array { ygg::ColumnLayout { ColumnIndex(100), ygg::type_id<urd::index<tyr::formalism::Object>> },
-                                      ygg::ColumnLayout { ColumnIndex(101), ygg::type_id<urd::index<tyr::formalism::Object>> } };
+    const auto columns = std::array { urd::data<ygg::ColumnLayout> { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                      urd::data<ygg::ColumnLayout> { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
+    const auto aliases = std::array { urd::data<ygg::ColumnLayout> { ColumnIndex(100), ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                      urd::data<ygg::ColumnLayout> { ColumnIndex(101), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     auto relations = ygg::FreeScratchRelations();
     bool valid = true;
     const auto cycle = [&](size_t generation)

@@ -15,8 +15,11 @@ void bind_module_definitions(nb::module_& m)
 {
     auto repository = RepositoryBinding(m, "Repository");
     bind_indexical(m, repository);
+    urd::python::bind_index<MemoryState<IcpFamilyTag>>(m);
     urd::python::bind_data<MemoryState<IcpFamilyTag>>(m);
+    urd::python::bind_index<ModuleSymbol<IcpFamilyTag>>(m);
     urd::python::bind_data<ModuleSymbol<IcpFamilyTag>>(m);
+    urd::python::bind_index<ps::Rule<IcpFamilyTag>>(m);
     urd::python::bind_data<ps::Rule<IcpFamilyTag>>(m);
     runir::kr::python::bind_program_record_views<IcpFamilyTag>(m, repository);
     bind_rule(m, repository);

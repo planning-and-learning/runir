@@ -45,7 +45,8 @@ TaskContext<Kind>::TaskContext(DomainContextPtr domain_context_, runir::datasets
     execution_repository(
         std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>(search_context->state_repository, control_repository)),
     icp_control_builder(),
-    icp_control_repository(std::make_shared<runir::kr::ps::ControlRepository<runir::kr::IcpFamilyTag>>(dl_denotation_repository, domain_context->icp_repository)),
+    icp_control_repository(
+        std::make_shared<runir::kr::ps::ControlRepository<runir::kr::IcpFamilyTag>>(dl_denotation_repository, domain_context->icp_repository)),
     icp_execution_builder(),
     icp_execution_repository(
         std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, Kind>>(search_context->state_repository, icp_control_repository))

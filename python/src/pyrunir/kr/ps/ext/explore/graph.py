@@ -13,10 +13,10 @@ from pytyr.formalism.planning import AtomGroundDerived, AtomGroundFluent, AtomGr
 from pytyr.planning import lifted
 
 from pyrunir.kr.ps import ProofStatus
-from pyrunir.kr.ps.ext import ModuleState
 from pyrunir.kr.ps.ext import (
     LiftedProgramProofGraph,
     LiftedProgramProofResults,
+    ModuleState,
     RuleChooseConcept,
     RuleChooseRole,
     RuleExt,

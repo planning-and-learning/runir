@@ -30,8 +30,10 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
     using View = SketchView;
     using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
+    urd::python::bind_index<Sketch>(m);
     urd::python::bind_data<Sketch>(m);
     urd::python::bind_view<View>(m);
+    urd::python::bind_builder<runir::kr::ps::base::Sketch, Repository>(m);
     m.def(
          "is_compatible_with",
          [](View sketch, GroundContext& context) { return runir::kr::ps::base::is_compatible_with<tyr::GroundTag>(sketch, context); },

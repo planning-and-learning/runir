@@ -59,7 +59,8 @@ struct data<runir::kr::ps::ext::ModuleState>
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
+    static constexpr auto cista_members() noexcept
+    { return urd::Members<&data::index, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
 };
 
 /// A frame: the suspended activation (its memory state the one to return to) and its caller.
@@ -78,6 +79,7 @@ struct data<runir::kr::ps::ext::CallStack>
         caller(std::move(caller_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -112,6 +114,7 @@ struct data<runir::kr::ps::ext::ProgramState<Kind>>
         call_stack(std::move(call_stack_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -119,16 +122,11 @@ struct data<runir::kr::ps::ext::ProgramState<Kind>>
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"state", &data::state>,
-                           urd::field<"module_state", &data::module_state>,
-                           urd::field<"call_stack", &data::call_stack>> {};
-    }
+    { return urd::Fields<urd::field<"state", &data::state>, urd::field<"module_state", &data::module_state>, urd::field<"call_stack", &data::call_stack>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
-    static constexpr auto cista_members() noexcept
-    { return urd::Members<&data::index, &data::state, &data::module_state, &data::call_stack> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::state, &data::module_state, &data::call_stack> {}; }
 };
 
 }  // namespace urd

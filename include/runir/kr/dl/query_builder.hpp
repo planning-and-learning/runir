@@ -49,12 +49,10 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>, C>
     urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
     urd::built_t<urd::index<tyr::formalism::Predicate<T>>, ::tyr::formalism::planning::Repository> predicate {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<urd::flat_vector<ygg::ColumnLayout>, C> schema {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"predicate", &builder::predicate>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {};
-    }
+    { return urd::Fields<urd::field<"predicate", &builder::predicate>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::predicate, &builder::columns> {}; }
 };
@@ -67,7 +65,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>, C>
     urd::built_t<urd::index<tyr::formalism::Predicate<T>>, ::tyr::formalism::planning::Repository> predicate {};
     urd::built_t<bool, C> polarity {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<urd::flat_vector<ygg::ColumnLayout>, C> schema {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
 
     static constexpr auto fields() noexcept
     {
@@ -87,12 +85,10 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>, C>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<urd::flat_vector<ygg::ColumnLayout>, C> schema {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {};
-    }
+    { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operand, &builder::columns> {}; }
 };
@@ -104,12 +100,10 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>, C>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<urd::flat_vector<ygg::ColumnLayout>, C> schema {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {};
-    }
+    { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operand, &builder::columns> {}; }
 };
@@ -167,9 +161,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>, C>
     urd::built_t<tyr::datalog::database::ProjectionPlan, C> plan {};
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"plan", &builder::plan>> {};
-    }
+    { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"plan", &builder::plan>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operand, &builder::columns> {}; }
 };
@@ -181,12 +173,10 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>, C>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<urd::flat_vector<ygg::ColumnLayout>, C> schema {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {};
-    }
+    { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operand, &builder::columns> {}; }
 };
@@ -285,9 +275,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>, C>
     }
 
     static constexpr auto identifying_members() noexcept
-    {
-        return urd::Members<&builder::keys, &builder::sources, &builder::edges, &builder::targets, &builder::probes> {};
-    }
+    { return urd::Members<&builder::keys, &builder::sources, &builder::edges, &builder::targets, &builder::probes> {}; }
 };
 
 /// The builder of Query: its record's members, each in its built form (urd::built_t).
@@ -296,7 +284,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>, C>
 {
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<urd::flat_vector<ygg::ColumnLayout>, C> schema {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {}; }
 
@@ -313,9 +301,7 @@ struct builder<runir::kr::dl::QueryProjection<Category>, C>
     urd::built_t<tyr::datalog::database::ProjectionPlan, C> plan {};
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"plan", &builder::plan>> {};
-    }
+    { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"plan", &builder::plan>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operand, &builder::columns> {}; }
 };

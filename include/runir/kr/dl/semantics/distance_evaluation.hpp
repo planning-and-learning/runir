@@ -124,11 +124,8 @@ inline MustPassFeature make_must_pass_feature(ygg::FreeScratchRelations& scratch
 /// Builds a must-pass feature's heuristic at first use, from the static slots' rows (`slot_rows(slot)`), and sets its
 /// targets. Without an abstraction, the search is blind.
 template<tyr::datalog::database::SlotRelations SlotRows, ygg::RelationViewConcept<ygg::Schema> Targets>
-heuristics::KeyedProjectionHeuristic& must_pass_heuristic(ygg::FreeScratchRelations& scratch,
-                                                          MustPassFeature& feature,
-                                                          ygg::uint_t num_objects,
-                                                          const SlotRows& slot_rows,
-                                                          const Targets& targets)
+heuristics::KeyedProjectionHeuristic&
+must_pass_heuristic(ygg::FreeScratchRelations& scratch, MustPassFeature& feature, ygg::uint_t num_objects, const SlotRows& slot_rows, const Targets& targets)
 {
     if (!feature.heuristic)
     {

@@ -63,8 +63,8 @@ public:
     ProjectionHeuristic() = default;
 
     ProjectionHeuristic(urd::Store<urd::sequence<PatternDatabase>> databases,
-                        std::span<const ygg::ColumnLayout> vertex_columns,
-                        std::span<const ygg::ColumnLayout> target_columns,
+                        std::span<const urd::data<ygg::ColumnLayout>> vertex_columns,
+                        std::span<const urd::data<ygg::ColumnLayout>> target_columns,
                         ygg::uint_t num_objects) :
         m_databases(std::move(databases)),
         m_vertex_columns(vertex_columns.begin(), vertex_columns.end()),
@@ -130,8 +130,8 @@ public:
 
 private:
     urd::Store<urd::sequence<PatternDatabase>> m_databases;
-    urd::Store<urd::sequence<ygg::ColumnLayout>> m_vertex_columns;
-    urd::Store<urd::sequence<ygg::ColumnLayout>> m_target_columns;
+    urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>> m_vertex_columns;
+    urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>> m_target_columns;
     ygg::uint_t m_num_objects = 0;
     urd::Store<urd::set<ygg::uint_t>, urd::dense> m_abstract_targets;  ///< Scratch of update_table(), kept with m_queue to avoid allocations.
     urd::Store<urd::sequence<ygg::uint_t>> m_queue;
@@ -209,7 +209,7 @@ public:
     KeyedProjectionHeuristic(ygg::FreeScratchRelations& scratch,
                              ProjectionHeuristic heuristic,
                              size_t key_size,
-                             std::span<const ygg::ColumnLayout> target_columns) :
+                             std::span<const urd::data<ygg::ColumnLayout>> target_columns) :
         m_scratch(&scratch),
         m_heuristic(std::move(heuristic)),
         m_key_size(key_size),
@@ -248,7 +248,7 @@ public:
             auto& entry = m_keys[key];
             if (entry.tables.empty() || entry.targets != rows)
             {
-                auto relation = m_scratch->draw(std::span<const ygg::ColumnLayout>(m_target_columns));
+                auto relation = m_scratch->draw(std::span<const urd::data<ygg::ColumnLayout>>(m_target_columns));
                 for (const auto& vertex : rows)
                     relation->insert(std::span<const ygg::Value>(vertex));
                 entry.tables = m_heuristic.tables(relation->view());
@@ -277,7 +277,7 @@ private:
     ygg::FreeScratchRelations* m_scratch = nullptr;
     ProjectionHeuristic m_heuristic;
     size_t m_key_size = 0;
-    urd::Store<urd::sequence<ygg::ColumnLayout>> m_target_columns;  ///< The vertex columns of a target, without the key.
+    urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>> m_target_columns;  ///< The vertex columns of a target, without the key.
     urd::Store<urd::map<urd::Store<urd::sequence<ygg::Value>>, Key>, urd::sorted> m_keys;
     mutable urd::Store<urd::sequence<ygg::Value>> m_key;  ///< Scratch of estimate().
     urd::Store<urd::sequence<ygg::Value>> m_previous;     ///< The rows of the targets of the last update().
@@ -302,8 +302,8 @@ struct EdgeAbstraction
 /// relaxes and compiles queries, which every includer would instantiate otherwise (brokkr's template rules, rule 24).
 std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& translator,
                                               tyr::datalog::database::QueryView<> edges,
-                                              std::span<const ygg::ColumnLayout> from,
-                                              std::span<const ygg::ColumnLayout> to);
+                                              std::span<const urd::data<ygg::ColumnLayout>> from,
+                                              std::span<const urd::data<ygg::ColumnLayout>> to);
 std::optional<EdgeAbstraction>
 abstract_edges(dl::detail::QueryTranslator& translator, tyr::datalog::database::QueryView<> edges, const tyr::datalog::database::DistancePlan& plan);
 
@@ -314,10 +314,10 @@ abstract_edges(dl::detail::QueryTranslator& translator, tyr::datalog::database::
 template<tyr::datalog::database::SlotRelations SlotRows>
 ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch,
                                               const EdgeAbstraction& abstraction,
-                                              std::span<const ygg::ColumnLayout> from,
-                                              std::span<const ygg::ColumnLayout> to,
-                                              std::span<const ygg::ColumnLayout> vertices,
-                                              std::span<const ygg::ColumnLayout> targets,
+                                              std::span<const urd::data<ygg::ColumnLayout>> from,
+                                              std::span<const urd::data<ygg::ColumnLayout>> to,
+                                              std::span<const urd::data<ygg::ColumnLayout>> vertices,
+                                              std::span<const urd::data<ygg::ColumnLayout>> targets,
                                               ygg::uint_t num_objects,
                                               const SlotRows& slot_rows)
 {
@@ -328,8 +328,8 @@ ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch
         const auto query = abstraction.plan[abstraction.plan.roots()[r]];
         auto& database = databases.emplace_back(PatternDatabase { i, tyr::datalog::database::bound::QueryEvaluator(scratch, query) });
         const auto columns = tyr::datalog::database::columns_of(query);
-        database.u_position = static_cast<size_t>(std::ranges::find(columns, from[i].label, &ygg::ColumnLayout::label) - columns.begin());
-        database.v_position = static_cast<size_t>(std::ranges::find(columns, to[i].label, &ygg::ColumnLayout::label) - columns.begin());
+        database.u_position = static_cast<size_t>(std::ranges::find(columns, from[i].label, &urd::data<ygg::ColumnLayout>::label) - columns.begin());
+        database.v_position = static_cast<size_t>(std::ranges::find(columns, to[i].label, &urd::data<ygg::ColumnLayout>::label) - columns.begin());
         for (const auto slot : tyr::datalog::database::input_slots(std::span(&query, 1)))
             database.edges.bind_slot(slot, slot_rows(abstraction.slots[slot]));
         database.predecessors = database.edges.prepare({ database.v_position });

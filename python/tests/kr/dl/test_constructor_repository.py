@@ -159,42 +159,42 @@ def test_repository_constructs_queries_and_semantic_wrappers(
 
 
 def _check_concept_argument(repository: dl.ConstructorRepository) -> None:
-    data = record(dl.ArgumentConceptData, name="reference", identifier=dl.ConceptArgumentIdentifier(3))
+    data = record(dl.ArgumentConceptData, name="reference", identifier=dl.ArgumentSlotConceptIndex(3))
     reference = _created(lambda: repository.insert(data))
     assert reference.get_name() == data.name
     assert reference.get_identifier() == data.identifier
 
 
 def _check_role_argument(repository: dl.ConstructorRepository) -> None:
-    data = record(dl.ArgumentRoleData, name="reference", identifier=dl.RoleArgumentIdentifier(3))
+    data = record(dl.ArgumentRoleData, name="reference", identifier=dl.ArgumentSlotRoleIndex(3))
     reference = _created(lambda: repository.insert(data))
     assert reference.get_name() == data.name
     assert reference.get_identifier() == data.identifier
 
 
 def _check_boolean_argument(repository: dl.ConstructorRepository) -> None:
-    data = record(dl.ArgumentBooleanData, name="reference", identifier=dl.BooleanArgumentIdentifier(3))
+    data = record(dl.ArgumentBooleanData, name="reference", identifier=dl.ArgumentSlotBooleanIndex(3))
     reference = _created(lambda: repository.insert(data))
     assert reference.get_name() == data.name
     assert reference.get_identifier() == data.identifier
 
 
 def _check_numerical_argument(repository: dl.ConstructorRepository) -> None:
-    data = record(dl.ArgumentNumericalData, name="reference", identifier=dl.NumericalArgumentIdentifier(3))
+    data = record(dl.ArgumentNumericalData, name="reference", identifier=dl.ArgumentSlotNumericalIndex(3))
     reference = _created(lambda: repository.insert(data))
     assert reference.get_name() == data.name
     assert reference.get_identifier() == data.identifier
 
 
 def _check_concept_register(repository: dl.ConstructorRepository) -> None:
-    data = record(dl.RegisterConceptData, name="reference", identifier=dl.ConceptRegisterIdentifier(3))
+    data = record(dl.RegisterConceptData, name="reference", identifier=dl.RegisterSlotConceptIndex(3))
     reference = _created(lambda: repository.insert(data))
     assert reference.get_name() == data.name
     assert reference.get_identifier() == data.identifier
 
 
 def _check_role_register(repository: dl.ConstructorRepository) -> None:
-    data = record(dl.RegisterRoleData, name="reference", identifier=dl.RoleRegisterIdentifier(3))
+    data = record(dl.RegisterRoleData, name="reference", identifier=dl.RegisterSlotRoleIndex(3))
     reference = _created(lambda: repository.insert(data))
     assert reference.get_name() == data.name
     assert reference.get_identifier() == data.identifier

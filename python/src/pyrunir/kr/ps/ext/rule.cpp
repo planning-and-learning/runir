@@ -25,18 +25,29 @@ namespace runir::kr::ps::ext
 void bind_rule(nb::module_& m, RepositoryBinding& repository)
 {
     nb::enum_<OrderDirection>(m, "OrderDirection").value("MIN", OrderDirection::MIN).value("MAX", OrderDirection::MAX);
+    urd::python::bind_index<OrderTerm>(m);
     urd::python::bind_data<OrderTerm>(m);
     urd::python::bind_view<OrderTermView>(m);
+    urd::python::bind_builder<OrderTerm, Repository>(m);
     ygg::bind_insert<OrderTerm>(repository);
 
+    urd::python::bind_index<Rule<LoadTag<runir::kr::dl::ConceptTag>>>(m);
     urd::python::bind_data<Rule<LoadTag<runir::kr::dl::ConceptTag>>>(m);
+    urd::python::bind_index<Rule<LoadTag<runir::kr::dl::RoleTag>>>(m);
     urd::python::bind_data<Rule<LoadTag<runir::kr::dl::RoleTag>>>(m);
+    urd::python::bind_index<Rule<ChooseTag<runir::kr::dl::ConceptTag>>>(m);
     urd::python::bind_data<Rule<ChooseTag<runir::kr::dl::ConceptTag>>>(m);
+    urd::python::bind_index<Rule<ChooseTag<runir::kr::dl::RoleTag>>>(m);
     urd::python::bind_data<Rule<ChooseTag<runir::kr::dl::RoleTag>>>(m);
+    urd::python::bind_index<Rule<SketchTag>>(m);
     urd::python::bind_data<Rule<SketchTag>>(m);
+    urd::python::bind_index<Rule<DoTag>>(m);
     urd::python::bind_data<Rule<DoTag>>(m);
+    urd::python::bind_index<Rule<ActionTag>>(m);
     urd::python::bind_data<Rule<ActionTag>>(m);
+    urd::python::bind_index<Rule<CallTag>>(m);
     urd::python::bind_data<Rule<CallTag>>(m);
+    urd::python::bind_index<Rule<BacktrackTag>>(m);
     urd::python::bind_data<Rule<BacktrackTag>>(m);
     urd::python::bind_view<RuleView<LoadTag<runir::kr::dl::ConceptTag>>>(m);
     urd::python::bind_view<RuleView<LoadTag<runir::kr::dl::RoleTag>>>(m);

@@ -21,6 +21,16 @@ struct data<runir::kr::dl::semantics::DenotationBlocks>
     urd::index<runir::kr::dl::semantics::DenotationBlocks> index;
     urd::flat_vector<ygg::uint_t> words;
 
+    data() = default;
+
+    data(urd::flat_vector<ygg::uint_t> words_) : index(), words(std::move(words_)) {}
+
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"words", &data::words>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }

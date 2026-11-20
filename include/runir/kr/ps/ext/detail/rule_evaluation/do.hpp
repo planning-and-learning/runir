@@ -97,8 +97,11 @@ private:
         auto transition = urd::visit_view(state.get_module_state(),
                                           [&](const auto& activation)
                                           {
-                                              return context.environment->make_dl_transition_context(
-                                                  planning_state, target_state, activation.get_arguments(), activation.get_registers(), activation.get_registers());
+                                              return context.environment->make_dl_transition_context(planning_state,
+                                                                                                     target_state,
+                                                                                                     activation.get_arguments(),
+                                                                                                     activation.get_registers(),
+                                                                                                     activation.get_registers());
                                           });
         return is_compatible_with<Kind>(rule, transition);
     }
@@ -154,7 +157,9 @@ public:
                 return true;
             if (stop())
                 return false;
-            const auto labeled = tyr::planning::LabeledNode<Kind, typename Storage::PlanningState> { search.successor_generator->materialize_action_binding(binding), candidate };
+            const auto labeled =
+                tyr::planning::LabeledNode<Kind, typename Storage::PlanningState> { search.successor_generator->materialize_action_binding(binding),
+                                                                                    candidate };
             return emit(detail::planning_step(*context.storage, state, labeled, rule_variant, rule.get_target(), *context.task_context));
         };
         return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0),

@@ -47,9 +47,7 @@ public:
     template<typename T>
         requires boost::mp11::mp_contains<DenotationRecordTypes, T>::value
     [[nodiscard]] urd::handle<urd::builder<T, DenotationRepository>> get_builder()
-    {
-        return m_records.template checkout<T>();
-    }
+    { return m_records.template checkout<T>(); }
 
     /// A builder of a boolean or numerical denotation holding `value`.
     template<typename T, typename Value>
@@ -62,13 +60,14 @@ public:
     }
 
     /// An empty builder of a concept's or role's denotation over num_objects objects, its words drawn from this
-    /// storage, read through `repository`.
+    /// storage.
     template<typename T>
         requires boost::mp11::mp_contains<DenotationTypes, T>::value
-    [[nodiscard]] urd::handle<urd::builder<T, DenotationRepository>> get_builder(ygg::uint_t num_objects, const DenotationRepository& repository)
+                 && requires(urd::builder<T, DenotationRepository>& built, RecordStorage& records) { semantics::initialize(built, ygg::uint_t { 0 }, records); }
+    [[nodiscard]] urd::handle<urd::builder<T, DenotationRepository>> get_builder(ygg::uint_t num_objects)
     {
         auto builder = m_records.template checkout<T>();
-        builder->initialize(num_objects, m_records, repository);
+        semantics::initialize(*builder, num_objects, m_records);
         return builder;
     }
 
@@ -82,9 +81,7 @@ public:
     template<typename T>
         requires boost::mp11::mp_contains<DenotationRecordTypes, T>::value
     [[nodiscard]] urd::handle<urd::data<T>> scratch()
-    {
-        return m_records.template scratch<T>();
-    }
+    { return m_records.template scratch<T>(); }
 };
 
 }  // namespace runir::kr::dl::semantics

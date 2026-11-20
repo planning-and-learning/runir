@@ -254,7 +254,8 @@ public:
             if (stop())
                 return false;
             const auto candidate = context.storage->successor(planning_state, binding);
-            const auto borrowed_candidate = tyr::planning::LabeledNode<Kind, typename Storage::PlanningState, tyr::planning::ActionBindingView<Kind>> { binding, candidate };
+            const auto borrowed_candidate =
+                tyr::planning::LabeledNode<Kind, typename Storage::PlanningState, tyr::planning::ActionBindingView<Kind>> { binding, candidate };
             context.environment->reset_target();
             auto label = std::optional<tyr::formalism::planning::ActionRowView> {};
             for (const auto& evaluator : m_sketch_rules)
@@ -281,7 +282,9 @@ public:
         return generator.for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0), std::ref(visit));
     }
 
-    template<ExecutionStorageConcept<Kind> Storage, urd::ViewOf<ProgramState<Kind>> State, tyr::planning::StateViewConcept<Kind> PlanningState,
+    template<ExecutionStorageConcept<Kind> Storage,
+             urd::ViewOf<ProgramState<Kind>> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate>
     std::optional<RuleVariantView> matching_rule(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                                  State state,
@@ -309,7 +312,9 @@ public:
         return std::nullopt;
     }
 
-    template<ExecutionStorageConcept<Kind> Storage, ExecutionStateViewConcept<Storage> State, tyr::planning::StateViewConcept<Kind> PlanningState,
+    template<ExecutionStorageConcept<Kind> Storage,
+             ExecutionStateViewConcept<Storage> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate>
     auto apply(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                State state,

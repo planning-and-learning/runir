@@ -257,12 +257,13 @@ TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
         for (const auto binding : expected)
         {
             const auto target = expander.apply_choice(expander.view(initial), parent.front(), statistics).get_target();
-            const auto selected = urd::visit_view(expander.view(target).get_module_state(),
-                                                  [](const auto& activation)
-                                                  {
-                                                      return urd::visit_view(activation.get_registers(),
-                                                                             [](const auto& registers) { return registers.template values<kr::dl::ConceptTag>()[0]; });
-                                                  });
+            const auto selected =
+                urd::visit_view(expander.view(target).get_module_state(),
+                                [](const auto& activation)
+                                {
+                                    return urd::visit_view(activation.get_registers(),
+                                                           [](const auto& registers) { return registers.template values<kr::dl::ConceptTag>()[0]; });
+                                });
             ASSERT_TRUE(selected);
             EXPECT_EQ(*selected, binding);
             parent.front().advance();

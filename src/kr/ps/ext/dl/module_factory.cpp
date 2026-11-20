@@ -26,9 +26,9 @@ ModuleView ModuleFactory::create_empty(Repository& repository)
     symbol_data->name = "empty";
     const auto symbol = repository.insert(*symbol_data, builder).first;
     auto data = runir::kr::ps::ext::checkout<Module>(builder);
-    data->symbol = symbol;
-    data->entry_memory_state = entry;
-    data->memory_states.emplace_back(entry);
+    urd::store(data->symbol, symbol);
+    urd::store(data->entry_memory_state, entry);
+    urd::append(data->memory_states, entry);
     return repository.insert(*data, builder).first;
 }
 

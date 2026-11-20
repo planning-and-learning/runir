@@ -118,7 +118,7 @@ public:
                                                     m_rule.get_target().index(),
                                                     source.get_registers().index(),
                                                     histories.index(),
-                                                    candidate.node.get_state().index());
+                                                    candidate.node.get_state().pack().index());
         auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
         step.rule = m_variant;
         step.planning_successor = candidate.pack();

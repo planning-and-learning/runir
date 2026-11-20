@@ -327,9 +327,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     child = collect_steps(expander, initial_program_state(expander, initial_node(task_context).get_state()))[0].target
     other_concept = collect_steps(expander, child)[1].target
     other_frame = collect_steps(expander, other_concept)[0].target
-    assert _same_state(
-        other_frame.get_state().unpack(), loaded.get_state().unpack()
-    )
+    assert _same_state(other_frame.get_state().unpack(), loaded.get_state().unpack())
     environment.reset_source()
     other_dl_context = make_dl_context(environment, other_frame)
     assert ext.evaluate(booleans["selected_goal_ball"], other_dl_context).get_value() is True
@@ -552,9 +550,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
         assert len(role_steps) == 2
         assert step.target.get_module_state().get_registers().get_role_values()[0] is None
         for role_step in role_steps:
-            assert _same_state(
-                role_step.target.get_state().unpack(), child.get_state().unpack()
-            )
+            assert _same_state(role_step.target.get_state().unpack(), child.get_state().unpack())
             assert role_step.target.get_module_state().get_registers().get_role_values()[0] is not None
 
 

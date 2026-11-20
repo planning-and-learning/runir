@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <optional>
 #include <tyr/formalism/planning/repository.hpp>
+#include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
@@ -51,7 +52,8 @@ auto resolve_predicate(tyr::formalism::planning::DomainView domain,
     diagnostics.throw_at(name, UndefinedSymbolError("predicate", name.text));
 }
 
-inline tyr::formalism::planning::ObjectView require_object(tyr::formalism::planning::DomainView domain, const ast::Identifier& name, const DiagnosticContext& diagnostics)
+inline tyr::formalism::planning::ObjectView
+require_object(tyr::formalism::planning::DomainView domain, const ast::Identifier& name, const DiagnosticContext& diagnostics)
 {
     for (auto object : domain.get_constants())
         if (object.get_name() == name.text)
@@ -69,7 +71,7 @@ void append_objects(tyr::formalism::planning::DomainView domain,
 {
     result.reserve(result.size() + names.size());
     for (const auto& name : names)
-        result.push_back(require_object(domain, name, diagnostics));
+        urd::append(result, require_object(domain, name, diagnostics));
 }
 
 }  // namespace runir::kr::parser

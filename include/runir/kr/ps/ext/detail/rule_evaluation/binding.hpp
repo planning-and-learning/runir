@@ -29,18 +29,23 @@ template<tyr::TaskKind Kind,
          tyr::planning::StateViewConcept<Kind> PS,
          urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-bool binding_effects_match(RuleView<Tag> rule, S state, const PS& planning_state, const R& registers, EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
+bool binding_effects_match(RuleView<Tag> rule,
+                           S state,
+                           const PS& planning_state,
+                           const R& registers,
+                           EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
 {
     if (rule.get_effects().empty())
         return true;
     environment.reset_target();
-    return urd::visit_view(state.get_module_state(),
-                           [&](const auto& module_)
-                           {
-                               auto transition = environment.make_dl_transition_context(
-                                   planning_state, planning_state, module_.get_arguments(), module_.get_registers(), registers);
-                               return is_compatible_with<Kind>(rule, transition);
-                           });
+    return urd::visit_view(
+        state.get_module_state(),
+        [&](const auto& module_)
+        {
+            auto transition =
+                environment.make_dl_transition_context(planning_state, planning_state, module_.get_arguments(), module_.get_registers(), registers);
+            return is_compatible_with<Kind>(rule, transition);
+        });
 }
 
 }  // namespace runir::kr::ps::ext::detail

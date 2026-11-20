@@ -71,7 +71,7 @@ urd::Store<urd::sequence<ObjectIndex>> object_values(const auto& row)
 }
 
 /// The column labels of a schema.
-urd::Store<urd::sequence<ColumnIndex>> column_labels(std::span<const ygg::ColumnLayout> columns)
+urd::Store<urd::sequence<ColumnIndex>> column_labels(std::span<const urd::data<ygg::ColumnLayout>> columns)
 {
     auto result = urd::Store<urd::sequence<ColumnIndex>> {};
     for (const auto& column : columns)
@@ -687,15 +687,15 @@ void check_cached_queries()
                              auto right_operand = relations.draw(decoded.plan.right_columns());
                              auto result = relations.draw(decoded.plan.output_columns());
                              left_operand->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(10)),
-                                                                             ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
+                                                                              ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
                              left_operand->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(30)),
-                                                                             ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(40)) });
+                                                                              ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(40)) });
                              right_operand->insert(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
                              tyr::datalog::database::Workspace scratch;
                              tyr::datalog::database::join(left_operand->view(), right_operand->view(), decoded.plan, *result, scratch);
-                             EXPECT_EQ(result->view().size(), 1);
+                             EXPECT_EQ(result->view().get_rows().size(), 1);
                              EXPECT_TRUE(result->view().contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(10)),
-                                                                                     ygg::encode_value<ygg::uint_t>(ygg::uint_t(20)) }));
+                                                                                             ygg::encode_value<ygg::uint_t>(ygg::uint_t(20)) }));
                          });
     const auto slice_position = [](const tyr::datalog::database::ColumnSlice& slice) { return slice.position; };
     const auto check_projection_plan = [&](auto& data, auto positions)
@@ -716,9 +716,10 @@ void check_cached_queries()
                                  input->insert(kr::dl::encode_object_row(row, bytes));
                                  tyr::datalog::database::Workspace scratch;
                                  tyr::datalog::database::project(input->view(), decoded.plan, *result, scratch);
-                                 ASSERT_EQ(result->view().size(), 1);
+                                 ASSERT_EQ(result->view().get_rows().size(), 1);
                                  for (size_t i = 0; i < positions.size(); ++i)
-                                     EXPECT_EQ(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(result->view().row(0), i))), ObjectIndex(10 + positions[i]));
+                                     EXPECT_EQ(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(result->view().row(0), i))),
+                                               ObjectIndex(10 + positions[i]));
                              });
         auto stale = runir::tests::copy_fields(data);
         stale.plan = {};
@@ -1621,8 +1622,8 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     const auto intern = [&](std::array<ColumnIndex, 2> columns, std::array<Row, 2> rows)
     {
         auto relations = ygg::FreeScratchRelations();
-        auto result = relations.draw(std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
-                                                  ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
+        auto result = relations.draw(std::array { urd::data<ygg::ColumnLayout> { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                                  urd::data<ygg::ColumnLayout> { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
         for (const auto& row : rows)
             result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(row[0].value), ygg::encode_value<ygg::uint_t>(row[1].value) });
         return kr::dl::semantics::insert(denotations, result->view(), dl_builder).first;
@@ -1635,8 +1636,8 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     EXPECT_EQ(intern(columns, { rows[1], rows[0] }), first);
     EXPECT_EQ(repository.template size<ygg::Relation<ygg::Schema>>(), 2);
 
-    auto renamed_columns = std::array { ygg::ColumnLayout { ColumnIndex(6), ygg::type_id<urd::index<tyr::formalism::Object>> },
-                                        ygg::ColumnLayout { ColumnIndex(7), ygg::type_id<urd::index<tyr::formalism::Object>> } };
+    auto renamed_columns = std::array { urd::data<ygg::ColumnLayout> { ColumnIndex(6), ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                        urd::data<ygg::ColumnLayout> { ColumnIndex(7), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     const auto renamed = kr::dl::semantics::rename(denotations, first, renamed_columns, dl_builder);
     renamed_columns[0].label = ColumnIndex(99);
     EXPECT_EQ(renamed.columns()[0].label, ColumnIndex(6));
@@ -1644,8 +1645,8 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     EXPECT_NE(renamed, first);
     EXPECT_EQ(kr::dl::semantics::rename(denotations,
                                         renamed,
-                                        std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
-                                                     ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } },
+                                        std::array { urd::data<ygg::ColumnLayout> { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                                     urd::data<ygg::ColumnLayout> { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } },
                                         dl_builder),
               first);
 }

@@ -19,8 +19,10 @@ namespace runir::kr::ps::icp
 
 void bind_module(nb::module_& m, RepositoryBinding& repository)
 {
+    urd::python::bind_index<Module>(m);
     urd::python::bind_data<Module>(m);
     urd::python::bind_view<ModuleView>(m);
+    urd::python::bind_builder<Module, Repository>(m);
     ygg::bind_insert<Module>(repository);
 }
 

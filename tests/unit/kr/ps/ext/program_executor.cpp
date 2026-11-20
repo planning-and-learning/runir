@@ -1486,23 +1486,21 @@ void check_transient_builder_values_and_reuse()
     auto register_pool = urd::Store<urd::slots<urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>>> {};
     auto module_pool = urd::Store<urd::slots<ModuleStateBuilder>> {};
     auto pool = urd::Store<urd::slots<ProgramStateBuilder>> {};
-    const auto& formalism = *search->task->get_repository();
-    const auto object = [&formalism](ygg::uint_t at) { return formalism.view(urd::index<tyr::formalism::Object>(at)); };
+    const auto object = [](ygg::uint_t at) { return urd::index<tyr::formalism::Object>(at); };
     using Object = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
     auto first = pool.make_shared();
-    auto& first_state = urd::builder_of(first->state, state_pool, states);
-    auto& first_module = urd::builder_of(first->module_state, module_pool, controls);
-    auto& first_registers = urd::builder_of(first_module.registers, register_pool, denotations);
-    first_module.mod = module_;
-    first_module.memory_state = module_.get_entry_memory_state();
+    auto& first_state = urd::builder_of(first->state, state_pool);
+    auto& first_module = urd::builder_of(first->module_state, module_pool);
+    auto& first_registers = urd::builder_of(first_module.registers, register_pool);
+    urd::store(first_module.mod, module_);
+    urd::store(first_module.memory_state, module_.get_entry_memory_state());
     auto arguments = context->dl_builder.template scratch<kr::dl::semantics::CallArguments>();
     const auto argument_view = kr::dl::semantics::insert(denotations, *arguments).first;
-    first_module.arguments = argument_view;
+    urd::store(first_module.arguments, argument_view);
     const auto program_state = urd::resolve(*first, executions);
     // A transient state holds its planning state, its activation and its registers built.
     const auto module_state = std::get<kr::ps::ext::ModuleStateBuilderView>(program_state.get_module_state());
-    const auto registers_of = [](const auto& activation)
-    { return std::get<kr::dl::semantics::RegisterValuesBuilderView>(activation.get_registers()); };
+    const auto registers_of = [](const auto& activation) { return std::get<kr::dl::semantics::RegisterValuesBuilderView>(activation.get_registers()); };
     EXPECT_TRUE(urd::is_interned_as(module_state.get_mod(), module_));
     EXPECT_TRUE(urd::is_interned_as(module_state.get_memory_state(), module_.get_entry_memory_state()));
     const auto planning_state = std::get<tyr::planning::StateBuilderView<Kind>>(program_state.get_state());
@@ -1526,7 +1524,7 @@ void check_transient_builder_values_and_reuse()
         facts.values = { 1, 0 };
     else
     {
-        facts.indices.insert(0);
+        facts.indices.insert(ygg::uint_t { 0 });
     }
     first_state.numeric_storage.values = { 3.0 };
 
@@ -1554,11 +1552,11 @@ void check_transient_builder_values_and_reuse()
     head_registers.concept_values.front() = urd::index<tyr::formalism::Object>(1);
     const auto head_register_values = kr::dl::semantics::insert(denotations, head_registers).first;
     const auto head = frame_of(activation_of(head_register_values), tail);
-    first->call_stack.emplace(head);
+    urd::store(first->call_stack, head);
     EXPECT_EQ(frame_of(activation_of(head_register_values), tail).index(), head.index());
     const auto stack = program_state.get_call_stack();
     ASSERT_TRUE(stack);
-    const auto head_frame = urd::interned_view(*stack);
+    const auto head_frame = urd::interned_view(stack.value());
     EXPECT_EQ(head_frame.index(), head.index());
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(head_frame.get_module_state().get_mod(), module_));
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(head_frame.get_module_state().get_memory_state(), module_.get_entry_memory_state()));
@@ -1575,30 +1573,30 @@ void check_transient_builder_values_and_reuse()
     using RegistersBuilder = urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>;
     const auto same = [&](const ProgramStateBuilder& lhs, const ProgramStateBuilder& rhs)
     {
-        const auto& lhs_module = std::get<urd::built_child<kr::ps::ext::ModuleState, kr::ps::ext::ControlRepository>>(lhs.module_state).held();
-        const auto& rhs_module = std::get<urd::built_child<kr::ps::ext::ModuleState, kr::ps::ext::ControlRepository>>(rhs.module_state).held();
-        return urd::EqualTo<decltype(lhs.state)> {}(lhs.state, rhs.state) && urd::EqualTo<decltype(lhs_module.registers)> {}(lhs_module.registers, rhs_module.registers)
-               && urd::interned_view(lhs_module.memory_state) == urd::interned_view(rhs_module.memory_state)
-               && lhs.call_stack.has_value() == rhs.call_stack.has_value()
-               && (!lhs.call_stack.has_value() || urd::interned_view(*lhs.call_stack).index() == urd::interned_view(*rhs.call_stack).index());
+        const auto& lhs_module = (*std::get<urd::built_child<kr::ps::ext::ModuleState, kr::ps::ext::ControlRepository>>(lhs.module_state));
+        const auto& rhs_module = (*std::get<urd::built_child<kr::ps::ext::ModuleState, kr::ps::ext::ControlRepository>>(rhs.module_state));
+        return urd::EqualTo<decltype(lhs.state)> {}(lhs.state, rhs.state)
+               && urd::EqualTo<decltype(lhs_module.registers)> {}(lhs_module.registers, rhs_module.registers)
+               && std::get<0>(lhs_module.memory_state) == std::get<0>(rhs_module.memory_state) && lhs.call_stack.has_value() == rhs.call_stack.has_value()
+               && (!lhs.call_stack.has_value() || std::get<0>(*lhs.call_stack) == std::get<0>(*rhs.call_stack));
     };
     static_assert(urd::EqualityComparableByEqualTo<RegistersBuilder>);
     auto separate = pool.make_shared();
-    auto& separate_state = urd::builder_of(separate->state, state_pool, states);
-    auto& separate_module = urd::builder_of(separate->module_state, module_pool, controls);
-    auto& separate_registers = urd::builder_of(separate_module.registers, register_pool, denotations);
+    auto& separate_state = urd::builder_of(separate->state, state_pool);
+    auto& separate_module = urd::builder_of(separate->module_state, module_pool);
+    auto& separate_registers = urd::builder_of(separate_module.registers, register_pool);
     separate_state = first_state;
-    separate_module.mod = module_;
-    separate_module.memory_state = module_.get_entry_memory_state();
+    urd::store(separate_module.mod, module_);
+    urd::store(separate_module.memory_state, module_.get_entry_memory_state());
     kr::dl::semantics::assign(separate_registers, registers_of(module_state));
-    separate_module.arguments = argument_view;
-    separate->call_stack.emplace(head);
+    urd::store(separate_module.arguments, argument_view);
+    urd::store(separate->call_stack, head);
     EXPECT_NE(std::ranges::data(separate_state.numeric_storage.values), std::ranges::data(first_state.numeric_storage.values));
     EXPECT_NE(separate_registers.concept_values.data(), first_registers.concept_values.data());
-    EXPECT_EQ(urd::interned_view(*separate->call_stack).index(), urd::interned_view(*first->call_stack).index());
+    EXPECT_EQ(std::get<0>(separate->call_stack.value()), std::get<0>(first->call_stack.value()));
     EXPECT_TRUE(same(*first, *separate));
     EXPECT_EQ(urd::Hash<decltype(first->state)> {}(first->state), urd::Hash<decltype(separate->state)> {}(separate->state));
-    separate_state.atom_storage.indices.insert(0);
+    separate_state.atom_storage.set(urd::index<tyr::formalism::Atom<tyr::GroundTag, tyr::formalism::DerivedTag>>(0));
     EXPECT_TRUE(same(*first, *separate));
     EXPECT_EQ(urd::Hash<decltype(first->state)> {}(first->state), urd::Hash<decltype(separate->state)> {}(separate->state));
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
@@ -1614,11 +1612,11 @@ void check_transient_builder_values_and_reuse()
     separate_registers.concept_values.front().emplace(object(1));
     const auto& first_concept = first_registers.concept_values.front();
     ASSERT_TRUE(first_concept.has_value());
-    EXPECT_EQ(first_concept.has_value() ? urd::interned_view(*first_concept).index() : urd::index<tyr::formalism::Object>(), urd::index<tyr::formalism::Object>(0));
+    EXPECT_EQ(first_concept.has_value() ? std::get<0>(*first_concept) : urd::index<tyr::formalism::Object>(), urd::index<tyr::formalism::Object>(0));
     EXPECT_FALSE(same(*first, *separate));
     kr::dl::semantics::assign(separate_registers, registers_of(module_state));
-    separate->call_stack.emplace(tail);
-    EXPECT_EQ(urd::interned_view(*program_state.get_call_stack()).index(), head.index());
+    urd::store(separate->call_stack, tail);
+    EXPECT_EQ(urd::interned_view(program_state.get_call_stack().value()).index(), head.index());
     EXPECT_FALSE(same(*first, *separate));
 
     // Releasing a program retains its mutable builders and their buffers for reuse.
@@ -1630,9 +1628,9 @@ void check_transient_builder_values_and_reuse()
     separate = {};
     auto reused = pool.make_shared();
     EXPECT_EQ(reused.get(), slot);
-    auto& reused_state = urd::builder_of(reused->state, state_pool, states);
-    auto& reused_module = urd::builder_of(reused->module_state, module_pool, controls);
-    auto& reused_registers = urd::builder_of(reused_module.registers, register_pool, denotations);
+    auto& reused_state = urd::builder_of(reused->state, state_pool);
+    auto& reused_module = urd::builder_of(reused->module_state, module_pool);
+    auto& reused_registers = urd::builder_of(reused_module.registers, register_pool);
     EXPECT_EQ(std::ranges::data(reused_state.numeric_storage.values), buffer);
     EXPECT_EQ(reused_state.numeric_storage.values.capacity(), capacity);
     EXPECT_EQ(reused_registers.concept_values.data(), concept_buffer);

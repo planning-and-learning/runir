@@ -276,7 +276,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
     {
         const auto arg = evaluate<Kind>(constructor.get_operand(), children);
 
-        assign(*result, arg, context.get_builder().records(), context.get_denotation_repository());
+        assign(*result, arg, context.get_builder().records());
 
         for (ygg::uint_t mid = 0; mid < num_objects; ++mid)
         {
@@ -469,9 +469,9 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
     const auto position = [&](size_t i)
     {
         const auto label = urd::index<ygg::Column>(columns.at(i).index().value);
-        return static_cast<size_t>(std::ranges::find(schema, label, &ygg::ColumnLayout::label) - schema.begin());
+        return static_cast<size_t>(std::ranges::find(schema, label, &urd::data<ygg::ColumnLayout>::label) - schema.begin());
     };
-    auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects<Kind>(context), context.get_denotation_repository());
+    auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects<Kind>(context));
     if constexpr (std::same_as<Category, ConceptTag>)
     {
         auto bits = result->get();

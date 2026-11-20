@@ -40,7 +40,8 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
     {
         environment->select_source(state);
         return urd::visit_view(state.get_module_state(),
-                               [&](const auto& module_) { return environment->make_dl_context(planning_state, module_.get_arguments(), module_.get_registers()); });
+                               [&](const auto& module_)
+                               { return environment->make_dl_context(planning_state, module_.get_arguments(), module_.get_registers()); });
     }
 
     /// From this context's planning state to a candidate's (its storage's successor: of another state type, where this

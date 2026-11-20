@@ -64,8 +64,7 @@ class RuleEvaluators
                                                                              binding,
                                                                              *search.state_repository,
                                                                              *search.axiom_evaluator);
-            const auto candidate =
-                tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::ActionBindingView<Kind>> { binding, node };
+            const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::ActionBindingView<Kind>> { binding, node };
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, candidate);
             auto histories = std::optional<HistoriesView> {};

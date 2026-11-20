@@ -1,10 +1,9 @@
 #ifndef RUNIR_KR_PS_EXT_EXECUTION_REPOSITORY_TYPES_HPP_
 #define RUNIR_KR_PS_EXT_EXECUTION_REPOSITORY_TYPES_HPP_
 
+#include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/ps/ext/execution_builder.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
-
-#include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <boost/mp11.hpp>
 #include <tyr/declarations.hpp>

@@ -113,7 +113,7 @@ public:
     auto value() const
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        using Layout = urd::builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>, runir::kr::dl::semantics::DenotationRepository>;
+        using Layout = runir::kr::dl::semantics::detail::ConceptLayout;
         using Bitset = urd::bitset_span<const ygg::uint_t>;
 
         const auto vector = get_blocks();
@@ -124,7 +124,7 @@ public:
     auto value(urd::index<::tyr::formalism::Object> object) const
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        using Layout = urd::builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>, runir::kr::dl::semantics::DenotationRepository>;
+        using Layout = runir::kr::dl::semantics::detail::RoleLayout;
         using Bitset = urd::bitset_span<const ygg::uint_t>;
 
         const auto vector = get_blocks();
@@ -132,6 +132,16 @@ public:
         assert(ygg::uint_t(object.value) < get_num_objects());
         return Bitset(vector.data() + Layout::row_block_offset(object, get_num_objects()), get_num_objects());
     }
+
+    /// Whether `object` is in a concept's denotation.
+    [[nodiscard]] bool contains(urd::index<::tyr::formalism::Object> object) const
+        requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
+    { return value().test(static_cast<ygg::uint_t>(object.value)); }
+
+    /// Whether (source, target) is in a role's denotation.
+    [[nodiscard]] bool contains(urd::index<::tyr::formalism::Object> source, urd::index<::tyr::formalism::Object> target) const
+        requires(std::same_as<Category, runir::kr::dl::RoleTag>)
+    { return value(source).test(static_cast<ygg::uint_t>(target.value)); }
 
     /// Includes zero padding: trailing concept bits or padding after each role row.
     auto storage_bits() const
@@ -173,28 +183,34 @@ public:
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
         {
             using Self = const view_mixin&;
-            return urd::Functions<
-                urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const>(&view_mixin::indices)>,
-                urd::function<"views", &view_mixin::views>,
-                urd::function<"value", static_cast<decltype(std::declval<Self>().value()) (view_mixin::*)() const>(&view_mixin::value)>,
-                urd::function<"storage_bits", &view_mixin::storage_bits>> {};
+            return urd::Functions<urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const>(&view_mixin::indices)>,
+                                  urd::function<"views", &view_mixin::views>,
+                                  urd::function<"value", static_cast<decltype(std::declval<Self>().value()) (view_mixin::*)() const>(&view_mixin::value)>,
+                                  urd::function<"contains",
+                                                static_cast<bool (view_mixin::*)(urd::index<tyr::formalism::Object>) const>(&view_mixin::contains),
+                                                urd::arg<"object">>,
+                                  urd::function<"storage_bits", &view_mixin::storage_bits>> {};
         }
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
         {
             using Self = const view_mixin&;
-            return urd::Functions<
-                urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const>(&view_mixin::indices)>,
-                urd::function<"indices",
-                              static_cast<decltype(std::declval<Self>().indices(std::declval<urd::index<tyr::formalism::Object>>())) (view_mixin::*)(
-                                  urd::index<tyr::formalism::Object>) const>(&view_mixin::indices),
-                              urd::arg<"source">>,
-                urd::function<"views", &view_mixin::views>,
-                urd::function<"views_from", &view_mixin::views_from, urd::arg<"source">>,
-                urd::function<"value",
-                              static_cast<decltype(std::declval<Self>().value(std::declval<urd::index<tyr::formalism::Object>>())) (view_mixin::*)(
-                                  urd::index<tyr::formalism::Object>) const>(&view_mixin::value),
-                              urd::arg<"object">>,
-                urd::function<"storage_bits", &view_mixin::storage_bits>> {};
+            return urd::Functions<urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const>(&view_mixin::indices)>,
+                                  urd::function<"indices",
+                                                static_cast<decltype(std::declval<Self>().indices(std::declval<urd::index<tyr::formalism::Object>>())) (
+                                                    view_mixin::*)(urd::index<tyr::formalism::Object>) const>(&view_mixin::indices),
+                                                urd::arg<"source">>,
+                                  urd::function<"views", &view_mixin::views>,
+                                  urd::function<"views_from", &view_mixin::views_from, urd::arg<"source">>,
+                                  urd::function<"value",
+                                                static_cast<decltype(std::declval<Self>().value(std::declval<urd::index<tyr::formalism::Object>>())) (
+                                                    view_mixin::*)(urd::index<tyr::formalism::Object>) const>(&view_mixin::value),
+                                                urd::arg<"object">>,
+                                  urd::function<"contains",
+                                                static_cast<bool (view_mixin::*)(urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>) const>(
+                                                    &view_mixin::contains),
+                                                urd::arg<"source">,
+                                                urd::arg<"target">>,
+                                  urd::function<"storage_bits", &view_mixin::storage_bits>> {};
         }
         else
             return urd::Functions<> {};

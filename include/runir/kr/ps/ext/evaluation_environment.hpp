@@ -127,13 +127,9 @@ public:
         // The invocation is the interned module, arguments and caller its state reads (a state being built holds them
         // interned: urd::interned_view).
         const auto caller = call_stack(state);
-        const auto invocation = urd::visit_view(state.get_module_state(),
-                                                [&](const auto& module_)
-                                                {
-                                                    return Invocation { urd::interned_view(module_.get_mod()),
-                                                                        urd::interned_view(module_.get_arguments()),
-                                                                        caller };
-                                                });
+        const auto invocation = urd::visit_view(
+            state.get_module_state(),
+            [&](const auto& module_) { return Invocation { urd::interned_view(module_.get_mod()), urd::interned_view(module_.get_arguments()), caller }; });
         if (m_invocation == invocation)
             return;
         const auto found = std::ranges::find(m_modules, invocation.module_, &ModuleEvaluation::module_);
@@ -158,7 +154,9 @@ public:
     }
 
     /// Over a planning state, its module's arguments and registers, each as read (a view, or a state builder's child).
-    template<tyr::planning::StateViewConcept<Kind> S, urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A, urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R>
+    template<tyr::planning::StateViewConcept<Kind> S,
+             urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A,
+             urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R>
     auto make_dl_context(S state, const A& arguments, const R& registers)
     {
         using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
@@ -168,7 +166,9 @@ public:
 
     /// Call argument roots enter task storage directly; their intermediates use
     /// the ordinary source storage. Argument inputs already belong to this task.
-    template<tyr::planning::StateViewConcept<Kind> S, urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A, urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R>
+    template<tyr::planning::StateViewConcept<Kind> S,
+             urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A,
+             urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R>
     auto make_call_context(S state, const A& read_arguments, const R& registers)
     {
         const auto arguments = urd::interned_view(read_arguments);
@@ -187,7 +187,8 @@ public:
     auto make_dl_transition_context(S source_state, U target_state, const A& read_arguments, const R& source_registers, const T& target_registers)
     {
         const auto arguments = urd::interned_view(read_arguments);
-        auto source = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>(std::move(source_state), *m_dl_builder, m_dl_storage, arguments, source_registers);
+        auto source =
+            runir::kr::dl::semantics::StateEvaluationContext<Kind, S>(std::move(source_state), *m_dl_builder, m_dl_storage, arguments, source_registers);
         auto target =
             runir::kr::dl::semantics::StateEvaluationContext<Kind, U>(std::move(target_state), *m_dl_builder, m_dl_target_storage, arguments, target_registers);
         return make_evaluation_transition_context<ExtFamilyTag, Kind>(current_policy().make_source_context(std::move(source)),

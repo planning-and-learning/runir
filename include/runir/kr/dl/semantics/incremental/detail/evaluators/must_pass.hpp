@@ -62,7 +62,7 @@ struct QueryMustPassEvaluator : QueryValue
         const auto row_size = this->get_result().arity();
         const auto previous = this->get_result();
         removed.clear();
-        for (size_t r = 0; r < previous.size(); ++r)
+        for (size_t r = 0; r < previous.get_rows().size(); ++r)
             if (const auto row = previous.row(r); !ygg::with_values(row, [this](const auto& values) { return computed->view().contains(values); }))
             {
                 const auto values = tyr::datalog::database::vertex_values(row, scratch);
@@ -71,7 +71,7 @@ struct QueryMustPassEvaluator : QueryValue
         for (size_t offset = 0; offset < removed.size(); offset += row_size)
             this->set(std::span<const ygg::Value>(removed).subspan(offset, row_size), false);
         const auto recomputed = computed->view();
-        for (size_t r = 0; r < recomputed.size(); ++r)
+        for (size_t r = 0; r < recomputed.get_rows().size(); ++r)
             ygg::with_values(recomputed.row(r), [this](const auto& values) { this->set(values, true); });
     }
 
@@ -81,7 +81,7 @@ private:
     QueryEvaluationIndex probes;
     MustPassFeature feature;
     urd::Store<urd::sequence<QueryEvaluationIndex>> slots;  ///< The graph node of each input slot.
-    urd::handle<ygg::FreeScratchRelation> computed;          ///< The recomputed result; kept to avoid allocations.
+    urd::handle<ygg::FreeScratchRelation> computed;         ///< The recomputed result; kept to avoid allocations.
     urd::Store<urd::sequence<ygg::Value>> removed;          ///< Rows of the previous result that are gone, their values.
     urd::Store<urd::sequence<ygg::Value>> scratch;          ///< A row's values, as read.
 
@@ -99,7 +99,7 @@ private:
     }
 
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
-    { return !graph.change(index).added->view().empty() || !graph.change(index).removed->view().empty(); }
+    { return !graph.change(index).added->view().get_rows().empty() || !graph.change(index).removed->view().get_rows().empty(); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

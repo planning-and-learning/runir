@@ -17,10 +17,14 @@ fmt::format_context::iterator fmt::formatter<pbd::StructuralTerminationResult, c
 {
     if (value.is_terminating())
         return fmt::format_to(context.out(), "StructuralTerminationResult(terminating)");
+    // The counterexample is SIEVE's, where it ran.
+    const auto& sieve = value.sieve_result;
+    if (!sieve.has_value())
+        return fmt::format_to(context.out(), "StructuralTerminationResult(non-terminating)");
     return fmt::format_to(context.out(),
                           "StructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
-                          value.sieve_result->counterexample->num_vertices(),
-                          value.sieve_result->counterexample->num_edges());
+                          sieve->counterexample->num_vertices(),
+                          sieve->counterexample->num_edges());
 }
 
 fmt::format_context::iterator fmt::formatter<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>, char>::format(

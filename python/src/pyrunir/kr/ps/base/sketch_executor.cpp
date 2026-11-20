@@ -8,9 +8,9 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
+#include <runir/kr/ps/base/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
-#include <runir/kr/ps/base/detail/successor_expander_impl.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <urd/dot.hpp>
 #include <urd/python/graphs.hpp>

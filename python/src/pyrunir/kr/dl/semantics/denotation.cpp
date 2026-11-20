@@ -27,15 +27,24 @@ void bind_denotation_view(nb::module_& m)
 {
     using View = urd::index_view<runir::kr::dl::semantics::Denotation<Category>, runir::kr::dl::semantics::DenotationRepository>;
     urd::python::bind_view<View>(m);
+    urd::python::bind_builder<runir::kr::dl::semantics::Denotation<Category>, runir::kr::dl::semantics::DenotationRepository>(m);
 }
 
 }  // namespace
 
 void bind_semantics_denotation(nb::module_& m)
 {
+    urd::python::bind_index<semantics::DenotationBlocks>(m);
+    urd::python::bind_data<semantics::DenotationBlocks>(m);
+    urd::python::bind_builder<semantics::DenotationBlocks, semantics::DenotationRepository>(m);
+    urd::python::bind_view<urd::index_view<semantics::DenotationBlocks, semantics::DenotationRepository>>(m);
+    urd::python::bind_index<semantics::Denotation<BooleanTag>>(m);
     urd::python::bind_data<semantics::Denotation<BooleanTag>>(m);
+    urd::python::bind_index<semantics::Denotation<NumericalTag>>(m);
     urd::python::bind_data<semantics::Denotation<NumericalTag>>(m);
+    urd::python::bind_index<semantics::Denotation<ConceptTag>>(m);
     urd::python::bind_data<semantics::Denotation<ConceptTag>>(m);
+    urd::python::bind_index<semantics::Denotation<RoleTag>>(m);
     urd::python::bind_data<semantics::Denotation<RoleTag>>(m);
     bind_denotation_view<BooleanTag>(m);
     bind_denotation_view<NumericalTag>(m);

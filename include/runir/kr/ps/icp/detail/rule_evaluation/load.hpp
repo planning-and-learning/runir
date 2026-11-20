@@ -65,7 +65,7 @@ public:
                                                         m_rule.get_target().index(),
                                                         target_registers.index(),
                                                         histories->index(),
-                                                        source.get_state().index());
+                                                        source.get_state().pack().index());
             auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), task);
             step.rule = m_variant;
             if (!output(std::move(step)))

@@ -19,7 +19,9 @@ void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository)
 {
     using Feature = runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>;
     using ConcreteFeature = runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>;
+    urd::python::bind_index<Feature>(m);
     urd::python::bind_data<Feature>(m);
+    urd::python::bind_index<ConcreteFeature>(m);
     urd::python::bind_data<ConcreteFeature>(m);
     runir::kr::python::bind_feature_views<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>(m, repository);
     runir::kr::python::bind_feature_evaluate<urd::index_view<Feature, Repository>>(m);

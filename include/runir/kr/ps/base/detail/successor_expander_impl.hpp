@@ -16,9 +16,9 @@ namespace runir::kr::ps::base
 template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 template<std::predicate<tyr::planning::LabeledNode<Kind>, RuleView> Emit, StopConcept Stop>
 bool SuccessorExpander<Kind, EvaluationPolicy>::for_each_successor(const tyr::planning::StateView<Kind>& state,
-                                                                    SketchSearchStatistics& statistics,
-                                                                    const Emit& emit,
-                                                                    const Stop& stop)
+                                                                   SketchSearchStatistics& statistics,
+                                                                   const Emit& emit,
+                                                                   const Stop& stop)
 {
     if (stop())
         return false;
@@ -50,7 +50,7 @@ bool SuccessorExpander<Kind, EvaluationPolicy>::for_each_successor(const tyr::pl
 
 template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 std::optional<RuleView> SuccessorExpander<Kind, EvaluationPolicy>::matching_rule(const tyr::planning::StateView<Kind>& source_state,
-                                                                                  const tyr::planning::StateView<Kind>& target_state)
+                                                                                 const tyr::planning::StateView<Kind>& target_state)
 {
     m_rules.begin_source();
     return m_rules.matching_rule(source_state, target_state, [] { return false; });

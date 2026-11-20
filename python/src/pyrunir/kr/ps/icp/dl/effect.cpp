@@ -20,23 +20,35 @@ void bind_effects(nb::module_& m, RepositoryBinding& repository)
     using runir::kr::dl::BooleanTag;
     using runir::kr::dl::NumericalTag;
     using namespace runir::kr::ps::dl;
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Positive>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Positive>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Negative>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Negative>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Unchanged>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Unchanged>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Increases>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Increases>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Decreases>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Decreases>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Unchanged>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Unchanged>>(m);
     urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Positive>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Positive>, Repository>(m);
     ygg::bind_insert<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Positive>>(repository);
     urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Negative>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Negative>, Repository>(m);
     ygg::bind_insert<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Negative>>(repository);
     urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Unchanged>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Unchanged>, Repository>(m);
     ygg::bind_insert<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, BooleanTag, Unchanged>>(repository);
     urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Increases>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Increases>, Repository>(m);
     ygg::bind_insert<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Increases>>(repository);
     urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Decreases>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Decreases>, Repository>(m);
     ygg::bind_insert<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Decreases>>(repository);
     urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Unchanged>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Unchanged>, Repository>(m);
     ygg::bind_insert<runir::kr::ps::ConcreteEffect<IcpFamilyTag, DlTag, NumericalTag, Unchanged>>(repository);
 }
 

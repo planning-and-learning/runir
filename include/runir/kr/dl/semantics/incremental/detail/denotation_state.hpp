@@ -19,13 +19,18 @@ class DenotationState<Category>
 {
     urd::builder<Denotation<Category>, runir::kr::dl::semantics::DenotationRepository> m_result;
     DenotationDelta<Category> m_delta;
+    /// The repository its result is read through (a view of its builder).
+    const DenotationRepository* m_denotations = nullptr;
+
+    [[nodiscard]] DenotationBuilderView<Category> result() const noexcept { return urd::resolve(m_result, *m_denotations); }
 
 public:
     /// Initialize storage and return its builder for construction without recording changes.
     /// Its words drawn from `records`, read through `denotations`.
     auto& initialize(ygg::uint_t num_objects, RecordStorage& records, const DenotationRepository& denotations)
     {
-        m_result.initialize(num_objects, records, denotations);
+        semantics::initialize(m_result, num_objects, records);
+        m_denotations = &denotations;
         m_delta.clear();
         return m_result;
     }
@@ -36,24 +41,25 @@ public:
 
     [[nodiscard]] const auto& get_delta() const noexcept { return m_delta; }
 
-    [[nodiscard]] size_t size() const noexcept { return m_result.count(); }
+    [[nodiscard]] size_t size() const { return result().storage_bits().count(); }
 
     /// Copy a complete result while retaining storage and clearing previous changes.
     template<typename Source>
         requires DenotationViewConcept<Source, Category>
     auto& assign(Source source, RecordStorage& records, const DenotationRepository& denotations)
     {
-        semantics::assign(m_result, source, records, denotations);
+        semantics::assign(m_result, source, records);
+        m_denotations = &denotations;
         m_delta.clear();
         return m_result;
     }
 
-    [[nodiscard]] bool contains(DenotationElementView<Category> value) const noexcept
+    [[nodiscard]] bool contains(DenotationElementView<Category> value) const
     {
         if constexpr (std::same_as<Category, ConceptTag>)
-            return m_result.contains(value.index());
+            return result().contains(value.index());
         else
-            return m_result.contains(value.first.index(), value.second.index());
+            return result().contains(value.first.index(), value.second.index());
     }
 
     /// Update membership and record its change exactly once.
@@ -72,7 +78,7 @@ public:
     void set(urd::index<tyr::formalism::Object> object, bool present, const tyr::formalism::planning::Repository& repository)
         requires std::same_as<Category, ConceptTag>
     {
-        if (m_result.contains(object) != present)
+        if (result().contains(object) != present)
             set(urd::resolve(object, repository), present);
     }
 
@@ -82,7 +88,7 @@ public:
              const tyr::formalism::planning::Repository& repository)
         requires std::same_as<Category, RoleTag>
     {
-        if (m_result.contains(source, target) != present)
+        if (result().contains(source, target) != present)
             set(std::pair(urd::resolve(source, repository), urd::resolve(target, repository)), present);
     }
 
@@ -124,7 +130,7 @@ public:
 
     [[nodiscard]] const auto& get_builder() const noexcept { return m_result; }
 
-    [[nodiscard]] auto get_value() const noexcept { return m_result.get(); }
+    [[nodiscard]] auto get_value() const noexcept { return m_result.value; }
 
     [[nodiscard]] bool changed() const noexcept { return m_changed; }
 

@@ -712,9 +712,7 @@ class Session:
         module_state = program_state.get_module_state()
         expander = LiftedSuccessorExpander(task_context, self._program)
         before = self._state_values(task_context, program_state.get_state().unpack(), module_state)
-        node = search.successor_generator.get_node(
-            search.state_repository, program_state.get_state().unpack().index()
-        )
+        node = search.successor_generator.get_node(search.state_repository, program_state.get_state().index())
         steps: list[Step] = []
         for successor in search.successor_generator.get_labeled_successor_nodes(
             node, search.state_repository, search.axiom_evaluator
@@ -737,7 +735,7 @@ class Session:
         )
         state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).state
         options = gbfs_lazy.lifted.Options()
-        options.start_node = search.successor_generator.get_node(search.state_repository, state.index())
+        options.start_node = search.successor_generator.get_node(search.state_repository, state.pack().index())
         options.search_budget = SearchBudget(
             max_num_states=budget.max_states, max_time=timedelta(seconds=budget.max_seconds)
         )

@@ -75,8 +75,11 @@ void bind_equivalence_graph(nb::module_& m)
 
     // The colors of an object graph's vertices, read in their ColorRepository.
     nb::enum_<PredicateContext>(m, "PredicateContext").value("STATE", PredicateContext::STATE).value("GOAL", PredicateContext::GOAL);
+    urd::python::bind_index<PredicateColor<tyr::formalism::StaticTag>>(m);
     urd::python::bind_data<PredicateColor<tyr::formalism::StaticTag>>(m);
+    urd::python::bind_index<PredicateColor<tyr::formalism::FluentTag>>(m);
     urd::python::bind_data<PredicateColor<tyr::formalism::FluentTag>>(m);
+    urd::python::bind_index<Color>(m);
     urd::python::bind_data<Color>(m);
     urd::python::bind_view<urd::index_view<PredicateColor<tyr::formalism::StaticTag>, ColorRepository>>(m);
     urd::python::bind_view<urd::index_view<PredicateColor<tyr::formalism::FluentTag>, ColorRepository>>(m);

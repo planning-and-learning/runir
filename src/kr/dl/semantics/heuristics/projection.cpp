@@ -13,8 +13,8 @@ namespace runir::kr::dl::semantics::heuristics
 
 std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& translator,
                                               tyr::datalog::database::QueryView<> edges,
-                                              std::span<const ygg::ColumnLayout> from,
-                                              std::span<const ygg::ColumnLayout> to)
+                                              std::span<const urd::data<ygg::ColumnLayout>> from,
+                                              std::span<const urd::data<ygg::ColumnLayout>> to)
 {
     const auto k = from.size();
     auto projections = urd::Store<urd::sequence<tyr::datalog::database::QueryView<>>>();

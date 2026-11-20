@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_CLOSURE_HPP_
 
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <algorithm>
@@ -60,7 +61,7 @@ struct ClosureWorkspace
 // so later components can reuse it.
 template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
 void evaluate_closure(Tag,
-                      const urd::builder<Denotation<RoleTag>, runir::kr::dl::semantics::DenotationRepository>& result,
+                      DenotationBuilderView<RoleTag> result,
                       DenotationBuilderView<RoleTag> role,
                       const MarkedRows& dirty,
                       urd::builder<Denotation<ConceptTag>, runir::kr::dl::semantics::DenotationRepository>& row,
@@ -144,7 +145,7 @@ void evaluate_closure(Tag,
                         if (target != member)
                         {
                             assert(!is_dirty(target) || (scratch.discovery[target] && !scratch.active.contains(target)));
-                            reached |= result.get(urd::index<tyr::formalism::Object>(target));
+                            reached |= result.value(urd::index<tyr::formalism::Object>(target));
                         }
                     }
                 }

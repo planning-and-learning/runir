@@ -14,6 +14,7 @@
 #include <string>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::tests
 {
@@ -185,10 +186,10 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto activation = [&](kr::ps::ext::ModuleView module_, kr::ps::ext::MemoryStateView memory_state)
     {
         auto data = control_builder.checkout<kr::ps::ext::ModuleState>();
-        data->mod = module_;
-        data->memory_state = memory_state;
-        data->registers = registers;
-        data->arguments = arguments;
+        urd::store(data->mod, module_);
+        urd::store(data->memory_state, memory_state);
+        urd::store(data->registers, registers);
+        urd::store(data->arguments, arguments);
         return control_repository->insert(*data, control_builder).first;
     };
     const auto caller_activation = activation(caller, caller_return);
@@ -199,29 +200,28 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     EXPECT_EQ(&callee_activation.get_registers().context(), &denotations);
     EXPECT_EQ(control_repository->size<kr::ps::ext::ModuleState>(), 2);
 
-    const auto program_state = [&](const tyr::planning::StateView<tyr::GroundTag>& planning_state,
-                                   kr::ps::ext::ModuleStateView activation_,
-                                   std::optional<CallStackView> caller_)
+    const auto program_state =
+        [&](const tyr::planning::StateView<tyr::GroundTag>& planning_state, kr::ps::ext::ModuleStateView activation_, std::optional<CallStackView> caller_)
     {
         auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
-        data->state = search_context->state_repository->view(planning_state.index());
-        data->module_state = activation_;
+        data->state = planning_state.pack().index();
+        urd::store(data->module_state, activation_);
         if (caller_.has_value())
-            data->call_stack.emplace(*caller_);
+            urd::store(data->call_stack, *caller_);
         return execution_repository->insert(*data, execution_builder).first;
     };
     {
         // Program states that differ in their planning state share their activation.
         const auto successors =
             search_context->successor_generator->get_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
-        const auto changed = std::ranges::find_if(successors, [&](const auto& node) { return node.get_state().index() != state.index(); });
+        const auto changed = std::ranges::find_if(successors, [&](const auto& node) { return node.get_state().pack().index() != state.pack().index(); });
         ASSERT_NE(changed, successors.end());
         const auto first = program_state(state, callee_activation, std::nullopt);
         const auto moved = program_state(changed->get_state(), callee_activation, std::nullopt);
         EXPECT_NE(moved, first);
         EXPECT_EQ(moved.get_module_state(), first.get_module_state());
-        EXPECT_EQ(moved.get_state().index(), changed->get_state().index());
-        EXPECT_EQ(first.get_state().index(), state.index());
+        EXPECT_EQ(moved.get_state().index(), changed->get_state().pack().index());
+        EXPECT_EQ(first.get_state().index(), state.pack().index());
         EXPECT_EQ(program_state(state, callee_activation, std::nullopt), first);
         EXPECT_EQ(control_repository->size<kr::ps::ext::ModuleState>(), 2);
     }
@@ -230,9 +230,9 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto frame = [&](kr::ps::ext::ModuleStateView activation_, std::optional<CallStackView> caller_)
     {
         auto data = control_builder.checkout<kr::ps::ext::CallStack>();
-        data->module_state = activation_;
+        urd::store(data->module_state, activation_);
         if (caller_.has_value())
-            data->caller.emplace(*caller_);
+            urd::store(data->caller, *caller_);
         return control_repository->insert(*data, control_builder).first;
     };
     const auto caller_frame = frame(caller_activation, std::nullopt);
@@ -262,7 +262,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto returned_state = program_state(state, caller_frame.get_module_state(), caller_frame.get_caller());
     EXPECT_EQ(returned_state.get_module_state().get_mod().get_symbol().get_name(), "caller");
     EXPECT_EQ(returned_state.get_module_state(), caller_activation);
-    EXPECT_EQ(returned_state.get_state().index(), state.index());
+    EXPECT_EQ(returned_state.get_state().index(), state.pack().index());
     EXPECT_FALSE(returned_state.get_call_stack());
 }
 

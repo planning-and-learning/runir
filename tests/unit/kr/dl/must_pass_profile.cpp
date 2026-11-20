@@ -124,7 +124,7 @@ int run(std::span<char*> args)
                    heuristic_time,
                    must_pass_time,
                    slot_time,
-                   out->view().size(),
+                   out->view().get_rows().size(),
                    after.keys - before.keys,
                    after.vertices - before.vertices,
                    after.backward - before.backward,

@@ -45,8 +45,11 @@ void bind_program_record_views(nb::module_& m, nb::class_<runir::kr::ps::Reposit
 {
     using Repository = runir::kr::ps::Repository<Family>;
     urd::python::bind_view<urd::index_view<runir::kr::ps::MemoryState<Family>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::MemoryState<Family>, Repository>(m);
     urd::python::bind_view<urd::index_view<runir::kr::ps::ModuleSymbol<Family>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::ModuleSymbol<Family>, Repository>(m);
     urd::python::bind_view<urd::index_view<runir::kr::ps::Rule<Family>, Repository>>(m);
+    urd::python::bind_builder<runir::kr::ps::Rule<Family>, Repository>(m);
     ygg::bind_insert<runir::kr::ps::MemoryState<Family>>(repository);
     ygg::bind_insert<runir::kr::ps::ModuleSymbol<Family>>(repository);
     ygg::bind_insert<runir::kr::ps::Rule<Family>>(repository);

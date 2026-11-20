@@ -58,7 +58,9 @@ void bind_feature_views(nb::module_& m, nb::class_<Repository>& repository)
     using ConcreteView = urd::index_view<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, Repository>;
 
     urd::python::bind_view<FeatureView>(m);
+    urd::python::bind_builder<runir::kr::ps::Feature<Family, FeatureTag>, Repository>(m);
     urd::python::bind_view<ConcreteView>(m);
+    urd::python::bind_builder<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, Repository>(m);
     bind_ps_optimize<Family, Repository, FeatureView>(m);
     ygg::bind_insert<runir::kr::ps::Feature<Family, FeatureTag>>(repository);
     ygg::bind_insert<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>(repository);

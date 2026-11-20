@@ -77,35 +77,35 @@ concept CallArgumentsContract =
 
 /// A control record's view: of the task's control repository, whatever its kind.
 template<typename Entity, typename SharedView>
-concept IndexedControlView = std::same_as<SharedView, urd::index_view<Entity, kr::ps::ext::ControlRepository>>
-                             && std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>>
-                             && std::totally_ordered<urd::data<Entity>> && std::totally_ordered<SharedView>;
+concept IndexedControlView =
+    std::same_as<SharedView, urd::index_view<Entity, kr::ps::ext::ControlRepository>> && std::constructible_from<urd::index<Entity>, ygg::uint_t>
+    && std::totally_ordered<urd::index<Entity>> && std::totally_ordered<urd::data<Entity>> && std::totally_ordered<SharedView>;
 
 template<typename SharedView>
-concept ModuleStateContract = IndexedControlView<kr::ps::ext::ModuleState, SharedView>
-                              && requires(urd::data<kr::ps::ext::ModuleState>& data, const SharedView& view) {
-                                     data.index;
-                                     data.mod;
-                                     data.memory_state;
-                                     data.registers;
-                                     data.arguments;
-                                     view.index();
-                                     view.get_mod();
-                                     view.get_memory_state();
-                                     view.get_registers();
-                                     view.get_arguments();
-                                 };
+concept ModuleStateContract =
+    IndexedControlView<kr::ps::ext::ModuleState, SharedView> && requires(urd::data<kr::ps::ext::ModuleState>& data, const SharedView& view) {
+        data.index;
+        data.mod;
+        data.memory_state;
+        data.registers;
+        data.arguments;
+        view.index();
+        view.get_mod();
+        view.get_memory_state();
+        view.get_registers();
+        view.get_arguments();
+    };
 
 template<typename SharedView>
-concept CallStackContract = IndexedControlView<kr::ps::ext::CallStack, SharedView>
-    && requires(urd::data<kr::ps::ext::CallStack>& data, const SharedView& view) {
-           data.index;
-           data.module_state;
-           data.caller;
-           view.index();
-           view.get_module_state();
-           view.get_caller();
-       };
+concept CallStackContract =
+    IndexedControlView<kr::ps::ext::CallStack, SharedView> && requires(urd::data<kr::ps::ext::CallStack>& data, const SharedView& view) {
+        data.index;
+        data.module_state;
+        data.caller;
+        view.index();
+        view.get_module_state();
+        view.get_caller();
+    };
 
 template<tyr::TaskKind Kind>
 using ProgramState = kr::ps::ext::ProgramState<Kind>;

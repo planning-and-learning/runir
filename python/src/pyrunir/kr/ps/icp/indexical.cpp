@@ -22,10 +22,14 @@ void bind_indexical(nb::module_& m, RepositoryBinding& repository)
                   [](const ResetPair& lhs, const ResetPair& rhs) { return lhs == rhs; },
                   nb::is_operator())
         .def("__ne__", [](const ResetPair& lhs, const ResetPair& rhs) { return lhs != rhs; }, nb::is_operator());
+    urd::python::bind_index<XCondition>(m);
     urd::python::bind_data<XCondition>(m);
+    urd::python::bind_index<XEffect>(m);
     urd::python::bind_data<XEffect>(m);
     urd::python::bind_view<urd::index_view<XCondition, Repository>>(m);
+    urd::python::bind_builder<XCondition, Repository>(m);
     urd::python::bind_view<urd::index_view<XEffect, Repository>>(m);
+    urd::python::bind_builder<XEffect, Repository>(m);
     ygg::bind_insert<XCondition>(repository);
     ygg::bind_insert<XEffect>(repository);
 }

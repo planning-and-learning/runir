@@ -16,15 +16,25 @@ namespace runir::kr::ps::icp::dl
 // One translation unit per kind: the three instantiations together need about 6 GB to compile.
 void bind_features(nb::module_& m, RepositoryBinding& repository)
 {
+    urd::python::bind_index<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>>(m);
     urd::python::bind_data<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>>(m);
+    urd::python::bind_index<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::dl::RoleTag>>(m);
     urd::python::bind_data<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::dl::RoleTag>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>>(m);
+    urd::python::bind_index<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>>(m);
     urd::python::bind_data<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(m);
+    urd::python::bind_index<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>>(m);
     urd::python::bind_data<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(m);
+    urd::python::bind_index<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>(m);
     urd::python::bind_data<runir::kr::ps::Feature<IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::QueryFeature>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteFeature<IcpFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::QueryFeature>>(m);
     runir::kr::python::bind_feature_views<IcpFamilyTag, runir::kr::dl::ConceptTag>(m, repository);
     runir::kr::python::bind_feature_views<IcpFamilyTag, runir::kr::dl::RoleTag>(m, repository);

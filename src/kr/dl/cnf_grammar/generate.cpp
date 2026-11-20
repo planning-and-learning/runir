@@ -219,7 +219,7 @@ private:
         const auto concrete = m_output_repository->insert(*data, m_builder).first;
 
         auto wrapper = runir::kr::dl::checkout<runir::kr::dl::Constructor<Category>>(m_builder);
-        wrapper->variant = concrete;
+        urd::store(wrapper->variant, concrete);
         return m_output_repository->insert(*wrapper, m_builder).first;
     }
 
@@ -232,7 +232,7 @@ private:
     template<runir::kr::dl::CategoryTag Category, typename T, typename Operand>
     auto intern_unary(Operand operand)
     {
-        return intern_wrapped<Category, T>([&](auto& data) { data.operand = m_output_repository->view(operand); });
+        return intern_wrapped<Category, T>([&](auto& data) { urd::store(data.operand, m_output_repository->view(operand)); });
     }
 
     template<runir::kr::dl::CategoryTag Category, typename T, typename Left, typename Right>
@@ -241,8 +241,8 @@ private:
         return intern_wrapped<Category, T>(
             [&](auto& data)
             {
-                data.left_operand = m_output_repository->view(left);
-                data.right_operand = m_output_repository->view(right);
+                urd::store(data.left_operand, m_output_repository->view(left));
+                urd::store(data.right_operand, m_output_repository->view(right));
             });
     }
 
@@ -252,8 +252,8 @@ private:
         return intern_wrapped<Category, T>(
             [&](auto& data)
             {
-                data.role = m_output_repository->view(role);
-                data.qualifier = m_output_repository->view(qualifier);
+                urd::store(data.role, m_output_repository->view(role));
+                urd::store(data.qualifier, m_output_repository->view(qualifier));
             });
     }
 
@@ -546,7 +546,7 @@ private:
                                       [&](auto& data)
                                       {
                                           data.n = constructor.get_n();
-                                          data.role = m_output_repository->view(role);
+                                          urd::store(data.role, m_output_repository->view(role));
                                       });
                               });
     }
@@ -573,8 +573,8 @@ private:
                                        [&](auto& data)
                                        {
                                            data.n = constructor.get_n();
-                                           data.role = m_output_repository->view(role);
-                                           data.qualifier = m_output_repository->view(qualifier);
+                                           urd::store(data.role, m_output_repository->view(role));
+                                           urd::store(data.qualifier, m_output_repository->view(qualifier));
                                        });
                                });
     }
@@ -627,7 +627,7 @@ private:
                 return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::RoleFillersTag>>(
                     [&](auto& data)
                     {
-                        data.role = m_output_repository->view(role);
+                        urd::store(data.role, m_output_repository->view(role));
                         for (const auto object : constructor.get_objects())
                             urd::append(data.objects, object);
                     });
@@ -855,9 +855,9 @@ private:
                 return intern_wrapped<runir::kr::dl::NumericalTag, runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>>(
                     [&](auto& data)
                     {
-                        data.sources = m_output_repository->view(sources);
-                        data.edges = m_output_repository->view(edges);
-                        data.targets = m_output_repository->view(targets);
+                        urd::store(data.sources, m_output_repository->view(sources));
+                        urd::store(data.edges, m_output_repository->view(edges));
+                        urd::store(data.targets, m_output_repository->view(targets));
                     });
             });
     }

@@ -36,8 +36,8 @@ struct CountEvaluator
             {
                 const auto [added, removed] = graph.change(index).change();
                 // The numerical result retains the count; only net membership changes are needed.
-                const auto remaining = static_cast<size_t>(value.get_value()) - std::ranges::size(removed);
-                return ygg::to_uint_t(remaining + std::ranges::size(added));
+                const auto remaining = static_cast<size_t>(value.get_value()) - change_size(removed);
+                return ygg::to_uint_t(remaining + change_size(added));
             },
             child));
     }

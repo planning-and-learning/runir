@@ -37,6 +37,11 @@ nanobind_add_module(
 )
 
 target_link_libraries(_pyrunir PRIVATE runir::core)
+# GCC 13's link-time optimization crashes inlining urd::python::bind_data across these bindings (internal compiler error
+# in lto_tag_to_tree_code): they are compiled without it, the core library they link keeps it.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
+    target_compile_options(_pyrunir PRIVATE -fno-lto)
+endif()
 # The bindings are the build's heaviest translation units: where memory is tight, cap how many compile at once
 # (-DRUNIR_PYTHON_COMPILE_JOBS=6 at -j12 lowers the peak memory by about 4 GB in the same wall time; 4 is slower), so
 # that they do not take every parallel slot at the same time.

@@ -118,7 +118,7 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
         m_delta.removed->insert(row);
     }
     const auto added_rows = m_delta.added->view();
-    for (size_t i = 0; i < added_rows.size(); ++i)
+    for (size_t i = 0; i < added_rows.get_rows().size(); ++i)
         ygg::with_values(added_rows.row(i), [this](const auto& values) { m_result->insert(values); });
     m_initialized = true;
 }

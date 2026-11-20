@@ -20,11 +20,17 @@ void bind_effect(nb::module_& m, RepositoryBinding& repository)
     using runir::kr::dl::BooleanTag;
     using runir::kr::dl::NumericalTag;
     using namespace runir::kr::ps::dl;
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Positive>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Positive>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Negative>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Negative>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Unchanged>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Unchanged>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Increases>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Increases>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Decreases>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Decreases>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Unchanged>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Unchanged>>(m);
     bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Positive>>(m, repository);
     bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Negative>>(m, repository);

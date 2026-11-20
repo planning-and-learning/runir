@@ -32,6 +32,7 @@ class ExecutionRepository :
     public ygg::formalism::SymbolContext<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>
 {
     using Base = ygg::formalism::SymbolContext<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>;
+
 private:
     std::size_t m_index;
     tyr::planning::StateRepositoryPtr<Kind> m_state_repository;
@@ -75,23 +76,17 @@ public:
     template<typename T>
         requires ygg::formalism::SupportsSymbol<Repository<Family>, T>
     [[nodiscard]] auto view(urd::index<T> index) const
-    {
-        return get_program_repository().view(index);
-    }
+    { return get_program_repository().view(index); }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
     [[nodiscard]] auto view(urd::index<T> index) const
-    {
-        return get_denotation_repository().view(index);
-    }
+    { return get_denotation_repository().view(index); }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>
     [[nodiscard]] auto view(urd::index<T> index) const
-    {
-        return get_control_repository().view(index);
-    }
+    { return get_control_repository().view(index); }
 
     [[nodiscard]] tyr::planning::PackedStateView<Kind> view(urd::index<tyr::planning::State<Kind>> index) const { return get_state_repository().view(index); }
 
@@ -99,28 +94,19 @@ public:
     /// for an interned child: a program symbol's, a denotation's, a formalism record's (a register's values) or a state's.
     template<typename T>
     [[nodiscard]] auto view(const urd::builder<T, Repository<Family>>& built URD_LIFETIMEBOUND) const
-    {
-        return urd::resolve(built, get_program_repository());
-    }
+    { return urd::resolve(built, get_program_repository()); }
 
     template<typename T>
     [[nodiscard]] auto view(const urd::builder<T, runir::kr::dl::semantics::DenotationRepository>& built URD_LIFETIMEBOUND) const
-    {
-        return urd::resolve(built, get_denotation_repository());
-    }
+    { return urd::resolve(built, get_denotation_repository()); }
 
     template<typename T>
     [[nodiscard]] auto view(const urd::builder<T, ControlRepository<Family>>& built URD_LIFETIMEBOUND) const
-    {
-        return urd::resolve(built, get_control_repository());
-    }
-
+    { return urd::resolve(built, get_control_repository()); }
 
     [[nodiscard]] tyr::planning::StateBuilderView<Kind>
     view(const urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>& built URD_LIFETIMEBOUND) const
-    {
-        return urd::resolve(built, get_state_repository());
-    }
+    { return urd::resolve(built, get_state_repository()); }
 
     using Base::find;
     using Base::insert;
@@ -135,14 +121,15 @@ public:
     { return m_control_repository->insert(built, storage); }
 
     template<typename T>
-        requires(ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T> || ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>)
+        requires(ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
+                 || ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>)
     auto insert(urd::data<T>& record)
     { return m_control_repository->insert(record); }
 
     template<ygg::formalism::IsBuilderStorage Storage>
     urd::index<tyr::planning::State<Kind>> insert(const urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>& built,
                                                   Storage& /*storage*/)
-    { return m_state_repository->register_extended_state(urd::resolve(built, *m_state_repository)).index(); }
+    { return m_state_repository->register_extended_state(urd::resolve(built, *m_state_repository)).pack().index(); }
 
     /// Likewise for finding, inserting nothing (a built planning state is not looked up: its program state is not found).
     template<typename T, typename C, ygg::formalism::IsBuilderStorage Storage>
@@ -151,16 +138,15 @@ public:
     { return m_control_repository->find(built, storage); }
 
     template<typename T>
-        requires(ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T> || ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>)
+        requires(ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
+                 || ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>)
     auto find(const urd::data<T>& record)
     { return m_control_repository->find(record); }
 };
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
 inline const ExecutionRepository<Family, Kind>& get_repository(const ExecutionRepository<Family, Kind>& context URD_LIFETIMEBOUND) noexcept
-{
-    return context;
-}
+{ return context; }
 
 /// Execution records are canonical as built.
 template<ProgramFamilyTag Family, tyr::TaskKind Kind, typename T>

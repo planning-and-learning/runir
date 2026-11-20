@@ -13,6 +13,7 @@
 #include <string>
 #include <type_traits>
 #include <tyr/formalism/planning/repository.hpp>
+#include <urd/elements/flat.hpp>
 #include <utility>
 
 namespace runir::kr::dl::grammar
@@ -113,17 +114,19 @@ parse(const ast::ConstructorOrNonTerminal<Category>& node, tyr::formalism::plann
         {
             const auto& unwrapped = unwrap(arg);
             if constexpr (std::same_as<Unwrapped<Arg>, ast::NonTerminal<Category>>)
-                return parse(unwrapped, domain, context);
+                return urd::stored<urd::built_t<ConstructorOrNonTerminal<Category>, ConstructorRepository>>(parse(unwrapped, domain, context));
             else
                 return parse_constructor(unwrapped, domain, context);
         },
         node.get());
 }
 
-runir::kr::parser::constructors::GrammarTarget::ParsedConstructor<ConceptTag> parse(const ast::ConceptProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+runir::kr::parser::constructors::GrammarTarget::ParsedConstructor<ConceptTag>
+parse(const ast::ConceptProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 { context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
 
-runir::kr::parser::constructors::GrammarTarget::ParsedConstructor<RoleTag> parse(const ast::RoleProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+runir::kr::parser::constructors::GrammarTarget::ParsedConstructor<RoleTag>
+parse(const ast::RoleProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 { context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
 
 template<typename Result>
@@ -138,7 +141,7 @@ auto parse(const ast::DerivationRule<Category>& node, tyr::formalism::planning::
                                             {
                                                 for (const auto& symbol : node.rhs)
                                                     data.rhs.push_back(parse(symbol, domain, context));
-                                                data.lhs = parse(node.lhs, domain, context);
+                                                urd::store(data.lhs, parse(node.lhs, domain, context));
                                             });
 }
 
@@ -147,7 +150,7 @@ void append_derivation_rule(std::vector<urd::child<DerivationRule<Category>, Con
                             const ast::DerivationRule<Category>& node,
                             tyr::formalism::planning::DomainView domain,
                             const ConstructorContext& context)
-{ rules.emplace_back(parse(node, domain, context)); }
+{ urd::append(rules, parse(node, domain, context)); }
 
 void append_derivation_rule(urd::builder<GrammarTag, ConstructorRepository>& data,
                             const ast::DerivationRuleVariant& node,
@@ -205,15 +208,15 @@ auto parse_grammar_impl(const std::string& description, tyr::formalism::planning
 
     auto data = runir::kr::dl::grammar::checkout<GrammarTag>(builder);
 
-    data->concept_start = parse_fixed_start<ConceptTag>(domain, context);
-    data->role_start = parse_fixed_start<RoleTag>(domain, context);
-    data->boolean_start = parse_fixed_start<BooleanTag>(domain, context);
-    data->numerical_start = parse_fixed_start<NumericalTag>(domain, context);
+    urd::store(data->concept_start, parse_fixed_start<ConceptTag>(domain, context));
+    urd::store(data->role_start, parse_fixed_start<RoleTag>(domain, context));
+    urd::store(data->boolean_start, parse_fixed_start<BooleanTag>(domain, context));
+    urd::store(data->numerical_start, parse_fixed_start<NumericalTag>(domain, context));
 
     for (const auto& rule : ast.rules)
         append_derivation_rule(*data, rule, domain, context);
 
-    data->domain = domain;
+    urd::store(data->domain, domain);
     return repository.insert(*data, builder).first;
 }
 

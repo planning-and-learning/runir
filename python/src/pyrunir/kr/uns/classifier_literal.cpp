@@ -15,8 +15,10 @@ namespace runir::kr::uns
 
 void bind_classifier_literal(nb::module_& m)
 {
+    urd::python::bind_index<ClassifierLiteral>(m);
     urd::python::bind_data<ClassifierLiteral>(m);
     urd::python::bind_view<ClassifierLiteralView>(m);
+    urd::python::bind_builder<runir::kr::uns::ClassifierLiteral, Repository>(m);
 }
 
 }  // namespace runir::kr::uns

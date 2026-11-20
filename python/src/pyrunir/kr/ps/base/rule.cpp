@@ -28,6 +28,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     using View = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>;
     using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
+    urd::python::bind_index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(m);
     urd::python::bind_data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(m);
     urd::python::bind_view<View>(m);
     m.def(

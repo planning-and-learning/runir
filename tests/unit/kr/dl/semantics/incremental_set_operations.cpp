@@ -68,12 +68,12 @@ void check_composition_and_closures()
         size_t count = 0;
         for (ygg::uint_t source = 0; source < size; ++source)
         {
-            EXPECT_TRUE(output.get_builder().get(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
+            EXPECT_TRUE(output.get_result(words.repository).value(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
             for (ygg::uint_t target = 0; target < size; ++target)
             {
                 const auto position = source * size + target;
-                const auto before = previous.get(urd::index<tyr::formalism::Object>(source))[target];
-                EXPECT_EQ(output.get_builder().get(urd::index<tyr::formalism::Object>(source))[target], expected[position]);
+                const auto before = words.view(previous).value(urd::index<tyr::formalism::Object>(source))[target];
+                EXPECT_EQ(output.get_result(words.repository).value(urd::index<tyr::formalism::Object>(source))[target], expected[position]);
                 EXPECT_EQ(added[position], !initialized && !before && expected[position]);
                 EXPECT_EQ(removed[position], !initialized && before && !expected[position]);
                 count += expected[position];
@@ -96,12 +96,12 @@ void check_composition_and_closures()
                     (rhs.get(urd::index<tyr::formalism::Object>(source))[target] ? rhs_delta.added : rhs_delta.removed)
                         .emplace_back(object(source), object(target));
             }
-        const auto old_composition =
-            initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : copy_denotation(composition.get_builder(), words.storage, words.repository);
-        const auto old_transitive =
-            initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : copy_denotation(transitive.get_builder(), words.storage, words.repository);
-        const auto old_reflexive =
-            initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : copy_denotation(reflexive.get_builder(), words.storage, words.repository);
+        const auto old_composition = initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) :
+                                                  copy_denotation(composition.get_builder(), words.storage, words.repository);
+        const auto old_transitive = initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) :
+                                                 copy_denotation(transitive.get_builder(), words.storage, words.repository);
+        const auto old_reflexive = initialize ? words.make<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) :
+                                                copy_denotation(reflexive.get_builder(), words.storage, words.repository);
         if (initialize)
         {
             kr::dl::semantics::incremental::detail::initialize_set(kr::dl::CompositionTag {}, composition, lhs_view, lhs_delta, rhs_view, rhs_delta, workspace);
@@ -240,7 +240,8 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
     {
         constexpr auto intersection = std::same_as<decltype(tag), kr::dl::IntersectionTag>;
         SCOPED_TRACE(intersection);
-        auto lhs = words.make<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size), rhs = words.make<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
+        auto lhs = words.make<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size),
+             rhs = words.make<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
         for (const auto i : { digits - 1, digits, digits + 1 })
             lhs.get().set(i);
         for (const auto i : { ygg::uint_t { 0 }, digits, digits + 1 })
@@ -268,7 +269,7 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
         for (ygg::uint_t i = 0; i < size; ++i)
             EXPECT_EQ(output.contains(object(i)), i == digits || i == digits - 1 || (!intersection && (i == 0 || i == 1)));
         EXPECT_EQ(output.size(), intersection ? 2 : 4);
-        EXPECT_TRUE(output.get_builder().get().trailing_bits_zero());
+        EXPECT_TRUE(output.get_result(words.repository).value().trailing_bits_zero());
     };
     check(kr::dl::IntersectionTag {});
     check(kr::dl::UnionTag {});
@@ -334,9 +335,9 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
                                                        workspace);
     for (ygg::uint_t source = 0; source < size; ++source)
     {
-        EXPECT_EQ(existential.get_builder().get().test(source), source < 3);
+        EXPECT_EQ(existential.get_result(words.repository).value().test(source), source < 3);
         for (ygg::uint_t target = 0; target < size; ++target)
-            EXPECT_EQ(restricted.get_builder().get(urd::index<tyr::formalism::Object>(source)).test(target), source < 3 && target == size - 1);
+            EXPECT_EQ(restricted.get_result(words.repository).value(urd::index<tyr::formalism::Object>(source)).test(target), source < 3 && target == size - 1);
     }
     EXPECT_EQ(restricted.get_delta().added.size(), 3);
     EXPECT_EQ(restricted.get_delta().removed.size(), 2);
@@ -392,13 +393,13 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
     {
         for (ygg::uint_t source = 0; source < size; ++source)
         {
-            EXPECT_TRUE(inverse.get_builder().get(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
-            EXPECT_TRUE(complement.get_builder().get(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
+            EXPECT_TRUE(inverse.get_result(words.repository).value(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
+            EXPECT_TRUE(complement.get_result(words.repository).value(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
             for (ygg::uint_t target = 0; target < size; ++target)
             {
-                EXPECT_EQ(inverse.get_builder().get(urd::index<tyr::formalism::Object>(source))[target],
+                EXPECT_EQ(inverse.get_result(words.repository).value(urd::index<tyr::formalism::Object>(source))[target],
                           role.get(urd::index<tyr::formalism::Object>(target))[source]);
-                EXPECT_EQ(complement.get_builder().get(urd::index<tyr::formalism::Object>(source))[target],
+                EXPECT_EQ(complement.get_result(words.repository).value(urd::index<tyr::formalism::Object>(source))[target],
                           !role.get(urd::index<tyr::formalism::Object>(source))[target]);
             }
         }

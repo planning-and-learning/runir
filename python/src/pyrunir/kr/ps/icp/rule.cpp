@@ -19,8 +19,11 @@ namespace runir::kr::ps::icp
 
 void bind_rule(nb::module_& m, RepositoryBinding& repository)
 {
+    urd::python::bind_index<Rule<LoadTag<runir::kr::dl::ConceptTag>>>(m);
     urd::python::bind_data<Rule<LoadTag<runir::kr::dl::ConceptTag>>>(m);
+    urd::python::bind_index<Rule<LoadTag<runir::kr::dl::RoleTag>>>(m);
     urd::python::bind_data<Rule<LoadTag<runir::kr::dl::RoleTag>>>(m);
+    urd::python::bind_index<Rule<CruleTag>>(m);
     urd::python::bind_data<Rule<CruleTag>>(m);
     urd::python::bind_view<RuleView<LoadTag<runir::kr::dl::ConceptTag>>>(m);
     urd::python::bind_view<RuleView<LoadTag<runir::kr::dl::RoleTag>>>(m);

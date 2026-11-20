@@ -600,10 +600,8 @@ def _check_ground_successor_callbacks() -> None:
         search.state_repository,
         search.axiom_evaluator,
     )
-    assert Counter(
-        (_transition(step).action, step.target.get_state().unpack().index()) for step in actual
-    ) == Counter(
-        (step.label, step.node.get_state().index())
+    assert Counter((_transition(step).action, step.target.get_state().index()) for step in actual) == Counter(
+        (step.label, step.node.get_state().pack().index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )
@@ -666,10 +664,8 @@ def _check_lifted_successor_callbacks() -> None:
         search.state_repository,
         search.axiom_evaluator,
     )
-    assert Counter(
-        (_transition(step).action, step.target.get_state().unpack().index()) for step in actual
-    ) == Counter(
-        (step.label, step.node.get_state().index())
+    assert Counter((_transition(step).action, step.target.get_state().index()) for step in actual) == Counter(
+        (step.label, step.node.get_state().pack().index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <tyr/planning/state_view_concepts.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -41,6 +42,17 @@ void assign_atom_delta(const Source& source, const Target& target, DeltaType& de
     append_only_in<Kind, tyr::formalism::DerivedTag>(target, source, delta.added.derived_atoms);
 }
 }  // namespace detail
+
+/// How many elements one side of a change holds: a concept's or role's values, or a query's rows (a relation view, read
+/// by its rows).
+template<typename Side>
+std::size_t change_size(const Side& side)
+{
+    if constexpr (requires { side.get_rows(); })
+        return std::ranges::size(side.get_rows());
+    else
+        return std::ranges::size(side);
+}
 
 /// Changes to the feature inputs: fluent and derived atoms, and the registers within one module invocation.
 /// Calls, returns and backtracking across invocations require reinitializing
@@ -147,7 +159,7 @@ template<tyr::TaskKind Kind,
 void Delta::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
 {
     const auto* repository = source.get_formalism_repository().get();
-    if (&source_registers.get_formalism_repository() != repository || &target_registers.get_formalism_repository() != repository)
+    if (&source_registers.context().get_formalism_repository() != repository || &target_registers.context().get_formalism_repository() != repository)
         throw std::invalid_argument("Feature delta requires registers for the same planning task.");
 
     detail::assign_atom_delta<Kind>(source, target, *this);

@@ -4,7 +4,6 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
-
 #include "semantics/denotation_builders.hpp"
 
 #include <algorithm>
@@ -57,7 +56,7 @@ static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongKindContext
 
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(kr::dl::semantics::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
-static_assert(acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, ygg::uint_t, const kr::dl::semantics::DenotationRepository&>());
+static_assert(acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, ygg::uint_t>());
 static_assert(acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, bool>());
 static_assert(!acquires_builder.template operator()<ygg::Relation<ygg::Schema>, std::span<const urd::index<ygg::Column>>>());
 static_assert(!acquires_builder.template operator()<int>());
@@ -80,7 +79,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
         auto source = urd::builder<Denotation, runir::kr::dl::semantics::DenotationRepository>();
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
         {
-            source.initialize(3, builder.records(), repository);
+            kr::dl::semantics::initialize(source, 3, builder.records());
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                 source.get().set(1);
             else
@@ -105,7 +104,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
         EXPECT_EQ(repository.size<Denotation>(), 1);
 
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
-            source.initialize(0, builder.records(), repository);
+            kr::dl::semantics::initialize(source, 0, builder.records());
         else
             source.initialize(0);
         if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
@@ -120,7 +119,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
             EXPECT_TRUE(view.value(urd::index<tyr::formalism::Object>(0)).test(2));
         }
         else
-            EXPECT_EQ(view.get_value(), expected.get());
+            EXPECT_EQ(view.get_value(), expected.value);
     };
     check.template operator()<kr::dl::BooleanTag>();
     check.template operator()<kr::dl::NumericalTag>();
@@ -142,8 +141,8 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
     auto scratch = kr::dl::semantics::Builder();
     const auto object = [&](ygg::uint_t index) { return urd::resolve(ObjectIndex(index), *formalism); };
 
-    auto boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository>(true);
-    auto numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository>(7);
+    auto boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = true };
+    auto numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = 7 };
     const auto boolean_view = urd::resolve(boolean, repository);
     const auto numerical_view = urd::resolve(numerical, repository);
     static_assert(std::same_as<decltype(boolean_view.get_value()), bool>);
@@ -154,7 +153,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
 
     const auto check = [&]<kr::dl::ConceptOrRoleTag Category>()
     {
-        auto builder = runir::tests::make_denotation<kr::dl::semantics::Denotation<Category>>(num_objects, scratch, repository);
+        auto builder = runir::tests::make_denotation<kr::dl::semantics::Denotation<Category>>(num_objects, scratch);
         const auto borrowed = urd::resolve(builder, repository);
         EXPECT_EQ(borrowed.views().begin(), borrowed.views().end());
         EXPECT_FALSE(borrowed.storage_bits().any());
@@ -338,7 +337,7 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
         auto payload = urd::builder<D, runir::kr::dl::semantics::DenotationRepository>();
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
         {
-            payload.initialize(3, scratch.records(), source_repository);
+            kr::dl::semantics::initialize(payload, 3, scratch.records());
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                 payload.get().set(1);
             else
@@ -348,18 +347,18 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
             payload.value = 1;
         const auto source = kr::dl::semantics::insert(source_repository, payload, scratch).first;
         auto destination = urd::builder<D, runir::kr::dl::semantics::DenotationRepository>();
-        kr::dl::semantics::assign(destination, source, scratch.records(), source_repository);  // read as the payload is
+        kr::dl::semantics::assign(destination, source, scratch.records());  // read as the payload is
         EXPECT_TRUE((urd::EqualTo<urd::builder<D, runir::kr::dl::semantics::DenotationRepository>> {}(destination, payload)));
         EXPECT_EQ(destination.index, urd::index<D>());
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
         {
             const auto* buffer = runir::tests::own_words(destination).data();
-            kr::dl::semantics::assign(destination, source, scratch.records(), source_repository);
+            kr::dl::semantics::assign(destination, source, scratch.records());
             EXPECT_EQ(runir::tests::own_words(destination).data(), buffer);
         }
 
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
-            payload.initialize(0, scratch.records(), source_repository);
+            kr::dl::semantics::initialize(payload, 0, scratch.records());
         else
             payload.initialize(0);
         const auto unrelated = kr::dl::semantics::insert(target_repository, payload, scratch).first;
@@ -371,7 +370,7 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
         EXPECT_EQ(kr::dl::semantics::copy(copied, { target_repository, scratch }).first, copied);
 
         source_repository.reset();
-        kr::dl::semantics::assign(payload, copied, scratch.records(), target_repository);
+        kr::dl::semantics::assign(payload, copied, scratch.records());
         EXPECT_TRUE((urd::EqualTo<urd::builder<D, runir::kr::dl::semantics::DenotationRepository>> {}(destination, payload)));
     };
     check.template operator()<kr::dl::BooleanTag>();
@@ -620,7 +619,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     const auto left_result = kr::dl::semantics::evaluate<tyr::GroundTag>(left, context);
     const auto right_result = kr::dl::semantics::evaluate<tyr::GroundTag>(right, context);
     ASSERT_EQ(left_result.get_rows().size(), 9);
-    EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns, {}, &ygg::ColumnLayout::label));
+    EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns, {}, &urd::data<ygg::ColumnLayout>::label));
     EXPECT_EQ(&left_result.context(), &persistent.get_relation_repository());
     EXPECT_EQ(left_result, right_result);
     EXPECT_TRUE(std::ranges::equal(left_result.get_rows(), right_result.get_rows()));
@@ -631,7 +630,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     ASSERT_EQ(columns_of(left_alias)[0].index(), columns_of(right_alias)[0].index());
     const auto renamed_left = kr::dl::semantics::evaluate<tyr::GroundTag>(left_alias, context);
     const auto renamed_right = kr::dl::semantics::evaluate<tyr::GroundTag>(right_alias, context);
-    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));
+    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &urd::data<ygg::ColumnLayout>::label));
     EXPECT_EQ(renamed_left, renamed_right);
     EXPECT_NE(renamed_left, left_result);
     EXPECT_TRUE(std::ranges::equal(renamed_left.get_rows(), left_result.get_rows()));
@@ -640,8 +639,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
 
     {
         auto scratch_relations = ygg::FreeScratchRelations();
-        const auto layouts = std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
-                                          ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } };
+        const auto layouts = std::array { urd::data<ygg::ColumnLayout> { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
+                                          urd::data<ygg::ColumnLayout> { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } };
         auto direct = scratch_relations.draw(layouts);
         for (size_t i = 0; i < left_result.get_rows().size(); ++i)
             ygg::with_values(left_result.row(i), [&direct](const auto& values) { direct->insert(values); });
@@ -659,7 +658,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_EQ(left_result.get_rows().size(), 9);
     EXPECT_TRUE(
         left_result.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(2)) }));
-    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));
+    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &urd::data<ygg::ColumnLayout>::label));
     auto fresh_repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     const auto fresh = query("(q_role (fresh_source fresh_target) (r_universal))", *fresh_repository);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(fresh, context), left_result);

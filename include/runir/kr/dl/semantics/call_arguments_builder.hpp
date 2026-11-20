@@ -41,9 +41,7 @@ struct builder<runir::kr::dl::semantics::CallArguments, C>
     }
 
     static constexpr auto identifying_members() noexcept
-    {
-        return urd::Members<&builder::concept_arguments, &builder::role_arguments, &builder::boolean_arguments, &builder::numerical_arguments> {};
-    }
+    { return urd::Members<&builder::concept_arguments, &builder::role_arguments, &builder::boolean_arguments, &builder::numerical_arguments> {}; }
 };
 
 }  // namespace urd

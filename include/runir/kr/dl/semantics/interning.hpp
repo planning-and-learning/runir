@@ -8,6 +8,7 @@
 #include <ranges>
 #include <span>
 #include <stdexcept>
+#include <urd/elements/flat.hpp>
 #include <utility>
 
 namespace runir::kr::dl::semantics
@@ -28,15 +29,15 @@ public:
 };
 
 /// `destination` holding `source` (a denotation or a builder's view of one): a concept's or role's words copied into
-/// its own, drawn from `storage`, read through `repository`.
+/// its own, drawn from `storage`.
 template<CategoryTag Category, typename Source>
     requires DenotationViewConcept<Source, Category>
-DenotationBuilder<Category>& assign(DenotationBuilder<Category>& destination, Source source, RecordStorage& storage, const DenotationRepository& repository)
+DenotationBuilder<Category>& assign(DenotationBuilder<Category>& destination, Source source, RecordStorage& storage)
 {
     if constexpr (ConceptOrRoleTag<Category>)
     {
         destination.num_objects = source.get_num_objects();
-        detail::own_copied_words(destination.blocks, source.get_blocks(), storage, repository);
+        detail::own_copied_words(destination.blocks, source.get_blocks(), storage);
     }
     else
         destination.value = source.get_value();
@@ -54,7 +55,8 @@ template<CategoryTag Category>
 }
 
 /// These columns, interned into `relations` from a builder of `storage`.
-[[nodiscard]] inline urd::index<ygg::Columns> interned_columns(ygg::FreeRelationRepository& relations, RelationStorage& storage, std::span<const ygg::ColumnLayout> layouts)
+[[nodiscard]] inline urd::index<ygg::Columns>
+interned_columns(ygg::FreeRelationRepository& relations, RelationStorage& storage, std::span<const urd::data<ygg::ColumnLayout>> layouts)
 {
     auto columns = storage.template checkout<ygg::Columns>();
     columns->values.assign(layouts.begin(), layouts.end());
@@ -72,8 +74,8 @@ template<CategoryTag Category>
     auto relation = storage.template scratch<ygg::Relation<ygg::Schema>>();
     relation->pool = pool.index();
     auto row = storage.template checkout<ygg::Row<ygg::Schema>>();
-    row->relation = pool;
-    for (std::size_t i = 0; i < source.size(); ++i)
+    urd::store(row->relation, pool);
+    for (std::size_t i = 0; i < source.get_rows().size(); ++i)
     {
         ygg::with_values(source.row(i), [&row](const auto& values) { row->values.assign(std::ranges::begin(values), std::ranges::end(values)); });
         urd::append(relation->rows, relations.insert(*row, storage).first);
@@ -85,7 +87,7 @@ template<CategoryTag Category>
 /// `source` under new columns (the same pool and rows) in the denotation repository's relation repository, from
 /// `builder`.
 [[nodiscard]] inline QueryDenotationView
-rename(DenotationRepository& repository, QueryDenotationView source, std::span<const ygg::ColumnLayout> labels, Builder& builder)
+rename(DenotationRepository& repository, QueryDenotationView source, std::span<const urd::data<ygg::ColumnLayout>> labels, Builder& builder)
 {
     auto& relations = repository.get_relation_repository();
     auto& storage = builder.relations();
@@ -105,7 +107,7 @@ template<RegisterValuesViewConcept R>
 {
     auto& repository = context.repository();
     auto& builder = context.builder();
-    if (&source.get_formalism_repository() != &repository.get_formalism_repository())
+    if (&source.context().get_formalism_repository() != &repository.get_formalism_repository())
         throw std::invalid_argument("Register copying requires the same formalism repository.");
     auto data = builder.template scratch<RegisterValues>();
     assign(*data, source);
@@ -132,7 +134,7 @@ template<CategoryTag Category>
         if (source.context().get_formalism_repository_ptr() != repository.get_formalism_repository_ptr())
             throw std::invalid_argument("Denotation copying requires the same formalism repository.");
     auto copied = builder.template get_builder<Denotation<Category>>();
-    assign(*copied, source, builder.records(), repository);
+    assign(*copied, source, builder.records());
     return repository.insert(*copied, builder.records());
 }
 

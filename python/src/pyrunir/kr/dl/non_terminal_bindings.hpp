@@ -18,9 +18,13 @@ template<template<CategoryTag> typename NonTerminal, typename Repository>
 void bind_non_terminal_views(nb::module_& m)
 {
     urd::python::bind_view<urd::index_view<NonTerminal<ConceptTag>, Repository>>(m);
+    urd::python::bind_builder<NonTerminal<ConceptTag>, Repository>(m);
     urd::python::bind_view<urd::index_view<NonTerminal<RoleTag>, Repository>>(m);
+    urd::python::bind_builder<NonTerminal<RoleTag>, Repository>(m);
     urd::python::bind_view<urd::index_view<NonTerminal<BooleanTag>, Repository>>(m);
+    urd::python::bind_builder<NonTerminal<BooleanTag>, Repository>(m);
     urd::python::bind_view<urd::index_view<NonTerminal<NumericalTag>, Repository>>(m);
+    urd::python::bind_builder<NonTerminal<NumericalTag>, Repository>(m);
 }
 
 }  // namespace runir::kr::dl::python

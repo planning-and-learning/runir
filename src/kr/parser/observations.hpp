@@ -13,10 +13,11 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <urd/elements/children.hpp>
+#include <urd/elements/flat.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
-#include <urd/elements/children.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::parser::observations
@@ -37,16 +38,16 @@ template<typename FeatureTag, typename ObservationTag, runir::kr::FamilyTag Fami
 auto make_condition(Repository& repository, Builder& builder, urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature)
 {
     auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>();
-    concrete_data->feature = repository.view(feature);
-    return urd::built_t<runir::kr::ps::ConditionVariant<Family>, Repository>(repository.insert(*concrete_data, builder).first);
+    concrete_data->feature = feature;
+    return urd::stored<urd::built_t<runir::kr::ps::ConditionVariant<Family>, Repository>>(repository.insert(*concrete_data, builder).first);
 }
 
 template<typename FeatureTag, typename ObservationTag, runir::kr::FamilyTag Family, typename Repository, typename Builder>
 auto make_effect(Repository& repository, Builder& builder, urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature)
 {
     auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>();
-    concrete_data->feature = repository.view(feature);
-    return urd::built_t<runir::kr::ps::EffectVariant<Family>, Repository>(repository.insert(*concrete_data, builder).first);
+    concrete_data->feature = feature;
+    return urd::stored<urd::built_t<runir::kr::ps::EffectVariant<Family>, Repository>>(repository.insert(*concrete_data, builder).first);
 }
 
 template<runir::kr::FamilyTag Family, typename Repository, typename Builder>

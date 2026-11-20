@@ -86,13 +86,13 @@ struct data<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
     urd::index<tyr::formalism::Predicate<T>> predicate {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::flat_vector<ygg::ColumnLayout> schema {};
+    urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
 
     data() = default;
 
     data(urd::index<tyr::formalism::Predicate<T>> predicate_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         urd::flat_vector<ygg::ColumnLayout> schema_) :
+         urd::flat_vector<urd::data<ygg::ColumnLayout>> schema_) :
         index(),
         predicate(predicate_),
         columns(std::move(columns_)),
@@ -121,14 +121,14 @@ struct data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
     urd::index<tyr::formalism::Predicate<T>> predicate {};
     bool polarity {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::flat_vector<ygg::ColumnLayout> schema {};
+    urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
 
     data() = default;
 
     data(urd::index<tyr::formalism::Predicate<T>> predicate_,
          bool polarity_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         urd::flat_vector<ygg::ColumnLayout> schema_) :
+         urd::flat_vector<urd::data<ygg::ColumnLayout>> schema_) :
         index(),
         predicate(predicate_),
         polarity(polarity_),
@@ -162,13 +162,13 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> index;
     urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::flat_vector<ygg::ColumnLayout> schema {};
+    urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
 
     data() = default;
 
     data(urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> operand_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         urd::flat_vector<ygg::ColumnLayout> schema_) :
+         urd::flat_vector<urd::data<ygg::ColumnLayout>> schema_) :
         index(),
         operand(operand_),
         columns(std::move(columns_)),
@@ -196,13 +196,13 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;
     urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::flat_vector<ygg::ColumnLayout> schema {};
+    urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
 
     data() = default;
 
     data(urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> operand_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         urd::flat_vector<ygg::ColumnLayout> schema_) :
+         urd::flat_vector<urd::data<ygg::ColumnLayout>> schema_) :
         index(),
         operand(operand_),
         columns(std::move(columns_)),
@@ -351,13 +351,13 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> index;
     urd::index<runir::kr::dl::Query<>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::flat_vector<ygg::ColumnLayout> schema {};
+    urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
 
     data() = default;
 
     data(urd::index<runir::kr::dl::Query<>> operand_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         urd::flat_vector<ygg::ColumnLayout> schema_) :
+         urd::flat_vector<urd::data<ygg::ColumnLayout>> schema_) :
         index(),
         operand(operand_),
         columns(std::move(columns_)),
@@ -582,11 +582,11 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>
 {
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::flat_vector<ygg::ColumnLayout> schema {};
+    urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
 
     data() = default;
 
-    data(urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_, urd::flat_vector<ygg::ColumnLayout> schema_) :
+    data(urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_, urd::flat_vector<urd::data<ygg::ColumnLayout>> schema_) :
         index(),
         columns(std::move(columns_)),
         schema(std::move(schema_))

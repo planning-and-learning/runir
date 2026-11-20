@@ -11,6 +11,7 @@
 #include <string>
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_set>
+#include <urd/elements/flat.hpp>
 #include <urd/repr/values/std_set.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -82,7 +83,7 @@ private:
 
     template<typename T, typename Initialize>
     ConstructorChild intern_concrete(Initialize&& initialize)
-    { return intern<T>(std::forward<Initialize>(initialize)); }
+    { return urd::stored<ConstructorChild>(intern<T>(std::forward<Initialize>(initialize))); }
 
     template<typename T>
     auto intern_nullary()
@@ -93,7 +94,7 @@ private:
     template<typename T, typename Operand>
     auto intern_unary(Operand operand)
     {
-        return intern_concrete<T>([&](auto& data) { data.operand = std::move(operand); });
+        return intern_concrete<T>([&](auto& data) { urd::store(data.operand, operand); });
     }
 
     template<typename T, typename Left, typename Right>
@@ -102,8 +103,8 @@ private:
         return intern_concrete<T>(
             [&](auto& data)
             {
-                data.left_operand = left;
-                data.right_operand = right;
+                urd::store(data.left_operand, left);
+                urd::store(data.right_operand, right);
             });
     }
 
@@ -113,8 +114,8 @@ private:
         return intern_concrete<T>(
             [&](auto& data)
             {
-                data.role = role;
-                data.qualifier = qualifier;
+                urd::store(data.role, role);
+                urd::store(data.qualifier, qualifier);
             });
     }
 
@@ -142,7 +143,7 @@ private:
             [&](auto& data)
             {
                 data.n = n;
-                data.role = role;
+                urd::store(data.role, role);
             });
     }
 
@@ -153,8 +154,8 @@ private:
             [&](auto& data)
             {
                 data.n = n;
-                data.role = role;
-                data.qualifier = qualifier;
+                urd::store(data.role, role);
+                urd::store(data.qualifier, qualifier);
             });
     }
 
@@ -180,7 +181,7 @@ private:
         const auto rule = intern<DerivationRule<Category>>(
             [&](auto& data)
             {
-                data.lhs = lhs;
+                urd::store(data.lhs, lhs);
                 data.rhs = std::move(rhs);
             });
         urd::append(this->data().*derivation_rules_member<Category, TranslationContext::GrammarBuilder>(), rule);
@@ -191,8 +192,8 @@ private:
         const auto rule = intern<SubstitutionRule<Category>>(
             [&](auto& data)
             {
-                data.lhs = lhs;
-                data.rhs = rhs;
+                urd::store(data.lhs, lhs);
+                urd::store(data.rhs, rhs);
             });
         urd::append(this->data().*substitution_rules_member<Category, TranslationContext::GrammarBuilder>(), rule);
     }
@@ -381,7 +382,7 @@ public:
         return intern_concrete<Concept<CnfGrammarFamily, runir::kr::dl::RoleFillersTag>>(
             [&](auto& data)
             {
-                data.role = role;
+                urd::store(data.role, role);
                 for (const auto object : source.get_objects())
                     urd::append(data.objects, object);
             });
@@ -536,9 +537,9 @@ public:
         return intern_concrete<Numerical<CnfGrammarFamily, runir::kr::dl::DistanceTag>>(
             [&](auto& data)
             {
-                data.sources = sources;
-                data.edges = edges;
-                data.targets = targets;
+                urd::store(data.sources, sources);
+                urd::store(data.edges, edges);
+                urd::store(data.targets, targets);
             });
     }
 

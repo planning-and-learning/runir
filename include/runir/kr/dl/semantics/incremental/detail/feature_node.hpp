@@ -42,8 +42,7 @@ public:
 
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
 
-    [[nodiscard]] DenotationBuilderView<Category> get_result(const DenotationRepository& repository) const
-    { return state().get_result(repository); }
+    [[nodiscard]] DenotationBuilderView<Category> get_result(const DenotationRepository& repository) const { return state().get_result(repository); }
 
     [[nodiscard]] const auto& get_delta() const
         requires ConceptOrRoleTag<Category>

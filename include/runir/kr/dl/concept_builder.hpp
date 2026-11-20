@@ -63,9 +63,7 @@ struct builder<runir::kr::dl::Concept<F, Tag>, C>
     urd::built_t<runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>, C> right_operand;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"left_operand", &builder::left_operand>, urd::field<"right_operand", &builder::right_operand>> {};
-    }
+    { return urd::Fields<urd::field<"left_operand", &builder::left_operand>, urd::field<"right_operand", &builder::right_operand>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
@@ -118,9 +116,7 @@ struct builder<runir::kr::dl::Concept<F, Tag>, C>
     urd::built_t<runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>, C> qualifier;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"n", &builder::n>, urd::field<"role", &builder::role>, urd::field<"qualifier", &builder::qualifier>> {};
-    }
+    { return urd::Fields<urd::field<"n", &builder::n>, urd::field<"role", &builder::role>, urd::field<"qualifier", &builder::qualifier>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
@@ -134,9 +130,7 @@ struct builder<runir::kr::dl::Concept<F, Tag>, C>
     urd::built_t<runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, C> right_operand;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"left_operand", &builder::left_operand>, urd::field<"right_operand", &builder::right_operand>> {};
-    }
+    { return urd::Fields<urd::field<"left_operand", &builder::left_operand>, urd::field<"right_operand", &builder::right_operand>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };

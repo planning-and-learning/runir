@@ -47,11 +47,11 @@ auto num_objects(const Context& context) noexcept -> ygg::uint_t
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto make_concept_builder(Context& context)
-{ return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Kind>(context), context.get_denotation_repository()); }
+{ return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Kind>(context)); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto make_role_builder(Context& context)
-{ return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context), context.get_denotation_repository()); }
+{ return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context)); }
 
 template<tyr::formalism::FactKind T>
 auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) -> urd::index<tyr::formalism::Object>
@@ -244,12 +244,13 @@ void insert_denotation_rows(const Denotation& denotation, ygg::FreeScratchRelati
 
 /// A distance argument as a relation over the plan's columns for it.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(urd::index_view<Query<>, C> argument, std::span<const ygg::ColumnLayout>, Context& context) -> QueryDenotationView
+auto evaluate_relation(urd::index_view<Query<>, C> argument, std::span<const urd::data<ygg::ColumnLayout>>, Context& context) -> QueryDenotationView
 { return evaluate<Kind>(argument, context); }
 
 /// Concepts and roles are lifted, so all argument forms share one distance evaluation.
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::span<const ygg::ColumnLayout> columns, Context& context) -> QueryDenotationView
+auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::span<const urd::data<ygg::ColumnLayout>> columns, Context& context)
+    -> QueryDenotationView
 {
     const auto denotation = evaluate<Kind>(argument, context);
     auto result = context.get_workspace().get_scratch().draw(columns);

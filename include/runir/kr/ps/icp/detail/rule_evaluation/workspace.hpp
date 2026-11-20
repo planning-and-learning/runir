@@ -46,7 +46,7 @@ public:
         if (&program.context() != m_task->domain_context->icp_repository.get())
             throw std::invalid_argument("ICP requires a program from the domain context repository.");
         const auto planning_task = m_task->search_context->task->get_task();
-        auto empty = m_task->dl_builder.template get_builder<Denotation>(static_cast<ygg::uint_t>(planning_task.get_num_objects()), *m_task->dl_denotation_repository);
+        auto empty = m_task->dl_builder.template get_builder<Denotation>(static_cast<ygg::uint_t>(planning_task.get_num_objects()));
         m_empty = runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *empty, m_task->dl_builder).first.index();
         const auto module = program.get_entry_mod();
         const auto features = module.template get_features<Concept>();
@@ -76,10 +76,10 @@ public:
         const auto stored_registers = insert(*m_task->dl_denotation_repository, *registers).first;
         auto histories = checkout<Histories>(m_task->icp_control_builder);
         for (std::size_t i = 0; i < module.template get_features<Concept>().size(); ++i)
-            histories->concepts.emplace_back(m_task->dl_denotation_repository->view(m_empty));
+            urd::append(histories->concepts, m_task->dl_denotation_repository->view(m_empty));
         auto data = urd::data<ProgramState<Kind>> {};
         data.program = m_program.index();
-        data.state = state.index();
+        data.state = state.pack().index();
         data.memory_state = module.get_entry_memory_state().index();
         data.registers = stored_registers.index();
         data.histories = m_task->icp_control_repository->insert(*histories, m_task->icp_control_builder).first.index();
@@ -94,7 +94,7 @@ public:
         const auto previous = state.get_histories().get_concepts();
         histories->concepts.clear();
         for (const auto concept_ : previous)
-            histories->concepts.emplace_back(concept_);
+            urd::append(histories->concepts, concept_);
         const auto features = m_program.get_entry_mod().template get_features<Concept>();
         m_changed.clear();
         bool progress = !binding;
@@ -104,7 +104,7 @@ public:
                 return std::nullopt;
             const auto before = evaluate<Kind>(features[static_cast<std::ptrdiff_t>(i)], transition.get_source_context());
             const auto after = evaluate<Kind>(features[static_cast<std::ptrdiff_t>(i)], transition.get_target_context());
-            auto entered = m_task->dl_builder.template get_builder<Denotation>(before.get_num_objects(), *m_task->dl_denotation_repository);
+            auto entered = m_task->dl_builder.template get_builder<Denotation>(before.get_num_objects());
             entered->get().copy_from(after.value());
             entered->get() -= before.value();
             if (entered->get().intersects(previous[i].value()))
@@ -121,7 +121,7 @@ public:
                             break;
                         }
                 entered->get() |= previous[i].value();
-                histories->concepts[i] = runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *entered, m_task->dl_builder).first;
+                urd::store(histories->concepts[i], runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *entered, m_task->dl_builder).first);
             }
         }
         if (!progress)
@@ -129,7 +129,7 @@ public:
         // Reset after admission and accumulation, including predecessors entering in this step.
         for (const auto i : m_changed)
             for (const auto predecessor : m_reset_predecessors[i])
-                histories->concepts[predecessor] = m_task->dl_denotation_repository->view(m_empty);
+                urd::store(histories->concepts[predecessor], m_task->dl_denotation_repository->view(m_empty));
         return m_task->icp_control_repository->insert(*histories, m_task->icp_control_builder).first;
     }
 };

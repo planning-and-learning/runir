@@ -49,9 +49,9 @@ public:
         {
             if (stop())
                 return false;
-            const auto target_registers = urd::visit_view(state.get_module_state(),
-                                                          [&](const auto& activation)
-                                                          { return bound_registers<Kind>(rule, activation.get_registers(), value, *registers, *context.storage); });
+            const auto target_registers = urd::visit_view(
+                state.get_module_state(),
+                [&](const auto& activation) { return bound_registers<Kind>(rule, activation.get_registers(), value, *registers, *context.storage); });
             if (!binding_effects_match(rule, state, planning_state, target_registers, *context.environment))
                 continue;
             auto target = urd::visit_view(state.get_module_state(),

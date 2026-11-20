@@ -36,11 +36,11 @@ urd::Store<urd::sequence<urd::index<ygg::Column>>> query_labels(const R& columns
 }
 
 /// Object columns labeled by the query columns, validated.
-inline urd::flat_vector<ygg::ColumnLayout> query_columns(const urd::flat_vector<urd::index<QueryColumn>>& columns)
+inline urd::flat_vector<urd::data<ygg::ColumnLayout>> query_columns(const urd::flat_vector<urd::index<QueryColumn>>& columns)
 {
-    urd::flat_vector<ygg::ColumnLayout> result;
+    urd::flat_vector<urd::data<ygg::ColumnLayout>> result;
     for (const auto column : columns)
-        result.push_back(ygg::ColumnLayout { urd::index<ygg::Column>(column.value), ygg::type_id<urd::index<tyr::formalism::Object>> });
+        result.push_back(urd::data<ygg::ColumnLayout> { urd::index<ygg::Column>(column.value), ygg::type_id<urd::index<tyr::formalism::Object>> });
     ygg::validate_columns({ result.data(), result.size() });
     return result;
 }
@@ -88,7 +88,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     {
         if (data.args.size() < 2)
             throw std::invalid_argument("q_generic_join: requires at least two input queries.");
-        urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::ColumnLayout>>>> inputs;
+        urd::Store<urd::sequence<urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>>>> inputs;
         urd::Store<urd::sequence<urd::index<QueryColumn>>> input_columns;
         for (const auto arg : data.args)
         {
@@ -177,11 +177,12 @@ void prepare(urd::data<QueryProjection<Category>>& data, const Repository& repos
 inline constexpr auto distance_column = urd::index<ygg::Column>();
 
 /// A concept (k = 1) or role (k = 2) lifted into a relation: object columns labeled 0..k-1.
-inline urd::flat_vector<ygg::ColumnLayout> lifted_columns(size_t arity)
+inline urd::flat_vector<urd::data<ygg::ColumnLayout>> lifted_columns(size_t arity)
 {
-    urd::flat_vector<ygg::ColumnLayout> columns;
+    urd::flat_vector<urd::data<ygg::ColumnLayout>> columns;
     for (size_t i = 0; i < arity; ++i)
-        columns.push_back(ygg::ColumnLayout { urd::index<ygg::Column>(static_cast<std::uint32_t>(i)), ygg::type_id<urd::index<tyr::formalism::Object>> });
+        columns.push_back(
+            urd::data<ygg::ColumnLayout> { urd::index<ygg::Column>(static_cast<std::uint32_t>(i)), ygg::type_id<urd::index<tyr::formalism::Object>> });
     return columns;
 }
 

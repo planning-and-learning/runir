@@ -26,8 +26,10 @@ void bind_classifier(nb::module_& m)
 {
     using namespace nb::literals;
     using Family = runir::kr::UnsFamilyTag;
+    urd::python::bind_index<Classifier>(m);
     urd::python::bind_data<Classifier>(m);
     urd::python::bind_view<ClassifierView>(m);
+    urd::python::bind_builder<runir::kr::uns::Classifier, Repository>(m);
     runir::kr::python::bind_ps_optimize<Family, Repository, ClassifierView>(m);
     m.def(
         "classify",

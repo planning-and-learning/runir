@@ -116,9 +116,9 @@ private:
             {
                 if (stop())
                     return false;
-                const auto target_registers = urd::visit_view(state.get_module_state(),
-                                                              [&](const auto& module_)
-                                                              { return bound_registers<Kind>(rule, module_.get_registers(), value, *registers, *context.storage); });
+                const auto target_registers = urd::visit_view(
+                    state.get_module_state(),
+                    [&](const auto& module_) { return bound_registers<Kind>(rule, module_.get_registers(), value, *registers, *context.storage); });
                 if (binding_effects_match(rule, state, planning_state, target_registers, *context.environment))
                     *admitted++ = value;
             }
@@ -138,15 +138,18 @@ private:
         {
             if (stop())
                 return false;
-            const auto target_registers = urd::visit_view(state.get_module_state(),
-                                                          [&](const auto& activation)
-                                                          { return bound_registers<Kind>(rule, activation.get_registers(), value, *registers, *context.storage); });
+            const auto target_registers = urd::visit_view(
+                state.get_module_state(),
+                [&](const auto& activation) { return bound_registers<Kind>(rule, activation.get_registers(), value, *registers, *context.storage); });
             context.environment->reset_target();
             auto transition = urd::visit_view(state.get_module_state(),
                                               [&](const auto& activation)
                                               {
-                                                  return context.environment->make_dl_transition_context(
-                                                      planning_state, planning_state, activation.get_arguments(), activation.get_registers(), target_registers);
+                                                  return context.environment->make_dl_transition_context(planning_state,
+                                                                                                         planning_state,
+                                                                                                         activation.get_arguments(),
+                                                                                                         activation.get_registers(),
+                                                                                                         target_registers);
                                               });
             for (auto term : rule.get_order())
             {

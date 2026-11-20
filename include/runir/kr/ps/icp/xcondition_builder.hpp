@@ -27,9 +27,7 @@ struct builder<runir::kr::ps::icp::XCondition, C>
     urd::built_t<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>, C> feature;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"operation", &builder::operation>, urd::field<"object", &builder::object>, urd::field<"feature", &builder::feature>> {};
-    }
+    { return urd::Fields<urd::field<"operation", &builder::operation>, urd::field<"object", &builder::object>, urd::field<"feature", &builder::feature>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operation, &builder::object, &builder::feature> {}; }
 };

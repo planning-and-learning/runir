@@ -49,9 +49,7 @@ struct builder<runir::kr::ps::ext::CallStack, C>
     urd::built_t<urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>>, C> caller;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"module_state", &builder::module_state>, urd::field<"caller", &builder::caller>> {};
-    }
+    { return urd::Fields<urd::field<"module_state", &builder::module_state>, urd::field<"caller", &builder::caller>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };

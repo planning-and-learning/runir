@@ -64,14 +64,14 @@ auto parse_feature(
         parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(*builders.ps);
-    concrete_data->feature = constructor;
+    urd::store(concrete_data->feature, constructor);
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *builders.ps, *concrete_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>(*builders.ps);
-    data->variant = concrete;
+    urd::store(data->variant, concrete);
     const auto feature = intern(repository, *builders.ps, *data);
     boolean_features.emplace(node.symbol.text, feature.index());
-    sketch_data.boolean_features.emplace_back(feature);
+    urd::append(sketch_data.boolean_features, feature);
 }
 
 auto parse_feature(
@@ -89,14 +89,14 @@ auto parse_feature(
         parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(*builders.ps);
-    concrete_data->feature = constructor;
+    urd::store(concrete_data->feature, constructor);
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *builders.ps, *concrete_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>(*builders.ps);
-    data->variant = concrete;
+    urd::store(data->variant, concrete);
     const auto feature = intern(repository, *builders.ps, *data);
     numerical_features.emplace(node.symbol.text, feature.index());
-    sketch_data.numerical_features.emplace_back(feature);
+    urd::append(sketch_data.numerical_features, feature);
 }
 
 using runir::kr::parser::observations::parse_condition;
@@ -165,7 +165,7 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     {
         if (!rule_symbols.emplace(rule.symbol.text).second)
             diagnostics.throw_at(rule.symbol, runir::kr::DuplicateDefinitionError("rule", rule.symbol.text));
-        data->rules.emplace_back(parse_rule(rule, repository, ps_builder, boolean_features, numerical_features, diagnostics));
+        urd::append(data->rules, parse_rule(rule, repository, ps_builder, boolean_features, numerical_features, diagnostics));
     }
 
     return intern(repository, ps_builder, *data);

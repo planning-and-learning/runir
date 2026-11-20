@@ -75,7 +75,7 @@ auto elements(const auto& denotation)
 {
     auto result = kr::dl::semantics::DenotationElementViewList<Category> {};
     for (const auto value : denotation.views())
-        result.push_back(value);
+        urd::append(result, value);
     std::ranges::sort(result);
     return result;
 }
@@ -183,9 +183,8 @@ void check_incremental_evaluation()
     auto builder = kr::dl::semantics::Builder {};
     auto workspace = tyr::datalog::database::Workspace {};
     // Registers being built: each context reads its own builder (no copy).
-    const auto& formalism = *search->task->get_repository();
     using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
-    const auto object = [&](auto index) { return ObjectChild(formalism.view(index)); };
+    const auto object = [](auto index) { return ObjectChild(index); };
     auto register_data = std::array<urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>, 3> {};
     for (auto& data : register_data)
     {
@@ -201,10 +200,10 @@ void check_incremental_evaluation()
     const auto registers = [&](size_t i) { return urd::resolve(register_data[i], denotations); };
 
     // Invocation values live outside the repositories reset during ordinary evaluation.
-    auto argument_concept = make_denotation<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, builder, denotations);
-    auto argument_role = make_denotation<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, builder, denotations);
-    auto argument_boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository>(true);
-    auto argument_numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository>(7);
+    auto argument_concept = make_denotation<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, builder);
+    auto argument_role = make_denotation<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, builder);
+    auto argument_boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = true };
+    auto argument_numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = 7 };
     argument_concept.get().set(ygg::uint_t(a.value));
     argument_role.get(a).set(ygg::uint_t(b.value));
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
@@ -675,8 +674,8 @@ void check_incremental_evaluation()
         EXPECT_TRUE(unchanged.delta(source_id).removed.empty());
         EXPECT_TRUE(unchanged.delta(edge_id).added.empty());
         EXPECT_TRUE(unchanged.delta(edge_id).removed.empty());
-        EXPECT_TRUE(unchanged.delta(query_id).added->view().empty());
-        EXPECT_TRUE(unchanged.delta(query_id).removed->view().empty());
+        EXPECT_TRUE(std::ranges::empty(unchanged.delta(query_id).added->view().get_rows()));
+        EXPECT_TRUE(std::ranges::empty(unchanged.delta(query_id).removed->view().get_rows()));
         for (const auto id : scalar_ids)
             EXPECT_FALSE(unchanged.changed(id));
         EXPECT_EQ(scalar_values(unchanged), after_scalars);

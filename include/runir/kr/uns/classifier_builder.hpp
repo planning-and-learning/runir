@@ -49,9 +49,7 @@ struct builder<runir::kr::uns::Classifier, C>
     urd::built_t<urd::flat_vector<urd::index<runir::kr::uns::ClassifierClause>>, C> clauses;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"symbol", &builder::symbol>, urd::field<"features", &builder::features>, urd::field<"clauses", &builder::clauses>> {};
-    }
+    { return urd::Fields<urd::field<"symbol", &builder::symbol>, urd::field<"features", &builder::features>, urd::field<"clauses", &builder::clauses>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::symbol, &builder::features, &builder::clauses> {}; }
 };

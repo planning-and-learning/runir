@@ -70,30 +70,34 @@ public:
     template<typename T>
         requires ygg::formalism::SupportsSymbol<Repository<Family>, T>
     [[nodiscard]] auto view(urd::index<T> index) const
-    {
-        return get_program_repository().view(index);
-    }
+    { return get_program_repository().view(index); }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
     [[nodiscard]] auto view(urd::index<T> index) const
-    {
-        return get_denotation_repository().view(index);
-    }
+    { return get_denotation_repository().view(index); }
 
     /// A built child of a control record (urd::child) as the view the repository that holds its kind makes of it, as for
     /// an interned child.
     template<typename T>
     [[nodiscard]] auto view(const urd::builder<T, Repository<Family>>& built URD_LIFETIMEBOUND) const
-    {
-        return urd::resolve(built, get_program_repository());
-    }
+    { return urd::resolve(built, get_program_repository()); }
 
     template<typename T>
     [[nodiscard]] auto view(const urd::builder<T, runir::kr::dl::semantics::DenotationRepository>& built URD_LIFETIMEBOUND) const
-    {
-        return urd::resolve(built, get_denotation_repository());
-    }
+    { return urd::resolve(built, get_denotation_repository()); }
+
+    /// A held child of a control record (a record not interned yet, urd::child) as the view the repository that holds
+    /// its kind makes of it, as for a built one.
+    template<typename T>
+        requires ygg::formalism::SupportsSymbol<Repository<Family>, T>
+    [[nodiscard]] auto view(const urd::data<T>& record URD_LIFETIMEBOUND) const
+    { return urd::resolve(record, get_program_repository()); }
+
+    template<typename T>
+        requires ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
+    [[nodiscard]] auto view(const urd::data<T>& record URD_LIFETIMEBOUND) const
+    { return urd::resolve(record, get_denotation_repository()); }
 
     using Base::find;
     using Base::insert;
@@ -124,9 +128,7 @@ public:
 
 template<ProgramFamilyTag Family>
 inline const ControlRepository<Family>& get_repository(const ControlRepository<Family>& context URD_LIFETIMEBOUND) noexcept
-{
-    return context;
-}
+{ return context; }
 
 /// Control records are canonical as built.
 template<ProgramFamilyTag Family, typename T>

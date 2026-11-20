@@ -36,7 +36,9 @@ struct ProjectionEvaluator
         if constexpr (std::same_as<Category, ConceptTag>)
             builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 0))), present);
         else
-            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 0))), ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 1))), present);
+            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 0))),
+                        ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(row, 1))),
+                        present);
     }
 
     static void set_row(DenotationState<Category>& state, const auto& row, bool present, const tyr::formalism::planning::Repository& repository)
@@ -57,7 +59,7 @@ struct ProjectionEvaluator
         auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context), graph.records(), graph.denotations());
         operation.initialize(graph.result(child), context.get_workspace().get_database_workspace());
         const auto rows = operation.get_result();
-        for (size_t i = 0; i < rows.size(); ++i)
+        for (size_t i = 0; i < rows.get_rows().size(); ++i)
             set_row(builder, rows.row(i), true);
     }
 
@@ -65,9 +67,9 @@ struct ProjectionEvaluator
     {
         operation.update(graph.change(child).change(), workspace);
         const auto [added, removed] = operation.get_delta().change();
-        for (size_t i = 0; i < removed.size(); ++i)
+        for (size_t i = 0; i < removed.get_rows().size(); ++i)
             set_row(value, removed.row(i), false, graph.repository());
-        for (size_t i = 0; i < added.size(); ++i)
+        for (size_t i = 0; i < added.get_rows().size(); ++i)
             set_row(value, added.row(i), true, graph.repository());
     }
 };

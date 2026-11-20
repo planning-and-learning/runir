@@ -15,8 +15,10 @@ namespace runir::kr::uns
 
 void bind_classifier_clause(nb::module_& m)
 {
+    urd::python::bind_index<ClassifierClause>(m);
     urd::python::bind_data<ClassifierClause>(m);
     urd::python::bind_view<ClassifierClauseView>(m);
+    urd::python::bind_builder<runir::kr::uns::ClassifierClause, Repository>(m);
 }
 
 }  // namespace runir::kr::uns

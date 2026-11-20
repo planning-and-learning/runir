@@ -10,10 +10,12 @@
 #include <boost/variant/apply_visitor.hpp>
 #include <stdexcept>
 #include <type_traits>
-#include <urd/elements/children.hpp>
 #include <urd/config.hpp>
+#include <urd/elements/children.hpp>
+#include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
+#include <utility>
 #include <vector>
 #include <yggdrasil/formalism/builder.hpp>
 
@@ -84,6 +86,17 @@ template<typename T, typename Context>
 auto checkout(const Context& context)
 { return ygg::formalism::checkout<T>(context.builder()); }
 
+/// Writes what a parse gives into a builder's member: a built form (a grammar constructor's) as it is, a view (an
+/// interned constructor's) as the member stores it, its key (urd::store).
+template<typename M, typename P>
+void take(M& member, P&& parsed)
+{
+    if constexpr (std::is_assignable_v<M&, P&&>)
+        member = std::forward<P>(parsed);
+    else
+        urd::store(member, parsed);
+}
+
 template<typename Context, typename T>
 auto intern(const Context& context, urd::builder<T, typename Context::Repository>& built)
 { return context.repository().insert(built, context.builder()).first; }
@@ -94,11 +107,15 @@ auto intern_constructor(const Context& context, urd::index<T> index)
 {
     using Constructor = typename Context::Target::template Constructor<Category>;
     if constexpr (urd::is_flat_variant<Constructor>)
-        return typename Context::Target::template ParsedConstructor<Category>(context.repository().view(index));
+    {
+        auto result = typename Context::Target::template ParsedConstructor<Category>();
+        take(result, context.repository().view(index));
+        return result;
+    }
     else
     {
         auto data = checkout<Constructor>(context);
-        data->variant = context.repository().view(index);
+        take(data->variant, context.repository().view(index));
         return intern(context, *data);
     }
 }
@@ -113,7 +130,7 @@ template<typename Tag, typename Context>
 auto intern_query(const Context& context, urd::index<runir::kr::dl::Query<Tag>> index)
 {
     auto data = checkout<runir::kr::dl::Query<>>(context);
-    data->variant = context.repository().view(index);
+    take(data->variant, context.repository().view(index));
     return intern(context, *data);
 }
 
@@ -130,7 +147,7 @@ auto parse_columns(const urd::Store<urd::sequence<runir::kr::dl::grammar::ast::I
 {
     std::vector<urd::child<runir::kr::dl::QueryColumn, typename Context::Repository>> columns;
     for (const auto& name : names)
-        columns.push_back(parse_column(name, context));
+        take(columns.emplace_back(), parse_column(name, context));
     return columns;
 }
 
@@ -148,7 +165,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicState& node, tyr::forma
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>(context);
-                                                    data->predicate = std::move(predicate);
+                                                    take(data->predicate, std::move(predicate));
                                                     data->columns = parse_columns(node.columns, context);
                                                     return intern_query(context, intern(context, *data).index());
                                                 });
@@ -165,7 +182,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicGoal& node, tyr::formal
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>(context);
-                                                    data->predicate = std::move(predicate);
+                                                    take(data->predicate, std::move(predicate));
                                                     data->polarity = node.polarity;
                                                     data->columns = parse_columns(node.columns, context);
                                                     return intern_query(context, intern(context, *data).index());
@@ -177,7 +194,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryConcept& node, tyr::formalism
 {
     auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>(context);
-    data->operand = std::move(arg);
+    take(data->operand, std::move(arg));
     data->columns = parse_columns(node.columns, context);
     return intern_query(context, intern(context, *data).index());
 }
@@ -187,7 +204,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryRole& node, tyr::formalism::p
 {
     auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>(context);
-    data->operand = std::move(arg);
+    take(data->operand, std::move(arg));
     data->columns = parse_columns(node.columns, context);
     return intern_query(context, intern(context, *data).index());
 }
@@ -198,8 +215,8 @@ auto parse(const runir::kr::dl::grammar::ast::QueryBinary<Tag>& node, tyr::forma
     auto lhs = parse(node.left_operand.get(), domain, context);
     auto rhs = parse(node.right_operand.get(), domain, context);
     auto data = checkout<runir::kr::dl::Query<Tag>>(context);
-    data->left_operand = std::move(lhs);
-    data->right_operand = std::move(rhs);
+    take(data->left_operand, std::move(lhs));
+    take(data->right_operand, std::move(rhs));
     return intern_query(context, intern(context, *data).index());
 }
 
@@ -208,7 +225,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryColumns<Tag>& node, tyr::form
 {
     auto arg = parse(node.operand.get(), domain, context);
     auto data = checkout<runir::kr::dl::Query<Tag>>(context);
-    data->operand = std::move(arg);
+    take(data->operand, std::move(arg));
     data->columns = parse_columns(node.columns, context);
     return intern_query(context, intern(context, *data).index());
 }
@@ -218,7 +235,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryGenericJoin& node, tyr::forma
 {
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>(context);
     for (const auto& arg : node.args)
-        data->args.emplace_back(parse(arg.get(), domain, context));
+        take(data->args.emplace_back(), parse(arg.get(), domain, context));
     data->variable_order = parse_columns(node.variable_order, context);
     data->output_order = parse_columns(node.output_order, context);
     return intern_query(context, intern(context, *data).index());
@@ -241,10 +258,10 @@ auto parse(const runir::kr::dl::grammar::ast::QueryMustPass& node, tyr::formalis
     auto probes = parse(node.probes.get(), domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>(context);
     data->keys = parse_columns(node.keys, context);
-    data->sources = std::move(sources);
-    data->edges = std::move(edges);
-    data->targets = std::move(targets);
-    data->probes = std::move(probes);
+    take(data->sources, std::move(sources));
+    take(data->edges, std::move(edges));
+    take(data->targets, std::move(targets));
+    take(data->probes, std::move(probes));
     return intern_query(context, intern(context, *data).index());
 }
 
@@ -253,9 +270,9 @@ auto parse(const runir::kr::dl::grammar::ast::QuerySelectEqual& node, tyr::forma
 {
     auto arg = parse(node.operand.get(), domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>(context);
-    data->operand = std::move(arg);
-    data->left_column = parse_column(node.left_column, context);
-    data->right_column = parse_column(node.right_column, context);
+    take(data->operand, std::move(arg));
+    take(data->left_column, parse_column(node.left_column, context));
+    take(data->right_column, parse_column(node.right_column, context));
     return intern_query(context, intern(context, *data).index());
 }
 
@@ -265,9 +282,9 @@ auto parse(const runir::kr::dl::grammar::ast::QuerySelectValue& node, tyr::forma
     auto arg = parse(node.operand.get(), domain, context);
     auto object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics());
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>(context);
-    data->operand = std::move(arg);
-    data->column = parse_column(node.column, context);
-    data->object = std::move(object);
+    take(data->operand, std::move(arg));
+    take(data->column, parse_column(node.column, context));
+    take(data->object, std::move(object));
     return intern_query(context, intern(context, *data).index());
 }
 
@@ -300,7 +317,11 @@ QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::
 /// the alternative its view or built form is.
 template<typename Result, typename Node, typename Context>
 Result parse_collection_operand(const Node& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return Result(parse(node, domain, context)); }
+{
+    auto result = Result();
+    take(result, parse(node, domain, context));
+    return result;
+}
 
 template<typename Result, typename Operand, typename Context>
 Result parse_operand(const Operand& node, tyr::formalism::planning::DomainView domain, const Context& context)
@@ -315,7 +336,7 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<Category, runir::kr::d
 {
     auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::QueryProjection<Category>>(context);
-    data->operand = std::move(arg);
+    take(data->operand, std::move(arg));
     data->columns = parse_columns(node.columns, context);
     try
     {
@@ -352,7 +373,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState& node, tyr::for
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetConcept<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
-                                                    data->predicate = std::move(predicate);
+                                                    take(data->predicate, std::move(predicate));
                                                     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
                                                 });
 }
@@ -368,7 +389,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal& node, tyr::form
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetConcept<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);
-                                                    data->predicate = std::move(predicate);
+                                                    take(data->predicate, std::move(predicate));
                                                     data->polarity = node.polarity;
                                                     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
                                                 });
@@ -380,8 +401,8 @@ auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView 
     auto left = parse(node.left_operand, domain, context);
     auto right = parse(node.right_operand, domain, context);
     auto data = checkout<TargetConcept<Context, Tag>>(context);
-    data->left_operand = std::move(left);
-    data->right_operand = std::move(right);
+    take(data->left_operand, std::move(left));
+    take(data->right_operand, std::move(right));
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
@@ -391,8 +412,8 @@ auto parse_quantification_concept(const Ast& node, tyr::formalism::planning::Dom
     auto role = parse(node.role, domain, context);
     auto qualifier = parse(node.qualifier, domain, context);
     auto data = checkout<TargetConcept<Context, Tag>>(context);
-    data->role = std::move(role);
-    data->qualifier = std::move(qualifier);
+    take(data->role, std::move(role));
+    take(data->qualifier, std::move(qualifier));
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
@@ -418,7 +439,7 @@ auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning:
     auto role = parse(node.role, domain, context);
     auto data = checkout<TargetConcept<Context, Tag>>(context);
     data->n = node.n;
-    data->role = std::move(role);
+    take(data->role, std::move(role));
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
@@ -441,8 +462,8 @@ auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism:
     auto qualifier = parse(node.qualifier, domain, context);
     auto data = checkout<TargetConcept<Context, Tag>>(context);
     data->n = node.n;
-    data->role = std::move(role);
-    data->qualifier = std::move(qualifier);
+    take(data->role, std::move(role));
+    take(data->qualifier, std::move(qualifier));
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
@@ -475,7 +496,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node, tyr::for
 {
     auto role = parse(node.role, domain, context);
     auto data = checkout<TargetConcept<Context, runir::kr::dl::RoleFillersTag>>(context);
-    data->role = std::move(role);
+    take(data->role, std::move(role));
     runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics(), data->objects);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
@@ -493,7 +514,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node, tyr::formal
 {
     auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetConcept<Context, runir::kr::dl::NegationTag>>(context);
-    data->operand = std::move(operand);
+    take(data->operand, std::move(operand));
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
@@ -501,7 +522,7 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptNominal& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     auto data = checkout<TargetConcept<Context, runir::kr::dl::NominalTag>>(context);
-    data->object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics());
+    take(data->object, runir::kr::parser::require_object(domain, node.object_name, context.diagnostics()));
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
@@ -523,7 +544,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState& node, tyr::formal
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetRole<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
-                                                    data->predicate = std::move(predicate);
+                                                    take(data->predicate, std::move(predicate));
                                                     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
                                                 });
 }
@@ -539,7 +560,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal& node, tyr::formali
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetRole<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);
-                                                    data->predicate = std::move(predicate);
+                                                    take(data->predicate, std::move(predicate));
                                                     data->polarity = node.polarity;
                                                     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
                                                 });
@@ -551,8 +572,8 @@ auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView dom
     auto left = parse(node.left_operand, domain, context);
     auto right = parse(node.right_operand, domain, context);
     auto data = checkout<TargetRole<Context, Tag>>(context);
-    data->left_operand = std::move(left);
-    data->right_operand = std::move(right);
+    take(data->left_operand, std::move(left));
+    take(data->right_operand, std::move(right));
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
@@ -573,7 +594,7 @@ auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView doma
 {
     auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetRole<Context, Tag>>(context);
-    data->operand = std::move(operand);
+    take(data->operand, std::move(operand));
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
@@ -599,8 +620,8 @@ auto parse(const runir::kr::dl::grammar::ast::RoleRestriction& node, tyr::formal
     auto role = parse(node.role, domain, context);
     auto qualifier = parse(node.qualifier, domain, context);
     auto data = checkout<TargetRole<Context, runir::kr::dl::RestrictionTag>>(context);
-    data->role = std::move(role);
-    data->qualifier = std::move(qualifier);
+    take(data->role, std::move(role));
+    take(data->qualifier, std::move(qualifier));
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
@@ -609,7 +630,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleIdentity& node, tyr::formalism
 {
     auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetRole<Context, runir::kr::dl::IdentityTag>>(context);
-    data->operand = std::move(operand);
+    take(data->operand, std::move(operand));
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
@@ -624,7 +645,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState& node, tyr::for
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetBoolean<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
-                                                    data->predicate = std::move(predicate);
+                                                    take(data->predicate, std::move(predicate));
                                                     data->polarity = node.polarity;
                                                     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
                                                 });
@@ -641,7 +662,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal& node, tyr::form
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetBoolean<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);
-                                                    data->predicate = std::move(predicate);
+                                                    take(data->predicate, std::move(predicate));
                                                     data->polarity = node.polarity;
                                                     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
                                                 });
@@ -692,8 +713,8 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::Boolean
     auto left = parse(node.left_operand, domain, context);
     auto right = parse(node.right_operand, domain, context);
     auto data = checkout<TargetBoolean<Context, Tag>>(context);
-    data->left_operand = std::move(left);
-    data->right_operand = std::move(right);
+    take(data->left_operand, std::move(left));
+    take(data->right_operand, std::move(right));
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
 }
 
@@ -705,8 +726,8 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::Numeric
     auto left = parse(node.left_operand, domain, context);
     auto right = parse(node.right_operand, domain, context);
     auto data = checkout<TargetNumerical<Context, Tag>>(context);
-    data->left_operand = std::move(left);
-    data->right_operand = std::move(right);
+    take(data->left_operand, std::move(left));
+    take(data->right_operand, std::move(right));
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).index());
 }
 
@@ -731,7 +752,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanNot& node, tyr::formalism::
 {
     auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetBoolean<Context, runir::kr::dl::NotTag>>(context);
-    data->operand = std::move(operand);
+    take(data->operand, std::move(operand));
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
 }
 

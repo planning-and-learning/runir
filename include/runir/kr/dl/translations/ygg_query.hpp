@@ -38,7 +38,7 @@ struct QuerySlot
     };
     Kind kind = Kind::QUERY;
     ygg::uint_t index = 0;
-    urd::Store<urd::sequence<ygg::ColumnLayout>> columns;
+    urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>> columns;
     bool is_static = false;
 };
 
@@ -114,8 +114,8 @@ private:
     YggQuery binary(YggQuery lhs, YggQuery rhs)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
-        out->left_operand = lhs;
-        out->right_operand = rhs;
+        urd::store(out->left_operand, lhs);
+        urd::store(out->right_operand, rhs);
         return insert(*out);
     }
 
@@ -123,13 +123,13 @@ private:
     YggQuery unary(YggQuery arg, std::span<const Label> labels)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
-        out->operand = arg;
+        urd::store(out->operand, arg);
         out->labels.assign(labels.begin(), labels.end());
         return insert(*out);
     }
 
     YggQuery input(QuerySlot slot);
-    static std::span<const ygg::ColumnLayout> schema(DlQuery query);
+    static std::span<const urd::data<ygg::ColumnLayout>> schema(DlQuery query);
 
     /// The conjuncts of a tree of binary joins.
     static void flatten(DlQuery query, urd::Store<urd::sequence<DlQuery>>& conjuncts);

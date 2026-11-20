@@ -19,7 +19,9 @@ void bind_numerical_feature(nb::module_& m, RepositoryBinding& repository)
 {
     using Feature = runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>;
     using ConcreteFeature = runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>;
+    urd::python::bind_index<Feature>(m);
     urd::python::bind_data<Feature>(m);
+    urd::python::bind_index<ConcreteFeature>(m);
     urd::python::bind_data<ConcreteFeature>(m);
     runir::kr::python::bind_feature_views<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>(m, repository);
     runir::kr::python::bind_feature_evaluate<urd::index_view<Feature, Repository>>(m);

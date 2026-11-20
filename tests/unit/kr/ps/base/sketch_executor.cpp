@@ -11,11 +11,11 @@
 #include <runir/datasets/state_graph.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/ps/base/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
-#include <runir/kr/ps/base/detail/successor_expander_impl.hpp>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/axiom_evaluator.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
@@ -145,7 +145,7 @@ TEST(RunirTests, BaseMatchingDistinguishesCollidingStateIdsAcrossStorage)
 
     const auto target_repository = std::make_shared<tyr::planning::StateRepository<tyr::GroundTag>>(task);
     const auto target = tyr::planning::materialize_state(successor->node.get_state(), *target_repository, *search_context->axiom_evaluator);
-    ASSERT_EQ(initial.get_state().index(), target.index());
+    ASSERT_EQ(initial.get_state().pack().index(), target.pack().index());
     ASSERT_NE(initial.get_state(), target);
     EXPECT_TRUE(expander.matching_rule(initial.get_state(), target));
     EXPECT_FALSE(expander.matching_rule(initial.get_state(), initial.get_state()));
@@ -299,7 +299,7 @@ void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>&
     {
         ++num_emitted;
         EXPECT_GT(statistics.num_generated, 0);
-        EXPECT_NE(successor.node.get_state().index(), state.index());
+        EXPECT_NE(successor.node.get_state().pack().index(), state.pack().index());
         EXPECT_EQ(rule, sketch.get_rules().front());
         return false;
     };

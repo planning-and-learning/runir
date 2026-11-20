@@ -29,6 +29,7 @@ void bind_query_view(nb::module_& m)
 {
     using View = urd::index_view<Query<Tag>, ConstructorRepository>;
     urd::python::bind_view<View>(m);
+    urd::python::bind_builder<Query<Tag>, ConstructorRepository>(m);
     if constexpr (std::same_as<Tag, void>)
     {
         runir::kr::python::bind_evaluate<View>(m);
@@ -41,9 +42,12 @@ template<typename... Tags>
 void bind_query_views(nb::module_& m, boost::mp11::mp_list<Tags...> /*tags*/)
 {
     urd::python::bind_view<urd::index_view<QueryColumn, ConstructorRepository>>(m);
+    urd::python::bind_builder<QueryColumn, ConstructorRepository>(m);
     runir::kr::python::bind_query_statistics(m);
     urd::python::bind_view<urd::index_view<QueryProjection<ConceptTag>, ConstructorRepository>>(m);
+    urd::python::bind_builder<QueryProjection<ConceptTag>, ConstructorRepository>(m);
     urd::python::bind_view<urd::index_view<QueryProjection<RoleTag>, ConstructorRepository>>(m);
+    urd::python::bind_builder<QueryProjection<RoleTag>, ConstructorRepository>(m);
     bind_query_view<void>(m);
     (bind_query_view<Tags>(m), ...);
 }

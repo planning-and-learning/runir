@@ -10,9 +10,13 @@ namespace runir::kr::dl
 
 void bind_grammar_non_terminal(nb::module_& m)
 {
+    urd::python::bind_index<grammar::NonTerminal<ConceptTag>>(m);
     urd::python::bind_data<grammar::NonTerminal<ConceptTag>>(m);
+    urd::python::bind_index<grammar::NonTerminal<RoleTag>>(m);
     urd::python::bind_data<grammar::NonTerminal<RoleTag>>(m);
+    urd::python::bind_index<grammar::NonTerminal<BooleanTag>>(m);
     urd::python::bind_data<grammar::NonTerminal<BooleanTag>>(m);
+    urd::python::bind_index<grammar::NonTerminal<NumericalTag>>(m);
     urd::python::bind_data<grammar::NonTerminal<NumericalTag>>(m);
     python::bind_non_terminal_views<grammar::NonTerminal, grammar::ConstructorRepository>(m);
 }

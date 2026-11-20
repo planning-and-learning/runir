@@ -155,6 +155,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     // The records are bound first (bind_data, bind_program_executor), and the control views (no task kind) once, before
     // the kinds. The planning state of a program state: the registered state, not the index its record holds.
     urd::python::bind_view<StateView>(m);
+    urd::python::bind_builder<ProgramState<Kind>, ExecutionRepository<ExtFamilyTag, Kind>>(m);
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)
@@ -279,15 +280,21 @@ void bind_program_executor(nb::module_& m)
     m.attr("GroundProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedProgramProofEdgeLabel") = edge_label;
 
+    urd::python::bind_index<ModuleState>(m);
     urd::python::bind_data<ModuleState>(m);
+    urd::python::bind_index<CallStack>(m);
     urd::python::bind_data<CallStack>(m);
+    urd::python::bind_index<ProgramState<tyr::GroundTag>>(m);
     urd::python::bind_data<ProgramState<tyr::GroundTag>>(m);
+    urd::python::bind_index<ProgramState<tyr::LiftedTag>>(m);
     urd::python::bind_data<ProgramState<tyr::LiftedTag>>(m);
     // Registered without methods so Python can hold and pass these handles.
-    nb::class_<ControlRepository>(m, "ControlRepository");
-    nb::class_<ControlBuilder>(m, "ControlBuilder");
+    static_cast<void>(nb::class_<ControlRepository>(m, "ControlRepository"));
+    static_cast<void>(nb::class_<ControlBuilder>(m, "ControlBuilder"));
     urd::python::bind_view<ModuleStateView>(m);
+    urd::python::bind_builder<ModuleState, ControlRepository>(m);
     urd::python::bind_view<CallStackView>(m);
+    urd::python::bind_builder<CallStack, ControlRepository>(m);
     bind_execution_types<tyr::GroundTag>(m, "Ground");
     bind_execution_types<tyr::LiftedTag>(m, "Lifted");
 
