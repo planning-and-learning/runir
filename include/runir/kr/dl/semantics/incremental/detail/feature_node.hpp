@@ -107,6 +107,7 @@ private:
     using NumericalOperations = boost::mp11::mp_list<CountEvaluator<Kind>,
                                                      RoleEdgeDistanceEvaluator<Kind>,
                                                      QueryEdgeDistanceEvaluator<Kind>,
+                                                     ValueEvaluator<Kind>,
                                                      ScalarBinaryEvaluator<Kind, Category, AddTag, NumericalTag>,
                                                      ScalarBinaryEvaluator<Kind, Category, SubTag, NumericalTag>,
                                                      ScalarBinaryEvaluator<Kind, Category, MulTag, NumericalTag>,
@@ -165,6 +166,8 @@ private:
             return ArgumentEvaluator<Kind, Category>(expression.get_argument().get_identifier());
         else if constexpr (std::same_as<Tag, DistanceTag>)
             return std::visit([&](auto edges) { return prepare_distance(expression, edges, graph); }, expression.get_edges());
+        else if constexpr (std::same_as<Tag, ValueTag>)
+            return ValueEvaluator<Kind>(graph.prepare(expression.get_operand(), m_dependencies));
         else if constexpr (std::same_as<Tag, CountTag>)
             return std::visit([&](auto child) -> Evaluators { return CountEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_operand());
         else if constexpr (std::same_as<Tag, NonemptyTag>)

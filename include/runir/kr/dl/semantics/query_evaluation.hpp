@@ -6,6 +6,7 @@
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 
+#include <array>
 #include <span>
 #include <tuple>
 #include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
@@ -88,8 +89,18 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
     {
         // The result builder starts empty.
     }
-    else if constexpr (std::same_as<Tag, QueryMustPassTag>)
-        on_demand_must_pass<Kind>(constructor, context, result);
+    else if constexpr (std::same_as<Tag, QueryBooleanTag>)
+    {
+        if (evaluate<Kind>(constructor.get_operand(), children).get_value())
+            result.insert(std::span<const ygg::Value> {});
+    }
+    else if constexpr (std::same_as<Tag, QueryNumericalTag>)
+    {
+        const auto value = std::array { ygg::encode_value(evaluate<Kind>(constructor.get_operand(), children).get_value()) };
+        result.insert(std::span<const ygg::Value>(value));
+    }
+    else if constexpr (std::same_as<Tag, QueryHeadTag>)
+        on_demand_head<Kind>(constructor, context, result);
     else
     {
         static_assert(false, "unhandled relational query constructor");

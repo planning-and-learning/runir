@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/datalog_evaluation.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
@@ -387,6 +388,10 @@ auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, Tag>, C> constructo
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
         result_value = detail::on_demand_distance<Kind>(constructor, context);
+    }
+    else if constexpr (std::same_as<Tag, ValueTag>)
+    {
+        result_value = detail::least_value(evaluate<Kind>(constructor.get_operand(), children));
     }
     else if constexpr (std::same_as<Tag, NumericalConstantTag>)
     {

@@ -6,6 +6,7 @@
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -50,6 +51,9 @@ public:
     QueryDenotationView insert_query(bool is_static, QueryView<> query, QueryDenotationView result);
     /// The cached query results of a partition.
     [[nodiscard]] std::vector<QueryDenotationView> get_queries(bool is_static) const;
+    /// The generation of a program's feature evaluated last in this state (DatalogFeature), if any.
+    [[nodiscard]] std::optional<uint64_t> find_program(bool is_static, DatalogProgramView program) const;
+    void insert_program(bool is_static, DatalogProgramView program, uint64_t generation);
 
     void reset_dynamic() noexcept;
     void reset_all() noexcept;

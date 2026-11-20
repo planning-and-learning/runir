@@ -2,6 +2,7 @@
 #define RUNIR_SEMANTICS_EVALUATION_WORKSPACE_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/datalog_feature.hpp"
 #include "runir/kr/dl/semantics/distance/feature.hpp"
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
 
@@ -58,8 +59,8 @@ private:
     urd::Store<urd::sequence<KeyedFeature<FullDistanceFeature>>, urd::stable_refs>
         m_distance_features;  ///< Stable references: callers keep the features they get.
     FeaturePositions m_distance_feature_positions;
-    urd::Store<urd::sequence<KeyedFeature<MustPassFeature>>, urd::stable_refs> m_must_pass_features;
-    FeaturePositions m_must_pass_feature_positions;
+    urd::Store<urd::sequence<KeyedFeature<DatalogFeature>>, urd::stable_refs> m_datalog_features;  ///< Stable references: callers keep the features they get.
+    FeaturePositions m_datalog_feature_positions;
     urd::Store<urd::sequence<tyr::datalog::database::GenericJoinWorkspace>> m_generic_join_workspaces;  ///< One per generic join plan.
     tyr::datalog::database::Workspace m_database_workspace;
     /// A row's values, as evaluation encodes them (encode_object_row).
@@ -67,12 +68,13 @@ private:
 
     // ponytail: entries of dead repositories are kept; a constructor repository freed and replaced at the same address
     // with the same factory index over the same formalism would alias. Key by a repository-owned cache if that happens.
-    template<typename Feature, std::invocable Make>
+    // The constructor repository is a template parameter so that the body is checked where its type is complete.
+    template<typename Feature, typename Constructors, std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, Feature>
     static Feature& find_or_make(urd::Store<urd::sequence<KeyedFeature<Feature>>, urd::stable_refs>& features,
                                  FeaturePositions& positions,
                                  const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                 const ConstructorRepository& constructors,
+                                 const Constructors& constructors,
                                  ygg::uint_t constructor,
                                  Make make)
     {
@@ -123,14 +125,15 @@ public:
                                                  std::forward<Make>(make));
     }
 
-    /// The feature of a must-pass query, like get_distance_feature().
+    /// The evaluator of a Datalog program of a constructor repository over a formalism repository in full evaluation,
+    /// made by make() at first use. References stay valid while this workspace lives.
     template<std::invocable Make>
-        requires std::same_as<std::invoke_result_t<Make&>, MustPassFeature>
-    MustPassFeature& get_must_pass_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                           const ConstructorRepository& constructors,
-                                           ygg::uint_t query,
-                                           Make&& make)
-    { return find_or_make<MustPassFeature>(m_must_pass_features, m_must_pass_feature_positions, formalism, constructors, query, std::forward<Make>(make)); }
+        requires std::same_as<std::invoke_result_t<Make&>, DatalogFeature>
+    DatalogFeature& get_datalog_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
+                                        const ConstructorRepository& constructors,
+                                        ygg::uint_t program,
+                                        Make&& make)
+    { return find_or_make<DatalogFeature>(m_datalog_features, m_datalog_feature_positions, formalism, constructors, program, std::forward<Make>(make)); }
 };
 
 }

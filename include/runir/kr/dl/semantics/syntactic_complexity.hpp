@@ -86,6 +86,8 @@ std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Numerical<
         const auto complexity = [](auto argument) { return std::visit([](auto child) { return syntactic_complexity(child); }, argument); };
         return 1 + complexity(view.get_sources()) + complexity(view.get_edges()) + complexity(view.get_targets());
     }
+    else if constexpr (std::same_as<Tag, runir::kr::dl::ValueTag>)
+        return 1 + syntactic_complexity(view.get_operand());
     else if constexpr (requires {
                            view.get_left_operand();
                            view.get_right_operand();
@@ -98,10 +100,7 @@ std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Numerical<
 template<typename Tag, typename C>
 std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Query<Tag>, C>& view)
 {
-    if constexpr (std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
-        return 1 + syntactic_complexity(view.get_sources()) + syntactic_complexity(view.get_edges()) + syntactic_complexity(view.get_targets())
-               + syntactic_complexity(view.get_probes());
-    else if constexpr (requires { view.get_args(); })
+    if constexpr (requires { view.get_args(); })
     {
         auto result = std::size_t { 1 };
         for (const auto arg : view.get_args())

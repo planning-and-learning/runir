@@ -154,6 +154,16 @@ inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(
 
 inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.get_rows().size()); }
 
+/// The least value in the one column of a relation, the largest uint_t (infinity) if it has no row.
+template<typename Rows>
+ygg::uint_t least_value(const Rows& rows)
+{
+    auto result = std::numeric_limits<ygg::uint_t>::max();
+    for (const auto& held : rows.get_rows())
+        ygg::with_values(held, [&](const auto& values) { result = std::min(result, ygg::decode_value<ygg::uint_t>(*std::ranges::begin(values))); });
+    return result;
+}
+
 template<ComparisonTag Tag>
 constexpr bool apply_comparison(ygg::uint_t lhs, ygg::uint_t rhs) noexcept
 {
@@ -181,7 +191,7 @@ constexpr bool apply_logical_binary(bool lhs, bool rhs) noexcept
 }
 
 // Numerical operands are nonnegative integers; numeric_limits<ygg::uint_t>::max() denotes infinity
-// (as produced by the distance constructor for unreachable targets).
+// (as produced by the distance constructor for unreachable targets, and by n_value for a head without rows).
 template<NumericalBinaryTag Tag>
 constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) noexcept
 {

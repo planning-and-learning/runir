@@ -35,6 +35,8 @@ struct data<runir::kr::ps::ext::Module>
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> entry_memory_state;
     urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>> memory_states;
     urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>> memory_transitions;
+    /// The rules of its :datalog section as written (empty without one): printed back, so that the module parses again.
+    urd::flat_string datalog;
     data() = default;
 
     // Arguments and registers live in the description-logic repository, hence the separate context parameter.
@@ -52,7 +54,8 @@ struct data<runir::kr::ps::ext::Module>
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features_,
          urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> entry_memory_state_,
          urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>> memory_states_,
-         urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>> memory_transitions_) :
+         urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>> memory_transitions_,
+         urd::flat_string datalog_) :
         index(),
         symbol(symbol_),
         concept_arguments(std::move(concept_arguments_)),
@@ -68,7 +71,8 @@ struct data<runir::kr::ps::ext::Module>
         query_features(std::move(query_features_)),
         entry_memory_state(entry_memory_state_),
         memory_states(std::move(memory_states_)),
-        memory_transitions(std::move(memory_transitions_))
+        memory_transitions(std::move(memory_transitions_)),
+        datalog(std::move(datalog_))
     {
     }
 
@@ -94,7 +98,8 @@ struct data<runir::kr::ps::ext::Module>
                            urd::field<"query_features", &data::query_features>,
                            urd::field<"entry_memory_state", &data::entry_memory_state>,
                            urd::field<"memory_states", &data::memory_states>,
-                           urd::field<"memory_transitions", &data::memory_transitions>> {};
+                           urd::field<"memory_transitions", &data::memory_transitions>,
+                           urd::field<"datalog", &data::datalog>> {};
     }
 
     static constexpr auto identifying_members() noexcept
@@ -113,7 +118,8 @@ struct data<runir::kr::ps::ext::Module>
                             &data::query_features,
                             &data::entry_memory_state,
                             &data::memory_states,
-                            &data::memory_transitions> {};
+                            &data::memory_transitions,
+                            &data::datalog> {};
     }
 
     static constexpr auto cista_members() noexcept
@@ -133,7 +139,8 @@ struct data<runir::kr::ps::ext::Module>
                             &data::query_features,
                             &data::entry_memory_state,
                             &data::memory_states,
-                            &data::memory_transitions> {};
+                            &data::memory_transitions,
+                            &data::datalog> {};
     }
 };
 

@@ -228,15 +228,17 @@ RecordView<Numerical<SemanticFamily, DistanceTag>> QueryOptimizer::rewrite(Recor
     return runir::kr::dl::insert(*m_repository, data).first;
 }
 
-RecordView<Query<QueryMustPassTag>> QueryOptimizer::rewrite(RecordView<Query<QueryMustPassTag>> view)
+RecordView<DatalogProgram> QueryOptimizer::rewrite(RecordView<DatalogProgram> view)
 {
-    auto data = urd::make<Query<QueryMustPassTag>>(view.get_keys(),
-                                                   optimize_root(view.get_sources(), std::nullopt).index(),
-                                                   optimize_root(view.get_edges(), std::nullopt, tyr::datalog::database::Evaluation::bound).index(),
-                                                   optimize_root(view.get_targets(), std::nullopt).index(),
-                                                   optimize_root(view.get_probes(), std::nullopt).index(),
-                                                   view.get_columns(),
-                                                   tyr::datalog::database::MustPassPlan());  // columns and plan: derived on insert
+    auto data = urd::data<DatalogProgram>();
+    data.program = view.get_program().index().value;
+    for (const auto input : view.get_inputs())
+    {
+        const auto optimized = optimize_root(input, std::nullopt);
+        data.inputs.push_back(std::ranges::equal(schema_of(optimized), schema_of(input)) ? optimized.index() : input.index());
+    }
+    for (const auto output : view.get_outputs())
+        data.outputs.push_back(output.index().value);
     return runir::kr::dl::insert(*m_repository, data).first;
 }
 

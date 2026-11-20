@@ -145,6 +145,10 @@ fmt::format_context::iterator fmt::formatter<re::ModuleView>::format(const re::M
             out = fmt::format_to(out, " {}", state.get_name());
         out = fmt::format_to(out, ")");
 
+        // The :datalog section as written, so that the module parses again.
+        if (!value.get_datalog().empty())
+            out = fmt::format_to(out, "{}(:datalog {})", urd::new_line(), value.get_datalog());
+
         out = fmt::format_to(out, "{}(:features", urd::new_line());
         {
             const auto features = urd::scoped_indent();

@@ -109,8 +109,9 @@ private:
     RecordView<Boolean<SemanticFamily, NonemptyTag>> rewrite(RecordView<Boolean<SemanticFamily, NonemptyTag>> view);
     /// The edges of a distance are evaluated per vertex, with the source or the target columns bound, never fully.
     RecordView<Numerical<SemanticFamily, DistanceTag>> rewrite(RecordView<Numerical<SemanticFamily, DistanceTag>> view);
-    /// The edges of a must-pass query are explored per vertex, with the key and the source columns bound, never fully.
-    RecordView<Query<QueryMustPassTag>> rewrite(RecordView<Query<QueryMustPassTag>> view);
+    /// A program reads its inputs positionally, so an optimized input replaces the input only with the same columns in
+    /// the same order.
+    RecordView<DatalogProgram> rewrite(RecordView<DatalogProgram> view);
 
     /// The index of an optimized argument that is a query evaluated as given or another record.
     template<typename Result, typename Argument>

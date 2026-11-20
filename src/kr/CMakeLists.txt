@@ -10,6 +10,7 @@ add_library(kr SHARED
     dl/semantics/evaluation.cpp
     dl/semantics/formatter.cpp
     dl/semantics/heuristics/projection.cpp
+    parser/datalog.cpp
     dl/semantics/repository.cpp
     dl/semantics/state_evaluation_context.cpp
     dl/semantics/syntactic_complexity.cpp

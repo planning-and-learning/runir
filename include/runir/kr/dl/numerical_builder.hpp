@@ -27,6 +27,18 @@ struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>, C>
 
 /// The builder of Numerical: its record's members, each in its built form (urd::built_t).
 template<typename F, typename C>
+struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>, C>
+{
+    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>> index;
+    urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &builder::operand>> {}; }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+};
+
+/// The builder of Numerical: its record's members, each in its built form (urd::built_t).
+template<typename F, typename C>
 struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>, C>
 {
     urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>> index;

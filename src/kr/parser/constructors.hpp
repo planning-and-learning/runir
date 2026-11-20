@@ -250,22 +250,6 @@ auto parse(const runir::kr::dl::grammar::ast::QueryEmpty& node, tyr::formalism::
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryMustPass& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    auto sources = parse(node.sources.get(), domain, context);
-    auto edges = parse(node.edges.get(), domain, context);
-    auto targets = parse(node.targets.get(), domain, context);
-    auto probes = parse(node.probes.get(), domain, context);
-    auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>(context);
-    data->keys = parse_columns(node.keys, context);
-    take(data->sources, std::move(sources));
-    take(data->edges, std::move(edges));
-    take(data->targets, std::move(targets));
-    take(data->probes, std::move(probes));
-    return intern_query(context, intern(context, *data).index());
-}
-
-template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QuerySelectEqual& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     auto arg = parse(node.operand.get(), domain, context);

@@ -4,7 +4,9 @@
 #include "runir/kr/dl/repository.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -67,6 +69,44 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
                                                      { edges.data(), edges.size() },
                                                      { targets.data(), targets.size() },
                                                      distance_column);
+}
+
+void prepare(urd::data<DatalogProgram>& data, const ConstructorRepository& repository)
+{
+    const auto& datalog = repository.get_datalog_repository();
+    auto arities = urd::Store<urd::sequence<std::optional<size_t>>>(data.inputs.size());
+    const auto read = [&](tyr::datalog::database::datalog::RelationView relation)
+    {
+        if (!relation.is_input())
+            return;
+        const auto slot = relation.get_input_slot();
+        if (slot >= data.inputs.size())
+            throw std::invalid_argument("Datalog program: an input relation has no input query.");
+        arities[slot] = relation.get_arity();
+    };
+    const auto atoms = [&](auto range)
+    {
+        for (const auto atom : range)
+            read(atom.get_relation());
+    };
+    for (const auto rule : datalog.view(urd::index<tyr::datalog::database::datalog::Program>(data.program)).get_rules())
+    {
+        atoms(rule.get_atoms());
+        atoms(rule.get_negated());
+        for (const auto aggregate : rule.get_aggregates())
+        {
+            atoms(aggregate.get_atoms());
+            atoms(aggregate.get_negated());
+        }
+    }
+    data.is_static = true;
+    for (size_t slot = 0; slot < data.inputs.size(); ++slot)
+    {
+        const auto input = repository.view(data.inputs[slot]);
+        if (const auto& arity = arities[slot]; arity && *arity != schema_of(input).size())
+            throw std::invalid_argument("Datalog program: an input query does not have its relation's arity.");
+        data.is_static = data.is_static && input.get_is_static();
+    }
 }
 
 }  // namespace runir::kr::dl::detail

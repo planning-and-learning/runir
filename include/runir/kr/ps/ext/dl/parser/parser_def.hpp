@@ -27,12 +27,21 @@ using ygg::diagnostics::keyword;
 using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
 using boost::spirit::x3::ascii::char_;
+using boost::spirit::x3::ascii::digit;
 
 struct IdentifierText
 {
 };
 
 struct QuotedStringText
+{
+};
+
+struct DatalogVariableText
+{
+};
+
+struct DatalogTermText
 {
 };
 
@@ -58,6 +67,10 @@ constexpr concept_feature_type concept_feature = "concept_feature";
 constexpr role_feature_type role_feature = "role_feature";
 constexpr boolean_feature_type boolean_feature = "boolean_feature";
 constexpr numerical_feature_type numerical_feature = "numerical_feature";
+constexpr concept_head_feature_type concept_head_feature = "concept_head_feature";
+constexpr role_head_feature_type role_head_feature = "role_head_feature";
+constexpr boolean_head_feature_type boolean_head_feature = "boolean_head_feature";
+constexpr numerical_head_feature_type numerical_head_feature = "numerical_head_feature";
 constexpr query_feature_type query_feature = "query_feature";
 constexpr feature_type feature = "feature";
 constexpr features_section_type features_section = ":features";
@@ -98,6 +111,20 @@ constexpr module_type module = "module";
 constexpr program_type program = "program";
 constexpr module_root_type module_root = "module_root";
 constexpr program_root_type program_root = "program_root";
+constexpr datalog_variable_type datalog_variable = "Datalog variable";
+constexpr datalog_term_type datalog_term = "Datalog term";
+constexpr datalog_atom_type datalog_atom = "Datalog atom";
+constexpr datalog_goal_atom_type datalog_goal_atom = "Datalog goal atom";
+constexpr datalog_negation_type datalog_negation = "Datalog negation";
+constexpr datalog_negated_goal_type datalog_negated_goal = "Datalog negated goal atom";
+constexpr datalog_comparison_type datalog_comparison = "Datalog comparison";
+constexpr datalog_arithmetic_type datalog_arithmetic = "Datalog arithmetic";
+constexpr datalog_condition_type datalog_condition = "Datalog condition";
+constexpr datalog_aggregate_type datalog_aggregate = "Datalog aggregate";
+constexpr datalog_literal_type datalog_literal = "Datalog literal";
+constexpr datalog_rule_type datalog_rule = "Datalog rule";
+constexpr datalog_head_type datalog_head = "Datalog head";
+constexpr datalog_section_type datalog_section = ":datalog";
 
 constexpr auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
@@ -138,7 +165,16 @@ constexpr auto numerical_feature_def = context(
 constexpr auto query_feature_def =
     context("query feature")[keyword("(:query") > symbol_section
                              > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::dl_query > lit(")")] > lit(")")];
-constexpr auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature | query_feature;
+constexpr auto concept_head_feature_def =
+    context("concept feature")[(keyword("(:concept") >> symbol_section >> lit("(") >> keyword(":head")) > identifier > lit(")") > lit(")")];
+constexpr auto role_head_feature_def =
+    context("role feature")[(keyword("(:role") >> symbol_section >> lit("(") >> keyword(":head")) > identifier > lit(")") > lit(")")];
+constexpr auto boolean_head_feature_def =
+    context("boolean feature")[(keyword("(:boolean") >> symbol_section >> lit("(") >> keyword(":head")) > identifier > lit(")") > lit(")")];
+constexpr auto numerical_head_feature_def =
+    context("numerical feature")[(keyword("(:numerical") >> symbol_section >> lit("(") >> keyword(":head")) > identifier > lit(")") > lit(")")];
+constexpr auto feature_def = concept_head_feature | concept_feature | role_head_feature | role_feature | boolean_head_feature | boolean_feature
+                             | numerical_head_feature | numerical_feature | query_feature;
 constexpr auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
 
 constexpr auto symbol_expression_def = identifier;
@@ -205,12 +241,63 @@ constexpr auto required_memory_states =
     boost::spirit::x3::rule<class RequiredMemoryStates, urd::Store<urd::sequence<ast::NamedValue>>> { "one or more memory states" } = +named_value;
 constexpr auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory")) > required_memory_states > lit(")")];
 
+// The :datalog section: (:rule head literal...), literals as in docs/datalog.rst. Aggregate bodies hold no aggregates.
+constexpr auto datalog_variable_def = boost::spirit::x3::rule<DatalogVariableText, std::string> { "variable_text" } =
+    raw[lexeme[char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
+constexpr auto datalog_term_def = boost::spirit::x3::rule<DatalogTermText, std::string> { "term_text" } =
+    raw[lexeme[(-char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))) | +digit]];
+constexpr auto datalog_atom_def = ((lit("(") >> identifier) > *datalog_term) > lit(")");
+constexpr auto datalog_goal_atom_def =
+    ((lit("(") >> keyword("goal") >> lit("(") >> keyword("not") >> lit("(")) > identifier > *datalog_term > lit(")") > lit(")") > attr(true) > lit(")"))
+    | ((lit("(") >> keyword("goal")) > identifier > *datalog_term > attr(false) > lit(")"));
+constexpr auto datalog_negation_def = ((lit("(") >> keyword("not")) > datalog_atom) > lit(")");
+constexpr auto datalog_negated_goal_def = ((lit("(") >> keyword("not") >> &(lit("(") >> keyword("goal"))) > datalog_goal_atom) > lit(")");
+constexpr auto datalog_comparison_operator =
+    (lit("!=") >> attr(ast::DatalogComparisonOperator::NOT_EQUAL)) | (lit("<=") >> attr(ast::DatalogComparisonOperator::LESS_EQUAL))
+    | (lit(">=") >> attr(ast::DatalogComparisonOperator::GREATER_EQUAL)) | (lit("<") >> attr(ast::DatalogComparisonOperator::LESS))
+    | (lit(">") >> attr(ast::DatalogComparisonOperator::GREATER)) | (lit("=") >> attr(ast::DatalogComparisonOperator::EQUAL));
+constexpr auto datalog_comparison_def = (((lit("(") >> datalog_comparison_operator) > datalog_term) > datalog_term) > lit(")");
+constexpr auto datalog_arithmetic_operator =
+    (lit("+") >> attr(ast::DatalogArithmeticOperator::ADD)) | (lit("-") >> attr(ast::DatalogArithmeticOperator::SUBTRACT))
+    | (lit("*") >> attr(ast::DatalogArithmeticOperator::MULTIPLY)) | (lit("/") >> attr(ast::DatalogArithmeticOperator::DIVIDE))
+    | (keyword("min") >> attr(ast::DatalogArithmeticOperator::MIN)) | (keyword("max") >> attr(ast::DatalogArithmeticOperator::MAX));
+// (= ?result (op lhs rhs)); backtracks to a comparison (= lhs rhs) before the inner parenthesis.
+constexpr auto datalog_arithmetic_def =
+    (((((lit("(") >> lit("=") >> datalog_variable >> lit("(")) > datalog_arithmetic_operator) > datalog_term) > datalog_term) > lit(")")) > lit(")");
+constexpr auto datalog_condition_def = datalog_negated_goal | datalog_negation | datalog_goal_atom | datalog_arithmetic | datalog_comparison | datalog_atom;
+constexpr auto datalog_aggregate_function =
+    (keyword("count") >> attr(ast::DatalogAggregateFunction::COUNT)) | (keyword("sum") >> attr(ast::DatalogAggregateFunction::SUM))
+    | (keyword("min") >> attr(ast::DatalogAggregateFunction::MIN)) | (keyword("max") >> attr(ast::DatalogAggregateFunction::MAX));
+constexpr auto datalog_aggregate_body = (lit("(") > *datalog_condition) > lit(")");
+constexpr auto datalog_aggregate_def = ((((lit("(") >> datalog_aggregate_function) > datalog_variable) > -datalog_variable) > datalog_aggregate_body)
+                                       > lit(")");
+constexpr auto datalog_literal_def = datalog_aggregate | datalog_condition;
+constexpr auto datalog_head_def = (((lit("(") >> identifier) > *datalog_term) > -((lit("(") >> keyword("min")) > datalog_term > lit(")"))) > lit(")");
+constexpr auto datalog_rule_def = context("Datalog rule")[(((lit("(") >> keyword(":rule")) > datalog_head) > *datalog_literal) > lit(")")];
+constexpr auto datalog_section_def = context(":datalog")[((lit("(") >> keyword(":datalog")) > *datalog_rule) > lit(")")];
+
 constexpr auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
-                                              > memory_section > features_section > rules_section > lit(")")];
+                                              > memory_section > -datalog_section > features_section > rules_section > lit(")")];
 constexpr auto required_modules = boost::spirit::x3::rule<class RequiredModules, urd::Store<urd::sequence<ast::Module>>> { "one or more modules" } = +module;
 constexpr auto program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
 constexpr auto module_root_def = context("module")[module > eoi];
 constexpr auto program_root_def = context("program")[program > eoi];
+
+BOOST_SPIRIT_DEFINE(datalog_variable,
+                    datalog_term,
+                    datalog_atom,
+                    datalog_goal_atom,
+                    datalog_negation,
+                    datalog_negated_goal,
+                    datalog_comparison,
+                    datalog_arithmetic,
+                    datalog_condition,
+                    datalog_aggregate,
+                    datalog_literal,
+                    datalog_rule,
+                    datalog_head,
+                    datalog_section)
+BOOST_SPIRIT_DEFINE(concept_head_feature, role_head_feature, boolean_head_feature, numerical_head_feature)
 
 BOOST_SPIRIT_DEFINE(identifier,
                     quoted_string,
@@ -387,6 +474,22 @@ struct NumericalFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
 
+struct ConceptHeadFeatureClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct RoleHeadFeatureClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct BooleanHeadFeatureClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct NumericalHeadFeatureClass : boost::spirit::x3::annotate_on_success
+{
+};
+
 struct QueryFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
@@ -504,6 +607,54 @@ struct RuleClass : boost::spirit::x3::annotate_on_success
 };
 
 struct RuleEntryClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogVariableClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogTermClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogAtomClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogGoalAtomClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogNegatedGoalClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogNegationClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogComparisonClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogConditionClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogAggregateClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogLiteralClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogRuleClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct DatalogSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
 

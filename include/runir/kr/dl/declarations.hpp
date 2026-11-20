@@ -268,6 +268,14 @@ struct DistanceTag
     static constexpr auto keyword = "n_distance";
 };
 
+/// The least value in the one column of a query (a Datalog head read with q_head), infinity if it has no row: the
+/// bridge from a head to a numerical feature.
+struct ValueTag
+{
+    static constexpr auto name = "Value";
+    static constexpr auto keyword = "n_value";
+};
+
 struct ConceptAtomicStateSyntaxTag
 {
     static constexpr auto keyword = "c_atomic_state";
@@ -748,6 +756,20 @@ struct QueryRoleTag
     static constexpr auto keyword = "q_role";
 };
 
+/// A Boolean as a nullary relation: its one row iff the Boolean holds.
+struct QueryBooleanTag
+{
+    static constexpr auto name = "Boolean";
+    static constexpr auto keyword = "q_boolean";
+};
+
+/// A numerical as a relation with one row, holding the value.
+struct QueryNumericalTag
+{
+    static constexpr auto name = "Numerical";
+    static constexpr auto keyword = "q_numerical";
+};
+
 struct QueryJoinTag
 {
     static constexpr auto name = "Join";
@@ -802,10 +824,17 @@ struct QueryEmptyTag
     static constexpr auto keyword = "q_empty";
 };
 
-struct QueryMustPassTag
+/// The rows of a head relation of a Datalog program (DatalogProgram), with named columns.
+struct QueryHeadTag
 {
-    static constexpr auto name = "MustPass";
-    static constexpr auto keyword = "q_must_pass";
+    static constexpr auto name = "Head";
+    static constexpr auto keyword = "q_head";
+};
+
+/// A stratified Datalog program (tyr's Datalog records) whose input relations are queries.
+struct DatalogProgram
+{
+    static constexpr auto name = "DatalogProgram";
 };
 
 using QueryConstructorTags = boost::mp11::mp_list<AtomicStateTag<tyr::formalism::StaticTag>,
@@ -816,6 +845,8 @@ using QueryConstructorTags = boost::mp11::mp_list<AtomicStateTag<tyr::formalism:
                                                   AtomicGoalTag<tyr::formalism::DerivedTag>,
                                                   QueryConceptTag,
                                                   QueryRoleTag,
+                                                  QueryBooleanTag,
+                                                  QueryNumericalTag,
                                                   QueryJoinTag,
                                                   QueryProjectTag,
                                                   QueryRenameTag,
@@ -825,7 +856,7 @@ using QueryConstructorTags = boost::mp11::mp_list<AtomicStateTag<tyr::formalism:
                                                   QueryDifferenceTag,
                                                   QueryGenericJoinTag,
                                                   QueryEmptyTag,
-                                                  QueryMustPassTag>;
+                                                  QueryHeadTag>;
 
 /// The set operations: left_operand and right_operand of identical columns, and a SetPlan.
 using QuerySetTags = boost::mp11::mp_list<QueryUnionTag, QueryDifferenceTag>;
@@ -909,7 +940,7 @@ using BooleanConstructorTags = boost::mp11::mp_append<BaseBooleanConstructorTags
                                                       LogicalConstructorTags,
                                                       boost::mp11::mp_list<ArgumentTag<BooleanTag>>>;
 using NumericalConstructorTags =
-    boost::mp11::mp_append<BaseNumericalConstructorTags, ArithmeticConstructorTags, boost::mp11::mp_list<ArgumentTag<NumericalTag>>>;
+    boost::mp11::mp_append<BaseNumericalConstructorTags, ArithmeticConstructorTags, boost::mp11::mp_list<ValueTag, ArgumentTag<NumericalTag>>>;
 
 template<typename T>
 concept ConceptConstructorTag = boost::mp11::mp_contains<ConceptConstructorTags, T>::value;
@@ -1109,14 +1140,15 @@ using QueryTypes = boost::mp11::mp_transform<Query, QueryConstructorTags>;
 using ReferenceTypes =
     boost::mp11::mp_list<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>;
 
-using ConstructorRepositoryTypes = boost::mp11::mp_append<ConceptTypes,
-                                                          RoleTypes,
-                                                          BooleanTypes,
-                                                          NumericalTypes,
-                                                          ConstructorTypes,
-                                                          ReferenceTypes,
-                                                          QueryTypes,
-                                                          boost::mp11::mp_list<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>>>;
+using ConstructorRepositoryTypes =
+    boost::mp11::mp_append<ConceptTypes,
+                           RoleTypes,
+                           BooleanTypes,
+                           NumericalTypes,
+                           ConstructorTypes,
+                           ReferenceTypes,
+                           QueryTypes,
+                           boost::mp11::mp_list<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>, DatalogProgram>>;
 
 using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
 
@@ -1136,6 +1168,8 @@ using NumericalView = urd::index_view<Numerical<SemanticFamily, Tag>, Constructo
 
 template<CategoryTag Category>
 using ConstructorView = urd::index_view<Constructor<Category>, ConstructorRepository>;
+
+using DatalogProgramView = urd::index_view<DatalogProgram, ConstructorRepository>;
 
 template<typename Tag = void>
 using QueryView = urd::index_view<Query<Tag>, ConstructorRepository>;

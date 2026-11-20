@@ -79,13 +79,12 @@ fmt::formatter<urd::index_view<dl::Query<Tag>, dl::ConstructorRepository>>::form
                          fmt::format("{}", fmt::join(value.get_args(), " ")));
         else if constexpr (std::same_as<Tag, dl::QueryEmptyTag>)
             return write(dl::QueryEmptyTag::keyword, columns(value.get_columns()));
-        else if constexpr (std::same_as<Tag, dl::QueryMustPassTag>)
-            return write(dl::QueryMustPassTag::keyword,
-                         columns(value.get_keys()),
-                         value.get_sources(),
-                         value.get_edges(),
-                         value.get_targets(),
-                         value.get_probes());
+        else if constexpr (std::same_as<Tag, dl::QueryBooleanTag>)
+            return write(dl::QueryBooleanTag::keyword, value.get_operand());
+        else if constexpr (std::same_as<Tag, dl::QueryNumericalTag>)
+            return write(dl::QueryNumericalTag::keyword, *value.get_columns().begin(), value.get_operand());
+        else if constexpr (std::same_as<Tag, dl::QueryHeadTag>)
+            return write(dl::QueryHeadTag::keyword, value.get_relation().get_name(), columns(value.get_columns()));
         else
             static_assert(false, "unhandled DL query constructor tag");
     }
@@ -149,10 +148,6 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<ds::Denotation<Cate
         static_assert(false, "unhandled DL denotation category");
 }
 
-fmt::format_context::iterator fmt::formatter<tyr::datalog::database::MustPassPlan, char>::format(const tyr::datalog::database::MustPassPlan& plan,
-                                                                                                 fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "[{}]", fmt::join(plan.output_columns(), ", ")); }
-
 // Query<> and each query constructor tag (dl::QueryConstructorTags).
 template struct fmt::formatter<urd::index_view<dl::Query<>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Query<dl::AtomicStateTag<tyr::formalism::StaticTag>>, dl::ConstructorRepository>>;
@@ -172,7 +167,9 @@ template struct fmt::formatter<urd::index_view<dl::Query<dl::QueryUnionTag>, dl:
 template struct fmt::formatter<urd::index_view<dl::Query<dl::QueryDifferenceTag>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Query<dl::QueryGenericJoinTag>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Query<dl::QueryEmptyTag>, dl::ConstructorRepository>>;
-template struct fmt::formatter<urd::index_view<dl::Query<dl::QueryMustPassTag>, dl::ConstructorRepository>>;
+template struct fmt::formatter<urd::index_view<dl::Query<dl::QueryBooleanTag>, dl::ConstructorRepository>>;
+template struct fmt::formatter<urd::index_view<dl::Query<dl::QueryNumericalTag>, dl::ConstructorRepository>>;
+template struct fmt::formatter<urd::index_view<dl::Query<dl::QueryHeadTag>, dl::ConstructorRepository>>;
 
 // Concept and role (dl::ConceptOrRoleTags).
 template struct fmt::formatter<urd::index_view<dl::QueryProjection<dl::ConceptTag>, dl::ConstructorRepository>>;

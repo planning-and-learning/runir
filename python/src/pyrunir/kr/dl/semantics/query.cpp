@@ -61,8 +61,15 @@ void bind_semantics_query(nb::module_& m)
     urd::python::bind_data<Query<QueryGenericJoinTag>>(m);
     urd::python::bind_index<Query<QueryEmptyTag>>(m);
     urd::python::bind_data<Query<QueryEmptyTag>>(m);
-    urd::python::bind_index<Query<QueryMustPassTag>>(m);
-    urd::python::bind_data<Query<QueryMustPassTag>>(m);
+    urd::python::bind_index<Query<QueryBooleanTag>>(m);
+    urd::python::bind_data<Query<QueryBooleanTag>>(m);
+    urd::python::bind_index<Query<QueryNumericalTag>>(m);
+    urd::python::bind_data<Query<QueryNumericalTag>>(m);
+    urd::python::bind_index<DatalogProgram>(m);
+    urd::python::bind_data<DatalogProgram>(m);
+    urd::python::bind_view<urd::index_view<DatalogProgram, ConstructorRepository>>(m);
+    urd::python::bind_index<Query<QueryHeadTag>>(m);
+    urd::python::bind_data<Query<QueryHeadTag>>(m);
     python::bind_query_views(m, QueryConstructorTags {});
 }
 

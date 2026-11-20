@@ -11,7 +11,7 @@
 
 /// The instantiations (PREFIX extern: declarations).
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
-#define RUNIR_KR_DL_INTERNS(PREFIX) YGG_FORMALISM_INTERNS(PREFIX, 110, false, runir::kr::dl::ConstructorRepositoryTypes)
+#define RUNIR_KR_DL_INTERNS(PREFIX) YGG_FORMALISM_INTERNS(PREFIX, 114, false, runir::kr::dl::ConstructorRepositoryTypes)
 
 RUNIR_KR_DL_INTERNS(extern)
 

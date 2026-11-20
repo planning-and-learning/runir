@@ -25,14 +25,13 @@ bool infer_is_static(urd::index_view<Expression<Args...>, C> constructor)
         return true;
     else if constexpr (requires { constructor.get_slot(); } || requires { constructor.get_argument(); })
         return false;
-    else if constexpr (std::same_as<Tag, QueryMustPassTag>)
-        return constructor.get_sources().get_is_static() && constructor.get_edges().get_is_static() && constructor.get_targets().get_is_static()
-               && constructor.get_probes().get_is_static();
     else if constexpr (requires { constructor.get_edges(); })
     {
         const auto is_static = [](auto argument) { return std::visit([](auto child) { return child.get_is_static(); }, argument); };
         return is_static(constructor.get_sources()) && is_static(constructor.get_edges()) && is_static(constructor.get_targets());
     }
+    else if constexpr (std::same_as<Tag, QueryHeadTag>)
+        return constructor.get_program().get_is_static();
     else if constexpr (requires {
                            constructor.get_left_operand();
                            constructor.get_right_operand();

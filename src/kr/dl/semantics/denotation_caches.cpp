@@ -17,16 +17,20 @@ struct DenotationCaches::Impl
     using Cache = urd::Store<urd::map<ConstructorView<Category>, DenotationView<Category>>>;
 
     using QueryCache = urd::Store<urd::map<QueryView<>, QueryDenotationView>>;
+    /// Per program, the generation of its feature's evaluation in this state (DatalogFeature).
+    using ProgramCache = urd::Store<urd::map<DatalogProgramView, uint64_t>>;
 
     struct Partition
     {
         std::tuple<Cache<ConceptTag>, Cache<RoleTag>, Cache<BooleanTag>, Cache<NumericalTag>> values;
         QueryCache queries;
+        ProgramCache programs;
 
         void clear() noexcept
         {
             std::apply([](auto&... caches) { (caches.clear(), ...); }, values);
             queries.clear();
+            programs.clear();
         }
     };
 
@@ -82,6 +86,17 @@ std::vector<QueryDenotationView> DenotationCaches::get_queries(bool is_static) c
         results.push_back(result);
     return results;
 }
+
+std::optional<uint64_t> DenotationCaches::find_program(bool is_static, DatalogProgramView program) const
+{
+    const auto& cache = m_impl->partitions[is_static].programs;
+    if (const auto it = cache.find(program); it != cache.end())
+        return it->second;
+    return std::nullopt;
+}
+
+void DenotationCaches::insert_program(bool is_static, DatalogProgramView program, uint64_t generation)
+{ m_impl->partitions[is_static].programs.insert_or_assign(program, generation); }
 
 void DenotationCaches::reset_dynamic() noexcept { m_impl->partitions[false].clear(); }
 

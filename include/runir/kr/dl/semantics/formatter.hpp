@@ -9,7 +9,6 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // fmt::range_format_kind
 #include <type_traits>
-#include <tyr/datalog/lifted/database/semantics/must_pass_plan.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/elements/view.hpp>
 
@@ -80,13 +79,6 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::semantics::Denotation<Categ
     fmt::format_context::iterator
     format(const urd::index_view<runir::kr::dl::semantics::Denotation<Category>, runir::kr::dl::semantics::DenotationRepository>& value,
            fmt::format_context& context) const;
-};
-
-/// A must-pass plan as tyr writes its other plans: [its output columns].
-template<>
-struct fmt::formatter<tyr::datalog::database::MustPassPlan, char> : runir::detail::without_format_spec
-{
-    fmt::format_context::iterator format(const tyr::datalog::database::MustPassPlan& plan, fmt::format_context& context) const;
 };
 
 #endif

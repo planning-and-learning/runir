@@ -107,68 +107,6 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
         constructor.get_edges());
 }
 
-/// Translates a must-pass query's edges and builds its must-pass evaluator and the abstraction of its heuristic.
-inline MustPassFeature make_must_pass_feature(ygg::FreeScratchRelations& scratch, const tyr::datalog::database::MustPassPlan& plan, QueryView<> edges)
-{
-    auto translator = dl::detail::QueryTranslator(true);
-    const auto query = translator.translate(edges);
-    auto static_slots = urd::Store<urd::set<size_t>, urd::dense>();
-    for (size_t slot = 0; slot < translator.get_slots().size(); ++slot)
-        if (translator.get_slots()[slot].is_static)
-            static_slots.insert(slot);
-    const auto columns = plan.edge_columns().subspan(plan.keys());
-    auto abstraction = heuristics::abstract_edges(translator, query, columns.first(plan.arity()), columns.subspan(plan.arity()));
-    return { translator.get_slots(), MustPassFeature::MustPass(scratch, query, plan, static_slots), std::move(abstraction), std::nullopt };
-}
-
-/// Builds a must-pass feature's heuristic at first use, from the static slots' rows (`slot_rows(slot)`), and sets its
-/// targets. Without an abstraction, the search is blind.
-template<tyr::datalog::database::SlotRelations SlotRows, ygg::RelationViewConcept<ygg::Schema> Targets>
-heuristics::KeyedProjectionHeuristic&
-must_pass_heuristic(ygg::FreeScratchRelations& scratch, MustPassFeature& feature, ygg::uint_t num_objects, const SlotRows& slot_rows, const Targets& targets)
-{
-    if (!feature.heuristic)
-    {
-        const auto& plan = feature.must_pass.plan();
-        // The vertex part of the keyed columns.
-        const auto vertices = plan.source_columns().subspan(plan.keys());
-        const auto ends = plan.target_columns().subspan(plan.keys());
-        const auto columns = plan.edge_columns().subspan(plan.keys());
-        auto heuristic = feature.abstraction ? heuristics::make_projection_heuristic(scratch,
-                                                                                     *feature.abstraction,
-                                                                                     columns.first(plan.arity()),
-                                                                                     columns.subspan(plan.arity()),
-                                                                                     vertices,
-                                                                                     ends,
-                                                                                     num_objects,
-                                                                                     slot_rows) :
-                                               heuristics::ProjectionHeuristic();
-        feature.heuristic.emplace(scratch, std::move(heuristic), plan.key_size(), ends);
-    }
-    feature.heuristic->update(targets);
-    return *feature.heuristic;
-}
-
-/// The must-pass probe objects of every key, from the state alone (full evaluation): sources, targets, probes and the
-/// edge query's slots are evaluated in the state, and the edges are explored on demand.
-template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-void on_demand_must_pass(urd::index_view<Query<QueryMustPassTag>, C> constructor, Context& context, ygg::FreeScratchRelation& result)
-{
-    auto children = context.child_context();
-    const auto sources = evaluate<Kind>(constructor.get_sources(), children);
-    const auto targets = evaluate<Kind>(constructor.get_targets(), children);
-    const auto probes = evaluate<Kind>(constructor.get_probes(), children);
-    const auto edges = constructor.get_edges();
-    auto& feature = context.get_workspace().get_must_pass_feature(
-        context.get_state().get_formalism_repository(),
-        constructor.context(),
-        static_cast<ygg::uint_t>(constructor.index().value),
-        [&] { return make_must_pass_feature(context.get_workspace().get_scratch(), constructor.get_plan(), edges); });
-    const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.context(), children); };
-    auto& heuristic = must_pass_heuristic(context.get_workspace().get_scratch(), feature, detail::num_objects<Kind>(context), input, targets);
-    feature.must_pass.must_pass(input, sources, targets, probes, result, heuristic);
-}
-
 }  // namespace runir::kr::dl::semantics::detail
 
 #endif

@@ -14,6 +14,7 @@ The rules the planning-and-learning libraries share are documented in
    :caption: Policies
 
    action-rules
+   datalog
    proof-search
    concept-policies
    explore

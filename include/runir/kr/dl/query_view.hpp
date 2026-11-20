@@ -4,6 +4,8 @@
 #include "runir/kr/dl/query_data.hpp"
 
 #include <cstddef>
+#include <ranges>
+#include <tyr/datalog/lifted/database/datalog/repository.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/elements/flat.hpp>
@@ -58,6 +60,7 @@ public:
 
     auto get_operand() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryConceptTag> || std::same_as<Tag, runir::kr::dl::QueryRoleTag>
+                 || std::same_as<Tag, runir::kr::dl::QueryBooleanTag> || std::same_as<Tag, runir::kr::dl::QueryNumericalTag>
                  || std::same_as<Tag, runir::kr::dl::QueryProjectTag> || std::same_as<Tag, runir::kr::dl::QueryRenameTag>
                  || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>)
     { return self().template member<&urd::record_of<V>::operand>(); }
@@ -100,26 +103,6 @@ public:
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
     { return self().template member<&urd::record_of<V>::output_order>(); }
 
-    auto get_keys() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::keys>(); }
-
-    auto get_sources() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::sources>(); }
-
-    auto get_edges() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::edges>(); }
-
-    auto get_targets() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::targets>(); }
-
-    auto get_probes() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::probes>(); }
-
     auto get_columns() const noexcept
         requires(!std::same_as<Tag, void>)
     { return self().template member<&urd::record_of<V>::columns>(); }
@@ -129,8 +112,20 @@ public:
         requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
                  || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag> || std::same_as<Tag, runir::kr::dl::QueryProjectTag>
                  || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
-                 || std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag> || std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
+                 || std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>)
     { return self().template member<&urd::record_of<V>::plan>(); }
+
+    auto get_program() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
+    { return self().template member<&urd::record_of<V>::program>(); }
+
+    /// The head relation in the repository's DatalogRepository.
+    auto get_relation() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
+    {
+        return self().context().get_datalog_repository().view(
+            urd::index<tyr::datalog::database::datalog::Relation>(self().template member<&urd::record_of<V>::relation>()));
+    }
 
     [[nodiscard]] std::span<const urd::data<ygg::ColumnLayout>> get_schema() const noexcept
         requires(!std::same_as<Tag, void>)
@@ -146,6 +141,33 @@ public:
         return urd::Functions<
             urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::dl::semantics::syntactic_complexity)>> {};
     }
+};
+
+template<typename V>
+struct view_mixin<runir::kr::dl::DatalogProgram, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
+
+public:
+    /// The program's rules, in the repository's DatalogRepository.
+    auto get_program() const noexcept
+    {
+        return self().context().get_datalog_repository().view(
+            urd::index<tyr::datalog::database::datalog::Program>(self().template member<&urd::record_of<V>::program>()));
+    }
+
+    auto get_inputs() const noexcept { return self().template member<&urd::record_of<V>::inputs>(); }
+
+    /// The heads that features read, in the repository's DatalogRepository.
+    auto get_outputs() const noexcept
+    {
+        return self().template member<&urd::record_of<V>::outputs>()
+               | std::views::transform([repository = &self().context().get_datalog_repository()](ygg::uint_t relation)
+                                       { return repository->view(urd::index<tyr::datalog::database::datalog::Relation>(relation)); });
+    }
+
+    [[nodiscard]] bool get_is_static() const noexcept { return self().template member<&urd::record_of<V>::is_static>(); }
 };
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename V>

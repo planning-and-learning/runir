@@ -21,9 +21,9 @@ namespace detail
 /// Defined in distance_evaluation.hpp.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& context);
-/// Defined in distance_evaluation.hpp.
+/// Defined in datalog_evaluation.hpp.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-void on_demand_must_pass(urd::index_view<Query<QueryMustPassTag>, C> constructor, Context& context, ygg::FreeScratchRelation& result);
+void on_demand_head(urd::index_view<Query<QueryHeadTag>, C> constructor, Context& context, ygg::FreeScratchRelation& result);
 }
 
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>

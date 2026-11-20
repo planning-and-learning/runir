@@ -658,6 +658,25 @@ public:
 };
 
 template<typename F, typename V>
+struct view_mixin<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
+
+public:
+    [[nodiscard]] decltype(auto) get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+
+    static constexpr auto functions() noexcept
+    {
+        if constexpr (runir::kr::dl::semantics::Measured<V>)
+            return urd::Functions<
+                urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::dl::semantics::syntactic_complexity)>> {};
+        else
+            return urd::Functions<> {};
+    }
+};
+
+template<typename F, typename V>
 struct view_mixin<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>, V>
 {
 private:

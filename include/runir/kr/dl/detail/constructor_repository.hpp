@@ -6,6 +6,7 @@
 #include <boost/mp11.hpp>
 #include <cassert>
 #include <memory>
+#include <tyr/datalog/lifted/database/datalog/repository.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
@@ -22,6 +23,8 @@ class BasicConstructorRepository : public ygg::formalism::SymbolContext<BasicCon
 
 private:
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
+    /// The rules of the repository's DatalogPrograms.
+    std::unique_ptr<tyr::datalog::database::datalog::DatalogRepository> m_datalog_repository;
     size_t m_index;
 
 public:
@@ -29,6 +32,7 @@ public:
     /// counter, so that no two contexts share a number.
     explicit BasicConstructorRepository(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
         m_planning_repository(std::move(planning_repository)),
+        m_datalog_repository(std::make_unique<tyr::datalog::database::datalog::DatalogRepository>()),
         m_index(ygg::next_layer())
     {
         assert(m_planning_repository);
@@ -50,6 +54,10 @@ public:
         // Dereference the raw pointer: operator* on the shared_ptr would complete the repository type for its lookup.
         return *m_planning_repository.get();
     }
+
+    [[nodiscard]] const tyr::datalog::database::datalog::DatalogRepository& get_datalog_repository() const noexcept { return *m_datalog_repository; }
+
+    [[nodiscard]] tyr::datalog::database::datalog::DatalogRepository& get_datalog_repository() noexcept { return *m_datalog_repository; }
 
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 

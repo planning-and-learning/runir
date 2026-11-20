@@ -252,34 +252,6 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>, C>
 
 /// The builder of Query: its record's members, each in its built form (urd::built_t).
 template<typename C>
-struct builder<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>, C>
-{
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>> index;
-    urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> keys {};
-    urd::built_t<urd::index<runir::kr::dl::Query<>>, C> sources {};
-    urd::built_t<urd::index<runir::kr::dl::Query<>>, C> edges {};
-    urd::built_t<urd::index<runir::kr::dl::Query<>>, C> targets {};
-    urd::built_t<urd::index<runir::kr::dl::Query<>>, C> probes {};
-    urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<tyr::datalog::database::MustPassPlan, C> plan {};
-
-    static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"keys", &builder::keys>,
-                           urd::field<"sources", &builder::sources>,
-                           urd::field<"edges", &builder::edges>,
-                           urd::field<"targets", &builder::targets>,
-                           urd::field<"probes", &builder::probes>,
-                           urd::field<"columns", &builder::columns>,
-                           urd::field<"plan", &builder::plan>> {};
-    }
-
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&builder::keys, &builder::sources, &builder::edges, &builder::targets, &builder::probes> {}; }
-};
-
-/// The builder of Query: its record's members, each in its built form (urd::built_t).
-template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>, C>
 {
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
@@ -304,6 +276,78 @@ struct builder<runir::kr::dl::QueryProjection<Category>, C>
     { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"plan", &builder::plan>> {}; }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operand, &builder::columns> {}; }
+};
+
+/// The builder of QueryBooleanTag>: its record's members, each in its built form (urd::built_t).
+template<typename C>
+struct builder<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>, C>
+{
+    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>> index;
+    urd::built_t<urd::index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>, C> operand {};
+    urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
+
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {}; }
+
+    static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operand, &builder::columns> {}; }
+};
+
+/// The builder of QueryNumericalTag>: its record's members, each in its built form (urd::built_t).
+template<typename C>
+struct builder<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>, C>
+{
+    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>> index;
+    urd::built_t<urd::index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>, C> operand {};
+    urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
+
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"schema", &builder::schema>> {}; }
+
+    static constexpr auto identifying_members() noexcept { return urd::Members<&builder::operand, &builder::columns> {}; }
+};
+
+/// The builder of DatalogProgram: its record's members, each in its built form (urd::built_t).
+template<typename C>
+struct builder<runir::kr::dl::DatalogProgram, C>
+{
+    urd::index<runir::kr::dl::DatalogProgram> index;
+    urd::built_t<ygg::uint_t, C> program {};
+    urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::Query<>>>, C> inputs {};
+    urd::built_t<urd::flat_vector<ygg::uint_t>, C> outputs {};
+    urd::built_t<bool, C> is_static {};
+
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"program", &builder::program>,
+                           urd::field<"inputs", &builder::inputs>,
+                           urd::field<"outputs", &builder::outputs>,
+                           urd::field<"is_static", &builder::is_static>> {};
+    }
+
+    static constexpr auto identifying_members() noexcept { return urd::Members<&builder::program, &builder::inputs, &builder::outputs> {}; }
+};
+
+/// The builder of QueryHeadTag>: its record's members, each in its built form (urd::built_t).
+template<typename C>
+struct builder<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>, C>
+{
+    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>> index;
+    urd::built_t<urd::index<runir::kr::dl::DatalogProgram>, C> program {};
+    urd::built_t<ygg::uint_t, C> relation {};
+    urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
+    urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
+
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"program", &builder::program>,
+                           urd::field<"relation", &builder::relation>,
+                           urd::field<"columns", &builder::columns>,
+                           urd::field<"schema", &builder::schema>> {};
+    }
+
+    static constexpr auto identifying_members() noexcept { return urd::Members<&builder::program, &builder::relation, &builder::columns> {}; }
 };
 
 }  // namespace urd

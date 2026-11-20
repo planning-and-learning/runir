@@ -76,6 +76,8 @@ void bind_semantics_feature_records(nb::module_& m)
     urd::python::bind_data<Boolean<SemanticFamily, NotTag>>(m);
     urd::python::bind_index<Numerical<SemanticFamily, CountTag>>(m);
     urd::python::bind_data<Numerical<SemanticFamily, CountTag>>(m);
+    urd::python::bind_index<Numerical<SemanticFamily, ValueTag>>(m);
+    urd::python::bind_data<Numerical<SemanticFamily, ValueTag>>(m);
     urd::python::bind_index<Numerical<SemanticFamily, DistanceTag>>(m);
     urd::python::bind_data<Numerical<SemanticFamily, DistanceTag>>(m);
     urd::python::bind_index<Numerical<SemanticFamily, ArgumentTag<NumericalTag>>>(m);
@@ -145,6 +147,8 @@ void bind_semantics_feature_records(nb::module_& m)
     urd::python::bind_builder<Boolean<SemanticFamily, NotTag>, ConstructorRepository>(m);
     urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, CountTag>, ConstructorRepository>>(m);
     urd::python::bind_builder<Numerical<SemanticFamily, CountTag>, ConstructorRepository>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, ValueTag>, ConstructorRepository>>(m);
+    urd::python::bind_builder<Numerical<SemanticFamily, ValueTag>, ConstructorRepository>(m);
     urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, DistanceTag>, ConstructorRepository>>(m);
     urd::python::bind_builder<Numerical<SemanticFamily, DistanceTag>, ConstructorRepository>(m);
     urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, ArgumentTag<NumericalTag>>, ConstructorRepository>>(m);

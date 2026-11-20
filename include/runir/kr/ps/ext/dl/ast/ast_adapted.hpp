@@ -11,6 +11,7 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Register
 BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Feature) (Category), symbol, expression)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::QueryFeature, symbol, expression)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::HeadFeature) (Category), symbol, head)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::SymbolExpression, symbol)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::NamedValue, value)
 
@@ -23,8 +24,18 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::ActionRule, conditions, a
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::CallRule, conditions, callee, arguments)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::BacktrackRule, conditions)
 
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogAtom, relation, terms)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogGoalAtom, predicate, terms, negative)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogNegation, atom)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogNegatedGoal, atom)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogComparison, op, lhs, rhs)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogArithmetic, result, op, lhs, rhs)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogAggregate, function, result, value, body)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogHead, relation, terms, min)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogRule, head, body)
+
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::RuleEntry, symbol, source, target, rules)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::Module, name, arguments, registers, entry, memory_states, features, rule_entries)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::Module, name, arguments, registers, entry, memory_states, datalog, features, rule_entries)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::Program, entry, modules)
 
 #endif

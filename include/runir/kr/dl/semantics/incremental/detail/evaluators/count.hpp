@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
@@ -40,6 +41,27 @@ struct CountEvaluator
                 return ygg::to_uint_t(remaining + change_size(added));
             },
             child));
+    }
+};
+
+/// n_value: the least value in the one column of the child query, read anew from its result when its rows change.
+template<tyr::TaskKind Kind>
+struct ValueEvaluator
+{
+    QueryEvaluationIndex child;
+    DenotationState<NumericalTag> value;
+
+    explicit ValueEvaluator(QueryEvaluationIndex child_) : child(child_) {}
+
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
+    { value.set(semantics::detail::least_value(graph.result(child))); }
+
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    {
+        const auto [added, removed] = graph.change(child).change();
+        if (!added.get_rows().empty() || !removed.get_rows().empty())
+            value.set(semantics::detail::least_value(graph.result(child)));
     }
 };
 

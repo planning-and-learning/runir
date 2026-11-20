@@ -22,6 +22,11 @@ bool is_canonical(const urd::data<QueryProjection<Category>>&) noexcept
 
 inline void canonicalize(urd::data<QueryColumn>&) noexcept {}
 
+/// Input slots are positional, so a program has no canonical reordering.
+inline void canonicalize(urd::data<DatalogProgram>&) noexcept {}
+
+inline bool is_canonical(const urd::data<DatalogProgram>&) noexcept { return true; }
+
 inline bool is_canonical(const urd::data<QueryColumn>&) noexcept { return true; }
 
 template<typename Tag>

@@ -178,10 +178,16 @@ struct NonTerminal : boost::spirit::x3::position_tagged
     Identifier name;
 };
 
-template<runir::kr::dl::CategoryTag Category>
-struct ConstructorOrNonTerminal : PositionedVariant<NonTerminal<Category>, Constructor<Category>>
+/// A bare name in a policy expression: another feature of the module, of any category.
+struct FeatureName : boost::spirit::x3::position_tagged
 {
-    using Base = PositionedVariant<NonTerminal<Category>, Constructor<Category>>;
+    Identifier name;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct ConstructorOrNonTerminal : PositionedVariant<NonTerminal<Category>, FeatureName, Constructor<Category>>
+{
+    using Base = PositionedVariant<NonTerminal<Category>, FeatureName, Constructor<Category>>;
     using Base::Base;
     using Base::operator=;
 };
@@ -271,13 +277,11 @@ struct QueryEmpty : boost::spirit::x3::position_tagged
     urd::Store<urd::sequence<Identifier>> columns;
 };
 
-struct QueryMustPass : boost::spirit::x3::position_tagged
+/// The rows of a head relation of the enclosing policy's Datalog program.
+struct QueryHead : boost::spirit::x3::position_tagged
 {
-    urd::Store<urd::sequence<Identifier>> keys;
-    boost::spirit::x3::forward_ast<Query> sources;
-    boost::spirit::x3::forward_ast<Query> edges;
-    boost::spirit::x3::forward_ast<Query> targets;
-    boost::spirit::x3::forward_ast<Query> probes;
+    Identifier name;
+    urd::Store<urd::sequence<Identifier>> columns;
 };
 
 struct Query :
@@ -294,7 +298,7 @@ struct Query :
                       QueryDifference,
                       QueryGenericJoin,
                       QueryEmpty,
-                      QueryMustPass>
+                      QueryHead>
 {
     using Base = PositionedVariant<QueryAtomicState,
                                    QueryAtomicGoal,
@@ -309,7 +313,7 @@ struct Query :
                                    QueryDifference,
                                    QueryGenericJoin,
                                    QueryEmpty,
-                                   QueryMustPass>;
+                                   QueryHead>;
     using Base::Base;
     using Base::operator=;
 };

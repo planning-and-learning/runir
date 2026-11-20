@@ -2,6 +2,7 @@
 #define RUNIR_SRC_KR_PARSER_EXT_CONSTRUCTORS_HPP_
 
 #include "kr/parser/constructors.hpp"
+#include "kr/parser/datalog.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 
 #include <string>
@@ -35,6 +36,9 @@ struct ModuleReferences
     ReferenceTable<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>> numerical_arguments;
     ReferenceTable<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> concept_registers;
     ReferenceTable<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers;
+    /// The module's features by name and its :datalog section, while the module is parsed.
+    datalog::FeatureResolver* features = nullptr;
+    datalog::DatalogSection* datalog = nullptr;
 };
 
 /// What a language binds: sketches and classifiers bind neither registers nor arguments, ICP programs only registers.
@@ -83,6 +87,20 @@ public:
     [[nodiscard]] const LanguageCapabilities& capabilities() const noexcept { return m_capabilities; }
 };
 
+/// The feature a bare name refers to.
+inline datalog::FeatureReference resolve_feature(const runir::kr::parser::ast::Identifier& name, const ConstructorContext& context)
+{
+    const auto* references = context.references();
+    if (!references || !references->features)
+        context.diagnostics().throw_at(
+            name,
+            runir::kr::InvalidExpressionError(std::string("Feature names are not supported in ") + context.capabilities().language + "."));
+    const auto feature = references->features->resolve(name);
+    if (!feature)
+        context.diagnostics().throw_at(name, runir::kr::UndefinedSymbolError("feature", name.text));
+    return *feature;
+}
+
 template<typename Node>
 void require_registers(const Node& node, const ConstructorContext& context)
 {
@@ -101,6 +119,30 @@ void require_arguments(const Node& node, const ConstructorContext& context)
             runir::kr::InvalidExpressionError(std::string("Arguments are not supported in ") + context.capabilities().language + "."));
 }
 
+/// q_head: the rows of a head of the module's :datalog section.
+inline auto parse(const runir::kr::dl::grammar::ast::QueryHead& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+{
+    const auto* references = context.references();
+    if (!references || !references->datalog)
+        context.diagnostics().throw_at(node,
+                                       runir::kr::InvalidExpressionError(std::string("q_head is not supported in ") + context.capabilities().language + "."));
+    const auto head = references->datalog->head(node.name);
+    if (!head)
+        context.diagnostics().throw_at(node.name, runir::kr::UndefinedSymbolError("Datalog head", node.name.text));
+    auto data = constructors::checkout<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>>(context);
+    constructors::take(data->program, context.repository().view(head->program));
+    data->relation = head->relation.value;
+    data->columns = constructors::parse_columns(node.columns, context);
+    try
+    {
+        return constructors::intern_query(context, intern(context, *data).index());
+    }
+    catch (const std::invalid_argument& error)
+    {
+        context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError(std::string("q_head: ") + error.what()));
+    }
+}
+
 template<runir::kr::dl::CategoryTag Category>
 inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Category>& node,
                   tyr::formalism::planning::DomainView domain,
@@ -114,10 +156,42 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Ca
                 context.diagnostics().throw_at(
                     unwrapped.name,
                     runir::kr::InvalidExpressionError(std::string(context.capabilities().language) + " cannot reference grammar nonterminals."));
+            else if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::FeatureName>)
+            {
+                const auto feature = resolve_feature(unwrapped.name, context);
+                if (const auto* index = std::get_if<urd::index<runir::kr::dl::Constructor<Category>>>(&feature))
+                    return context.repository().view(*index);
+                context.diagnostics().throw_at(
+                    unwrapped.name,
+                    runir::kr::InvalidExpressionError("Feature `" + unwrapped.name.text + "` is not a " + Category::name + " feature."));
+            }
             else
                 return parse_constructor(unwrapped, domain, context);
         },
         node.get());
+}
+
+/// An operand that may be of several categories (n_count, b_nonempty): a bare name is parsed as a concept
+/// choice, so it may name a feature of any of the operand's categories.
+template<typename Result, runir::kr::dl::CategoryTag Category>
+Result parse_collection_operand(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Category>& node,
+                                tyr::formalism::planning::DomainView domain,
+                                const ConstructorContext& context)
+{
+    if (const auto* name = boost::get<runir::kr::dl::grammar::ast::FeatureName>(&node.get()))
+    {
+        const auto feature = resolve_feature(name->name, context);
+        return std::visit(
+            [&]<typename T>(urd::index<T> index) -> Result
+            {
+                if constexpr (std::is_constructible_v<Result, urd::index<T>>)
+                    return Result(index);
+                else
+                    context.diagnostics().throw_at(name->name, runir::kr::InvalidExpressionError("Feature `" + name->name.text + "` cannot be used here."));
+            },
+            feature);
+    }
+    return Result(parse(node, domain, context).index());
 }
 
 template<typename Entity, typename Identifier, typename Reference>

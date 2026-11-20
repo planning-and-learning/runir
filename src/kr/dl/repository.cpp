@@ -8,5 +8,5 @@
 RUNIR_KR_DL_INTERNS()
 
 // The repository's symbols, which the library's other sources only declare (yggdrasil/formalism/symbol_context.hpp).
-YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::dl::ConstructorRepository, 110)
-YGG_FORMALISM_BUILDER(, runir::kr::dl::Builder, 110)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::dl::ConstructorRepository, 114)
+YGG_FORMALISM_BUILDER(, runir::kr::dl::Builder, 114)

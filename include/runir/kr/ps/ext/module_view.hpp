@@ -11,6 +11,8 @@
 
 #include <concepts>
 #include <cstddef>
+#include <string_view>
+#include <tuple>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
@@ -108,6 +110,9 @@ public:
 
     static constexpr auto functions() noexcept
     { return urd::Functions<urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::ps::ext::syntactic_complexity)>> {}; }
+
+    /// The rules of its :datalog section as written; empty without one.
+    [[nodiscard]] std::string_view get_datalog() const noexcept { return std::string_view(self().template member<&urd::record_of<V>::datalog>()); }
 };
 }  // namespace urd
 

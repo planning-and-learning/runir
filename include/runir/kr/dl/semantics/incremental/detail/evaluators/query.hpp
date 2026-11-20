@@ -10,6 +10,7 @@
 #include <array>
 #include <concepts>
 #include <cstddef>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <tuple>
@@ -184,6 +185,61 @@ struct QueryFromDenotationEvaluator : QueryValue
             set_element(element, false);
         for (const auto& element : child_delta.added)
             set_element(element, true);
+    }
+};
+
+/// q_boolean and q_numerical: the row of the scalar's value, replaced when the value changes.
+template<tyr::TaskKind Kind, typename Category>
+struct QueryFromScalarEvaluator : QueryValue
+{
+    EvaluationIndex<Category> argument;
+    std::optional<ygg::uint_t> current;
+
+    QueryFromScalarEvaluator(ygg::FreeScratchRelations& scratch_, EvaluationIndex<Category> argument_, std::span<const urd::data<ygg::ColumnLayout>> columns) :
+        QueryValue(scratch_, columns),
+        argument(argument_)
+    {
+    }
+
+    /// The value as a row: Booleans are rows only when true.
+    std::optional<ygg::uint_t> read(EvaluationGraph<Kind>& graph) const
+    {
+        const auto value = graph.result(argument).get_value();
+        if constexpr (std::same_as<Category, BooleanTag>)
+            return value ? std::optional<ygg::uint_t>(0) : std::nullopt;
+        else
+            return value;
+    }
+
+    void set_value(ygg::uint_t value, bool present)
+    {
+        if constexpr (std::same_as<Category, BooleanTag>)
+            this->set(std::span<const ygg::Value> {}, present);
+        else
+            this->set(std::array<ygg::Value, 1> { ygg::encode_value(value) }, present);
+    }
+
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
+    {
+        this->clear();
+        current = read(graph);
+        if (current)
+            set_value(*current, true);
+        this->delta.clear();
+    }
+
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    {
+        this->delta.clear();
+        const auto next = read(graph);
+        if (next == current)
+            return;
+        if (current)
+            set_value(*current, false);
+        if (next)
+            set_value(*next, true);
+        current = next;
     }
 };
 

@@ -114,7 +114,7 @@ add_runir_test(
 )
 add_runir_test(
     runir_kr_ps_ext_program_executor
-    "unit/kr/ps/ext/module_fixtures.cpp;unit/kr/ps/ext/program_executor.cpp;unit/kr/ps/ext/program_parser.cpp;unit/kr/ps/ext/execution_repository.cpp;unit/kr/ps/ext/successor_expander.cpp;unit/kr/ps/ext/successor_expander_lifted.cpp"
+    "unit/kr/ps/ext/module_fixtures.cpp;unit/kr/ps/ext/datalog_policies.cpp;unit/kr/ps/ext/program_executor.cpp;unit/kr/ps/ext/program_parser.cpp;unit/kr/ps/ext/execution_repository.cpp;unit/kr/ps/ext/successor_expander.cpp;unit/kr/ps/ext/successor_expander_lifted.cpp"
     runir::datasets
     runir::kr
     runir_test_planning_fixtures
@@ -152,14 +152,10 @@ add_runir_test(runir_kr_uns_classifier
 )
 
 add_runir_test(runir_kr_dl_query_evaluation unit/kr/dl/query_evaluation.cpp runir::kr runir::datasets runir_test_planning_fixtures)
+add_runir_test(runir_kr_dl_datalog unit/kr/dl/datalog.cpp runir::kr runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_optimization unit/kr/dl/optimization.cpp runir::kr runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_evaluation_storage unit/kr/dl/evaluation_storage.cpp runir::kr runir::datasets runir_test_planning_fixtures)
 
 # Keep allocation replacements isolated from all other test executables.
 add_runir_test(runir_kr_dl_query_allocations unit/kr/dl/query_allocations.cpp runir::kr runir::datasets runir_test_planning_fixtures
                urd::count_allocations)
-
-# Profiles q_must_pass phase by phase; not a test. Optimized even in Debug builds so its timings mean something.
-add_executable(runir_must_pass_profile unit/kr/dl/must_pass_profile.cpp)
-target_compile_options(runir_must_pass_profile PRIVATE -O2 -DNDEBUG)
-target_link_libraries(runir_must_pass_profile PRIVATE runir::kr runir::datasets runir_test_planning_fixtures TBB::tbb runir_test_fixtures)

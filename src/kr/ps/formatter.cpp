@@ -11,12 +11,72 @@
 #include "runir/kr/ps/proof_status.hpp"
 #include "runir/kr/uns/repository.hpp"
 
+#include <algorithm>
 #include <fmt/format.h>
+#include <optional>
+#include <string>
 #include <urd/format.hpp>
 #include <variant>
 
 namespace rk = runir::kr;
 namespace rp = runir::kr::ps;
+
+namespace
+{
+/// The head of a q_head with `arity` columns; none for any other query.
+template<typename C>
+std::optional<std::string> query_head(urd::index_view<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>, C> view, size_t arity)
+{
+    if (view.get_columns().size() != arity)
+        return std::nullopt;
+    return std::string(view.get_relation().get_name());
+}
+
+template<typename V>
+std::optional<std::string> query_head(V, size_t)
+{ return std::nullopt; }
+
+template<typename C>
+std::optional<std::string> query_head(urd::index_view<runir::kr::dl::Query<>, C> view, size_t arity)
+{
+    return std::visit([&](auto concrete) { return query_head(concrete, arity); }, view.get_variant());
+}
+
+/// The head that a feature's expression reads whole, as `(:head h)` parses into (parse_head_feature in
+/// src/kr/ps/ext/dl/parser.cpp): a projection of a q_head onto its columns in their order, b_nonempty of a q_head
+/// without columns, or n_value of one with one column.
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
+std::optional<std::string> read_head(urd::index_view<runir::kr::dl::QueryProjection<Category>, C> view)
+{
+    const auto columns = view.get_columns();
+    const auto arity = std::same_as<Category, runir::kr::dl::ConceptTag> ? size_t { 1 } : size_t { 2 };
+    auto result = query_head(view.get_operand(), arity);
+    if (result)
+        std::visit(
+            [&](auto concrete)
+            {
+                if constexpr (requires { concrete.get_relation(); })
+                    if (!std::ranges::equal(concrete.get_columns(), columns))
+                        result.reset();
+            },
+            view.get_operand().get_variant());
+    return result;
+}
+
+template<typename C>
+std::optional<std::string> read_head(urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::NonemptyTag>, C> view)
+{
+    return std::visit([&](auto operand) { return query_head(operand, 0); }, view.get_operand());
+}
+
+template<typename C>
+std::optional<std::string> read_head(urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::ValueTag>, C> view)
+{ return query_head(view.get_operand(), 1); }
+
+template<typename V>
+std::optional<std::string> read_head(V)
+{ return std::nullopt; }
+}  // namespace
 
 template<rk::FamilyTag Family, rp::dl::FeatureTag FeatureTag, typename C>
 fmt::format_context::iterator
@@ -35,7 +95,14 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<rp::ConcreteFeature
     {
         const auto deeper = urd::scoped_indent();
         out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), value.get_symbol());
-        out = fmt::format_to(out, "{}(:expression {})", urd::new_line(), value.get_feature());
+        // A feature that reads a :datalog head whole prints as it is written, so that the program parses again.
+        auto head = std::optional<std::string>();
+        if constexpr (requires { value.get_feature().get_variant(); })
+            head = std::visit([](auto concrete) { return read_head(concrete); }, value.get_feature().get_variant());
+        if (head)
+            out = fmt::format_to(out, "{}(:head {})", urd::new_line(), *head);
+        else
+            out = fmt::format_to(out, "{}(:expression {})", urd::new_line(), value.get_feature());
     }
     return fmt::format_to(out, "{})", urd::new_line());
 }

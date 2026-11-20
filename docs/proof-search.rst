@@ -34,6 +34,8 @@ register differences between evaluations, and reuses result buffers across forwa
 - Distances whose edges are a query (``n_distance`` over k-tuples) are not maintained from deltas, since that would
   materialize every edge. Such a node and every node depending on it are recomputed from the state on demand.
   Distances over role edges are maintained incrementally.
+- A Datalog program is maintained from its inputs' exact changes; its goal searches keep their search trees across
+  states (:doc:`datalog`).
 - Incremental row updates can change the Action enumeration order, so plans, traversal statistics and
   resource-limited outcomes may differ from full evaluation.
 

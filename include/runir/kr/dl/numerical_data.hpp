@@ -111,6 +111,30 @@ struct data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::d
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::sources, &data::edges, &data::targets, &data::plan> {}; }
 };
 
+/// n_value(query): the least value in the query's one column, infinity if it has no row.
+template<typename F>
+struct data<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>>
+{
+    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>> index;
+    urd::index<runir::kr::dl::Query<>> operand;
+
+    data() = default;
+
+    explicit data(urd::index<runir::kr::dl::Query<>> operand_) : index(), operand(operand_) {}
+
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>> {}; }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
+};
+
 template<typename F>
 struct data<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>
 {

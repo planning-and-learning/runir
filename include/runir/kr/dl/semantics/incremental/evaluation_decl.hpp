@@ -62,6 +62,8 @@ class EvaluationGraph
     urd::Store<urd::map<QueryView<>, QueryEvaluationIndex>> m_query_nodes;
     /// The nodes that lift a concept or role node into a relation, by the lifted node.
     urd::Store<urd::map<ygg::uint_t, QueryEvaluationIndex>, urd::multi> m_lifts;
+    /// The node of each Datalog program, which its q_head nodes read.
+    urd::Store<urd::map<DatalogProgramView, QueryEvaluationIndex>> m_programs;
     detail::SetOperationWorkspace m_set_workspace;
     const tyr::planning::Task<Kind>* m_task;
 
@@ -122,7 +124,29 @@ class EvaluationGraph
         return *index;
     }
 
+    /// The node of a Datalog program; one per program.
+    QueryEvaluationIndex prepare_program(DatalogProgramView program, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    {
+        auto index = QueryEvaluationIndex {};
+        if (const auto it = m_programs.find(program); it != m_programs.end())
+            index = it->second;
+        else
+        {
+            // Constructed first: preparing the inputs may relocate m_nodes.
+            auto builder = detail::GraphBuilder<Kind>(*this);
+            auto prepared = detail::QueryNode<Kind>(program, builder);
+            index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
+            m_nodes.emplace_back(std::move(prepared));
+            m_programs.emplace(program, index);
+        }
+        dependencies.push_back(static_cast<ygg::uint_t>(index.value));
+        return index;
+    }
+
 public:
+    /// The operation of a program node, read by its heads.
+    [[nodiscard]] const auto& program(QueryEvaluationIndex index) const { return *node(index).get_program(); }
+
     EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot> roots);
 
     EvaluationGraph(const tyr::planning::Task<Kind>& task, std::initializer_list<EvaluationRoot> roots) :
@@ -209,6 +233,9 @@ public:
                                           std::span<const urd::data<ygg::ColumnLayout>> columns,
                                           urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return m_graph->prepare_relation(expression, columns, dependencies); }
+
+    QueryEvaluationIndex prepare_program(DatalogProgramView program, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    { return m_graph->prepare_program(program, dependencies); }
 };
 }  // namespace detail
 

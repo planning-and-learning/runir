@@ -1,0 +1,43 @@
+(:program
+  (:entry visitall)
+  (:module
+    (:symbol visitall)
+    (:arguments)
+    (:registers)
+    (:entry walk)
+    (:memory walk)
+    (:datalog
+      (:rule (cell ?x) (object ?x))
+      (:rule (unvisited ?x) (object ?x) (not (visited ?x)))
+      (:rule (remaining-count ?n) (count ?n ((unvisited ?x))))
+      (:rule (dist ?x (min 0)) (at-robot ?x))
+      (:rule (dist ?y (min ?v)) (dist ?x ?w) (connected ?x ?y) (= ?v (+ ?w 1)))
+      (:rule (nearest (min ?w)) (dist ?x ?w) (unvisited ?x)))
+    (:features
+      (:concept (:symbol places) (:head cell))
+      (:numerical (:symbol remaining) (:head remaining-count))
+      (:numerical (:symbol distance) (:head nearest)))
+    (:rules
+      (:rule
+        (:symbol visit)
+        (:expression
+          (:source-memory walk)
+          (:target-memory walk)
+          (:do
+            (:conditions)
+            (:action "move")
+            (:arguments places places)
+            (:effects
+              (decreases remaining)))))
+      (:rule
+        (:symbol approach)
+        (:expression
+          (:source-memory walk)
+          (:target-memory walk)
+          (:do
+            (:conditions)
+            (:action "move")
+            (:arguments places places)
+            (:effects
+              (unchanged remaining)
+              (decreases distance))))))))

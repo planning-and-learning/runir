@@ -21,11 +21,12 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QuerySelectEqual, left_co
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QuerySelectValue, column, object_name, operand)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryGenericJoin, variable_order, output_order, args)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryEmpty, columns)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryMustPass, keys, sources, edges, targets, probes)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryHead, name, columns)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptProject, columns, operand)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleProject, columns, operand)
 
 BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::dl::grammar::ast::NonTerminal) (Category), name)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::FeatureName, name)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::dl::grammar::ast::DerivationRule) (Category), lhs, rhs)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptBot)

@@ -10,6 +10,7 @@
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
+#include <cstdint>
 #include <string>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -67,9 +68,23 @@ struct QueryFeature : boost::spirit::x3::position_tagged
     runir::kr::dl::grammar::ast::Query expression;
 };
 
-using FeatureVariant = PositionedVariant<Feature<runir::kr::dl::ConceptTag>,
+/// A feature read from a head of the module's Datalog program: a concept one is the unary head's rows, a role one the
+/// binary head's rows, a Boolean one is true iff the nullary head has its row, a numerical one is the least value of
+/// the unary head (infinity without a row).
+template<runir::kr::dl::CategoryTag Category>
+struct HeadFeature : boost::spirit::x3::position_tagged
+{
+    Identifier symbol;
+    Identifier head;
+};
+
+using FeatureVariant = PositionedVariant<HeadFeature<runir::kr::dl::ConceptTag>,
+                                         Feature<runir::kr::dl::ConceptTag>,
+                                         HeadFeature<runir::kr::dl::RoleTag>,
                                          Feature<runir::kr::dl::RoleTag>,
+                                         HeadFeature<runir::kr::dl::BooleanTag>,
                                          Feature<runir::kr::dl::BooleanTag>,
+                                         HeadFeature<runir::kr::dl::NumericalTag>,
                                          Feature<runir::kr::dl::NumericalTag>,
                                          QueryFeature>;
 
@@ -155,6 +170,108 @@ struct RuleEntry : boost::spirit::x3::position_tagged
     urd::Store<urd::sequence<Rule>> rules;
 };
 
+/// (relation term...): a rule head or a body atom. Terms are ?variables or object names.
+struct DatalogAtom : boost::spirit::x3::position_tagged
+{
+    Identifier relation;
+    urd::Store<urd::sequence<Identifier>> terms;
+};
+
+/// (goal p t...) or, for the goal's negative literals, (goal (not (p t...))).
+struct DatalogGoalAtom : boost::spirit::x3::position_tagged
+{
+    Identifier predicate;
+    urd::Store<urd::sequence<Identifier>> terms;
+    bool negative = false;
+};
+
+/// (not atom)
+struct DatalogNegation : boost::spirit::x3::position_tagged
+{
+    DatalogAtom atom;
+};
+
+/// (not (goal ...)): the goal does not contain that literal.
+struct DatalogNegatedGoal : boost::spirit::x3::position_tagged
+{
+    DatalogGoalAtom atom;
+};
+
+enum class DatalogComparisonOperator : std::uint8_t
+{
+    EQUAL,
+    NOT_EQUAL,
+    LESS,
+    LESS_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+};
+
+/// (op lhs rhs) with op one of = != < <= > >=
+struct DatalogComparison : boost::spirit::x3::position_tagged
+{
+    DatalogComparisonOperator op = DatalogComparisonOperator::EQUAL;
+    Identifier lhs;
+    Identifier rhs;
+};
+
+enum class DatalogArithmeticOperator : std::uint8_t
+{
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+    MIN,
+    MAX,
+};
+
+/// (= ?result (op lhs rhs)) with op one of + - * / min max
+struct DatalogArithmetic : boost::spirit::x3::position_tagged
+{
+    Identifier result;
+    DatalogArithmeticOperator op = DatalogArithmeticOperator::ADD;
+    Identifier lhs;
+    Identifier rhs;
+};
+
+/// A literal that an aggregate body may hold: anything but an aggregate.
+using DatalogCondition = PositionedVariant<DatalogNegatedGoal, DatalogNegation, DatalogGoalAtom, DatalogArithmetic, DatalogComparison, DatalogAtom>;
+
+enum class DatalogAggregateFunction : std::uint8_t
+{
+    COUNT,
+    SUM,
+    MIN,
+    MAX,
+};
+
+/// (count ?result (condition...)) or (sum|min|max ?result ?value (condition...))
+struct DatalogAggregate : boost::spirit::x3::position_tagged
+{
+    DatalogAggregateFunction function = DatalogAggregateFunction::COUNT;
+    Identifier result;
+    boost::optional<Identifier> value;
+    urd::Store<urd::sequence<DatalogCondition>> body;
+};
+
+using DatalogLiteral = PositionedVariant<DatalogAggregate, DatalogCondition>;
+
+/// (:rule head literal...)
+/// (relation term... (min term)?): with a min as last term, the relation keeps per row of the other terms the least
+/// value its rules derive (aggregates in recursion, Zaniolo et al. 2017).
+struct DatalogHead : boost::spirit::x3::position_tagged
+{
+    Identifier relation;
+    urd::Store<urd::sequence<Identifier>> terms;
+    boost::optional<Identifier> min;
+};
+
+struct DatalogRule : boost::spirit::x3::position_tagged
+{
+    DatalogHead head;
+    urd::Store<urd::sequence<DatalogLiteral>> body;
+};
+
 struct Module : boost::spirit::x3::position_tagged
 {
     Identifier name;
@@ -162,6 +279,7 @@ struct Module : boost::spirit::x3::position_tagged
     urd::Store<urd::sequence<RegisterVariant>> registers;
     Identifier entry;
     urd::Store<urd::sequence<NamedValue>> memory_states;
+    boost::optional<urd::Store<urd::sequence<DatalogRule>>> datalog;
     urd::Store<urd::sequence<FeatureVariant>> features;
     urd::Store<urd::sequence<RuleEntry>> rule_entries;
 };

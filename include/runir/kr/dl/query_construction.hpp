@@ -10,9 +10,9 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tyr/datalog/lifted/database/datalog/view.hpp>
 #include <tyr/datalog/lifted/database/semantics/distance.hpp>
 #include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
-#include <tyr/datalog/lifted/database/semantics/must_pass_plan.hpp>
 #include <tyr/datalog/lifted/database/semantics/plans.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -103,30 +103,6 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         data.plan = tyr::datalog::database::GenericJoinPlan(inputs, query_labels(data.variable_order), query_labels(data.output_order));
         data.columns = data.output_order;
     }
-    else if constexpr (std::same_as<Tag, QueryMustPassTag>)
-    {
-        const auto column_name = [&](urd::index<QueryColumn> column) { return std::string(urd::resolve(column, repository).get_name()); };
-        const auto require_keys = [&](std::string_view argument, urd::index<Query<>> query)
-        {
-            const auto& columns = get_query_columns(query, repository);
-            for (size_t i = 0; i < data.keys.size(); ++i)
-                if (i >= columns.size() || columns[i] != data.keys[i])
-                    throw std::invalid_argument("q_must_pass: the " + std::string(argument) + " must start with the key columns; column "
-                                                + std::to_string(i + 1) + " should be `" + column_name(data.keys[i]) + "`.");
-        };
-        require_keys("sources", data.sources);
-        require_keys("edges", data.edges);
-        require_keys("targets", data.targets);
-        const auto sources = schema_of(urd::resolve(data.sources, repository));
-        const auto edges = schema_of(urd::resolve(data.edges, repository));
-        const auto targets = schema_of(urd::resolve(data.targets, repository));
-        const auto probes = schema_of(urd::resolve(data.probes, repository));
-        if (probes.size() != 1)
-            throw std::invalid_argument("q_must_pass: the probes must have one column.");
-        data.plan = tyr::datalog::database::MustPassPlan(sources, edges, targets, probes, data.keys.size());
-        data.columns = data.keys;
-        data.columns.push_back(get_query_columns(data.probes, repository).front());
-    }
     else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
     {
         const auto lhs = schema_of(urd::resolve(data.left_operand, repository));
@@ -159,10 +135,18 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
             require_query_arity(arity, urd::resolve(data.predicate, repository.get_planning_repository()).get_arity());
         else if constexpr (std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>)
             require_query_arity(arity, std::same_as<Tag, QueryConceptTag> ? 1 : 2);
+        else if constexpr (std::same_as<Tag, QueryBooleanTag> || std::same_as<Tag, QueryNumericalTag>)
+            require_query_arity(arity, std::same_as<Tag, QueryBooleanTag> ? 0 : 1);
+        else if constexpr (std::same_as<Tag, QueryHeadTag>)
+            require_query_arity(arity,
+                                repository.get_datalog_repository().view(urd::index<tyr::datalog::database::datalog::Relation>(data.relation)).get_arity());
         else if constexpr (std::same_as<Tag, QueryRenameTag>)
             require_query_arity(arity, schema_of(urd::resolve(data.operand, repository)).size());
     }
 }
+
+/// Each input must have the arity of its slot's relation; the program is static if all its inputs are.
+void prepare(urd::data<DatalogProgram>& data, const ConstructorRepository& repository);
 
 template<ConceptOrRoleTag Category, typename Repository>
 void prepare(urd::data<QueryProjection<Category>>& data, const Repository& repository)

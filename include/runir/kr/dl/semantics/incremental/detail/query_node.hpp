@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 
-#include "runir/kr/dl/semantics/incremental/detail/evaluators/must_pass.hpp"
+#include "runir/kr/dl/semantics/incremental/detail/evaluators/datalog.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
 
 #include <algorithm>
@@ -30,6 +30,12 @@ public:
         m_operation(QueryFromDenotationEvaluator<Kind, Category>(scratch, argument, columns))
     {
     }
+
+    /// A Datalog program, which its q_head nodes read; it has no query expression.
+    QueryNode(DatalogProgramView program, GraphBuilder<Kind>& graph) : m_operation(QueryProgramEvaluator<Kind>(program, graph, m_dependencies)) {}
+
+    /// The operation of a program node, if this is one.
+    [[nodiscard]] const QueryProgramEvaluator<Kind>* get_program() const noexcept { return std::get_if<QueryProgramEvaluator<Kind>>(&m_operation); }
 
     [[nodiscard]] std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
 
@@ -64,7 +70,10 @@ private:
                                    QuerySelectionEvaluator<Kind, QueryRenameTag>,
                                    QuerySelectionEvaluator<Kind, QuerySelectEqualTag>,
                                    QuerySelectionEvaluator<Kind, QuerySelectValueTag>,
-                                   QueryMustPassEvaluator<Kind>>;
+                                   QueryFromScalarEvaluator<Kind, BooleanTag>,
+                                   QueryFromScalarEvaluator<Kind, NumericalTag>,
+                                   QueryProgramEvaluator<Kind>,
+                                   QueryHeadEvaluator<Kind>>;
 
     std::optional<QueryView<>> m_expression;
     urd::Store<urd::sequence<ygg::uint_t>> m_dependencies;
@@ -140,8 +149,12 @@ auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kin
                                                                concrete.get_schema());
             else if constexpr (std::same_as<Tag, QueryRenameTag> || std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
                 return QuerySelectionEvaluator<Kind, Tag>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete);
-            else if constexpr (std::same_as<Tag, QueryMustPassTag>)
-                return QueryMustPassEvaluator<Kind>(concrete, graph, m_dependencies);
+            else if constexpr (std::same_as<Tag, QueryBooleanTag>)
+                return QueryFromScalarEvaluator<Kind, BooleanTag>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_schema());
+            else if constexpr (std::same_as<Tag, QueryNumericalTag>)
+                return QueryFromScalarEvaluator<Kind, NumericalTag>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_schema());
+            else if constexpr (std::same_as<Tag, QueryHeadTag>)
+                return QueryHeadEvaluator<Kind>(scratch, concrete, graph, m_dependencies);
             else
                 throw std::logic_error("Incremental query: a static constructor was marked dynamic.");
         },

@@ -36,6 +36,7 @@ struct builder<runir::kr::ps::ext::Module, C>
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> entry_memory_state;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>>, C> memory_states;
     urd::built_t<urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>>, C> memory_transitions;
+    urd::built_t<urd::flat_string, C> datalog;
 
     static constexpr auto fields() noexcept
     {
@@ -53,7 +54,8 @@ struct builder<runir::kr::ps::ext::Module, C>
                            urd::field<"query_features", &builder::query_features>,
                            urd::field<"entry_memory_state", &builder::entry_memory_state>,
                            urd::field<"memory_states", &builder::memory_states>,
-                           urd::field<"memory_transitions", &builder::memory_transitions>> {};
+                           urd::field<"memory_transitions", &builder::memory_transitions>,
+                           urd::field<"datalog", &builder::datalog>> {};
     }
 
     static constexpr auto identifying_members() noexcept
@@ -72,7 +74,8 @@ struct builder<runir::kr::ps::ext::Module, C>
                             &builder::query_features,
                             &builder::entry_memory_state,
                             &builder::memory_states,
-                            &builder::memory_transitions> {};
+                            &builder::memory_transitions,
+                            &builder::datalog> {};
     }
 };
 

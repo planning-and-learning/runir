@@ -255,6 +255,7 @@ template struct fmt::formatter<urd::index_view<dl::Boolean<dl::SemanticFamily, d
 template struct fmt::formatter<urd::index_view<dl::Boolean<dl::SemanticFamily, dl::ArgumentTag<dl::BooleanTag>>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Numerical<dl::SemanticFamily, dl::CountTag>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Numerical<dl::SemanticFamily, dl::DistanceTag>, dl::ConstructorRepository>>;
+template struct fmt::formatter<urd::index_view<dl::Numerical<dl::SemanticFamily, dl::ValueTag>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Numerical<dl::SemanticFamily, dl::NumericalConstantTag>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Numerical<dl::SemanticFamily, dl::AddTag>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Numerical<dl::SemanticFamily, dl::SubTag>, dl::ConstructorRepository>>;

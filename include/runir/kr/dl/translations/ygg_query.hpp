@@ -64,8 +64,9 @@ namespace detail
 {
 
 template<typename Tag>
-inline constexpr bool is_query_leaf_tag_v = is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag> || std::same_as<Tag, QueryConceptTag>
-                                            || std::same_as<Tag, QueryRoleTag> || std::same_as<Tag, QueryMustPassTag>;
+inline constexpr bool is_query_leaf_tag_v =
+    is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag> || std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>
+    || std::same_as<Tag, QueryBooleanTag> || std::same_as<Tag, QueryNumericalTag> || std::same_as<Tag, QueryHeadTag>;
 
 /// Copies a DL query into a yggdrasil query repository; its leaves become input slots, each distinct leaf one slot.
 ///
