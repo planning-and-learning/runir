@@ -155,6 +155,7 @@ void own_copied_words(BlocksChild<C>& blocks, std::span<const ygg::uint_t> sourc
         return;
     std::ranges::copy(source, own_words(blocks, source.size(), storage).begin());
 }
+
 /// Where a concept's bits lie in its words: a bit per object, the trailing bits zero.
 struct ConceptLayout
 {
@@ -166,8 +167,7 @@ struct ConceptLayout
 /// Where a role's bits lie in its words: a row of whole blocks per source object, each row's trailing bits zero.
 struct RoleLayout
 {
-    static constexpr auto num_bits(ygg::uint_t num_objects) noexcept -> size_t
-    { return static_cast<size_t>(num_objects) * static_cast<size_t>(num_objects); }
+    static constexpr auto num_bits(ygg::uint_t num_objects) noexcept -> size_t { return static_cast<size_t>(num_objects) * static_cast<size_t>(num_objects); }
 
     static constexpr auto num_row_blocks(ygg::uint_t num_objects) noexcept -> size_t { return urd::bitset_span<ygg::uint_t>::num_blocks(num_objects); }
 
@@ -245,11 +245,10 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>, C>
     auto get(urd::index<tyr::formalism::Object> object) -> urd::bitset_span<ygg::uint_t>
     {
         assert(static_cast<ygg::uint_t>(object.value) < num_objects);
-        return urd::bitset_span<ygg::uint_t>(
-            runir::kr::dl::semantics::detail::own_words(blocks)
-                .subspan(runir::kr::dl::semantics::detail::RoleLayout::row_block_offset(object, num_objects))
-                .data(),
-            num_objects);
+        return urd::bitset_span<ygg::uint_t>(runir::kr::dl::semantics::detail::own_words(blocks)
+                                                 .subspan(runir::kr::dl::semantics::detail::RoleLayout::row_block_offset(object, num_objects))
+                                                 .data(),
+                                             num_objects);
     }
 
     /// Set membership and invalidate published identity; return whether it changed.

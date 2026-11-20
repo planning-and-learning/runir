@@ -141,8 +141,10 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
     auto scratch = kr::dl::semantics::Builder();
     const auto object = [&](ygg::uint_t index) { return urd::resolve(ObjectIndex(index), *formalism); };
 
-    auto boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = true };
-    auto numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = 7 };
+    auto boolean =
+        urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = true };
+    auto numerical =
+        urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = 7 };
     const auto boolean_view = urd::resolve(boolean, repository);
     const auto numerical_view = urd::resolve(numerical, repository);
     static_assert(std::same_as<decltype(boolean_view.get_value()), bool>);

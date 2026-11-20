@@ -57,7 +57,7 @@ struct Words
 
     /// The builder read: its view through the repository (a builder's reads are its view's).
     template<typename T>
-    auto view(const urd::builder<T, runir::kr::dl::semantics::DenotationRepository>& builder) const
+    [[nodiscard]] auto view(const urd::builder<T, runir::kr::dl::semantics::DenotationRepository>& builder) const
     { return urd::resolve(builder, repository); }
 
     /// The builder interned.

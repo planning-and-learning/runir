@@ -202,8 +202,10 @@ void check_incremental_evaluation()
     // Invocation values live outside the repositories reset during ordinary evaluation.
     auto argument_concept = make_denotation<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, builder);
     auto argument_role = make_denotation<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, builder);
-    auto argument_boolean = urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = true };
-    auto argument_numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = 7 };
+    auto argument_boolean =
+        urd::builder<kr::dl::semantics::Denotation<kr::dl::BooleanTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = true };
+    auto argument_numerical =
+        urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>, runir::kr::dl::semantics::DenotationRepository> { .index = {}, .value = 7 };
     argument_concept.get().set(ygg::uint_t(a.value));
     argument_role.get(a).set(ygg::uint_t(b.value));
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
