@@ -13,12 +13,11 @@ namespace runir::kr::dl::semantics
 {
 
 DenotationRepository::DenotationRepository(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
-    m_formalism_repository(std::move(formalism_repository)),
+    Base(),
+    NestsBase(std::move(formalism_repository)),
+    m_relation_repository(),
     m_index(ygg::next_layer())
-{
-    assert(m_formalism_repository);
-    this->reset();
-}
+{ this->reset(); }
 
 DenotationRepository::~DenotationRepository() = default;
 

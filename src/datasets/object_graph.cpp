@@ -170,7 +170,7 @@ auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& 
             layer = layer->parent();
         return layer;
     };
-    if (root(state.get_formalism_repository().get()) != root(&repository.get_planning_repository()))
+    if (root(state.get_formalism_repository().get()) != root(&repository.get<tyr::formalism::planning::Repository>()))
         throw std::invalid_argument("State and ColorRepository use different planning repositories.");
 
     auto context = ObjectGraphConstructionContext(repository);

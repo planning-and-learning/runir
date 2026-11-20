@@ -77,7 +77,7 @@ template<typename FeatureTag, typename Expression>
 auto make_feature(Repository& repository, Builder& builder, urd::index<Expression> expression, const std::string& symbol)
 {
     auto concrete = checkout<runir::kr::ps::ConcreteFeature<IcpFamilyTag, DlTag, FeatureTag>>(builder);
-    urd::store(concrete->feature, repository.get_dl_repository().view(expression));
+    urd::store(concrete->feature, repository.get<runir::kr::dl::ConstructorRepository>().view(expression));
     concrete->symbol = symbol;
     auto data = checkout<runir::kr::ps::Feature<IcpFamilyTag, FeatureTag>>(builder);
     urd::store(data->variant, intern(repository, builder, *concrete));
@@ -128,13 +128,13 @@ ModuleView lower_module(const ast::Module& module,
                 auto value = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(dl_builder);
                 value->name = concrete.symbol.text;
                 value->identifier = runir::kr::dl::RegisterIdentifier<Category>(declarations.by_identifier.size());
-                const auto index = repository.get_dl_repository().insert(*value, dl_builder).first.index();
+                const auto index = repository.get<runir::kr::dl::ConstructorRepository>().insert(*value, dl_builder).first.index();
                 declarations.by_name.emplace(concrete.symbol.text, index);
                 declarations.by_identifier.push_back(index);
                 if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-                    urd::append(data->concept_registers, repository.get_dl_repository().view(index));
+                    urd::append(data->concept_registers, repository.get<runir::kr::dl::ConstructorRepository>().view(index));
                 else
-                    urd::append(data->role_registers, repository.get_dl_repository().view(index));
+                    urd::append(data->role_registers, repository.get<runir::kr::dl::ConstructorRepository>().view(index));
             },
             reg.get());
 
@@ -145,7 +145,7 @@ ModuleView lower_module(const ast::Module& module,
     auto feature_names = urd::Store<urd::set<std::string>, urd::stable_refs> {};
     /// The concept features in their order (the module's), by index: what its reset pairs name.
     auto concept_feature_indices = std::vector<urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>>> {};
-    const auto context = ConstructorContext { repository.get_dl_repository(),
+    const auto context = ConstructorContext { repository.get<runir::kr::dl::ConstructorRepository>(),
                                               dl_builder,
                                               diagnostics,
                                               &references,
@@ -284,15 +284,15 @@ ModuleView lower_module(const ast::Module& module,
                         {
                             urd::store(rule->feature, repository.view(require_feature(concepts, concrete.feature, diagnostics)));
                             urd::store(rule->slot,
-                                       repository.get_dl_repository().view(
+                                       repository.get<runir::kr::dl::ConstructorRepository>().view(
                                            require(references.concept_registers.by_name, concrete.slot, "concept register", diagnostics)));
                         }
                         else
                         {
                             urd::store(rule->feature, repository.view(require_feature(roles, concrete.feature, diagnostics)));
-                            urd::store(
-                                rule->slot,
-                                repository.get_dl_repository().view(require(references.role_registers.by_name, concrete.slot, "role register", diagnostics)));
+                            urd::store(rule->slot,
+                                       repository.get<runir::kr::dl::ConstructorRepository>().view(
+                                           require(references.role_registers.by_name, concrete.slot, "role register", diagnostics)));
                         }
                         urd::store(variant->variant, intern(repository, builder, *rule));
                     }

@@ -35,7 +35,10 @@ void bind_repository(nb::module_& /*m*/, nb::class_<runir::kr::ps::BasicReposito
              "dl_repository"_a)
         .def("clear", &Repository::clear)
         .def("layer", &Repository::layer)
-        .def("get_dl_repository", [](Repository& self) -> auto& { return self.get_dl_repository(); }, nb::rv_policy::reference_internal);
+        .def(
+            "get_dl_repository",
+            [](Repository& self) -> auto& { return self.template get<runir::kr::dl::ConstructorRepository>(); },
+            nb::rv_policy::reference_internal);
 }
 
 /// The views of the memory states, module symbols and rule variants of a program family (ext, icp), whose records are

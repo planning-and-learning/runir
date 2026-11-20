@@ -28,7 +28,8 @@ TaskContextPtr<Kind> TaskContext<Kind>::create(DomainContextPtr domain_context, 
     if (!search_context || !search_context->task || !search_context->execution_context || !search_context->axiom_evaluator || !search_context->state_repository
         || !search_context->successor_generator)
         throw std::invalid_argument("TaskContext requires a fully initialized search context.");
-    if (domain_context->base_repository->get_dl_repository().get_planning_repository_ptr() != search_context->task->get_domain().get_repository())
+    if (domain_context->base_repository->get<runir::kr::dl::ConstructorRepository>().get_ptr<tyr::formalism::planning::Repository>()
+        != search_context->task->get_domain().get_repository())
         throw std::invalid_argument("TaskContext search and domain contexts must belong to the same planning domain.");
     return TaskContextPtr<Kind>(new TaskContext(std::move(domain_context), std::move(search_context)));
 }

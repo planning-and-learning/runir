@@ -100,14 +100,14 @@ public:
     auto get_concept_values() const noexcept
     {
         return urd::transform(urd::detail::view_access::record(self()).concept_values,
-                              &self().context().get_formalism_repository(),
+                              &self().context().template get<tyr::formalism::planning::Repository>(),
                               runir::kr::dl::semantics::detail::concept_value_of {});
     }
 
     auto get_role_values() const noexcept
     {
         return urd::transform(urd::detail::view_access::record(self()).role_values,
-                              &self().context().get_formalism_repository(),
+                              &self().context().template get<tyr::formalism::planning::Repository>(),
                               runir::kr::dl::semantics::detail::role_value_of {});
     }
 

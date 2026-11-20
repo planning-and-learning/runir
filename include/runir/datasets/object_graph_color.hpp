@@ -41,6 +41,7 @@
 #include <variant>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
+#include <yggdrasil/formalism/nested.hpp>
 #include <yggdrasil/formalism/symbol_context.hpp>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
@@ -182,21 +183,26 @@ inline void canonicalize(urd::data<Color>& data) { ygg::canonicalize(data.values
 /// The symbol types of a color repository.
 using ColorTypes = boost::mp11::mp_list<PredicateColor<::tyr::formalism::StaticTag>, PredicateColor<::tyr::formalism::FluentTag>, Color>;
 
-class ColorRepository : public ygg::formalism::SymbolContext<ColorRepository, ColorTypes, true>
+/// Colors, over the planning repository whose predicates they refer to (nested, read only).
+class ColorRepository :
+    public ygg::formalism::SymbolContext<ColorRepository, ColorTypes, true>,
+    public ygg::formalism::Nests<ColorRepository, ygg::formalism::Nested<const ::tyr::formalism::planning::Repository>>
 {
     using Base = ygg::formalism::SymbolContext<ColorRepository, ColorTypes, true>;
+    using NestsBase = ygg::formalism::Nests<ColorRepository, ygg::formalism::Nested<const ::tyr::formalism::planning::Repository>>;
 
 private:
-    std::shared_ptr<const ::tyr::formalism::planning::Repository> m_planning_repository;
     std::size_t m_index;
 
 public:
     /// Over the planning repository whose predicates its colors refer to. Numbered by ygg::next_layer(), the process-wide
     /// counter, so that no two contexts share a number.
     explicit ColorRepository(std::shared_ptr<const ::tyr::formalism::planning::Repository> planning_repository) :
-        m_planning_repository(std::move(planning_repository)),
+        Base(),
+        NestsBase(std::move(planning_repository)),
         m_index(ygg::next_layer())
-    { assert(m_planning_repository); }
+    {
+    }
 
     ColorRepository(const ColorRepository&) = delete;
     ColorRepository& operator=(const ColorRepository&) = delete;
@@ -207,22 +213,11 @@ public:
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
 
-    [[nodiscard]] const auto& get_planning_repository() const noexcept
-    {
-        assert(m_planning_repository);
-        return *m_planning_repository;
-    }
-
-    [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
-
     using Base::view;
-
-    /// A planning symbol (a predicate) as its view in the planning repository, which holds it: so that urd resolves
-    /// every member of a color through this context (urd's resolves contract).
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<::tyr::formalism::planning::Repository, T>
-    [[nodiscard]] urd::index_view<T, ::tyr::formalism::planning::Repository> view(urd::index<T> index) const
-    { return get_planning_repository().view(index); }
+    using NestsBase::get;
+    using NestsBase::get_ptr;
+    using NestsBase::repository_for;
+    using NestsBase::view;
 
     template<typename T>
     std::optional<urd::index_view<T, ColorRepository>> find(const urd::data<T>& data) const noexcept

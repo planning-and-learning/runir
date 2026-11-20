@@ -174,12 +174,12 @@ public:
 
     auto views() const
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return urd::resolve(indices(), self().context().get_formalism_repository()); }
+    { return urd::resolve(indices(), self().context().template get<tyr::formalism::planning::Repository>()); }
 
     /// Objects reached from this source.
     auto views_from(tyr::formalism::planning::ObjectView source) const
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return urd::resolve(indices(source.index()), self().context().get_formalism_repository()); }
+    { return urd::resolve(indices(source.index()), self().context().template get<tyr::formalism::planning::Repository>()); }
 
     static constexpr auto functions() noexcept
     {

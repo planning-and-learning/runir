@@ -159,7 +159,8 @@ template<tyr::TaskKind Kind,
 void Delta::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
 {
     const auto* repository = source.get_formalism_repository().get();
-    if (&source_registers.context().get_formalism_repository() != repository || &target_registers.context().get_formalism_repository() != repository)
+    if (&source_registers.context().template get<tyr::formalism::planning::Repository>() != repository
+        || &target_registers.context().template get<tyr::formalism::planning::Repository>() != repository)
         throw std::invalid_argument("Feature delta requires registers for the same planning task.");
 
     detail::assign_atom_delta<Kind>(source, target, *this);

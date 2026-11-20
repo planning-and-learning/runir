@@ -187,7 +187,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
         }();
         const auto indexed = kr::dl::semantics::insert(repository, builder, scratch).first;
         EXPECT_EQ(indexed.get_num_objects(), num_objects);
-        EXPECT_EQ(&indexed.context().get_formalism_repository(), formalism.get());
+        EXPECT_EQ(&indexed.context().template get<tyr::formalism::planning::Repository>(), formalism.get());
         EXPECT_TRUE(borrowed.storage_bits().any());
         EXPECT_EQ(borrowed.storage_bits().count(), expected.size());
         EXPECT_EQ(indexed.storage_bits().count(), expected.size());

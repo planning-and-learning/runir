@@ -60,7 +60,7 @@ public:
 
     [[nodiscard]] auto get_program() const noexcept { return m_program; }
 
-    auto& get_dl_repository() noexcept { return m_program.context().get_dl_repository(); }
+    auto& get_dl_repository() noexcept { return m_program.context().template get<runir::kr::dl::ConstructorRepository>(); }
 
     auto& get_dl_caches() noexcept { return m_source_storage.get_caches(); }
 

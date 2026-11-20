@@ -17,7 +17,10 @@ void bind_repository(nb::module_& /*m*/, RepositoryBinding& repository)
              "dl_repository"_a)
         .def("clear", &Repository::clear)
         .def("layer", &Repository::layer)
-        .def("get_dl_repository", [](Repository& self) -> auto& { return self.get_dl_repository(); }, nb::rv_policy::reference_internal);
+        .def(
+            "get_dl_repository",
+            [](Repository& self) -> auto& { return self.get<runir::kr::dl::ConstructorRepository>(); },
+            nb::rv_policy::reference_internal);
 }
 
 }  // namespace runir::kr::uns

@@ -16,7 +16,7 @@ EvaluationWorkspace& get_workspace(Builder& builder) noexcept { return builder.g
 tyr::datalog::database::Workspace& get_database_workspace(EvaluationWorkspace& workspace) noexcept { return workspace.get_database_workspace(); }
 
 const tyr::formalism::planning::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept
-{ return &repository.get_formalism_repository(); }
+{ return &repository.get<tyr::formalism::planning::Repository>(); }
 
 const urd::builder<RegisterValues, DenotationRepository>& empty_register_values() noexcept
 {

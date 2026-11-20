@@ -57,7 +57,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
     const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
@@ -65,7 +65,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
                                       *repository);
     const auto program = create_program(*repository, module_, { module_ });
 
-    auto classifier_dl_repository = task_context->domain_context->uns_repository->get_dl_repository_ptr();
+    auto classifier_dl_repository = task_context->domain_context->uns_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto classifier_repository = task_context->domain_context->uns_repository;
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
@@ -99,7 +99,7 @@ TEST(RunirTests, ExtFindSolutionRejectsNonterminatingPaperModules)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
 
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(task->get_domain().get_domain(), *repository);
@@ -120,7 +120,7 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
     const auto module_ = kr::ps::ext::dl::parse_module(
         read_fixture("kr/ps/ext/executor/ext_sketch_uses_only_immediate_outcomes_and_universal_preserves_parallel_edges/module.module"),
@@ -178,7 +178,7 @@ TEST(RunirTests, ExtFindSolutionRejectsCyclesBeforeInterningStates)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
     const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_reports_the_complete_three_state_cycle/module.module"),

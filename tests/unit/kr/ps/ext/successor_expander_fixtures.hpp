@@ -72,7 +72,7 @@ auto& built_registers(P& program_state)
 inline auto create_register(kr::ps::ext::Repository& repository, const std::string& name, ygg::uint_t identifier)
 {
     auto data = urd::data<kr::dl::Register<kr::dl::ConceptTag>>(name, kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(identifier));
-    return repository.get_dl_repository().insert(data).first;
+    return repository.template get<runir::kr::dl::ConstructorRepository>().insert(data).first;
 }
 
 template<typename FeatureTag, kr::dl::CategoryTag Category>
@@ -104,7 +104,7 @@ void expect_initial_program_state_uses_expander_repository()
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     auto task_context = create_task_context<Kind>(domain, task_file);
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->template get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
     const auto entry = create_memory_state(*repository, "entry");
     const auto module_ = create_module(*repository, "module", entry, { entry });

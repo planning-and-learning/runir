@@ -20,6 +20,7 @@
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
+#include <yggdrasil/formalism/nested.hpp>
 #include <yggdrasil/formalism/symbol_context.hpp>
 
 namespace runir::kr::ps
@@ -29,25 +30,25 @@ namespace runir::kr::ps
 /// state repository and its control repository (and, through it, the task's denotation and program repositories).
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
 class ExecutionRepository :
-    public ygg::formalism::SymbolContext<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>
+    public ygg::formalism::SymbolContext<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>,
+    public ygg::formalism::Nests<ExecutionRepository<Family, Kind>, ygg::formalism::Nested<tyr::planning::StateRepository<Kind>, ControlRepository<Family>>>
 {
     using Base = ygg::formalism::SymbolContext<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>;
+    using NestsBase =
+        ygg::formalism::Nests<ExecutionRepository<Family, Kind>, ygg::formalism::Nested<tyr::planning::StateRepository<Kind>, ControlRepository<Family>>>;
 
 private:
     std::size_t m_index;
-    tyr::planning::StateRepositoryPtr<Kind> m_state_repository;
-    ControlRepositoryPtr<Family> m_control_repository;
 
 public:
-    /// Over the task's state and control repositories. Numbered by ygg::next_layer(), the process-wide counter, so that
-    /// no two contexts share a number.
+    /// Over the task's state and control repositories (both interned into: a planning state built for a program state,
+    /// and through the control repository its records and the denotations). Numbered by ygg::next_layer(), the
+    /// process-wide counter, so that no two contexts share a number.
     ExecutionRepository(tyr::planning::StateRepositoryPtr<Kind> state_repository, ControlRepositoryPtr<Family> control_repository) :
-        m_index(ygg::next_layer()),
-        m_state_repository(std::move(state_repository)),
-        m_control_repository(std::move(control_repository))
+        Base(),
+        NestsBase(std::move(state_repository), std::move(control_repository)),
+        m_index(ygg::next_layer())
     {
-        assert(m_state_repository);
-        assert(m_control_repository);
     }
 
     ExecutionRepository(const ExecutionRepository&) = delete;
@@ -59,89 +60,15 @@ public:
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
 
-    [[nodiscard]] auto& get_state_repository() const noexcept { return *m_state_repository; }
-
-    [[nodiscard]] auto& get_control_repository() const noexcept { return *m_control_repository; }
-
-    [[nodiscard]] const auto& get_denotation_repository() const noexcept { return m_control_repository->get_denotation_repository(); }
-
-    [[nodiscard]] const auto& get_program_repository() const noexcept { return m_control_repository->get_program_repository(); }
-
-    [[nodiscard]] const auto& get_formalism_repository() const noexcept { return m_control_repository->get_formalism_repository(); }
-
-    using Base::view;
-
-    /// A program symbol, a denotation or a state as its view in the repository that holds it: so that urd resolves every
-    /// member of an execution record through this context (urd's resolves contract).
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<Repository<Family>, T>
-    [[nodiscard]] auto view(urd::index<T> index) const
-    { return get_program_repository().view(index); }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
-    [[nodiscard]] auto view(urd::index<T> index) const
-    { return get_denotation_repository().view(index); }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>
-    [[nodiscard]] auto view(urd::index<T> index) const
-    { return get_control_repository().view(index); }
-
-    [[nodiscard]] tyr::planning::PackedStateView<Kind> view(urd::index<tyr::planning::State<Kind>> index) const { return get_state_repository().view(index); }
-
-    /// A built child of an execution record (urd::child) as the view the repository that holds its kind makes of it, as
-    /// for an interned child: a program symbol's, a denotation's, a formalism record's (a register's values) or a state's.
-    template<typename T>
-    [[nodiscard]] auto view(const urd::builder<T, Repository<Family>>& built URD_LIFETIMEBOUND) const
-    { return urd::resolve(built, get_program_repository()); }
-
-    template<typename T>
-    [[nodiscard]] auto view(const urd::builder<T, runir::kr::dl::semantics::DenotationRepository>& built URD_LIFETIMEBOUND) const
-    { return urd::resolve(built, get_denotation_repository()); }
-
-    template<typename T>
-    [[nodiscard]] auto view(const urd::builder<T, ControlRepository<Family>>& built URD_LIFETIMEBOUND) const
-    { return urd::resolve(built, get_control_repository()); }
-
-    [[nodiscard]] tyr::planning::StateBuilderView<Kind>
-    view(const urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>& built URD_LIFETIMEBOUND) const
-    { return urd::resolve(built, get_state_repository()); }
-
     using Base::find;
     using Base::insert;
-
-    /// The records of an execution record's children that other repositories hold, interned there (the match-tree
-    /// rule): a control or a denotation repository's records in it (through the control repository), from a builder or
-    /// a record of its own, with scratch records from `storage`; a planning state built for a program state registered
-    /// in the state repository (its key).
-    template<typename T, typename C, ygg::formalism::IsBuilderStorage Storage>
-        requires(std::same_as<C, ControlRepository<Family>> || std::same_as<C, runir::kr::dl::semantics::DenotationRepository>)
-    decltype(auto) insert(const urd::builder<T, C>& built, Storage& storage)
-    { return m_control_repository->insert(built, storage); }
-
-    template<typename T>
-        requires(ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
-                 || ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>)
-    auto insert(urd::data<T>& record)
-    { return m_control_repository->insert(record); }
-
-    template<ygg::formalism::IsBuilderStorage Storage>
-    urd::index<tyr::planning::State<Kind>> insert(const urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>& built,
-                                                  Storage& /*storage*/)
-    { return m_state_repository->register_extended_state(urd::resolve(built, *m_state_repository)).pack().index(); }
-
-    /// Likewise for finding, inserting nothing (a built planning state is not looked up: its program state is not found).
-    template<typename T, typename C, ygg::formalism::IsBuilderStorage Storage>
-        requires(std::same_as<C, ControlRepository<Family>> || std::same_as<C, runir::kr::dl::semantics::DenotationRepository>)
-    auto find(const urd::builder<T, C>& built, Storage& storage)
-    { return m_control_repository->find(built, storage); }
-
-    template<typename T>
-        requires(ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
-                 || ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>)
-    auto find(const urd::data<T>& record)
-    { return m_control_repository->find(record); }
+    using Base::view;
+    using NestsBase::find;
+    using NestsBase::get;
+    using NestsBase::get_ptr;
+    using NestsBase::insert;
+    using NestsBase::repository_for;
+    using NestsBase::view;
 };
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>

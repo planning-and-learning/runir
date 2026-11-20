@@ -951,14 +951,14 @@ GenerateResultsFor generate(GrammarView grammar,
                             runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                             const GenerateOptions& options)
 {
-    const auto& planning_repository = output_repository.get_planning_repository_ptr();
+    const auto& planning_repository = output_repository.get_ptr<tyr::formalism::planning::Repository>();
     const auto root = [](const tyr::formalism::planning::Repository* layer)
     {
         while (layer->parent() != nullptr)
             layer = layer->parent();
         return layer;
     };
-    if (root(&grammar.context().get_planning_repository()) != root(planning_repository.get()))
+    if (root(&grammar.context().get<tyr::formalism::planning::Repository>()) != root(planning_repository.get()))
         throw std::invalid_argument("generate requires grammar and output repository for the same planning domain");
 
     for (const auto& state : states)
@@ -966,7 +966,7 @@ GenerateResultsFor generate(GrammarView grammar,
         const auto& task = state.context().get_task();
         if (task->get_repository() != planning_repository && task->get_domain().get_repository() != planning_repository)
             throw std::invalid_argument("generate requires states and output repository for the same planning domain");
-        if (task->get_repository().get() != &denotation_repository.get_formalism_repository())
+        if (task->get_repository().get() != &denotation_repository.get<tyr::formalism::planning::Repository>())
             throw std::invalid_argument("generate requires states and denotation repository for the same planning task");
     }
 

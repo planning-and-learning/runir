@@ -15,7 +15,7 @@ namespace runir::kr::dl::semantics
 template<typename V>
 concept RegisterValuesViewConcept =
     requires(const std::remove_reference_t<V>& values, RegisterIdentifier<ConceptTag> concept_id, RegisterIdentifier<RoleTag> role_id) {
-        { values.context().get_formalism_repository() } -> std::same_as<const tyr::formalism::planning::Repository&>;
+        { values.context().template get<tyr::formalism::planning::Repository>() } -> std::same_as<const tyr::formalism::planning::Repository&>;
         values.template values<ConceptTag>();
         values.template values<RoleTag>();
         { values.at(concept_id).has_value() } -> std::same_as<bool>;

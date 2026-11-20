@@ -44,8 +44,11 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
                    runir::kr::uns::Builder& builder,
                    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto context =
-        ConstructorContext { repository.get_dl_repository(), dl_builder, diagnostics, nullptr, LanguageCapabilities { "classifiers", false, false } };
+    const auto context = ConstructorContext { repository.get<runir::kr::dl::ConstructorRepository>(),
+                                              dl_builder,
+                                              diagnostics,
+                                              nullptr,
+                                              LanguageCapabilities { "classifiers", false, false } };
     const auto feature = parse_constructor(node.feature, domain, context);
     auto concrete_data =
         runir::kr::uns::checkout<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(builder);

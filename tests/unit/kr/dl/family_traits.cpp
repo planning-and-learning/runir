@@ -50,8 +50,13 @@ consteval bool execution_interning_contracts()
 {
     using ExtRepository = kr::ps::ExecutionRepository<kr::ExtFamilyTag, Kind>;
     using IcpRepository = kr::ps::ExecutionRepository<kr::IcpFamilyTag, Kind>;
+    // A program's module is found through the control repository, which nests the program repository read only: not
+    // interned through it.
     return InternsData<ExtRepository, kr::ps::ext::ProgramState<Kind>> && InternsData<IcpRepository, kr::ps::icp::ProgramState<Kind>>
-           && rejects_symbol<ExtRepository, kr::ps::ext::Module>() && rejects_symbol<IcpRepository, kr::ps::icp::Module>();
+           && !InternsData<ExtRepository, kr::ps::ext::Module>
+           && !InternsData<IcpRepository, kr::ps::icp::Module>&&
+                  requires(const ExtRepository& repository, const urd::data<kr::ps::ext::Module>& module)
+    { repository.find(module); };
 }
 
 static_assert(InternsData<kr::ps::ext::ControlRepository, kr::ps::ext::ModuleState>);

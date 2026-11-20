@@ -347,7 +347,9 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     auto persistent_caches = kr::dl::semantics::DenotationCaches {};
     auto static_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, persistent_caches, denotations, storage);
     const auto from = kr::dl::semantics::evaluate<tyr::LiftedTag>(
-        kr::ps::ext::dl::parse_concept(R"((c_or (c_nominal "a") (c_nominal "b")))", domain, *domain_context->ext_repository->get_dl_repository_ptr()),
+        kr::ps::ext::dl::parse_concept(R"((c_or (c_nominal "a") (c_nominal "b")))",
+                                       domain,
+                                       *domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>()),
         static_context);
     auto argument_data = urd::data<kr::dl::semantics::CallArguments>();
     argument_data.concept_arguments.push_back(from.index());

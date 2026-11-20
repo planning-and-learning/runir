@@ -200,7 +200,7 @@ auto intern_argument(Repository& repository, runir::kr::dl::Builder& builder, co
     auto data = runir::kr::dl::checkout<runir::kr::dl::Argument<Category>>(builder);
     data->name = argument.symbol.text;
     data->identifier = runir::kr::dl::ArgumentIdentifier<Category>(identifier);
-    return repository.get_dl_repository().insert(*data, builder).first;
+    return repository.get<runir::kr::dl::ConstructorRepository>().insert(*data, builder).first;
 }
 
 struct SignatureCounts
@@ -388,7 +388,7 @@ template<typename FeatureTag, typename Expression>
 auto intern_dl_feature(Repository& repository, runir::kr::ps::ext::Builder& builder, urd::index<Expression> constructor, const std::string& symbol)
 {
     auto concrete_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>(builder);
-    urd::store(concrete_data->feature, repository.get_dl_repository().view(constructor));
+    urd::store(concrete_data->feature, repository.get<runir::kr::dl::ConstructorRepository>().view(constructor));
     concrete_data->symbol = symbol;
     const auto concrete = intern(repository, builder, *concrete_data);
     auto feature_data = runir::kr::ps::ext::checkout<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>(builder);
@@ -660,12 +660,14 @@ auto parse_binding_rule(
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
         urd::store(data->feature, repository.view(require_feature(concept_features, rule.feature, diagnostics)));
-        urd::store(data->slot, repository.get_dl_repository().view(require_register(references.concept_registers.by_name, rule.slot, diagnostics)));
+        urd::store(data->slot,
+                   repository.get<runir::kr::dl::ConstructorRepository>().view(require_register(references.concept_registers.by_name, rule.slot, diagnostics)));
     }
     else
     {
         urd::store(data->feature, repository.view(require_feature(role_features, rule.feature, diagnostics)));
-        urd::store(data->slot, repository.get_dl_repository().view(require_register(references.role_registers.by_name, rule.slot, diagnostics)));
+        urd::store(data->slot,
+                   repository.get<runir::kr::dl::ConstructorRepository>().view(require_register(references.role_registers.by_name, rule.slot, diagnostics)));
     }
     return intern_rule_variant(repository, builder, *data, symbol);
 }
@@ -918,7 +920,7 @@ parse_concept(const std::string& description, tyr::formalism::planning::DomainVi
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto builder = runir::kr::dl::Builder {};
     const auto references = module_references(module);
-    return parse_concept(description, domain, repository.get_dl_repository(), builder, diagnostics, &references);
+    return parse_concept(description, domain, repository.get<runir::kr::dl::ConstructorRepository>(), builder, diagnostics, &references);
 }
 
 runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>
@@ -927,7 +929,7 @@ parse_role(const std::string& description, tyr::formalism::planning::DomainView 
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto builder = runir::kr::dl::Builder {};
     const auto references = module_references(module);
-    return parse_role(description, domain, repository.get_dl_repository(), builder, diagnostics, &references);
+    return parse_role(description, domain, repository.get<runir::kr::dl::ConstructorRepository>(), builder, diagnostics, &references);
 }
 
 runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>
@@ -936,7 +938,7 @@ parse_boolean(const std::string& description, tyr::formalism::planning::DomainVi
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto builder = runir::kr::dl::Builder {};
     const auto references = module_references(module);
-    return parse_boolean(description, domain, repository.get_dl_repository(), builder, diagnostics, &references);
+    return parse_boolean(description, domain, repository.get<runir::kr::dl::ConstructorRepository>(), builder, diagnostics, &references);
 }
 
 runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>
@@ -945,7 +947,7 @@ parse_numerical(const std::string& description, tyr::formalism::planning::Domain
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto builder = runir::kr::dl::Builder {};
     const auto references = module_references(module);
-    return parse_numerical(description, domain, repository.get_dl_repository(), builder, diagnostics, &references);
+    return parse_numerical(description, domain, repository.get<runir::kr::dl::ConstructorRepository>(), builder, diagnostics, &references);
 }
 
 namespace
@@ -998,7 +1000,7 @@ ModuleView lower_module(const ast::Module& ast,
                     auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(*builders.dl);
                     reg_data->name = concrete.symbol.text;
                     reg_data->identifier = runir::kr::dl::RegisterIdentifier<Category>(concept_register++);
-                    const auto interned = repository.get_dl_repository().insert(*reg_data, *builders.dl).first;
+                    const auto interned = repository.get<runir::kr::dl::ConstructorRepository>().insert(*reg_data, *builders.dl).first;
                     const auto index = interned.index();
                     urd::append(data->concept_registers, interned);
                     references.concept_registers.by_name.emplace(concrete.symbol.text, index);
@@ -1009,7 +1011,7 @@ ModuleView lower_module(const ast::Module& ast,
                     auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(*builders.dl);
                     reg_data->name = concrete.symbol.text;
                     reg_data->identifier = runir::kr::dl::RegisterIdentifier<Category>(role_register++);
-                    const auto interned = repository.get_dl_repository().insert(*reg_data, *builders.dl).first;
+                    const auto interned = repository.get<runir::kr::dl::ConstructorRepository>().insert(*reg_data, *builders.dl).first;
                     const auto index = interned.index();
                     urd::append(data->role_registers, interned);
                     references.role_registers.by_name.emplace(concrete.symbol.text, index);
@@ -1042,14 +1044,14 @@ ModuleView lower_module(const ast::Module& ast,
     auto section = runir::kr::parser::datalog::DatalogSection(ast.datalog ? &*ast.datalog : nullptr,
                                                               std::move(read_heads),
                                                               domain,
-                                                              repository.get_dl_repository(),
+                                                              repository.get<runir::kr::dl::ConstructorRepository>(),
                                                               *builders.dl,
                                                               resolver,
                                                               references,
                                                               diagnostics);
     references.features = &resolver;
     references.datalog = &section;
-    const auto context = ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, &references };
+    const auto context = ConstructorContext { repository.get<runir::kr::dl::ConstructorRepository>(), *builders.dl, diagnostics, &references };
     for (const auto& feature : ast.features)
         boost::apply_visitor(
             [&]<typename Concrete>(const Concrete& concrete)

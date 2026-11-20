@@ -65,8 +65,9 @@ RecordView<Family, RepositoryTypes, T> optimize(RecordView<Family, RepositoryTyp
 {
     if (&object.context() != &repository)
         throw std::invalid_argument("optimize: the object belongs to another repository.");
-    auto optimizer =
-        RecordOptimizer<Family, RepositoryTypes, FeatureOptimizer<Family>>(repository, FeatureOptimizer<Family>(repository.get_dl_repository(), statistics));
+    auto optimizer = RecordOptimizer<Family, RepositoryTypes, FeatureOptimizer<Family>>(
+        repository,
+        FeatureOptimizer<Family>(repository.template get<runir::kr::dl::ConstructorRepository>(), statistics));
     return optimizer.template optimize<T>(object);
 }
 

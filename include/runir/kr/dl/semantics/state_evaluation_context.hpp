@@ -97,7 +97,7 @@ private:
             throw std::invalid_argument("Evaluation requires arguments for the same planning task.");
         if (&urd::visit_view(m_registers,
                              [](const auto& registers) -> const tyr::formalism::planning::Repository&
-                             { return registers.context().get_formalism_repository(); })
+                             { return registers.context().template get<tyr::formalism::planning::Repository>(); })
             != repository)
             throw std::invalid_argument("Evaluation requires registers for the same planning task.");
     }
@@ -120,7 +120,7 @@ private:
         m_registers(registers),
         m_arguments(arguments)
     {
-        if (storage.get_denotation_repository(false).get_formalism_repository_ptr() != m_state.get_formalism_repository())
+        if (storage.get_denotation_repository(false).template get_ptr<tyr::formalism::planning::Repository>() != m_state.get_formalism_repository())
             throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
     }
 

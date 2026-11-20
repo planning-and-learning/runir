@@ -21,17 +21,21 @@
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/index_sequence.hpp>
 #include <yggdrasil/formalism/interning.hpp>
+#include <yggdrasil/formalism/nested.hpp>
 #include <yggdrasil/formalism/symbol_context.hpp>
 
 namespace runir::kr::dl::semantics
 {
 
-class DenotationRepository : public ygg::formalism::SymbolContext<DenotationRepository, DenotationRecordTypes>
+/// Denotations, over the planning repository whose objects they range over (nested, read only).
+class DenotationRepository :
+    public ygg::formalism::SymbolContext<DenotationRepository, DenotationRecordTypes>,
+    public ygg::formalism::Nests<DenotationRepository, ygg::formalism::Nested<const tyr::formalism::planning::Repository>>
 {
     using Base = ygg::formalism::SymbolContext<DenotationRepository, DenotationRecordTypes>;
+    using NestsBase = ygg::formalism::Nests<DenotationRepository, ygg::formalism::Nested<const tyr::formalism::planning::Repository>>;
 
     ygg::FreeRelationRepository m_relation_repository;
-    std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
     size_t m_index;
 
 public:
@@ -48,15 +52,6 @@ public:
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
 
-    [[nodiscard]] const tyr::formalism::planning::Repository& get_formalism_repository() const noexcept
-    {
-        assert(m_formalism_repository);
-        // Dereference the raw pointer: operator* on the shared_ptr would complete the repository type for its lookup.
-        return *m_formalism_repository.get();
-    }
-
-    [[nodiscard]] const auto& get_formalism_repository_ptr() const noexcept { return m_formalism_repository; }
-
     /// Clears the denotations together with the relation repository they refer to.
     void reset() noexcept
     {
@@ -64,14 +59,15 @@ public:
         m_relation_repository.clear();
     }
 
+    using Base::find;
+    using Base::insert;
     using Base::view;
-
-    /// A planning symbol (an object) as its view in the formalism repository, which holds it: so that urd resolves
-    /// every member of a register record through this context.
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<tyr::formalism::planning::Repository, T>
-    [[nodiscard]] urd::index_view<T, tyr::formalism::planning::Repository> view(urd::index<T> index) const
-    { return get_formalism_repository().view(index); }
+    using NestsBase::find;
+    using NestsBase::get;
+    using NestsBase::get_ptr;
+    using NestsBase::insert;
+    using NestsBase::repository_for;
+    using NestsBase::view;
 
     [[nodiscard]] const auto& get_relation_repository() const noexcept { return m_relation_repository; }
 

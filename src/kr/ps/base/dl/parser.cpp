@@ -60,8 +60,10 @@ auto parse_feature(
     urd::builder<runir::kr::ps::base::Sketch, runir::kr::ps::base::Repository>& sketch_data,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto constructor =
-        parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
+    const auto constructor = parse_constructor(
+        node.feature,
+        domain,
+        ConstructorContext { repository.get<runir::kr::dl::ConstructorRepository>(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(*builders.ps);
     urd::store(concrete_data->feature, constructor);
@@ -85,8 +87,10 @@ auto parse_feature(
     urd::builder<runir::kr::ps::base::Sketch, runir::kr::ps::base::Repository>& sketch_data,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto constructor =
-        parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
+    const auto constructor = parse_constructor(
+        node.feature,
+        domain,
+        ConstructorContext { repository.get<runir::kr::dl::ConstructorRepository>(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(*builders.ps);
     urd::store(concrete_data->feature, constructor);

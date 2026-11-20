@@ -97,7 +97,7 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationDoesNotRetainTaskDenotations)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
     const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_distance_feature_evaluation_reuses_task_context_cache/distance.module"),
@@ -290,7 +290,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
 
     const auto source = create_memory_state(*repository, "source");
@@ -383,7 +383,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
 
     const auto module_ =
@@ -486,7 +486,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
 
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
@@ -627,7 +627,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
 
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
@@ -671,7 +671,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
 
     const auto source = create_memory_state(*repository, "source");
@@ -752,7 +752,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
 
     const auto module_ =
@@ -785,7 +785,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->ext_repository;
 
     const auto source = create_memory_state(*repository, "source");
@@ -893,7 +893,8 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
 {
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto context = create_task_context<tyr::GroundTag>(directory / "domain.pddl", directory / "task.pddl");
-    const auto foreign_repository = std::make_shared<kr::ps::ext::Repository>(context->domain_context->ext_repository->get_dl_repository_ptr());
+    const auto foreign_repository =
+        std::make_shared<kr::ps::ext::Repository>(context->domain_context->ext_repository->get_ptr<runir::kr::dl::ConstructorRepository>());
     const auto make_module = [&](kr::ps::ext::Repository& repository, const char* target)
     {
         return kr::ps::ext::dl::parse_module(fmt::format(R"((:module (:symbol policy) (:arguments) (:registers)

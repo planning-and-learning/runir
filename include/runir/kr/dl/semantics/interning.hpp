@@ -107,7 +107,7 @@ template<RegisterValuesViewConcept R>
 {
     auto& repository = context.repository();
     auto& builder = context.builder();
-    if (&source.context().get_formalism_repository() != &repository.get_formalism_repository())
+    if (&source.context().template get<tyr::formalism::planning::Repository>() != &repository.template get<tyr::formalism::planning::Repository>())
         throw std::invalid_argument("Register copying requires the same formalism repository.");
     auto data = builder.template scratch<RegisterValues>();
     assign(*data, source);
@@ -131,7 +131,7 @@ template<CategoryTag Category>
     if (&source.context() == &repository)
         return { source, false };
     if constexpr (ConceptOrRoleTag<Category>)
-        if (source.context().get_formalism_repository_ptr() != repository.get_formalism_repository_ptr())
+        if (source.context().template get_ptr<tyr::formalism::planning::Repository>() != repository.template get_ptr<tyr::formalism::planning::Repository>())
             throw std::invalid_argument("Denotation copying requires the same formalism repository.");
     auto copied = builder.template get_builder<Denotation<Category>>();
     assign(*copied, source, builder.records());

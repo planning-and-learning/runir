@@ -79,7 +79,7 @@ struct BaseFeatureStorage
 {
     const BaseCustomRepository* repository;
 
-    [[nodiscard]] const auto& get_dl_repository() const { return repository->get_dl_repository(); }
+    [[nodiscard]] const auto& get_dl_repository() const { return repository->get<runir::kr::dl::ConstructorRepository>(); }
 
     [[nodiscard]] std::size_t layer() const { return repository->layer(); }
 

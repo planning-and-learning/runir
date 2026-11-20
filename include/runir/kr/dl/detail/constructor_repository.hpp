@@ -11,18 +11,22 @@
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
 #include <utility>
+#include <yggdrasil/formalism/nested.hpp>
 #include <yggdrasil/formalism/symbol_context.hpp>
 
 namespace runir::kr::dl::detail
 {
 
+/// Constructors, over the planning repository whose symbols their records refer to (nested, read only).
 template<typename RepositoryTypes>
-class BasicConstructorRepository : public ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>
+class BasicConstructorRepository :
+    public ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>,
+    public ygg::formalism::Nests<BasicConstructorRepository<RepositoryTypes>, ygg::formalism::Nested<const tyr::formalism::planning::Repository>>
 {
     using Base = ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>;
+    using NestsBase = ygg::formalism::Nests<BasicConstructorRepository<RepositoryTypes>, ygg::formalism::Nested<const tyr::formalism::planning::Repository>>;
 
 private:
-    std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
     /// The rules of the repository's DatalogPrograms.
     std::unique_ptr<tyr::datalog::database::datalog::DatalogRepository> m_datalog_repository;
     size_t m_index;
@@ -31,13 +35,11 @@ public:
     /// Over the planning repository whose symbols its records refer to. Numbered by ygg::next_layer(), the process-wide
     /// counter, so that no two contexts share a number.
     explicit BasicConstructorRepository(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
-        m_planning_repository(std::move(planning_repository)),
+        Base(),
+        NestsBase(std::move(planning_repository)),
         m_datalog_repository(std::make_unique<tyr::datalog::database::datalog::DatalogRepository>()),
         m_index(ygg::next_layer())
-    {
-        assert(m_planning_repository);
-        this->clear();
-    }
+    { this->clear(); }
 
     BasicConstructorRepository(const BasicConstructorRepository&) = delete;
     BasicConstructorRepository& operator=(const BasicConstructorRepository&) = delete;
@@ -48,27 +50,19 @@ public:
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
 
-    [[nodiscard]] const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
-    {
-        assert(m_planning_repository);
-        // Dereference the raw pointer: operator* on the shared_ptr would complete the repository type for its lookup.
-        return *m_planning_repository.get();
-    }
-
     [[nodiscard]] const tyr::datalog::database::datalog::DatalogRepository& get_datalog_repository() const noexcept { return *m_datalog_repository; }
 
     [[nodiscard]] tyr::datalog::database::datalog::DatalogRepository& get_datalog_repository() noexcept { return *m_datalog_repository; }
 
-    [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
-
+    using Base::find;
+    using Base::insert;
     using Base::view;
-
-    /// A planning symbol (a predicate, an object) as its view in the planning repository, which holds it: so that urd
-    /// resolves every member of a record through this context (urd's resolves contract).
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<tyr::formalism::planning::Repository, T>
-    [[nodiscard]] urd::index_view<T, tyr::formalism::planning::Repository> view(urd::index<T> index) const
-    { return get_planning_repository().view(index); }
+    using NestsBase::find;
+    using NestsBase::get;
+    using NestsBase::get_ptr;
+    using NestsBase::insert;
+    using NestsBase::repository_for;
+    using NestsBase::view;
 };
 
 template<typename RepositoryTypes>

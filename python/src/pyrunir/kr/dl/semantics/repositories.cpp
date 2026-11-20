@@ -67,7 +67,7 @@ void bind_semantics_repositories(nb::module_& m)
                            .def(
                                "get_object",
                                [](const DenotationRepository& self, urd::index<tyr::formalism::Object> index) -> tyr::formalism::planning::ObjectView
-                               { return self.get_formalism_repository().view(index); },
+                               { return self.get<tyr::formalism::planning::Repository>().view(index); },
                                nb::arg("index"));
     ygg::bind_insert<semantics::CallArguments>(denotations);
     ygg::bind_insert<semantics::RegisterValues>(denotations);

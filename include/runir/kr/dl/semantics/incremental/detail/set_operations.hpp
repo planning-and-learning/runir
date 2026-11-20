@@ -352,7 +352,7 @@ inline void update_set(RestrictionTag,
                   role,
                   concept_,
                   workspace,
-                  [&](auto source, auto row) { output.update_row(source, row, role.context().get_formalism_repository()); });
+                  [&](auto source, auto row) { output.update_row(source, row, role.context().template get<tyr::formalism::planning::Repository>()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -386,7 +386,7 @@ void update_set(Tag,
                   role,
                   concept_,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.context().get_formalism_repository()); });
+                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::planning::Repository>()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -417,7 +417,7 @@ void update_set(Tag,
                   role,
                   threshold,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.context().get_formalism_repository()); });
+                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::planning::Repository>()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -454,7 +454,7 @@ void update_set(Tag,
                   concept_,
                   threshold,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.context().get_formalism_repository()); });
+                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::planning::Repository>()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -484,7 +484,11 @@ void update_set(Tag,
     workspace.clear_rows();
     mark_sources(workspace, lhs_delta);
     mark_sources(workspace, rhs_delta);
-    evaluate_rows(Tag {}, lhs, rhs, workspace, [&](auto source, bool present) { output.set(source, present, lhs.context().get_formalism_repository()); });
+    evaluate_rows(Tag {},
+                  lhs,
+                  rhs,
+                  workspace,
+                  [&](auto source, bool present) { output.set(source, present, lhs.context().template get<tyr::formalism::planning::Repository>()); });
 }
 
 template<typename Objects>
@@ -521,7 +525,7 @@ void update_set(RoleFillersTag,
                   role,
                   fillers,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.context().get_formalism_repository()); });
+                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::planning::Repository>()); });
 }
 
 inline void initialize_set(CompositionTag,
@@ -554,7 +558,7 @@ inline void update_set(CompositionTag,
                   lhs,
                   rhs,
                   workspace,
-                  [&](auto source, auto row) { output.update_row(source, row, lhs.context().get_formalism_repository()); });
+                  [&](auto source, auto row) { output.update_row(source, row, lhs.context().template get<tyr::formalism::planning::Repository>()); });
 }
 
 template<BaseRoleConstructorTag Tag>
@@ -585,7 +589,7 @@ void update_set(Tag,
                   output.get_builder(),
                   role,
                   workspace,
-                  [&](auto source, auto row) { output.update_row(source, row, role.context().get_formalism_repository()); });
+                  [&](auto source, auto row) { output.update_row(source, row, role.context().template get<tyr::formalism::planning::Repository>()); });
 }
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

@@ -71,7 +71,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_THROW(kr::TaskContext<tyr::GroundTag>::create(task_context->domain_context, datasets::TaskSearchContextPtr<tyr::GroundTag> {}),
                      std::invalid_argument);
         EXPECT_THROW(kr::TaskContext<tyr::GroundTag>::create(kr::DomainContextPtr {}, context), std::invalid_argument);
-        auto dl_repository = task_context->domain_context->base_repository->get_dl_repository_ptr();
+        auto dl_repository = task_context->domain_context->base_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
         auto repository = task_context->domain_context->base_repository;
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, task->get_domain().get_domain(), *repository);
         const auto* dl_builder = &task_context->dl_builder;
@@ -123,7 +123,8 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_EQ(dl_denotation_repository, task_context->dl_denotation_repository.get());
         // Evaluation owns reusable result storage; the task repository remains durable.
         EXPECT_NE(dl_denotation_repository, &dl_context.get_denotation_repository());
-        EXPECT_EQ(dl_denotation_repository->get_formalism_repository_ptr(), dl_context.get_denotation_repository().get_formalism_repository_ptr());
+        EXPECT_EQ(dl_denotation_repository->get_ptr<tyr::formalism::planning::Repository>(),
+                  dl_context.get_denotation_repository().get_ptr<tyr::formalism::planning::Repository>());
         EXPECT_EQ(&dl_context.get_caches(), &expander.get_environment().get_dl_caches());
     }
 }
@@ -157,7 +158,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->domain_context->base_repository->get_dl_repository_ptr();
+    auto dl_repository = task_context->domain_context->base_repository->get_ptr<runir::kr::dl::ConstructorRepository>();
     auto repository = task_context->domain_context->base_repository;
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"), task->get_domain().get_domain(), *repository);
 
