@@ -55,6 +55,7 @@ brokkr_unity_directories(
     DIRECTORIES
         pyrunir/datasets
         pyrunir/kr
+        pyrunir/kr/database/syntax
         pyrunir/kr/dl
         pyrunir/kr/dl/cnf_grammar
         pyrunir/kr/dl/grammar
@@ -112,6 +113,7 @@ brokkr_install_python_files(
         pyrunir/py.typed
         pyrunir/datasets/__init__.py
         pyrunir/kr/__init__.py
+        pyrunir/kr/database/__init__.py
         pyrunir/kr/dl/__init__.py
         pyrunir/kr/dl/semantics/__init__.py
         pyrunir/kr/dl/grammar/__init__.py

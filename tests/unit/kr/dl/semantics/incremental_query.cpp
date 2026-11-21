@@ -11,6 +11,8 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <ranges>
+#include <runir/kr/database/semantics/incremental/projection.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
@@ -23,8 +25,6 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
-#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
@@ -124,13 +124,13 @@ void check_atomic_projection()
     auto ready_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
         layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(ready.get_variant()));
-    auto triple_projection = tyr::datalog::database::incremental::ProjectionEvaluator(
+    auto triple_projection = runir::kr::database::incremental::ProjectionEvaluator(
         layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_triple.get_variant()).get_plan());
-    auto copied_projection = tyr::datalog::database::incremental::ProjectionEvaluator(
+    auto copied_projection = runir::kr::database::incremental::ProjectionEvaluator(
         layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).get_plan());
-    auto workspace = tyr::datalog::database::Workspace {};
+    auto workspace = runir::kr::database::Workspace {};
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
@@ -268,7 +268,7 @@ void check_query_graph()
     auto deltas = urd::Store<urd::sequence<kr::dl::semantics::incremental::Delta>>(4);
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers, nodes[i + 1].get_state(), registers);
-    auto workspace = tyr::datalog::database::Workspace {};
+    auto workspace = runir::kr::database::Workspace {};
     const auto empty_delta = kr::dl::semantics::incremental::Delta {};
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto copied = std::string(R"((q_atomic_state "copied" (x y z)))");

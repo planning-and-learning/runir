@@ -6,14 +6,14 @@
 #include <algorithm>
 #include <concepts>
 #include <ranges>
+#include <runir/kr/database/datalog/view.hpp>
+#include <runir/kr/database/semantics/distance.hpp>
+#include <runir/kr/database/semantics/generic_join.hpp>
+#include <runir/kr/database/semantics/plans.hpp>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <tyr/datalog/lifted/database/datalog/view.hpp>
-#include <tyr/datalog/lifted/database/semantics/distance.hpp>
-#include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
-#include <tyr/datalog/lifted/database/semantics/plans.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -74,7 +74,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     {
         const auto lhs = schema_of(urd::resolve(data.left_operand, repository));
         const auto rhs = schema_of(urd::resolve(data.right_operand, repository));
-        data.plan = tyr::datalog::database::JoinPlan(lhs, rhs);
+        data.plan = runir::kr::database::JoinPlan(lhs, rhs);
         data.columns.clear();
         data.columns.reserve(data.plan.output_columns().size());
         for (const auto column : data.plan.output_columns())
@@ -83,7 +83,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto arg = schema_of(urd::resolve(data.operand, repository));
-        data.plan = tyr::datalog::database::ProjectionPlan(arg, query_labels(data.columns));
+        data.plan = runir::kr::database::ProjectionPlan(arg, query_labels(data.columns));
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
@@ -101,7 +101,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         }
         require_generic_join_order("variable order", data.variable_order, input_columns, repository);
         require_generic_join_order("output order", data.output_order, input_columns, repository);
-        data.plan = tyr::datalog::database::GenericJoinPlan(inputs, query_labels(data.variable_order), query_labels(data.output_order));
+        data.plan = runir::kr::database::GenericJoinPlan(inputs, query_labels(data.variable_order), query_labels(data.output_order));
         data.columns = data.output_order;
     }
     else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
@@ -111,22 +111,22 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         if (!std::ranges::equal(lhs, rhs))
             throw std::invalid_argument("Query: union and difference require identical ordered columns.");
         data.columns = get_query_columns(data.left_operand, repository);
-        data.plan = tyr::datalog::database::SetPlan(lhs, rhs);
+        data.plan = runir::kr::database::SetPlan(lhs, rhs);
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         data.columns = get_query_columns(data.operand, repository);
-        data.plan = tyr::datalog::database::SelectEqualPlan(schema_of(urd::resolve(data.operand, repository)),
-                                                            urd::index<ygg::Column>(data.left_column.value),
-                                                            urd::index<ygg::Column>(data.right_column.value));
+        data.plan = runir::kr::database::SelectEqualPlan(schema_of(urd::resolve(data.operand, repository)),
+                                                         urd::index<ygg::Column>(data.left_column.value),
+                                                         urd::index<ygg::Column>(data.right_column.value));
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         data.columns = get_query_columns(data.operand, repository);
-        data.plan = tyr::datalog::database::SelectValuePlan(schema_of(urd::resolve(data.operand, repository)),
-                                                            urd::index<ygg::Column>(data.column.value),
-                                                            ygg::type_id<urd::index<tyr::formalism::Object>>,
-                                                            ygg::encode_value(data.object));
+        data.plan = runir::kr::database::SelectValuePlan(schema_of(urd::resolve(data.operand, repository)),
+                                                         urd::index<ygg::Column>(data.column.value),
+                                                         ygg::type_id<urd::index<tyr::formalism::Object>>,
+                                                         ygg::encode_value(data.object));
     }
     else
     {
@@ -139,8 +139,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         else if constexpr (std::same_as<Tag, QueryBooleanTag> || std::same_as<Tag, QueryNumericalTag>)
             require_query_arity(arity, std::same_as<Tag, QueryBooleanTag> ? 0 : 1);
         else if constexpr (std::same_as<Tag, QueryHeadTag>)
-            require_query_arity(arity,
-                                repository.get_datalog_repository().view(urd::index<tyr::datalog::database::datalog::Relation>(data.relation)).get_arity());
+            require_query_arity(arity, repository.get_datalog_repository().view(urd::index<runir::kr::database::datalog::Relation>(data.relation)).get_arity());
         else if constexpr (std::same_as<Tag, QueryRenameTag>)
             require_query_arity(arity, schema_of(urd::resolve(data.operand, repository)).size());
     }
@@ -155,7 +154,7 @@ void prepare(urd::data<QueryProjection<Category>>& data, const Repository& repos
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
     const auto arg = schema_of(urd::resolve(data.operand, repository));
-    data.plan = tyr::datalog::database::ProjectionPlan(arg, query_labels(data.columns));
+    data.plan = runir::kr::database::ProjectionPlan(arg, query_labels(data.columns));
 }
 
 /// The distance plan's output column; interned query column labels never reach the maximum.

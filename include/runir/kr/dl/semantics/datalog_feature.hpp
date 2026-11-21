@@ -5,8 +5,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <runir/kr/database/datalog/evaluator.hpp>
 #include <stdexcept>
-#include <tyr/datalog/lifted/database/datalog/evaluator.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -16,12 +16,12 @@ namespace runir::kr::dl::semantics
 /// A program's evaluator in full evaluation, over the heads that features read; `generation` counts its evaluations.
 struct DatalogFeature
 {
-    tyr::datalog::database::datalog::Evaluator evaluator;
-    urd::Store<urd::sequence<urd::index<tyr::datalog::database::datalog::Relation>>> heads;
+    runir::kr::database::datalog::Evaluator evaluator;
+    urd::Store<urd::sequence<urd::index<runir::kr::database::datalog::Relation>>> heads;
     uint64_t generation = 0;
 
     /// The output of a head relation.
-    [[nodiscard]] size_t output(urd::index<tyr::datalog::database::datalog::Relation> relation) const
+    [[nodiscard]] size_t output(urd::index<runir::kr::database::datalog::Relation> relation) const
     {
         const auto it = std::ranges::find(heads, relation);
         if (it == heads.end())
@@ -33,9 +33,9 @@ struct DatalogFeature
 /// The heads that features read, the evaluator's outputs. The repository is a template parameter so that the body is
 /// checked once it is complete.
 template<typename C>
-urd::Store<urd::sequence<tyr::datalog::database::datalog::RelationView>> program_heads(urd::index_view<DatalogProgram, C> program)
+urd::Store<urd::sequence<runir::kr::database::datalog::RelationView>> program_heads(urd::index_view<DatalogProgram, C> program)
 {
-    auto heads = urd::Store<urd::sequence<tyr::datalog::database::datalog::RelationView>>();
+    auto heads = urd::Store<urd::sequence<runir::kr::database::datalog::RelationView>>();
     for (const auto head : program.get_outputs())
         heads.push_back(head);
     return heads;
@@ -59,7 +59,7 @@ DatalogFeature make_datalog_feature(ygg::FreeScratchRelations& scratch, urd::ind
 {
     const auto heads = program_heads(program);
     const auto slots = static_slots(program);
-    auto feature = DatalogFeature { tyr::datalog::database::datalog::Evaluator(scratch, program.get_program(), heads, slots), {}, 0 };
+    auto feature = DatalogFeature { runir::kr::database::datalog::Evaluator(scratch, program.get_program(), heads, slots), {}, 0 };
     for (const auto head : heads)
         feature.heads.push_back(head.index());
     return feature;

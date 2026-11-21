@@ -13,8 +13,8 @@
 #include <concepts>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <runir/kr/database/syntax/formatter.hpp>
 #include <string_view>
-#include <tyr/datalog/lifted/database/syntax/formatter.hpp>
 #include <tyr/formalism/planning/formatter.hpp>
 #include <urd/format.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>

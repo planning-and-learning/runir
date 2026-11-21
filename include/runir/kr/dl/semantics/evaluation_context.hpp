@@ -4,7 +4,7 @@
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
-#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
+#include <runir/kr/database/semantics/relation_view.hpp>
 
 namespace runir::kr::dl::semantics
 {

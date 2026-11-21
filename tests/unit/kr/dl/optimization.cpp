@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <ranges>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/optimization.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -16,7 +17,6 @@
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <urd/repr/sequences/sequence.hpp>

@@ -42,7 +42,7 @@ struct RegisterEvaluator
         }
     }
 
-    void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, runir::kr::database::Workspace&)
     {
         if constexpr (std::same_as<Category, ConceptTag>)
             update_values(delta.added.concept_registers, delta.removed.concept_registers);

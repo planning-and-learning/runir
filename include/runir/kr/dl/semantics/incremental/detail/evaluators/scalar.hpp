@@ -38,7 +38,7 @@ struct ScalarBinaryEvaluator
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { refresh(graph); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { refresh(graph); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&) { refresh(graph); }
 };
 
 template<tyr::TaskKind Kind>
@@ -53,7 +53,7 @@ struct LogicalNotEvaluator
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { value.set(!graph.result(child).get_value()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { value.set(!graph.result(child).get_value()); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&) { value.set(!graph.result(child).get_value()); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

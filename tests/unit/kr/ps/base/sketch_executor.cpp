@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 #include <ranges>
 #include <runir/datasets/state_graph.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/base/detail/successor_expander_impl.hpp>
@@ -16,7 +17,6 @@
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/axiom_evaluator.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>

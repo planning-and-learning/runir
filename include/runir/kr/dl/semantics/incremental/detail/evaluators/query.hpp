@@ -12,10 +12,10 @@
 #include <cstddef>
 #include <optional>
 #include <ranges>
+#include <runir/kr/database/semantics/incremental/generic_join.hpp>
+#include <runir/kr/database/semantics/incremental/query.hpp>
 #include <span>
 #include <tuple>
-#include <tyr/datalog/lifted/database/semantics/incremental/generic_join.hpp>
-#include <tyr/datalog/lifted/database/semantics/incremental/query.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -27,9 +27,9 @@ namespace runir::kr::dl::semantics::incremental::detail
 using ObjectIndex = urd::index<tyr::formalism::Object>;
 
 /// A maintained query result with the last update's exact delta.
-struct QueryValue : tyr::datalog::database::incremental::detail::QueryValue
+struct QueryValue : runir::kr::database::incremental::detail::QueryValue
 {
-    using tyr::datalog::database::incremental::detail::QueryValue::QueryValue;
+    using runir::kr::database::incremental::detail::QueryValue::QueryValue;
 
     ygg::FreeScratchRelation& clear()
     {
@@ -62,7 +62,7 @@ struct QueryStaticEvaluator : QueryValue
         this->delta.clear();
     }
 
-    void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
+    void update(EvaluationGraph<Kind>&, const Delta&, runir::kr::database::Workspace&) {}
 };
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact>
@@ -74,7 +74,7 @@ struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     { AtomicQueryEvaluator<Fact>::template initialize<Kind>(context.get_state()); }
 
-    void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, runir::kr::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
             AtomicQueryEvaluator<Fact>::update(delta.added.fluent_atoms, delta.removed.fluent_atoms);
@@ -84,32 +84,32 @@ struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
 };
 
 template<tyr::TaskKind Kind>
-struct QueryProjectionEvaluator : tyr::datalog::database::incremental::ProjectionEvaluator
+struct QueryProjectionEvaluator : runir::kr::database::incremental::ProjectionEvaluator
 {
     QueryEvaluationIndex argument;
 
-    QueryProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex argument_, const tyr::datalog::database::ProjectionPlan& plan) :
-        tyr::datalog::database::incremental::ProjectionEvaluator(scratch, plan),
+    QueryProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex argument_, const runir::kr::database::ProjectionPlan& plan) :
+        runir::kr::database::incremental::ProjectionEvaluator(scratch, plan),
         argument(argument_)
     {
     }
 
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
-    { tyr::datalog::database::incremental::ProjectionEvaluator::initialize(graph.result(argument), context.get_workspace().get_database_workspace()); }
+    { runir::kr::database::incremental::ProjectionEvaluator::initialize(graph.result(argument), context.get_workspace().get_database_workspace()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
-    { tyr::datalog::database::incremental::ProjectionEvaluator::update(graph.change(argument).change(), workspace); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace& workspace)
+    { runir::kr::database::incremental::ProjectionEvaluator::update(graph.change(argument).change(), workspace); }
 };
 
 template<tyr::TaskKind Kind>
-struct QueryJoinEvaluator : tyr::datalog::database::incremental::JoinEvaluator
+struct QueryJoinEvaluator : runir::kr::database::incremental::JoinEvaluator
 {
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QueryJoinEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, const tyr::datalog::database::JoinPlan& plan) :
-        tyr::datalog::database::incremental::JoinEvaluator(scratch, plan),
+    QueryJoinEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, const runir::kr::database::JoinPlan& plan) :
+        runir::kr::database::incremental::JoinEvaluator(scratch, plan),
         lhs(lhs_),
         rhs(rhs_)
     {
@@ -117,21 +117,21 @@ struct QueryJoinEvaluator : tyr::datalog::database::incremental::JoinEvaluator
 
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
-    { tyr::datalog::database::incremental::JoinEvaluator::initialize(graph.result(lhs), graph.result(rhs), context.get_workspace().get_database_workspace()); }
+    { runir::kr::database::incremental::JoinEvaluator::initialize(graph.result(lhs), graph.result(rhs), context.get_workspace().get_database_workspace()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
-    { tyr::datalog::database::incremental::JoinEvaluator::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace& workspace)
+    { runir::kr::database::incremental::JoinEvaluator::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace); }
 };
 
 template<tyr::TaskKind Kind>
-struct QueryGenericJoinEvaluator : tyr::datalog::database::incremental::GenericJoinEvaluator
+struct QueryGenericJoinEvaluator : runir::kr::database::incremental::GenericJoinEvaluator
 {
     urd::Store<urd::sequence<QueryEvaluationIndex>> args;
 
     QueryGenericJoinEvaluator(ygg::FreeScratchRelations& scratch,
                               urd::Store<urd::sequence<QueryEvaluationIndex>> args_,
-                              const tyr::datalog::database::GenericJoinPlan& plan) :
-        tyr::datalog::database::incremental::GenericJoinEvaluator(scratch, plan),
+                              const runir::kr::database::GenericJoinPlan& plan) :
+        runir::kr::database::incremental::GenericJoinEvaluator(scratch, plan),
         args(std::move(args_))
     {
     }
@@ -139,13 +139,13 @@ struct QueryGenericJoinEvaluator : tyr::datalog::database::incremental::GenericJ
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
-        tyr::datalog::database::incremental::GenericJoinEvaluator::initialize(
+        runir::kr::database::incremental::GenericJoinEvaluator::initialize(
             args | std::views::transform([&](QueryEvaluationIndex arg) { return graph.result(arg); }));
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
-        tyr::datalog::database::incremental::GenericJoinEvaluator::update(
+        runir::kr::database::incremental::GenericJoinEvaluator::update(
             args | std::views::transform([&](QueryEvaluationIndex arg) { return graph.change(arg).change(); }));
     }
 };
@@ -177,7 +177,7 @@ struct QueryFromDenotationEvaluator : QueryValue
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { semantics::detail::insert_denotation_rows<Category>(graph.result(argument), this->clear()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         this->delta.clear();
         const auto& child_delta = graph.change(argument);
@@ -229,7 +229,7 @@ struct QueryFromScalarEvaluator : QueryValue
         this->delta.clear();
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         this->delta.clear();
         const auto next = read(graph);
@@ -294,7 +294,7 @@ struct QuerySetCombinationEvaluator : QueryValue
             evaluate_rows(graph, graph.result(rhs), emit);
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         this->delta.clear();
         const auto [left_added, left_removed] = graph.change(lhs).change();
@@ -349,7 +349,7 @@ struct QuerySelectionEvaluator : QueryValue
         evaluate_rows(graph.result(argument), [&output](auto row) { ygg::with_values(row, [&output](const auto& values) { output.insert(values); }); });
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         this->delta.clear();
         const auto [added, removed] = graph.change(argument).change();

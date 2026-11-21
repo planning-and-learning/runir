@@ -40,7 +40,7 @@ template<ConceptOrRoleTag Category>
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
-const tyr::datalog::database::incremental::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
+const runir::kr::database::incremental::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
@@ -129,7 +129,7 @@ QueryEvaluationIndex EvaluationGraph<Kind>::prepare(QueryView<> expression)
 
 template<tyr::TaskKind Kind>
 template<StateEvaluationContextConcept<Kind> Context>
-void IncrementalEvaluation<Kind>::demand(ygg::uint_t index, Context& context, const Delta* delta, tyr::datalog::database::Workspace* workspace)
+void IncrementalEvaluation<Kind>::demand(ygg::uint_t index, Context& context, const Delta* delta, runir::kr::database::Workspace* workspace)
 {
     if (m_nodes.at(index).epoch == m_epoch)
         return;

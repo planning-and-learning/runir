@@ -8,10 +8,10 @@
 #include <cista/containers/variant.h>
 #include <cstddef>
 #include <optional>
+#include <runir/kr/database/datalog/declarations.hpp>
+#include <runir/kr/database/semantics/generic_join_plan.hpp>
+#include <runir/kr/database/semantics/plans.hpp>
 #include <tuple>
-#include <tyr/datalog/lifted/database/datalog/declarations.hpp>
-#include <tyr/datalog/lifted/database/semantics/generic_join_plan.hpp>
-#include <tyr/datalog/lifted/database/semantics/plans.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -299,14 +299,14 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>
     urd::index<runir::kr::dl::Query<>> left_operand {};
     urd::index<runir::kr::dl::Query<>> right_operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    tyr::datalog::database::JoinPlan plan {};
+    runir::kr::database::JoinPlan plan {};
 
     data() = default;
 
     data(urd::index<runir::kr::dl::Query<>> left_operand_,
          urd::index<runir::kr::dl::Query<>> right_operand_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         tyr::datalog::database::JoinPlan plan_) :
+         runir::kr::database::JoinPlan plan_) :
         index(),
         left_operand(left_operand_),
         right_operand(right_operand_),
@@ -343,14 +343,14 @@ struct data<runir::kr::dl::Query<Tag>>
     urd::index<runir::kr::dl::Query<>> left_operand {};
     urd::index<runir::kr::dl::Query<>> right_operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    tyr::datalog::database::SetPlan plan {};
+    runir::kr::database::SetPlan plan {};
 
     data() = default;
 
     data(urd::index<runir::kr::dl::Query<>> left_operand_,
          urd::index<runir::kr::dl::Query<>> right_operand_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         tyr::datalog::database::SetPlan plan_) :
+         runir::kr::database::SetPlan plan_) :
         index(),
         left_operand(left_operand_),
         right_operand(right_operand_),
@@ -385,13 +385,13 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> index;
     urd::index<runir::kr::dl::Query<>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    tyr::datalog::database::ProjectionPlan plan {};
+    runir::kr::database::ProjectionPlan plan {};
 
     data() = default;
 
     data(urd::index<runir::kr::dl::Query<>> operand_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         tyr::datalog::database::ProjectionPlan plan_) :
+         runir::kr::database::ProjectionPlan plan_) :
         index(),
         operand(operand_),
         columns(std::move(columns_)),
@@ -455,7 +455,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
     urd::index<runir::kr::dl::QueryColumn> left_column {};
     urd::index<runir::kr::dl::QueryColumn> right_column {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    tyr::datalog::database::SelectEqualPlan plan {};
+    runir::kr::database::SelectEqualPlan plan {};
 
     data() = default;
 
@@ -463,7 +463,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
          urd::index<runir::kr::dl::QueryColumn> left_column_,
          urd::index<runir::kr::dl::QueryColumn> right_column_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         tyr::datalog::database::SelectEqualPlan plan_) :
+         runir::kr::database::SelectEqualPlan plan_) :
         index(),
         operand(operand_),
         left_column(left_column_),
@@ -502,7 +502,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
     urd::index<runir::kr::dl::QueryColumn> column {};
     urd::index<tyr::formalism::Object> object {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    tyr::datalog::database::SelectValuePlan plan {};
+    runir::kr::database::SelectValuePlan plan {};
 
     data() = default;
 
@@ -510,7 +510,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
          urd::index<runir::kr::dl::QueryColumn> column_,
          urd::index<tyr::formalism::Object> object_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         tyr::datalog::database::SelectValuePlan plan_) :
+         runir::kr::database::SelectValuePlan plan_) :
         index(),
         operand(operand_),
         column(column_),
@@ -549,7 +549,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> variable_order {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> output_order {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    tyr::datalog::database::GenericJoinPlan plan {};
+    runir::kr::database::GenericJoinPlan plan {};
 
     data() = default;
 
@@ -557,7 +557,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> variable_order_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> output_order_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         tyr::datalog::database::GenericJoinPlan plan_) :
+         runir::kr::database::GenericJoinPlan plan_) :
         index(),
         args(std::move(args_)),
         variable_order(std::move(variable_order_)),
@@ -623,13 +623,13 @@ struct data<runir::kr::dl::QueryProjection<Category>>
     urd::index<runir::kr::dl::QueryProjection<Category>> index;
     urd::index<runir::kr::dl::Query<>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    tyr::datalog::database::ProjectionPlan plan {};
+    runir::kr::database::ProjectionPlan plan {};
 
     data() = default;
 
     data(urd::index<runir::kr::dl::Query<>> operand_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
-         tyr::datalog::database::ProjectionPlan plan_) :
+         runir::kr::database::ProjectionPlan plan_) :
         index(),
         operand(operand_),
         columns(std::move(columns_)),

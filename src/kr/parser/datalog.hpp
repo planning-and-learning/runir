@@ -9,8 +9,8 @@
 
 #include <functional>
 #include <optional>
+#include <runir/kr/database/datalog/declarations.hpp>
 #include <string>
-#include <tyr/datalog/lifted/database/datalog/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/maps/flat_map.hpp>
@@ -37,7 +37,7 @@ using FeatureReference = std::variant<urd::index<runir::kr::dl::Constructor<runi
 struct HeadReference
 {
     urd::index<runir::kr::dl::DatalogProgram> program;
-    urd::index<tyr::datalog::database::datalog::Relation> relation;
+    urd::index<runir::kr::database::datalog::Relation> relation;
 };
 
 /// Features by name, each parsed at its first reference: a feature that reaches itself through references is an error.
@@ -101,7 +101,7 @@ private:
     bool m_built = false;
     /// Per head that a feature reads, its program (ProgramBuilder::finish).
     urd::Store<urd::map<std::string, urd::index<runir::kr::dl::DatalogProgram>>, urd::sorted> m_programs;
-    urd::Store<urd::map<std::string, urd::index<tyr::datalog::database::datalog::Relation>>> m_heads;
+    urd::Store<urd::map<std::string, urd::index<runir::kr::database::datalog::Relation>>> m_heads;
 
     void build(const ast::Identifier& reference);
 };

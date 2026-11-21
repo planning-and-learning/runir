@@ -3,6 +3,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <limits>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -12,7 +13,6 @@
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <string>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/state_repository.hpp>
 
 namespace runir::tests

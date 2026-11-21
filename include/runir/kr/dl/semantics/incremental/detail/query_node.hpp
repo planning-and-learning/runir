@@ -49,12 +49,12 @@ public:
 
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
-    void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
+    void update(EvaluationGraph<Kind>& graph, const Delta& delta, runir::kr::database::Workspace& workspace);
 
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
 
     [[nodiscard]] ygg::FreeRelationBuilderView get_result() const;
-    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const;
+    [[nodiscard]] const runir::kr::database::incremental::Delta& get_delta() const;
 
 private:
     using Operation = std::variant<QueryStaticEvaluator<Kind>,
@@ -94,7 +94,7 @@ void QueryNode<Kind>::initialize(EvaluationGraph<Kind>& graph, Context& context)
 }
 
 template<tyr::TaskKind Kind>
-void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace)
+void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, runir::kr::database::Workspace& workspace)
 {
     std::visit([&](auto& operation) { operation.update(graph, delta, workspace); }, m_operation);
 }
@@ -106,7 +106,7 @@ ygg::FreeRelationBuilderView QueryNode<Kind>::get_result() const
 }
 
 template<tyr::TaskKind Kind>
-const tyr::datalog::database::incremental::Delta& QueryNode<Kind>::get_delta() const
+const runir::kr::database::incremental::Delta& QueryNode<Kind>::get_delta() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_delta(); }, m_operation);
 }

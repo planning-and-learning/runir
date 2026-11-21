@@ -14,11 +14,11 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <runir/kr/database/semantics/incremental/delta.hpp>
+#include <runir/kr/database/semantics/relation_view.hpp>
 #include <span>
 #include <stdexcept>
 #include <tuple>
-#include <tyr/datalog/lifted/database/semantics/incremental/delta.hpp>
-#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <urd/repr/maps/postings.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
@@ -174,7 +174,7 @@ public:
     [[nodiscard]] ygg::FreeRelationBuilderView result(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     [[nodiscard]] const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
-    [[nodiscard]] const tyr::datalog::database::incremental::Delta& change(QueryEvaluationIndex index) const;
+    [[nodiscard]] const runir::kr::database::incremental::Delta& change(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     [[nodiscard]] size_t cardinality(EvaluationIndex<Category> index) const;
 
@@ -285,7 +285,7 @@ class IncrementalEvaluation
     }
 
     template<StateEvaluationContextConcept<Kind> Context>
-    StateEvaluation<Kind, Context> next(Context context, const Delta* delta, tyr::datalog::database::Workspace* workspace)
+    StateEvaluation<Kind, Context> next(Context context, const Delta* delta, runir::kr::database::Workspace* workspace)
     {
         ++m_epoch;
         m_transition = delta != nullptr;
@@ -293,7 +293,7 @@ class IncrementalEvaluation
     }
 
     template<StateEvaluationContextConcept<Kind> Context>
-    void demand(ygg::uint_t index, Context& context, const Delta* delta, tyr::datalog::database::Workspace* workspace);
+    void demand(ygg::uint_t index, Context& context, const Delta* delta, runir::kr::database::Workspace* workspace);
 
 public:
     IncrementalEvaluation(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot> roots) : m_graph(task, roots), m_nodes(m_graph.node_count()) {}
@@ -321,7 +321,7 @@ public:
 
     /// Enters the state reached from the previous one by `delta`.
     template<StateEvaluationContextConcept<Kind> Context>
-    StateEvaluation<Kind, Context> enter(Context context, const Delta& delta, tyr::datalog::database::Workspace& workspace)
+    StateEvaluation<Kind, Context> enter(Context context, const Delta& delta, runir::kr::database::Workspace& workspace)
     {
         require_task(context);
         return next(std::move(context), &delta, &workspace);
@@ -330,7 +330,7 @@ public:
     /// Continues the current state, keeping what it evaluated. `delta` must be the one the state was entered by; it
     /// is ignored if the state was entered without one.
     template<StateEvaluationContextConcept<Kind> Context>
-    StateEvaluation<Kind, Context> resume(Context context, const Delta& delta, tyr::datalog::database::Workspace& workspace)
+    StateEvaluation<Kind, Context> resume(Context context, const Delta& delta, runir::kr::database::Workspace& workspace)
     {
         require_task(context);
         if (m_epoch == 0)
@@ -360,7 +360,7 @@ private:
         return m_graph.change(index);
     }
 
-    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta(QueryEvaluationIndex index) const
+    [[nodiscard]] const runir::kr::database::incremental::Delta& get_delta(QueryEvaluationIndex index) const
     {
         require_exact(static_cast<ygg::uint_t>(index.value));
         return m_graph.change(index);
@@ -377,11 +377,11 @@ class StateEvaluation
     uint64_t m_epoch;
     Context m_context;
     const Delta* m_delta;  ///< The transition into the state, if known.
-    tyr::datalog::database::Workspace* m_workspace;
+    runir::kr::database::Workspace* m_workspace;
 
     friend class IncrementalEvaluation<Kind>;
 
-    StateEvaluation(IncrementalEvaluation<Kind>& evaluation, Context context, const Delta* delta, tyr::datalog::database::Workspace* workspace) :
+    StateEvaluation(IncrementalEvaluation<Kind>& evaluation, Context context, const Delta* delta, runir::kr::database::Workspace* workspace) :
         m_evaluation(&evaluation),
         m_epoch(evaluation.m_epoch),
         m_context(std::move(context)),
@@ -419,8 +419,7 @@ public:
     const DenotationDelta<Category>& delta(EvaluationIndex<Category> index)
     { return current(static_cast<ygg::uint_t>(index.value)).get_delta(index); }
 
-    const tyr::datalog::database::incremental::Delta& delta(QueryEvaluationIndex index)
-    { return current(static_cast<ygg::uint_t>(index.value)).get_delta(index); }
+    const runir::kr::database::incremental::Delta& delta(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index.value)).get_delta(index); }
 
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index)

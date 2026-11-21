@@ -28,7 +28,7 @@ struct NonemptyEvaluator
         value.set(std::visit([&](auto index) { return graph.nonempty(index); }, child));
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         value.set(std::visit(
             [&](auto index)

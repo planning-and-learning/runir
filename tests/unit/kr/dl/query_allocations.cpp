@@ -13,6 +13,8 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <new>
+#include <runir/kr/database/semantics/incremental/projection.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
@@ -25,8 +27,6 @@
 #include <runir/kr/task_context.hpp>
 #include <string>
 #include <tuple>
-#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -147,8 +147,8 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(projected.get_operand().get_variant());
     auto layer = ygg::FreeScratchRelations();
     auto leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(layer, atomic);
-    auto projection = tyr::datalog::database::incremental::ProjectionEvaluator(layer, projected.get_plan());
-    auto workspace = tyr::datalog::database::Workspace {};
+    auto projection = runir::kr::database::incremental::ProjectionEvaluator(layer, projected.get_plan());
+    auto workspace = runir::kr::database::Workspace {};
     leaf.initialize<tyr::GroundTag>(initial.get_state());
     projection.initialize(leaf.get_result(), workspace);
     ASSERT_EQ(leaf.get_result().get_rows().size(), 4);
@@ -381,7 +381,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
             std::visit([&](auto expression) { (void) state.evaluate(graph.get_index(expression)); }, root);
     };
     initialize();
-    auto workspace = tyr::datalog::database::Workspace {};
+    auto workspace = runir::kr::database::Workspace {};
     // Enters state `target_index` by `delta`. Every read root is updated from the delta: get_delta(), delta() and changed()
     // throw otherwise.
     const auto apply = [&](const auto& delta, size_t target_index, size_t members, size_t register_members)

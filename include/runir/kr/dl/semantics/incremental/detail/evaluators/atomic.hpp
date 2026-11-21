@@ -64,7 +64,7 @@ struct AtomicEvaluator
         }
     }
 
-    void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, runir::kr::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
             update_atoms(delta.added.fluent_atoms, delta.removed.fluent_atoms);

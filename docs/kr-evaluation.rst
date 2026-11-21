@@ -28,11 +28,11 @@ Distance evaluation
 -------------------
 
 ``n_distance`` is the minimum distance from any source to any target over the edges, or ``uint_t``'s maximum if no
-target is reachable. Its value equals ``tyr::datalog::database::min_distance`` over the fully evaluated arguments.
+target is reachable. Its value equals ``runir::kr::database::min_distance`` over the fully evaluated arguments.
 
-**Role edges** are a relation. Full evaluation searches it with ``tyr::datalog::database::MinDistance``. Incremental
+**Role edges** are a relation. Full evaluation searches it with ``runir::kr::database::MinDistance``. Incremental
 evaluation maintains per-source distances over the materialized edges
-(``tyr::datalog::database::incremental::SourceMinDistance``, Ramalingam & Reps).
+(``runir::kr::database::incremental::SourceMinDistance``, Ramalingam & Reps).
 
 **Query edges** are never materialized:
 
@@ -41,8 +41,8 @@ evaluation maintains per-source distances over the materialized edges
   an antijoin, P ⋈ ¬R = P ▷ R, so identities and complements never become rows. The same translator serves the query
   optimizer, without this rewrite.
 - yggdrasil evaluates the edges on demand with some columns bound: a vertex's successors, its predecessors, or one
-  edge. Full evaluation uses ``tyr::datalog::database::MinDistance``, which computes from the current state alone.
-  Incremental evaluation uses ``tyr::datalog::database::incremental::MinDistance``, which keeps its search tree across
+  edge. Full evaluation uses ``runir::kr::database::MinDistance``, which computes from the current state alone.
+  Incremental evaluation uses ``runir::kr::database::incremental::MinDistance``, which keeps its search tree across
   states. Their headers describe the method: A\* with a backward frontier grown under Pohl's cardinality rule, and
   GAA*/MPGAA\* learning, path reuse and repair while the targets stay the same.
 - runir supplies the slots' relations in the current state. In incremental evaluation they are nodes of the
@@ -52,7 +52,7 @@ evaluation maintains per-source distances over the materialized edges
 h(v) = maxᵢ hᵢ(v[i]) over one database per vertex column i.
 
 - Each database is built from the relaxation of the translated edge query projected onto (i, k + i), with only the
-  static slots known (``tyr::datalog::database::relax``, with its translation table in
+  static slots known (``runir::kr::database::relax``, with its translation table in
   ``syntax/translations/relaxation.hpp``). Relaxing each projection eliminates the other variables early, as
   projections of pattern databases do.
 - The relaxation is evaluated once by yggdrasil (``optimize`` + ``QueryEvaluator``) over the static rows. A static

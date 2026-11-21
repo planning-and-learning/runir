@@ -5,6 +5,7 @@
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
 
 #include <nanobind/stl/vector.h>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
@@ -14,7 +15,6 @@
 #include <runir/kr/ps/base/sketch_view.hpp>
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <urd/python/bindings.hpp>
 #include <urd/python/sequences/sequence.hpp>
 #include <urd/repr/sequences/sequence.hpp>

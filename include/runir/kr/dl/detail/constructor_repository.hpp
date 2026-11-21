@@ -6,7 +6,7 @@
 #include <boost/mp11.hpp>
 #include <cassert>
 #include <memory>
-#include <tyr/datalog/lifted/database/datalog/repository.hpp>
+#include <runir/kr/database/datalog/repository.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
@@ -28,7 +28,7 @@ class BasicConstructorRepository :
 
 private:
     /// The rules of the repository's DatalogPrograms.
-    std::unique_ptr<tyr::datalog::database::datalog::DatalogRepository> m_datalog_repository;
+    std::unique_ptr<runir::kr::database::datalog::DatalogRepository> m_datalog_repository;
     size_t m_index;
 
 public:
@@ -37,7 +37,7 @@ public:
     explicit BasicConstructorRepository(std::shared_ptr<const tyr::formalism::Repository> planning_repository) :
         Base(),
         NestsBase(std::move(planning_repository)),
-        m_datalog_repository(std::make_unique<tyr::datalog::database::datalog::DatalogRepository>()),
+        m_datalog_repository(std::make_unique<runir::kr::database::datalog::DatalogRepository>()),
         m_index(ygg::next_layer())
     { this->clear(); }
 
@@ -50,9 +50,9 @@ public:
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
 
-    [[nodiscard]] const tyr::datalog::database::datalog::DatalogRepository& get_datalog_repository() const noexcept { return *m_datalog_repository; }
+    [[nodiscard]] const runir::kr::database::datalog::DatalogRepository& get_datalog_repository() const noexcept { return *m_datalog_repository; }
 
-    [[nodiscard]] tyr::datalog::database::datalog::DatalogRepository& get_datalog_repository() noexcept { return *m_datalog_repository; }
+    [[nodiscard]] runir::kr::database::datalog::DatalogRepository& get_datalog_repository() noexcept { return *m_datalog_repository; }
 
     using Base::find;
     using Base::insert;

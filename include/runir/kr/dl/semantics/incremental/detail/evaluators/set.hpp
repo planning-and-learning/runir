@@ -25,7 +25,7 @@ struct UnarySetEvaluator
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     { update_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace()); }
 };
 
@@ -42,7 +42,7 @@ struct BinarySetEvaluator
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     { update_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace()); }
 };
 

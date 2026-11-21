@@ -1,8 +1,8 @@
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 
 #include <array>
+#include <runir/kr/database/semantics/relation_view.hpp>
 #include <tuple>
-#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>

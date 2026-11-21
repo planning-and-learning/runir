@@ -5,6 +5,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <ranges>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
@@ -16,7 +17,6 @@
 #include <runir/kr/ps/memory_state_data.hpp>
 #include <set>
 #include <string>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>

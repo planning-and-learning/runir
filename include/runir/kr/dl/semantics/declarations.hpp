@@ -8,8 +8,8 @@
 #include <cstddef>
 #include <memory>
 #include <ranges>
+#include <runir/kr/database/declarations.hpp>
 #include <span>
-#include <tyr/datalog/lifted/database/declarations.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <urd/elements/concepts.hpp>

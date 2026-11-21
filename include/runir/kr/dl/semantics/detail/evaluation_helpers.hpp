@@ -19,9 +19,9 @@
 #include <cassert>
 #include <concepts>
 #include <limits>
+#include <runir/kr/database/semantics/distance.hpp>
 #include <stdexcept>
 #include <type_traits>
-#include <tyr/datalog/lifted/database/semantics/distance.hpp>
 #include <tyr/formalism/conjunctive_condition_view.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>

@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <optional>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/dl/repository.hpp>
@@ -17,7 +18,6 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>

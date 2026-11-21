@@ -2,13 +2,13 @@
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/errors.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 
 namespace runir::tests

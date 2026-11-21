@@ -3,7 +3,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/base/detail/proof_search.hpp"
 
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 
 namespace runir::kr::ps::base
 {

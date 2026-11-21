@@ -9,8 +9,8 @@
 #include "runir/kr/ps/icp/execution_data.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <stdexcept>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>

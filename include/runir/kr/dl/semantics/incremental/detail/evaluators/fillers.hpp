@@ -26,7 +26,7 @@ struct FillersEvaluator
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     { update_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace()); }
 };
 

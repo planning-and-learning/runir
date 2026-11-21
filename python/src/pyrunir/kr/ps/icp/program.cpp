@@ -4,6 +4,7 @@
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
 
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
@@ -11,7 +12,6 @@
 #include <runir/kr/ps/icp/program_view.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/syntactic_complexity.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <urd/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 

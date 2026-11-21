@@ -9,14 +9,14 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <cstddef>
+#include <runir/kr/database/semantics/min_distance.hpp>
+#include <runir/kr/database/semantics/relation_view.hpp>
 #include <span>
-#include <tyr/datalog/lifted/database/semantics/min_distance.hpp>
-#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 
-/// n_distance over a DL edge query, evaluated by yggdrasil (tyr::datalog::database::MinDistance in full evaluation,
-/// tyr::datalog::database::incremental::MinDistance in incremental evaluation; see their method overviews). runir translates the
+/// n_distance over a DL edge query, evaluated by yggdrasil (runir::kr::database::MinDistance in full evaluation,
+/// runir::kr::database::incremental::MinDistance in incremental evaluation; see their method overviews). runir translates the
 /// edge query into a yggdrasil query whose input slots are its leaves, complements becoming antijoins
 /// (translations/ygg_query.hpp), supplies the slots' relations in the current state, and for k > 1 query edges a
 /// pattern database heuristic over a static relaxation of the edge query (heuristics/projection.hpp). k = 1 and role
@@ -35,7 +35,7 @@ QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorReposi
 /// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
 template<typename Distance>
 DistanceFeature<Distance>
-make_distance_feature(ygg::FreeScratchRelations& scratch, const tyr::datalog::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
+make_distance_feature(ygg::FreeScratchRelations& scratch, const runir::kr::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
 {
     const auto columns = plan.edge_columns();
     return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.get_is_static() } },
@@ -45,7 +45,7 @@ make_distance_feature(ygg::FreeScratchRelations& scratch, const tyr::datalog::da
 
 /// Translates a feature's query edges and builds its min-distance evaluator.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(ygg::FreeScratchRelations& scratch, const tyr::datalog::database::DistancePlan& plan, QueryView<> edges)
+DistanceFeature<Distance> make_distance_feature(ygg::FreeScratchRelations& scratch, const runir::kr::database::DistancePlan& plan, QueryView<> edges)
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
@@ -59,10 +59,10 @@ DistanceFeature<Distance> make_distance_feature(ygg::FreeScratchRelations& scrat
 
 /// The heuristic of a feature: a pattern database heuristic if it has an abstraction, otherwise blind;
 /// `slot_rows(slot)` returns a static slot's rows.
-template<typename Distance, tyr::datalog::database::SlotRelations SlotRows>
+template<typename Distance, runir::kr::database::SlotRelations SlotRows>
 heuristics::ProjectionHeuristic make_heuristic(ygg::FreeScratchRelations& scratch,
                                                const DistanceFeature<Distance>& feature,
-                                               const tyr::datalog::database::DistancePlan& plan,
+                                               const runir::kr::database::DistancePlan& plan,
                                                ygg::uint_t num_objects,
                                                const SlotRows& slot_rows)
 {
@@ -92,7 +92,7 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
                 [&]
                 {
                     auto& scratch = context.get_workspace().get_scratch();
-                    auto edge_feature = make_distance_feature<tyr::datalog::database::MinDistance<heuristics::ProjectionHeuristic>>(scratch, plan, edges);
+                    auto edge_feature = make_distance_feature<runir::kr::database::MinDistance<heuristics::ProjectionHeuristic>>(scratch, plan, edges);
                     auto heuristic = make_heuristic(scratch,
                                                     edge_feature,
                                                     plan,

@@ -9,13 +9,13 @@
 #include <cassert>
 #include <cstddef>
 #include <optional>
+#include <runir/kr/database/semantics/bound/query_evaluation.hpp>
+#include <runir/kr/database/semantics/distance.hpp>
+#include <runir/kr/database/semantics/operations.hpp>
+#include <runir/kr/database/semantics/relation_view.hpp>
+#include <runir/kr/database/semantics/search/concepts.hpp>
+#include <runir/kr/database/syntax/query.hpp>
 #include <span>
-#include <tyr/datalog/lifted/database/semantics/bound/query_evaluation.hpp>
-#include <tyr/datalog/lifted/database/semantics/distance.hpp>
-#include <tyr/datalog/lifted/database/semantics/operations.hpp>
-#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
-#include <tyr/datalog/lifted/database/semantics/search/concepts.hpp>
-#include <tyr/datalog/lifted/database/syntax/query.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -35,12 +35,12 @@ namespace runir::kr::dl::semantics::heuristics
 struct PatternDatabase
 {
     size_t pattern = 0;                                        ///< The vertex column i.
-    tyr::datalog::database::bound::QueryEvaluator edges;       ///< The abstract edges (u[i], v[i]), over static inputs only.
+    runir::kr::database::bound::QueryEvaluator edges;          ///< The abstract edges (u[i], v[i]), over static inputs only.
     size_t u_position = 0;                                     ///< The position of u[i] in the columns of edges.
     size_t v_position = 0;                                     ///< The position of v[i] in the columns of edges.
     size_t predecessors = 0;                                   ///< The binding of edges with v[i] bound.
     urd::Store<urd::set<ygg::uint_t>, urd::dense> targets {};  ///< α_i(T), for which h was computed.
-    urd::Store<urd::sequence<ygg::uint_t>> h {};               ///< Abstract distance to α_i(T); tyr::datalog::database::infinity if unreachable.
+    urd::Store<urd::sequence<ygg::uint_t>> h {};               ///< Abstract distance to α_i(T); runir::kr::database::infinity if unreachable.
 
     /// Whether h has been computed, for some abstract targets.
     [[nodiscard]] bool computed() const noexcept { return !h.empty(); }
@@ -53,7 +53,7 @@ struct PatternDatabase
 /// h(v) = max_i h_i(α_i(v)) over single-column pattern databases (Culberson & Schaeffer, "Pattern Databases",
 /// Computational Intelligence 1998; maximizing over several, Holte et al., "Maximizing over Multiple Pattern Databases
 /// Speeds up Heuristic Search", AIJ 2006). The abstract edges come from the relaxation of the edge query with only its
-/// static slots known (tyr::datalog::database::relax), projected onto (u[i], v[i]): a superset of the projected edges in every
+/// static slots known (runir::kr::database::relax), projected onto (u[i], v[i]): a superset of the projected edges in every
 /// state (EdgeAbstraction). Every edge u -> v thus
 /// maps to an abstract edge, or to a self-loop when u[i] = v[i], so each h_i, and their maximum, is consistent in every
 /// state; only the tables depend on the targets. Without pattern databases, h = 0 (blind search).
@@ -90,7 +90,7 @@ public:
         {
             assert(database.computed());
             const auto entry = database.h[ygg::decode_value<ygg::uint_t>(vertex[database.pattern])];
-            if (entry == tyr::datalog::database::infinity)
+            if (entry == runir::kr::database::infinity)
                 return entry;
             value = std::max(value, entry);
         }
@@ -119,7 +119,7 @@ public:
         for (size_t d = 0; d < m_databases.size(); ++d)
         {
             const auto entry = tables[d][ygg::decode_value<ygg::uint_t>(vertex[m_databases[d].pattern])];
-            if (entry == tyr::datalog::database::infinity)
+            if (entry == runir::kr::database::infinity)
                 return entry;
             value = std::max(value, entry);
         }
@@ -170,7 +170,7 @@ private:
     /// The backward breadth-first distances from m_abstract_targets in the database's abstract graph, into h.
     void breadth_first(PatternDatabase& database, Tables::value_type& h)
     {
-        h.assign(m_num_objects, tyr::datalog::database::infinity);
+        h.assign(m_num_objects, runir::kr::database::infinity);
         m_queue.clear();
         for (const auto o : m_abstract_targets)
         {
@@ -186,7 +186,7 @@ private:
                                     [&](std::span<const ygg::Value> edge)
                                     {
                                         const auto p = ygg::decode_value<ygg::uint_t>(edge[database.u_position]);
-                                        if (h[p] == tyr::datalog::database::infinity)
+                                        if (h[p] == runir::kr::database::infinity)
                                         {
                                             h[p] = h[o] + 1;
                                             m_queue.push_back(p);
@@ -199,12 +199,12 @@ private:
 
 /// The abstract edges of the pattern databases as queries, built once per feature from the translated edge query Q.
 /// For each vertex column i, the pattern, the projection π_(u[i], v[i])(Q) is relaxed with only the static slots
-/// known (tyr::datalog::database::relax). Relaxing the projection rather than Q eliminates the other variables early, as
+/// known (runir::kr::database::relax). Relaxing the projection rather than Q eliminates the other variables early, as
 /// projections of pattern databases do, so no edge over all columns is ever built. Nothing is evaluated here, and the
 /// abstract edges are never materialized (PatternDatabase).
 struct EdgeAbstraction
 {
-    tyr::datalog::database::QueryPlan plan;  ///< Plan root r is the abstract edge query of column patterns[r].
+    runir::kr::database::QueryPlan plan;  ///< Plan root r is the abstract edge query of column patterns[r].
     urd::Store<urd::sequence<size_t>> patterns;
     urd::Store<urd::sequence<size_t>> slots;  ///< The edge query's slot of each input of the plan.
 };
@@ -213,17 +213,17 @@ struct EdgeAbstraction
 /// `from` and `to` are the edge columns of the two vertices of an edge, in vertex order. Defined in the library: it
 /// relaxes and compiles queries, which every includer would instantiate otherwise (brokkr's template rules, rule 24).
 std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& translator,
-                                              tyr::datalog::database::QueryView<> edges,
+                                              runir::kr::database::QueryView<> edges,
                                               std::span<const urd::data<ygg::ColumnLayout>> from,
                                               std::span<const urd::data<ygg::ColumnLayout>> to);
 std::optional<EdgeAbstraction>
-abstract_edges(dl::detail::QueryTranslator& translator, tyr::datalog::database::QueryView<> edges, const tyr::datalog::database::DistancePlan& plan);
+abstract_edges(dl::detail::QueryTranslator& translator, runir::kr::database::QueryView<> edges, const runir::kr::database::DistancePlan& plan);
 
 /// The pattern database heuristic of an abstraction; `slot_rows(slot)` returns a static slot's rows. The columns of
 /// u[i] and v[i] are found in each abstract edge query by label.
 /// `from` and `to` are the edge columns of an edge's two vertices; `vertices` and `targets` the columns of the vertices
 /// estimated and of the targets.
-template<tyr::datalog::database::SlotRelations SlotRows>
+template<runir::kr::database::SlotRelations SlotRows>
 ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch,
                                               const EdgeAbstraction& abstraction,
                                               std::span<const urd::data<ygg::ColumnLayout>> from,
@@ -238,21 +238,21 @@ ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch
     {
         const auto i = abstraction.patterns[r];
         const auto query = abstraction.plan[abstraction.plan.roots()[r]];
-        auto& database = databases.emplace_back(PatternDatabase { i, tyr::datalog::database::bound::QueryEvaluator(scratch, query) });
-        const auto columns = tyr::datalog::database::columns_of(query);
+        auto& database = databases.emplace_back(PatternDatabase { i, runir::kr::database::bound::QueryEvaluator(scratch, query) });
+        const auto columns = runir::kr::database::columns_of(query);
         database.u_position = static_cast<size_t>(std::ranges::find(columns, from[i].label, &urd::data<ygg::ColumnLayout>::label) - columns.begin());
         database.v_position = static_cast<size_t>(std::ranges::find(columns, to[i].label, &urd::data<ygg::ColumnLayout>::label) - columns.begin());
-        for (const auto slot : tyr::datalog::database::input_slots(std::span(&query, 1)))
+        for (const auto slot : runir::kr::database::input_slots(std::span(&query, 1)))
             database.edges.bind_slot(slot, slot_rows(abstraction.slots[slot]));
         database.predecessors = database.edges.prepare({ database.v_position });
     }
     return ProjectionHeuristic(std::move(databases), vertices, targets, num_objects);
 }
 
-template<tyr::datalog::database::SlotRelations SlotRows>
+template<runir::kr::database::SlotRelations SlotRows>
 ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch,
                                               const EdgeAbstraction& abstraction,
-                                              const tyr::datalog::database::DistancePlan& plan,
+                                              const runir::kr::database::DistancePlan& plan,
                                               ygg::uint_t num_objects,
                                               const SlotRows& slot_rows)
 {

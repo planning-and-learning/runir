@@ -37,6 +37,7 @@ option(
 option(RUNIR_BUILD_PYRUNIR "Build pyrunir Python bindings." OFF)
 option(RUNIR_BUILD_TESTS "Build Runir tests." OFF)
 option(RUNIR_BUILD_EXECUTABLES "Build Runir executables." OFF)
+option(RUNIR_BUILD_BENCHMARKS "Build Runir benchmark targets." OFF)
 option(RUNIR_DELTA_EVALUATION "Use incremental feature evaluation in find_solution." ON)
 option(RUNIR_STDLIB_ASSERTIONS "Check bounds and preconditions of the standard library in Debug builds." ON)
 # OFF compiles each source on its own: faster rebuilds after editing one, and compile_commands.json lists each source,
@@ -229,6 +230,10 @@ endif()
 
 if(RUNIR_BUILD_TESTS)
     add_subdirectory(tests)
+endif()
+
+if(RUNIR_BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
 endif()
 
 # Installation and package export

@@ -11,6 +11,8 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <optional>
+#include <runir/kr/database/semantics/operations.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/object_rows.hpp>
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
@@ -26,8 +28,6 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
-#include <tyr/datalog/lifted/database/semantics/operations.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/interning.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
@@ -416,8 +416,8 @@ void check_distance_queries()
                     const auto targets = relation(concrete.get_targets(), plan.target_columns());
                     auto scratch = ygg::FreeScratchRelations();
                     auto distances = scratch.draw(plan.output_columns());
-                    auto workspace = tyr::datalog::database::DistanceWorkspace(plan);
-                    return tyr::datalog::database::min_distance(sources, edges, targets, plan, *distances, workspace);
+                    auto workspace = runir::kr::database::DistanceWorkspace(plan);
+                    return runir::kr::database::min_distance(sources, edges, targets, plan, *distances, workspace);
                 }
                 else
                     throw std::logic_error("reference expects n_distance");
@@ -674,13 +674,13 @@ void check_cached_queries()
                              left_operand->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(30)),
                                                                               ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(40)) });
                              right_operand->insert(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
-                             tyr::datalog::database::Workspace scratch;
-                             tyr::datalog::database::join(left_operand->view(), right_operand->view(), decoded.plan, *result, scratch);
+                             runir::kr::database::Workspace scratch;
+                             runir::kr::database::join(left_operand->view(), right_operand->view(), decoded.plan, *result, scratch);
                              EXPECT_EQ(result->view().get_rows().size(), 1);
                              EXPECT_TRUE(result->view().contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(10)),
                                                                                              ygg::encode_value<ygg::uint_t>(ygg::uint_t(20)) }));
                          });
-    const auto slice_position = [](const tyr::datalog::database::ColumnSlice& slice) { return slice.position; };
+    const auto slice_position = [](const runir::kr::database::ColumnSlice& slice) { return slice.position; };
     const auto check_projection_plan = [&](auto& data, auto positions)
     {
         const auto concrete = kr::dl::insert(repo, data).first;
@@ -697,8 +697,8 @@ void check_cached_queries()
                                      row.emplace_back(10 + i);
                                  urd::Store<urd::sequence<ygg::Value>> bytes;
                                  input->insert(kr::dl::encode_object_row(row, bytes));
-                                 tyr::datalog::database::Workspace scratch;
-                                 tyr::datalog::database::project(input->view(), decoded.plan, *result, scratch);
+                                 runir::kr::database::Workspace scratch;
+                                 runir::kr::database::project(input->view(), decoded.plan, *result, scratch);
                                  ASSERT_EQ(result->view().get_rows().size(), 1);
                                  for (size_t i = 0; i < positions.size(); ++i)
                                      EXPECT_EQ(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(result->view().row(0), i))),
@@ -1355,8 +1355,8 @@ ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> num
                 const auto targets = relation(concrete.get_targets(), plan.target_columns());
                 auto scratch = ygg::FreeScratchRelations();
                 auto distances = scratch.draw(plan.output_columns());
-                auto workspace = tyr::datalog::database::DistanceWorkspace(plan);
-                return tyr::datalog::database::min_distance(sources, edges, targets, plan, *distances, workspace);
+                auto workspace = runir::kr::database::DistanceWorkspace(plan);
+                return runir::kr::database::min_distance(sources, edges, targets, plan, *distances, workspace);
             }
             else
                 throw std::logic_error("reference_distance expects n_distance");

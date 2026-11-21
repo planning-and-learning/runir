@@ -11,11 +11,11 @@
 #include <algorithm>
 #include <concepts>
 #include <cstddef>
+#include <runir/kr/database/semantics/incremental/delta.hpp>
+#include <runir/kr/database/semantics/incremental/join.hpp>
+#include <runir/kr/database/semantics/incremental/projection.hpp>
 #include <span>
 #include <stdexcept>
-#include <tyr/datalog/lifted/database/semantics/incremental/delta.hpp>
-#include <tyr/datalog/lifted/database/semantics/incremental/join.hpp>
-#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
 #include <tyr/planning/state_view_concepts.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -38,7 +38,7 @@ class AtomicQueryEvaluator
     tyr::formalism::PredicateView<Fact> m_predicate;
     bool m_initialized = false;
     urd::handle<ygg::FreeScratchRelation> m_result;
-    tyr::datalog::database::incremental::Delta m_delta;
+    runir::kr::database::incremental::Delta m_delta;
     urd::Store<urd::sequence<ygg::Value>> m_row;
 
 public:
@@ -58,9 +58,9 @@ public:
 
     [[nodiscard]] ygg::FreeRelationBuilderView get_result() const&& = delete;
 
-    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
+    [[nodiscard]] const runir::kr::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
 
-    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const&& = delete;
+    [[nodiscard]] const runir::kr::database::incremental::Delta& get_delta() const&& = delete;
 };
 
 template<tyr::formalism::FactKind Fact>

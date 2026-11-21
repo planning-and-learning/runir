@@ -1,17 +1,29 @@
 # Copyright (C) 2026 Dominik Drexler
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Reading relations by decoded values, and renaming an interned relation's columns."""
+"""Reading, writing, interning and renaming relations by decoded values."""
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Any
 
 from pyyggdrasil import formalism
 from pyyggdrasil.formalism import ObjectIndex
 
+from pyrunir.kr import database
 
-# `row` is a row of a builder (RowBuilderView) or of an interned relation (RowSchema); the bindings give them no common
-# base.
+
+def labels(columns: Iterable[formalism.ColumnLayoutData]) -> list[formalism.ColumnIndex]:
+    """The labels of `columns` (a relation's or a plan's)."""
+    return [column.label for column in columns]
+
+
+def insert(builder: database.ScratchRelation, values: Sequence[Any]) -> int:
+    """Inserts `values`, each encoded by the type of its column."""
+    return builder.insert([formalism.encode(v, c.type) for v, c in zip(values, builder.columns(), strict=True)])
+
+
+# `row` is a row of a relation, of a builder's view (RelationSchemaBuilderBorrowed) or of an interned relation
+# (RelationSchema); the bindings give them no common base.
 def values(row: Any) -> tuple[object, ...]:  # noqa: ANN401
     """The decoded values of `row`, an object column as its index (an int)."""
     return tuple(_plain(row.get(i)) for i in range(len(row.get_values())))
@@ -20,6 +32,24 @@ def values(row: Any) -> tuple[object, ...]:  # noqa: ANN401
 def _plain(value: object) -> object:
     """An object index (ObjectIndex) as its int, any other decoded value as it is."""
     return int(value) if isinstance(value, ObjectIndex) else value
+
+
+# `relation` is a builder's view (RelationSchemaBuilderBorrowed) or an interned relation (RelationSchema).
+def tuples(relation: Any) -> list[tuple[object, ...]]:  # noqa: ANN401
+    """The decoded rows of `relation`, in its order."""
+    return [values(row) for row in relation.get_rows()]
+
+
+# `relation` is any of the forms the docstring names; the bindings give them no common base.
+def intern(repository: formalism.RelationRepository, relation: Any) -> tuple[formalism.RelationSchema, bool]:  # noqa: ANN401
+    """Interns `relation` (a builder, a borrowed or an interned relation of any repository) in `repository`."""
+    if isinstance(relation, database.ScratchRelation):
+        relation = relation.view()
+    columns = relation.columns()
+    pool = repository.schema([column.type for column in columns])
+    rows = [repository.insert(formalism.RowSchemaData(pool, row.get_values()))[0] for row in relation.get_rows()]
+    layout = repository.insert(formalism.ColumnsData(columns))[0]
+    return repository.insert(formalism.RelationSchemaData(pool, layout.index(), [each.index() for each in rows]))
 
 
 def rename(

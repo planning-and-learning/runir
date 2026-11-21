@@ -31,7 +31,7 @@ struct StaticEvaluator
         }
     }
 
-    void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
+    void update(EvaluationGraph<Kind>&, const Delta&, runir::kr::database::Workspace&) {}
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

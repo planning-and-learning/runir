@@ -1,4 +1,42 @@
 add_library(kr SHARED
+    database/free_relations.cpp
+    database/optimization/details/cost.cpp
+    database/optimization/details/estimation.cpp
+    database/optimization/details/join_block.cpp
+    database/optimization/details/normalization.cpp
+    database/optimization/details/optimization.cpp
+    database/optimization/details/structural.cpp
+    database/semantics/bound/query_evaluation.cpp
+    database/semantics/bound/union_normal_form.cpp
+    database/datalog/aggregate.cpp
+    database/datalog/construction.cpp
+    database/datalog/evaluator.cpp
+    database/datalog/formatter.cpp
+    database/datalog/goal_search.cpp
+    database/datalog/plain.cpp
+    database/datalog/planner.cpp
+    database/datalog/recursive.cpp
+    database/datalog/repository.cpp
+    database/datalog/strata.cpp
+    database/datalog/stratification.cpp
+    database/datalog/translation.cpp
+    database/datalog/weighted.cpp
+    database/semantics/details/distance.cpp
+    database/semantics/details/min_distance.cpp
+    database/semantics/details/plans.cpp
+    database/semantics/generic_join.cpp
+    database/semantics/incremental/delta.cpp
+    database/semantics/incremental/details/distance_repair.cpp
+    database/semantics/incremental/distance.cpp
+    database/semantics/incremental/join.cpp
+    database/semantics/incremental/projection.cpp
+    database/semantics/query_evaluation.cpp
+    database/syntax/copy.cpp
+    database/syntax/formatter.cpp
+    database/syntax/operator_builder.cpp
+    database/syntax/query.cpp
+    database/syntax/query_construction.cpp
+    database/syntax/query_repository.cpp
     domain_context.cpp
     task_context.cpp
     dl/formatter.cpp
@@ -76,6 +114,21 @@ add_library(kr SHARED
 add_library(runir::kr ALIAS kr)
 
 set_target_properties(kr PROPERTIES OUTPUT_NAME runir_kr)
+
+# The database's sources of each directory listed share most of their instantiations: batched, they compile them once
+# (brokkr's template rules, rule 11). The Datalog evaluator's sources (database/datalog) and the free relations'
+# repository (database/free_relations.cpp) are compiled each on its own.
+brokkr_unity_directories(
+    kr
+    ENABLED ${RUNIR_UNITY_BUILD}
+    DIRECTORIES
+        database/optimization/details
+        database/semantics
+        database/semantics/bound
+        database/semantics/details
+        database/semantics/incremental
+        database/syntax
+)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # GCC 15 reports the value-initialized element Boost.Spirit X3 parses a list's items into as maybe uninitialized.

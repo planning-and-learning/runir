@@ -10,6 +10,7 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/call_arguments_view.hpp>
@@ -17,7 +18,6 @@
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/register_values_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>

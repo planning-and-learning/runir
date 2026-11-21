@@ -15,12 +15,12 @@
 #include <cstddef>
 #include <optional>
 #include <ranges>
+#include <runir/kr/database/optimization/optimization.hpp>
+#include <runir/kr/database/syntax/query.hpp>
 #include <span>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
-#include <tyr/datalog/lifted/database/optimization/optimization.hpp>
-#include <tyr/datalog/lifted/database/syntax/query.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/children.hpp>
 #include <urd/repr/maps/index_map.hpp>
@@ -44,7 +44,7 @@ namespace runir::kr::dl
 struct QueryStatistics
 {
     std::optional<size_t> objects;
-    urd::Store<urd::map<QueryView<>, tyr::datalog::database::RelationStatistics>> leaves;
+    urd::Store<urd::map<QueryView<>, runir::kr::database::RelationStatistics>> leaves;
 };
 
 template<typename T>
@@ -101,7 +101,7 @@ private:
                 return root;
             },
             root.get_variant());
-        auto data = urd::make<QueryProjection<Category>>(root, view.get_columns(), tyr::datalog::database::ProjectionPlan());  // the plan: derived on insert
+        auto data = urd::make<QueryProjection<Category>>(root, view.get_columns(), runir::kr::database::ProjectionPlan());  // the plan: derived on insert
         return runir::kr::dl::insert(*m_repository, data).first;
     }
 
@@ -115,7 +115,7 @@ private:
 
     /// The index of an optimized argument that is a query evaluated as given or another record.
     template<typename Result, typename Argument>
-    Result optimize_argument(const Argument& arg, tyr::datalog::database::Evaluation evaluation)
+    Result optimize_argument(const Argument& arg, runir::kr::database::Evaluation evaluation)
     {
         return std::visit(
             [&]<typename V>(V child) -> Result
@@ -129,15 +129,14 @@ private:
     }
 
     /// Optimizes a maximal query for its evaluation; with required labels, only those columns of its result are used.
-    QueryView<> optimize_root(QueryView<> root,
-                              const std::optional<Labels>& required,
-                              tyr::datalog::database::Evaluation evaluation = tyr::datalog::database::Evaluation::full);
+    QueryView<>
+    optimize_root(QueryView<> root, const std::optional<Labels>& required, runir::kr::database::Evaluation evaluation = runir::kr::database::Evaluation::full);
 
     ConstructorRepository* m_repository;
     const QueryStatistics* m_statistics;
     urd::Store<urd::map<runir::kr::detail::RecordKey, ygg::uint_t>> m_rewritten;  ///< Rewritten record index by record.
     /// Optimized maximal queries, by query, required labels and evaluation.
-    urd::Store<urd::map<std::tuple<QueryView<>, std::optional<Labels>, tyr::datalog::database::Evaluation>, QueryView<>>> m_optimized;
+    urd::Store<urd::map<std::tuple<QueryView<>, std::optional<Labels>, runir::kr::database::Evaluation>, QueryView<>>> m_optimized;
 };
 
 /// Measures fixed query leaves one sample state at a time. Each add evaluates every leaf in one state, so a caller may
@@ -173,7 +172,7 @@ public:
 
 private:
     urd::Store<urd::sequence<QueryView<>>> m_leaves;
-    tyr::datalog::database::StatisticsAccumulator<QueryView<>> m_accumulator;
+    runir::kr::database::StatisticsAccumulator<QueryView<>> m_accumulator;
     std::optional<size_t> m_objects;
 };
 

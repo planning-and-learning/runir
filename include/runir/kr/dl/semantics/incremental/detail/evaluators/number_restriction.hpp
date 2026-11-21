@@ -26,7 +26,7 @@ struct NumberRestrictionEvaluator
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     { update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
 };
 
@@ -58,7 +58,7 @@ struct QualifiedNumberRestrictionEvaluator
                        graph.set_workspace());
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     { update_set(Tag {}, value, graph.result(role), graph.change(role), graph.result(qualifier), graph.change(qualifier), threshold, graph.set_workspace()); }
 };
 

@@ -5,7 +5,7 @@
 
 #include <cstddef>
 #include <ranges>
-#include <tyr/datalog/lifted/database/datalog/repository.hpp>
+#include <runir/kr/database/datalog/repository.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/elements/flat.hpp>
@@ -112,7 +112,7 @@ public:
         requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
     {
         return self().context().get_datalog_repository().view(
-            urd::index<tyr::datalog::database::datalog::Relation>(self().template member<&urd::record_of<V>::relation>()));
+            urd::index<runir::kr::database::datalog::Relation>(self().template member<&urd::record_of<V>::relation>()));
     }
 
     auto get_columns() const noexcept
@@ -154,7 +154,7 @@ public:
     auto get_program() const noexcept
     {
         return self().context().get_datalog_repository().view(
-            urd::index<tyr::datalog::database::datalog::Program>(self().template member<&urd::record_of<V>::program>()));
+            urd::index<runir::kr::database::datalog::Program>(self().template member<&urd::record_of<V>::program>()));
     }
 
     auto get_inputs() const noexcept { return self().template member<&urd::record_of<V>::inputs>(); }
@@ -164,7 +164,7 @@ public:
     {
         return self().template member<&urd::record_of<V>::outputs>()
                | std::views::transform([repository = &self().context().get_datalog_repository()](ygg::uint_t relation)
-                                       { return repository->view(urd::index<tyr::datalog::database::datalog::Relation>(relation)); });
+                                       { return repository->view(urd::index<runir::kr::database::datalog::Relation>(relation)); });
     }
 
     [[nodiscard]] bool get_is_static() const noexcept { return self().template member<&urd::record_of<V>::is_static>(); }

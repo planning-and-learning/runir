@@ -13,7 +13,7 @@ namespace runir::kr::dl::semantics
 {
 
 /// The edges of one n_distance: the input slots of its translated edge query and a yggdrasil min-distance evaluator
-/// over them (tyr::datalog::database::MinDistance in full evaluation, tyr::datalog::database::incremental::MinDistance in incremental
+/// over them (runir::kr::database::MinDistance in full evaluation, runir::kr::database::incremental::MinDistance in incremental
 /// evaluation), and for k > 1 query edges the abstraction its pattern database heuristic is built from.
 template<typename Distance>
 struct DistanceFeature

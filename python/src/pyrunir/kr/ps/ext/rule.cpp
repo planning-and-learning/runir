@@ -5,13 +5,13 @@
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/rule_data.hpp>
 #include <runir/kr/ps/ext/rule_view.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <urd/python/bindings.hpp>
 #include <urd/python/sequences/sequence.hpp>
 #include <urd/repr/sequences/sequence.hpp>

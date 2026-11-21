@@ -3,11 +3,11 @@
 #include "pyrunir/module.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 
+#include <runir/kr/database/syntax/formatter.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/formatter.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <urd/python/bindings.hpp>
 
 namespace runir::kr::dl

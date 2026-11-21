@@ -18,6 +18,7 @@ from pyrunir._pyrunir.kr import (
     UndefinedSymbolError as UndefinedSymbolError,
 )
 from pyrunir.kr import (
+    database as database,
     dl as dl,
     ps as ps,
     uns as uns,

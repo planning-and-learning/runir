@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <ranges>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -23,7 +24,6 @@
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
 #include <type_traits>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
@@ -181,7 +181,7 @@ void check_incremental_evaluation()
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
-    auto workspace = tyr::datalog::database::Workspace {};
+    auto workspace = runir::kr::database::Workspace {};
     // Registers being built: each context reads its own builder (no copy).
     using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::Repository>;
     const auto object = [](auto index) { return ObjectChild(index); };

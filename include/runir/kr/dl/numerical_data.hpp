@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/boolean_data.hpp"
 
-#include <tyr/datalog/lifted/database/semantics/distance_plan.hpp>
+#include <runir/kr/database/semantics/distance_plan.hpp>
 #include <urd/elements/flat.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
@@ -76,14 +76,14 @@ struct data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::d
     runir::kr::dl::SemanticFamily::Vertex sources;
     runir::kr::dl::SemanticFamily::Edge edges;
     runir::kr::dl::SemanticFamily::Vertex targets;
-    tyr::datalog::database::DistancePlan plan {};
+    runir::kr::database::DistancePlan plan {};
 
     data() = default;
 
     data(runir::kr::dl::SemanticFamily::Vertex sources_,
          runir::kr::dl::SemanticFamily::Edge edges_,
          runir::kr::dl::SemanticFamily::Vertex targets_,
-         tyr::datalog::database::DistancePlan plan_) :
+         runir::kr::database::DistancePlan plan_) :
         index(),
         sources(std::move(sources_)),
         edges(std::move(edges_)),

@@ -10,17 +10,17 @@
 #include <charconv>
 #include <concepts>
 #include <memory>
+#include <runir/kr/database/datalog/construction.hpp>
+#include <runir/kr/database/datalog/evaluator.hpp>
 #include <stdexcept>
 #include <string_view>
-#include <tyr/datalog/lifted/database/datalog/construction.hpp>
-#include <tyr/datalog/lifted/database/datalog/evaluator.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::parser::datalog
 {
 
 namespace dl = runir::kr::dl;
-namespace ydl = tyr::datalog::database::datalog;
+namespace ydl = runir::kr::database::datalog;
 
 void FeatureResolver::declare(const ast::Identifier& name, std::function<FeatureReference()> parse)
 {

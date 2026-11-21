@@ -7,6 +7,7 @@
 #include <concepts>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
@@ -20,7 +21,6 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <yggdrasil/serialization/json.hpp>
 

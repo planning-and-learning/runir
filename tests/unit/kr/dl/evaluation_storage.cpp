@@ -12,6 +12,8 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <ranges>
+#include <runir/kr/database/semantics/join_index.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -23,8 +25,6 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <tyr/datalog/lifted/database/semantics/join_index.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/object_data.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <urd/bits.hpp>

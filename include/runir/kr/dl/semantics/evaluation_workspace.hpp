@@ -13,13 +13,13 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <runir/kr/database/semantics/distance.hpp>
+#include <runir/kr/database/semantics/generic_join.hpp>
+#include <runir/kr/database/semantics/min_distance.hpp>
+#include <runir/kr/database/semantics/operations.hpp>
 #include <span>
 #include <tuple>
 #include <type_traits>
-#include <tyr/datalog/lifted/database/semantics/distance.hpp>
-#include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
-#include <tyr/datalog/lifted/database/semantics/min_distance.hpp>
-#include <tyr/datalog/lifted/database/semantics/operations.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <urd/repr/maps/postings.hpp>
@@ -36,7 +36,7 @@ namespace runir::kr::dl::semantics
 /// One n_distance in full evaluation: its edges and its heuristic, built at first use.
 struct FullDistanceFeature
 {
-    DistanceFeature<tyr::datalog::database::MinDistance<heuristics::ProjectionHeuristic>> edges;
+    DistanceFeature<runir::kr::database::MinDistance<heuristics::ProjectionHeuristic>> edges;
     heuristics::ProjectionHeuristic heuristic;
 };
 
@@ -61,8 +61,8 @@ private:
     FeaturePositions m_distance_feature_positions;
     urd::Store<urd::sequence<KeyedFeature<DatalogFeature>>, urd::stable_refs> m_datalog_features;  ///< Stable references: callers keep the features they get.
     FeaturePositions m_datalog_feature_positions;
-    urd::Store<urd::sequence<tyr::datalog::database::GenericJoinWorkspace>> m_generic_join_workspaces;  ///< One per generic join plan.
-    tyr::datalog::database::Workspace m_database_workspace;
+    urd::Store<urd::sequence<runir::kr::database::GenericJoinWorkspace>> m_generic_join_workspaces;  ///< One per generic join plan.
+    runir::kr::database::Workspace m_database_workspace;
     /// A row's values, as evaluation encodes them (encode_object_row).
     urd::Store<urd::sequence<ygg::Value>> m_values;
 
@@ -94,7 +94,7 @@ public:
     EvaluationWorkspace() = default;
 
     // ponytail: linear scan over distinct plans; key by query index if features carry many generic joins.
-    auto& get_generic_join_workspace(const tyr::datalog::database::GenericJoinPlan& plan)
+    auto& get_generic_join_workspace(const runir::kr::database::GenericJoinPlan& plan)
     {
         for (auto& workspace : m_generic_join_workspaces)
             if (workspace.matches(plan))

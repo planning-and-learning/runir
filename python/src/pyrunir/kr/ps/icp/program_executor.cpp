@@ -16,6 +16,7 @@
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <optional>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
@@ -28,7 +29,6 @@
 #include <runir/kr/ps/icp/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
 #include <string>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <urd/dot.hpp>
 #include <urd/python/bindings.hpp>

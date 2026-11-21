@@ -5,6 +5,7 @@
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
@@ -13,7 +14,6 @@
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/syntactic_complexity.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/python/bindings.hpp>

@@ -13,10 +13,10 @@
 #include <concepts>
 #include <memory>
 #include <optional>
+#include <runir/kr/database/semantics/incremental/distance.hpp>
+#include <runir/kr/database/semantics/incremental/min_distance.hpp>
 #include <span>
 #include <stdexcept>
-#include <tyr/datalog/lifted/database/semantics/incremental/distance.hpp>
-#include <tyr/datalog/lifted/database/semantics/incremental/min_distance.hpp>
 #include <urd/config.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/dense_set.hpp>
@@ -45,7 +45,7 @@ struct RoleEdgeDistanceEvaluator
     QueryEvaluationIndex sources;
     QueryEvaluationIndex edges;
     QueryEvaluationIndex targets;
-    tyr::datalog::database::incremental::SourceMinDistance operation;
+    runir::kr::database::incremental::SourceMinDistance operation;
     DenotationState<NumericalTag> value;
 
     RoleEdgeDistanceEvaluator(NumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
@@ -63,7 +63,7 @@ struct RoleEdgeDistanceEvaluator
         value.set(operation.get_result());
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         operation.update(graph.change(sources).change(), graph.change(edges).change(), graph.change(targets).change());
         value.set(operation.get_result());
@@ -71,12 +71,12 @@ struct RoleEdgeDistanceEvaluator
 };
 
 /// Distances over query edges: the graph maintains the arguments and the edge query's input slots, and
-/// tyr::datalog::database::incremental::MinDistance evaluates the edges on demand from them, so the edge relation, which for
+/// runir::kr::database::incremental::MinDistance evaluates the edges on demand from them, so the edge relation, which for
 /// pair vertices grows with |vertices| x degree, is never materialized.
 template<tyr::TaskKind Kind>
 struct QueryEdgeDistanceEvaluator
 {
-    using Distance = tyr::datalog::database::incremental::MinDistance<heuristics::ProjectionHeuristic>;
+    using Distance = runir::kr::database::incremental::MinDistance<heuristics::ProjectionHeuristic>;
 
     NumericalView<DistanceTag> expression;
     QueryView<> edges;  ///< The edge argument of expression.
@@ -119,7 +119,7 @@ struct QueryEdgeDistanceEvaluator
 
     /// The children's deltas are exact (IncrementalEvaluation): they are the slots' changes, unchanged arguments and
     /// slots leave the distance unchanged, and unchanged targets leave the search and the heuristic's tables valid.
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         slot_changed.clear();
         for (size_t slot = 0; slot < slots.size(); ++slot)

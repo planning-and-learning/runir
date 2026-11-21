@@ -60,7 +60,7 @@ struct builder<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr
     urd::built_t<runir::kr::dl::SemanticFamily::Vertex, C> sources;
     urd::built_t<runir::kr::dl::SemanticFamily::Edge, C> edges;
     urd::built_t<runir::kr::dl::SemanticFamily::Vertex, C> targets;
-    urd::built_t<tyr::datalog::database::DistancePlan, C> plan {};
+    urd::built_t<runir::kr::database::DistancePlan, C> plan {};
 
     static constexpr auto fields() noexcept
     {

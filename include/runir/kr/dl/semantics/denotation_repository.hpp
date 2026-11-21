@@ -10,7 +10,7 @@
 
 #include <cassert>
 #include <memory>
-#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
+#include <runir/kr/database/semantics/relation_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>

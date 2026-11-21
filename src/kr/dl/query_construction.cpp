@@ -65,17 +65,17 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
     const auto sources = columns(data.sources);
     const auto edges = columns(data.edges);
     const auto targets = columns(data.targets);
-    data.plan = tyr::datalog::database::DistancePlan({ sources.data(), sources.size() },
-                                                     { edges.data(), edges.size() },
-                                                     { targets.data(), targets.size() },
-                                                     distance_column);
+    data.plan = runir::kr::database::DistancePlan({ sources.data(), sources.size() },
+                                                  { edges.data(), edges.size() },
+                                                  { targets.data(), targets.size() },
+                                                  distance_column);
 }
 
 void prepare(urd::data<DatalogProgram>& data, const ConstructorRepository& repository)
 {
     const auto& datalog = repository.get_datalog_repository();
     auto arities = urd::Store<urd::sequence<std::optional<size_t>>>(data.inputs.size());
-    const auto read = [&](tyr::datalog::database::datalog::RelationView relation)
+    const auto read = [&](runir::kr::database::datalog::RelationView relation)
     {
         if (!relation.is_input())
             return;
@@ -89,7 +89,7 @@ void prepare(urd::data<DatalogProgram>& data, const ConstructorRepository& repos
         for (const auto atom : range)
             read(atom.get_relation());
     };
-    for (const auto rule : datalog.view(urd::index<tyr::datalog::database::datalog::Program>(data.program)).get_rules())
+    for (const auto rule : datalog.view(urd::index<runir::kr::database::datalog::Program>(data.program)).get_rules())
     {
         atoms(rule.get_atoms());
         atoms(rule.get_negated());

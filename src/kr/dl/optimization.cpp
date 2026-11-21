@@ -33,48 +33,47 @@ QueryView<> insert_query(ConstructorRepository& repository, urd::data<Query<Tag>
 }
 
 /// Inserts the runir counterparts of a plan's nodes; input slots map back to leaves. Returns the roots in plan order.
-urd::Store<urd::sequence<QueryView<>>>
-lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>> leaves, ConstructorRepository& repository)
+urd::Store<urd::sequence<QueryView<>>> lower(const runir::kr::database::QueryPlan& plan, std::span<const QueryView<>> leaves, ConstructorRepository& repository)
 {
-    using YggIndex = urd::index<tyr::datalog::database::Query<>>;
+    using YggIndex = urd::index<runir::kr::database::Query<>>;
     urd::Store<urd::map<YggIndex, QueryView<>>, urd::dense> lowered;
     lowered.reserve(plan.node_count());
     const auto lowered_at = [&](YggIndex index) { return lowered.at(index); };
-    const auto child = [&](tyr::datalog::database::QueryView<> node) { return lowered_at(node.index()); };
+    const auto child = [&](runir::kr::database::QueryView<> node) { return lowered_at(node.index()); };
     for (size_t i = 0; i < plan.node_count(); ++i)
     {
         const auto index = YggIndex(static_cast<ygg::uint_t>(i));
         const auto query = std::visit(
-            [&]<typename Tag>(tyr::datalog::database::QueryView<Tag> node) -> QueryView<>
+            [&]<typename Tag>(runir::kr::database::QueryView<Tag> node) -> QueryView<>
             {
-                if constexpr (std::same_as<Tag, tyr::datalog::database::QueryInputTag>)
+                if constexpr (std::same_as<Tag, runir::kr::database::QueryInputTag>)
                     return leaves[node.get_input_slot()];
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryJoinTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QueryJoinTag>)
                 {
                     auto data = urd::data<Query<QueryJoinTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryUnionTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QueryUnionTag>)
                 {
                     auto data = urd::data<Query<QueryUnionTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryDifferenceTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QueryDifferenceTag>)
                 {
                     auto data = urd::data<Query<QueryDifferenceTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryProjectTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QueryProjectTag>)
                 {
                     auto data = urd::data<Query<QueryProjectTag>>(child(node.get_operand()).index(), query_columns_from_labels(node.get_labels()), {});
                     return insert_query(repository, data);
                 }
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryRenameTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QueryRenameTag>)
                 {
                     auto data = urd::data<Query<QueryRenameTag>>(child(node.get_operand()).index(), query_columns_from_labels(node.get_labels()), {});
                     return insert_query(repository, data);
                 }
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QuerySelectEqualTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QuerySelectEqualTag>)
                 {
                     auto data = urd::data<Query<QuerySelectEqualTag>>(child(node.get_operand()).index(),
                                                                       urd::index<QueryColumn>(node.get_left_column().value),
@@ -83,7 +82,7 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
                                                                       {});
                     return insert_query(repository, data);
                 }
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QuerySelectValueTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QuerySelectValueTag>)
                 {
                     auto data = urd::data<Query<QuerySelectValueTag>>(child(node.get_operand()).index(),
                                                                       urd::index<QueryColumn>(node.get_column().value),
@@ -92,7 +91,7 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
                                                                       {});
                     return insert_query(repository, data);
                 }
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryGenericJoinTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QueryGenericJoinTag>)
                 {
                     const auto inputs = node.get_inputs();
                     if (inputs.empty())
@@ -114,7 +113,7 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
                         urd::data<Query<QueryGenericJoinTag>>(std::move(args), query_columns_from_labels(node.get_variable_order()), output_order, {}, {});
                     return insert_query(repository, data);
                 }
-                else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryEmptyTag>)
+                else if constexpr (std::same_as<Tag, runir::kr::database::QueryEmptyTag>)
                 {
                     urd::flat_vector<urd::index<QueryColumn>> columns;
                     for (const auto column : node.columns())
@@ -222,9 +221,9 @@ RecordView<Numerical<SemanticFamily, DistanceTag>> QueryOptimizer::rewrite(Recor
 {
     using Data = urd::data<Numerical<SemanticFamily, DistanceTag>>;
     auto data = Data();
-    data.sources = optimize_argument<decltype(Data::sources)>(view.get_sources(), tyr::datalog::database::Evaluation::full);
-    data.edges = optimize_argument<decltype(Data::edges)>(view.get_edges(), tyr::datalog::database::Evaluation::bound);
-    data.targets = optimize_argument<decltype(Data::targets)>(view.get_targets(), tyr::datalog::database::Evaluation::full);
+    data.sources = optimize_argument<decltype(Data::sources)>(view.get_sources(), runir::kr::database::Evaluation::full);
+    data.edges = optimize_argument<decltype(Data::edges)>(view.get_edges(), runir::kr::database::Evaluation::bound);
+    data.targets = optimize_argument<decltype(Data::targets)>(view.get_targets(), runir::kr::database::Evaluation::full);
     return runir::kr::dl::insert(*m_repository, data).first;
 }
 
@@ -242,7 +241,7 @@ RecordView<DatalogProgram> QueryOptimizer::rewrite(RecordView<DatalogProgram> vi
     return runir::kr::dl::insert(*m_repository, data).first;
 }
 
-QueryView<> QueryOptimizer::optimize_root(QueryView<> root, const std::optional<Labels>& required, tyr::datalog::database::Evaluation evaluation)
+QueryView<> QueryOptimizer::optimize_root(QueryView<> root, const std::optional<Labels>& required, runir::kr::database::Evaluation evaluation)
 {
     // Keyed as asked: no required labels (every column) and none required (no column) are different queries.
     const auto key = std::tuple { root, required, evaluation };
@@ -252,7 +251,7 @@ QueryView<> QueryOptimizer::optimize_root(QueryView<> root, const std::optional<
     auto translated = translator.translate(root);
     if (required)
         translated = translator.project(translated, *required);
-    auto statistics = tyr::datalog::database::Statistics();
+    auto statistics = runir::kr::database::Statistics();
     statistics.objects = m_statistics->objects;
     const auto slot_leaves = translator.get_leaves(root.context());
     auto leaves = urd::Store<urd::sequence<QueryView<>>>();
@@ -264,9 +263,9 @@ QueryView<> QueryOptimizer::optimize_root(QueryView<> root, const std::optional<
         // Leaves are not optimized themselves, but their concept/role arguments may hold queries.
         leaves.push_back(memoized(leaf));
     }
-    const auto plan = tyr::datalog::database::optimize(std::span<const tyr::datalog::database::QueryView<>>(&translated, 1),
-                                                       std::span<const tyr::datalog::database::Evaluation>(&evaluation, 1),
-                                                       statistics);
+    const auto plan = runir::kr::database::optimize(std::span<const runir::kr::database::QueryView<>>(&translated, 1),
+                                                    std::span<const runir::kr::database::Evaluation>(&evaluation, 1),
+                                                    statistics);
     const auto result = lower(plan, leaves, *m_repository).front();
     m_optimized.emplace(key, result);
     return result;

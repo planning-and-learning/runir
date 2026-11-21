@@ -3,7 +3,7 @@ Datalog programs in policies
 
 A module (``ps::ext``) may define relations by stratified Datalog rules in a ``:datalog`` section, placed after
 ``:memory`` and before ``:features``; sketches (``ps::base``) have no such section. Features read a rule head with the
-query constructor ``q_head``. Rules are evaluated by tyr's ``tyr::datalog::database::datalog::Evaluator`` (tyr's
+query constructor ``q_head``. Rules are evaluated by tyr's ``runir::kr::database::datalog::Evaluator`` (tyr's
 ``docs/database.rst``, section *Datalog*).
 
 .. code:: text

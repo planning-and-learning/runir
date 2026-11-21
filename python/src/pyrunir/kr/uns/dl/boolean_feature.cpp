@@ -4,12 +4,12 @@
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
 
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/uns/repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <urd/python/bindings.hpp>
 
 namespace runir::kr::uns::dl

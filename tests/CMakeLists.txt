@@ -24,6 +24,31 @@ add_library(runir_test_planning_fixtures STATIC support/planning_fixtures.cpp)
 target_include_directories(runir_test_planning_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit ${PROJECT_SOURCE_DIR}/tests/support)
 target_link_libraries(runir_test_planning_fixtures PRIVATE runir::datasets TBB::tbb runir_test_fixtures)
 
+# The database (runir::kr::database): one test executable per source.
+foreach(test IN ITEMS
+    allocations
+    distance
+    dpccp
+    formatter
+    generic_join
+    incremental
+    incremental_min_distance
+    min_distance
+    operations
+    optimization
+    optimization_estimates
+    query
+    relation_repository
+    relaxation
+    search
+    datalog
+    typed_operations
+)
+    add_runir_test(runir_kr_database_${test} unit/kr/database/${test}.cpp runir::kr)
+endforeach()
+# Keep allocation replacements isolated from all other test executables.
+target_link_libraries(runir_kr_database_allocations PRIVATE urd::count_allocations)
+
 add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_object_graph unit/datasets/object_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_state_graph unit/datasets/state_graph.cpp runir::datasets runir_test_planning_fixtures)

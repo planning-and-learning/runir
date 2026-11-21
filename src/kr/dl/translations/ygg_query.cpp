@@ -1,6 +1,6 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
-#include <tyr/datalog/lifted/database/detail/repository_instantiations.hpp>
+#include <runir/kr/database/detail/repository_instantiations.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -64,7 +64,7 @@ QueryTranslator::YggQuery QueryTranslator::translate(DlQuery query)
 
 QueryTranslator::YggQuery QueryTranslator::project(YggQuery query, std::span<const Label> labels)
 {
-    auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QueryProjectTag>>(m_builder);
+    auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QueryProjectTag>>(m_builder);
     urd::store(out->operand, query);
     out->labels.assign(labels.begin(), labels.end());
     return insert(*out);
@@ -84,7 +84,7 @@ urd::Store<urd::sequence<QueryTranslator::DlQuery>> QueryTranslator::get_leaves(
 
 QueryTranslator::YggQuery QueryTranslator::input(QuerySlot slot)
 {
-    auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QueryInputTag>>(m_builder);
+    auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QueryInputTag>>(m_builder);
     out->input_slot = m_slots.size();
     out->columns.assign(slot.columns.begin(), slot.columns.end());
     m_slots.push_back(std::move(slot));
@@ -141,9 +141,9 @@ std::optional<QueryTranslator::YggQuery> QueryTranslator::rewrite_complements(Dl
         return std::nullopt;
     auto result = translate(positives.front());
     for (size_t i = 1; i < positives.size(); ++i)
-        result = binary<tyr::datalog::database::QueryJoinTag>(result, translate(positives[i]));
+        result = binary<runir::kr::database::QueryJoinTag>(result, translate(positives[i]));
     for (const auto complement : complements)
-        result = binary<tyr::datalog::database::QueryAntijoinTag>(result, complement_argument(complement));
+        result = binary<runir::kr::database::QueryAntijoinTag>(result, complement_argument(complement));
     return project(result, labels);
 }
 
@@ -181,19 +181,19 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
         if (m_rewrite_complements)
             if (const auto rewritten = rewrite_complements(query, query_labels(concrete.get_columns())))
                 return *rewritten;
-        return binary<tyr::datalog::database::QueryJoinTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
+        return binary<runir::kr::database::QueryJoinTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
     }
     else if constexpr (std::same_as<Tag, QueryUnionTag>)
-        return binary<tyr::datalog::database::QueryUnionTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
+        return binary<runir::kr::database::QueryUnionTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
     else if constexpr (std::same_as<Tag, QueryDifferenceTag>)
-        return binary<tyr::datalog::database::QueryDifferenceTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
+        return binary<runir::kr::database::QueryDifferenceTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
-        return unary<tyr::datalog::database::QueryProjectTag>(translate(concrete.get_operand()), query_labels(concrete.get_columns()));
+        return unary<runir::kr::database::QueryProjectTag>(translate(concrete.get_operand()), query_labels(concrete.get_columns()));
     else if constexpr (std::same_as<Tag, QueryRenameTag>)
-        return unary<tyr::datalog::database::QueryRenameTag>(translate(concrete.get_operand()), query_labels(concrete.get_columns()));
+        return unary<runir::kr::database::QueryRenameTag>(translate(concrete.get_operand()), query_labels(concrete.get_columns()));
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
-        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectEqualTag>>(m_builder);
+        auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QuerySelectEqualTag>>(m_builder);
         urd::store(out->operand, translate(concrete.get_operand()));
         out->left_column = Label(concrete.get_left_column().index().value);
         out->right_column = Label(concrete.get_right_column().index().value);
@@ -202,7 +202,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         using Object = urd::index<ygg::formalism::Object>;
-        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectValueTag>>(m_builder);
+        auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QuerySelectValueTag>>(m_builder);
         urd::store(out->operand, translate(concrete.get_operand()));
         out->column = Label(concrete.get_column().index().value);
         out->constant = ygg::encode_value(Object(concrete.get_object().index().value));
@@ -211,7 +211,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
-        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QueryGenericJoinTag>>(m_builder);
+        auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>>(m_builder);
         for (const auto arg : concrete.get_args())
             urd::append(out->inputs, translate(arg));
         const auto variable_order = query_labels(concrete.get_variable_order());
@@ -222,7 +222,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     }
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
     {
-        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QueryEmptyTag>>(m_builder);
+        auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QueryEmptyTag>>(m_builder);
         const auto columns = concrete.get_schema();
         out->columns.assign(columns.begin(), columns.end());
         return insert(*out);

@@ -116,7 +116,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>, C>
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> left_operand {};
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> right_operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<tyr::datalog::database::JoinPlan, C> plan {};
+    urd::built_t<runir::kr::database::JoinPlan, C> plan {};
 
     static constexpr auto fields() noexcept
     {
@@ -138,7 +138,7 @@ struct builder<runir::kr::dl::Query<Tag>, C>
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> left_operand {};
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> right_operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<tyr::datalog::database::SetPlan, C> plan {};
+    urd::built_t<runir::kr::database::SetPlan, C> plan {};
 
     static constexpr auto fields() noexcept
     {
@@ -158,7 +158,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>, C>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<tyr::datalog::database::ProjectionPlan, C> plan {};
+    urd::built_t<runir::kr::database::ProjectionPlan, C> plan {};
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"plan", &builder::plan>> {}; }
@@ -190,7 +190,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>, C>
     urd::built_t<urd::index<runir::kr::dl::QueryColumn>, C> left_column {};
     urd::built_t<urd::index<runir::kr::dl::QueryColumn>, C> right_column {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<tyr::datalog::database::SelectEqualPlan, C> plan {};
+    urd::built_t<runir::kr::database::SelectEqualPlan, C> plan {};
 
     static constexpr auto fields() noexcept
     {
@@ -213,7 +213,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>, C>
     urd::built_t<urd::index<runir::kr::dl::QueryColumn>, C> column {};
     urd::built_t<urd::index<tyr::formalism::Object>, ::tyr::formalism::Repository> object {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<tyr::datalog::database::SelectValuePlan, C> plan {};
+    urd::built_t<runir::kr::database::SelectValuePlan, C> plan {};
 
     static constexpr auto fields() noexcept
     {
@@ -236,7 +236,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>, C>
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> variable_order {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> output_order {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<tyr::datalog::database::GenericJoinPlan, C> plan {};
+    urd::built_t<runir::kr::database::GenericJoinPlan, C> plan {};
 
     static constexpr auto fields() noexcept
     {
@@ -270,7 +270,7 @@ struct builder<runir::kr::dl::QueryProjection<Category>, C>
     urd::index<runir::kr::dl::QueryProjection<Category>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
-    urd::built_t<tyr::datalog::database::ProjectionPlan, C> plan {};
+    urd::built_t<runir::kr::database::ProjectionPlan, C> plan {};
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"operand", &builder::operand>, urd::field<"columns", &builder::columns>, urd::field<"plan", &builder::plan>> {}; }

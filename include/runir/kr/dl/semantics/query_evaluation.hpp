@@ -7,10 +7,10 @@
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 
 #include <array>
+#include <runir/kr/database/semantics/generic_join.hpp>
+#include <runir/kr/database/semantics/operations.hpp>
 #include <span>
 #include <tuple>
-#include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
-#include <tyr/datalog/lifted/database/semantics/operations.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
@@ -55,27 +55,27 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
         const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
         if constexpr (std::same_as<Tag, QueryJoinTag>)
         {
-            tyr::datalog::database::join(lhs, rhs, constructor.get_plan(), result, context.get_workspace().get_database_workspace());
+            runir::kr::database::join(lhs, rhs, constructor.get_plan(), result, context.get_workspace().get_database_workspace());
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            tyr::datalog::database::union_(lhs, rhs, constructor.get_plan(), result);
+            runir::kr::database::union_(lhs, rhs, constructor.get_plan(), result);
         else
-            tyr::datalog::database::difference(lhs, rhs, constructor.get_plan(), result);
+            runir::kr::database::difference(lhs, rhs, constructor.get_plan(), result);
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_operand(), children);
-        tyr::datalog::database::project(child, constructor.get_plan(), result, context.get_workspace().get_database_workspace());
+        runir::kr::database::project(child, constructor.get_plan(), result, context.get_workspace().get_database_workspace());
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_operand(), children);
-        tyr::datalog::database::select_equal_columns(child, constructor.get_plan(), result);
+        runir::kr::database::select_equal_columns(child, constructor.get_plan(), result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_operand(), children);
-        tyr::datalog::database::select_equal_value(child, constructor.get_plan(), result);
+        runir::kr::database::select_equal_value(child, constructor.get_plan(), result);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
@@ -83,7 +83,7 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
         for (const auto arg : constructor.get_args())
             inputs.push_back(evaluate<Kind>(arg, children));
         const auto& plan = constructor.get_plan();
-        tyr::datalog::database::generic_join(inputs, plan, result, context.get_workspace().get_generic_join_workspace(plan));
+        runir::kr::database::generic_join(inputs, plan, result, context.get_workspace().get_generic_join_workspace(plan));
     }
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
     {

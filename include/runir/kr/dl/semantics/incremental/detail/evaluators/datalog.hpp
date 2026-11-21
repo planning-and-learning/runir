@@ -39,7 +39,7 @@ struct QueryProgramEvaluator : QueryValue
         feature.evaluator.initialize(inputs | std::views::transform([&](QueryEvaluationIndex input) { return graph.result(input); }));
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         feature.evaluator.update(inputs | std::views::transform([&](QueryEvaluationIndex input) { return graph.change(input).change(); }));
     }
@@ -50,7 +50,7 @@ template<tyr::TaskKind Kind>
 struct QueryHeadEvaluator : QueryValue
 {
     QueryEvaluationIndex program;
-    urd::index<tyr::datalog::database::datalog::Relation> relation;
+    urd::index<runir::kr::database::datalog::Relation> relation;
     urd::Store<urd::sequence<ygg::Value>> values;  ///< A head row's values.
 
     QueryHeadEvaluator(ygg::FreeScratchRelations& scratch_,
@@ -87,7 +87,7 @@ struct QueryHeadEvaluator : QueryValue
         for_each_row(head, [&](std::span<const ygg::Value> row) { rows.insert(row); });
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         this->delta.clear();
         const auto& feature = graph.program(program).feature;

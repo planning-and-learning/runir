@@ -5,7 +5,7 @@
 #include "runir/kr/ps/icp/detail/proof_search.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 
 namespace runir::kr::ps::icp
 {

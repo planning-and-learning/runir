@@ -11,8 +11,8 @@
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <concepts>
+#include <runir/kr/database/semantics/incremental/projection.hpp>
 #include <span>
-#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -21,10 +21,10 @@ template<tyr::TaskKind Kind, CategoryTag Category>
 struct ProjectionEvaluator
 {
     QueryEvaluationIndex child;
-    tyr::datalog::database::incremental::ProjectionEvaluator operation;
+    runir::kr::database::incremental::ProjectionEvaluator operation;
     DenotationState<Category> value;
 
-    ProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex child_, const tyr::datalog::database::ProjectionPlan& plan) :
+    ProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex child_, const runir::kr::database::ProjectionPlan& plan) :
         child(child_),
         operation(scratch, plan)
     {
@@ -63,7 +63,7 @@ struct ProjectionEvaluator
             set_row(builder, rows.row(i), true);
     }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace& workspace)
     {
         operation.update(graph.change(child).change(), workspace);
         const auto [added, removed] = operation.get_delta().change();

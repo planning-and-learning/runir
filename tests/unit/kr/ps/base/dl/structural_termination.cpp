@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <ranges>
+#include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
@@ -9,7 +10,6 @@
 #include <runir/kr/ps/base/dl/structural_termination.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <set>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <vefr/algorithms.hpp>
 #include <yggdrasil/serialization/json.hpp>

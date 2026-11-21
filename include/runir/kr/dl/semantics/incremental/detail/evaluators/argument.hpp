@@ -24,7 +24,7 @@ struct ArgumentEvaluator
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     { value.assign(argument_value(context, identifier), graph.records(), graph.denotations()); }
 
-    void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
+    void update(EvaluationGraph<Kind>&, const Delta&, runir::kr::database::Workspace&) {}
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

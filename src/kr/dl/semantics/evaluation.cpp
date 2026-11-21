@@ -12,8 +12,8 @@
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/tuple/elem.hpp>
 #include <cstddef>
-#include <tyr/datalog/lifted/database/detail/repository_instantiations.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
+#include <runir/kr/database/detail/repository_instantiations.hpp>
+#include <runir/kr/database/syntax/query_repository.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -72,20 +72,17 @@ namespace runir::kr::dl::semantics::incremental
 /// The evaluation classes of a task kind, their members per category, and demand over registered and builder states.
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-macro-parentheses): it expands to explicit instantiations, declarations, which no
 // function gives; Kind is a type, which takes no parentheses
-#define RUNIR_INCREMENTAL_EVALUATION(Kind)                                                                               \
-    template class EvaluationGraph<Kind>;                                                                                \
-    template class IncrementalEvaluation<Kind>;                                                                          \
-    BOOST_PP_REPEAT(4, RUNIR_EVALUATION_GRAPH_AT, Kind)                                                                  \
-    BOOST_PP_REPEAT(2, RUNIR_CONCEPT_OR_ROLE_AT, Kind)                                                                   \
-    BOOST_PP_REPEAT(2, RUNIR_BOOLEAN_OR_NUMERICAL_AT, Kind)                                                              \
-    template void IncrementalEvaluation<Kind>::demand<StateEvaluationContext<Kind>>(ygg::uint_t,                         \
-                                                                                    StateEvaluationContext<Kind>&,       \
-                                                                                    const Delta*,                        \
-                                                                                    tyr::datalog::database::Workspace*); \
-    template void IncrementalEvaluation<Kind>::demand<BuilderContext<Kind>>(ygg::uint_t,                                 \
-                                                                            BuilderContext<Kind>&,                       \
-                                                                            const Delta*,                                \
-                                                                            tyr::datalog::database::Workspace*);
+#define RUNIR_INCREMENTAL_EVALUATION(Kind)                                                                            \
+    template class EvaluationGraph<Kind>;                                                                             \
+    template class IncrementalEvaluation<Kind>;                                                                       \
+    BOOST_PP_REPEAT(4, RUNIR_EVALUATION_GRAPH_AT, Kind)                                                               \
+    BOOST_PP_REPEAT(2, RUNIR_CONCEPT_OR_ROLE_AT, Kind)                                                                \
+    BOOST_PP_REPEAT(2, RUNIR_BOOLEAN_OR_NUMERICAL_AT, Kind)                                                           \
+    template void IncrementalEvaluation<Kind>::demand<StateEvaluationContext<Kind>>(ygg::uint_t,                      \
+                                                                                    StateEvaluationContext<Kind>&,    \
+                                                                                    const Delta*,                     \
+                                                                                    runir::kr::database::Workspace*); \
+    template void IncrementalEvaluation<Kind>::demand<BuilderContext<Kind>>(ygg::uint_t, BuilderContext<Kind>&, const Delta*, runir::kr::database::Workspace*);
 // NOLINTEND(cppcoreguidelines-macro-usage,bugprone-macro-parentheses)
 
 RUNIR_INCREMENTAL_EVALUATION(tyr::GroundTag)
