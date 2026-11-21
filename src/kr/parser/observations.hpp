@@ -37,7 +37,7 @@ auto require_feature(const urd::Store<urd::map<std::string, urd::index<runir::kr
 template<typename FeatureTag, typename ObservationTag, runir::kr::FamilyTag Family, typename Repository, typename Builder>
 auto make_condition(Repository& repository, Builder& builder, urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature)
 {
-    auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>();
+    auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>>();
     concrete_data->feature = feature;
     return urd::stored<urd::built_t<runir::kr::ps::ConditionVariant<Family>, Repository>>(repository.insert(*concrete_data, builder).first);
 }
@@ -45,7 +45,7 @@ auto make_condition(Repository& repository, Builder& builder, urd::index<runir::
 template<typename FeatureTag, typename ObservationTag, runir::kr::FamilyTag Family, typename Repository, typename Builder>
 auto make_effect(Repository& repository, Builder& builder, urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature)
 {
-    auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>();
+    auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>>();
     concrete_data->feature = feature;
     return urd::stored<urd::built_t<runir::kr::ps::EffectVariant<Family>, Repository>>(repository.insert(*concrete_data, builder).first);
 }

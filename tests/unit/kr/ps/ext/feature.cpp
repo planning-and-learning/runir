@@ -39,7 +39,7 @@ using NumericalFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::dl::NumericalTag>
 using QueryFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::ps::dl::QueryFeature>;
 
 template<typename FeatureTag>
-using ConcreteFeature = kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>;
+using ConcreteFeature = kr::ps::ConcreteFeature<kr::ExtFamilyTag, FeatureTag>;
 
 static_assert(FeatureContract<ConceptFeature, ConcreteFeature<kr::dl::ConceptTag>>);
 static_assert(FeatureContract<RoleFeature, ConcreteFeature<kr::dl::RoleTag>>);

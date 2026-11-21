@@ -37,7 +37,7 @@ def test_uns_features_construct_programmatically(gripper_planning_domain: Planni
         read_fixture("kr/uns/positive.classifier"), gripper_planning_domain, repository
     )
     feature = classifier.get_features()[0]
-    concrete_data = uns_dl.ConcreteFeatureUnsDlBooleanData()
+    concrete_data = uns_dl.ConcreteFeatureUnsBooleanData()
     concrete_data.feature = feature.get_variant().get_feature().index()
     concrete_data.symbol = feature.get_variant().get_symbol()
     concrete = repository.insert(concrete_data)[0]
@@ -76,7 +76,7 @@ def _check_base(domain: PlanningDomain) -> None:
     assert boolean.get_variant().get_feature() == boolean.get_variant().get_feature()
     concrete_boolean = repository.insert(
         record(
-            base.dl.ConcreteFeatureBaseDlBooleanData,
+            base.dl.ConcreteFeatureBaseBooleanData,
             feature=boolean.get_variant().get_feature().index(),
             symbol=boolean.get_variant().get_symbol(),
         )
@@ -87,7 +87,7 @@ def _check_base(domain: PlanningDomain) -> None:
     assert numerical.get_variant().get_feature() == numerical.get_variant().get_feature()
     concrete_numerical = repository.insert(
         record(
-            base.dl.ConcreteFeatureBaseDlNumericalData,
+            base.dl.ConcreteFeatureBaseNumericalData,
             feature=numerical.get_variant().get_feature().index(),
             symbol=numerical.get_variant().get_symbol(),
         )
@@ -99,34 +99,34 @@ def _check_base(domain: PlanningDomain) -> None:
 
     b, n = boolean.index(), numerical.index()
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteConditionBaseDlBooleanPositiveData, feature=b)), boolean
+        lambda: repository.insert(record(base.dl.ConcreteConditionBaseBooleanPositiveData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteConditionBaseDlBooleanNegativeData, feature=b)), boolean
+        lambda: repository.insert(record(base.dl.ConcreteConditionBaseBooleanNegativeData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteConditionBaseDlNumericalEqualZeroData, feature=n)), numerical
+        lambda: repository.insert(record(base.dl.ConcreteConditionBaseNumericalEqualZeroData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteConditionBaseDlNumericalGreaterZeroData, feature=n)), numerical
+        lambda: repository.insert(record(base.dl.ConcreteConditionBaseNumericalGreaterZeroData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteEffectBaseDlBooleanPositiveData, feature=b)), boolean
+        lambda: repository.insert(record(base.dl.ConcreteEffectBaseBooleanPositiveData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteEffectBaseDlBooleanNegativeData, feature=b)), boolean
+        lambda: repository.insert(record(base.dl.ConcreteEffectBaseBooleanNegativeData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteEffectBaseDlBooleanUnchangedData, feature=b)), boolean
+        lambda: repository.insert(record(base.dl.ConcreteEffectBaseBooleanUnchangedData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteEffectBaseDlNumericalIncreasesData, feature=n)), numerical
+        lambda: repository.insert(record(base.dl.ConcreteEffectBaseNumericalIncreasesData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteEffectBaseDlNumericalDecreasesData, feature=n)), numerical
+        lambda: repository.insert(record(base.dl.ConcreteEffectBaseNumericalDecreasesData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(base.dl.ConcreteEffectBaseDlNumericalUnchangedData, feature=n)), numerical
+        lambda: repository.insert(record(base.dl.ConcreteEffectBaseNumericalUnchangedData, feature=n)), numerical
     )
 
 
@@ -139,7 +139,7 @@ def _check_ext(domain: PlanningDomain) -> None:
     assert boolean.get_variant().get_feature() == boolean.get_variant().get_feature()
     concrete_boolean = repository.insert(
         record(
-            ext.dl.ConcreteFeatureExtDlBooleanData,
+            ext.dl.ConcreteFeatureExtBooleanData,
             feature=boolean.get_variant().get_feature().index(),
             symbol=boolean.get_variant().get_symbol(),
         )
@@ -150,7 +150,7 @@ def _check_ext(domain: PlanningDomain) -> None:
     assert numerical.get_variant().get_feature() == numerical.get_variant().get_feature()
     concrete_numerical = repository.insert(
         record(
-            ext.dl.ConcreteFeatureExtDlNumericalData,
+            ext.dl.ConcreteFeatureExtNumericalData,
             feature=numerical.get_variant().get_feature().index(),
             symbol=numerical.get_variant().get_symbol(),
         )
@@ -160,34 +160,34 @@ def _check_ext(domain: PlanningDomain) -> None:
 
     b, n = boolean.index(), numerical.index()
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteConditionExtDlBooleanPositiveData, feature=b)), boolean
+        lambda: repository.insert(record(ext.dl.ConcreteConditionExtBooleanPositiveData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteConditionExtDlBooleanNegativeData, feature=b)), boolean
+        lambda: repository.insert(record(ext.dl.ConcreteConditionExtBooleanNegativeData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteConditionExtDlNumericalEqualZeroData, feature=n)), numerical
+        lambda: repository.insert(record(ext.dl.ConcreteConditionExtNumericalEqualZeroData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteConditionExtDlNumericalGreaterZeroData, feature=n)), numerical
+        lambda: repository.insert(record(ext.dl.ConcreteConditionExtNumericalGreaterZeroData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteEffectExtDlBooleanPositiveData, feature=b)), boolean
+        lambda: repository.insert(record(ext.dl.ConcreteEffectExtBooleanPositiveData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteEffectExtDlBooleanNegativeData, feature=b)), boolean
+        lambda: repository.insert(record(ext.dl.ConcreteEffectExtBooleanNegativeData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteEffectExtDlBooleanUnchangedData, feature=b)), boolean
+        lambda: repository.insert(record(ext.dl.ConcreteEffectExtBooleanUnchangedData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteEffectExtDlNumericalIncreasesData, feature=n)), numerical
+        lambda: repository.insert(record(ext.dl.ConcreteEffectExtNumericalIncreasesData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteEffectExtDlNumericalDecreasesData, feature=n)), numerical
+        lambda: repository.insert(record(ext.dl.ConcreteEffectExtNumericalDecreasesData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(ext.dl.ConcreteEffectExtDlNumericalUnchangedData, feature=n)), numerical
+        lambda: repository.insert(record(ext.dl.ConcreteEffectExtNumericalUnchangedData, feature=n)), numerical
     )
 
 
@@ -200,7 +200,7 @@ def _check_icp(domain: PlanningDomain) -> None:
     assert boolean.get_variant().get_feature() == boolean.get_variant().get_feature()
     concrete_boolean = repository.insert(
         record(
-            icp.dl.ConcreteFeatureIcpDlBooleanData,
+            icp.dl.ConcreteFeatureIcpBooleanData,
             feature=boolean.get_variant().get_feature().index(),
             symbol=boolean.get_variant().get_symbol(),
         )
@@ -211,7 +211,7 @@ def _check_icp(domain: PlanningDomain) -> None:
     assert numerical.get_variant().get_feature() == numerical.get_variant().get_feature()
     concrete_numerical = repository.insert(
         record(
-            icp.dl.ConcreteFeatureIcpDlNumericalData,
+            icp.dl.ConcreteFeatureIcpNumericalData,
             feature=numerical.get_variant().get_feature().index(),
             symbol=numerical.get_variant().get_symbol(),
         )
@@ -221,34 +221,34 @@ def _check_icp(domain: PlanningDomain) -> None:
 
     b, n = boolean.index(), numerical.index()
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteConditionIcpDlBooleanPositiveData, feature=b)), boolean
+        lambda: repository.insert(record(icp.dl.ConcreteConditionIcpBooleanPositiveData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteConditionIcpDlBooleanNegativeData, feature=b)), boolean
+        lambda: repository.insert(record(icp.dl.ConcreteConditionIcpBooleanNegativeData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteConditionIcpDlNumericalEqualZeroData, feature=n)), numerical
+        lambda: repository.insert(record(icp.dl.ConcreteConditionIcpNumericalEqualZeroData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteConditionIcpDlNumericalGreaterZeroData, feature=n)), numerical
+        lambda: repository.insert(record(icp.dl.ConcreteConditionIcpNumericalGreaterZeroData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpDlBooleanPositiveData, feature=b)), boolean
+        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpBooleanPositiveData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpDlBooleanNegativeData, feature=b)), boolean
+        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpBooleanNegativeData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpDlBooleanUnchangedData, feature=b)), boolean
+        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpBooleanUnchangedData, feature=b)), boolean
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpDlNumericalIncreasesData, feature=n)), numerical
+        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpNumericalIncreasesData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpDlNumericalDecreasesData, feature=n)), numerical
+        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpNumericalDecreasesData, feature=n)), numerical
     )
     _check_observation(
-        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpDlNumericalUnchangedData, feature=n)), numerical
+        lambda: repository.insert(record(icp.dl.ConcreteEffectIcpNumericalUnchangedData, feature=n)), numerical
     )
 
 

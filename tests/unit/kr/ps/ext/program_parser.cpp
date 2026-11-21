@@ -33,7 +33,7 @@ namespace
 template<typename FeatureTag, kr::dl::CategoryTag Category>
 auto create_feature(kr::ps::ext::Repository& repository, urd::index<kr::dl::Constructor<Category>> expression, const std::string& name)
 {
-    auto concrete_data = urd::data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
+    auto concrete_data = urd::data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, FeatureTag>>(expression, name);
     const auto concrete = repository.insert(concrete_data).first;
     auto feature_data = urd::data<kr::ps::Feature<kr::ExtFamilyTag, FeatureTag>>(concrete.index());
     return repository.insert(feature_data).first;

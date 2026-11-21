@@ -17,9 +17,9 @@ namespace urd
 
 /// The builder of ConcreteFeature: its record's members, each in its built form (urd::built_t).
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-struct builder<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>
+struct builder<runir::kr::ps::ConcreteFeature<Family, FeatureTag>, C>
 {
-    urd::index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> index;
+    urd::index<runir::kr::ps::ConcreteFeature<Family, FeatureTag>> index;
     urd::built_t<urd::index<typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type>, ::runir::kr::dl::ConstructorRepository> feature;
     urd::built_t<urd::flat_string, C> symbol;
 

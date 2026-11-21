@@ -30,7 +30,7 @@ concept EffectContract = IndexedDataView<Entity> && requires(urd::data<Entity>& 
 };
 
 template<typename Feature, typename Observation>
-using Effect = kr::ps::ConcreteEffect<kr::BaseFamilyTag, kr::DlTag, Feature, Observation>;
+using Effect = kr::ps::ConcreteEffect<kr::BaseFamilyTag, Feature, Observation>;
 
 using ConcreteTypes = boost::mp11::mp_list<Effect<kr::dl::BooleanTag, kr::ps::dl::Positive>,
                                            Effect<kr::dl::BooleanTag, kr::ps::dl::Negative>,

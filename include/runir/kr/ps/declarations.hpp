@@ -37,10 +37,10 @@ struct Feature
     static constexpr std::string_view name = urd::joined_name<"Feature", Family::name, FeatureTag::name>;
 };
 
-template<FamilyTag Family, typename LanguageTag, typename FeatureTag>
+template<FamilyTag Family, typename FeatureTag>
 struct ConcreteFeature
 {
-    static constexpr std::string_view name = urd::joined_name<"ConcreteFeature", Family::name, LanguageTag::name, FeatureTag::name>;
+    static constexpr std::string_view name = urd::joined_name<"ConcreteFeature", Family::name, FeatureTag::name>;
 };
 
 // Transition evaluation
@@ -56,18 +56,18 @@ class TransitionEvaluationContext;
 
 // Condition
 
-template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
+template<FamilyTag Family, typename FeatureTag, typename ObservationTag>
 struct ConcreteCondition
 {
-    static constexpr std::string_view name = urd::joined_name<"ConcreteCondition", Family::name, LanguageTag::name, FeatureTag::name, ObservationTag::name>;
+    static constexpr std::string_view name = urd::joined_name<"ConcreteCondition", Family::name, FeatureTag::name, ObservationTag::name>;
 };
 
 // Effect
 
-template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
+template<FamilyTag Family, typename FeatureTag, typename ObservationTag>
 struct ConcreteEffect
 {
-    static constexpr std::string_view name = urd::joined_name<"ConcreteEffect", Family::name, LanguageTag::name, FeatureTag::name, ObservationTag::name>;
+    static constexpr std::string_view name = urd::joined_name<"ConcreteEffect", Family::name, FeatureTag::name, ObservationTag::name>;
 };
 
 // Repository

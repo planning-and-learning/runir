@@ -9,7 +9,7 @@ namespace runir::kr::ps
 {
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-std::size_t syntactic_complexity(const urd::index_view<ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>& view)
+std::size_t syntactic_complexity(const urd::index_view<ConcreteFeature<Family, FeatureTag>, C>& view)
 { return runir::kr::dl::semantics::syntactic_complexity(view.get_feature()); }
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>

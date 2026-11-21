@@ -56,8 +56,8 @@ concept ConcreteFeatureContract =
 
 using BooleanFeature = kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>;
 using NumericalFeature = kr::ps::Feature<kr::BaseFamilyTag, kr::dl::NumericalTag>;
-using ConcreteBooleanFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
-using ConcreteNumericalFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::NumericalTag>;
+using ConcreteBooleanFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::dl::BooleanTag>;
+using ConcreteNumericalFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::dl::NumericalTag>;
 
 static_assert(FeatureContract<BooleanFeature, ConcreteBooleanFeature>);
 static_assert(FeatureContract<NumericalFeature, ConcreteNumericalFeature>);

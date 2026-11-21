@@ -5,9 +5,9 @@
 
 from pyrunir._pyrunir.kr.uns.dl import (
     ClassifierFactory as ClassifierFactory,
-    ConcreteFeatureUnsDlBoolean as ConcreteFeatureUnsDlBoolean,
-    ConcreteFeatureUnsDlBooleanData as ConcreteFeatureUnsDlBooleanData,
-    ConcreteFeatureUnsDlBooleanIndex as ConcreteFeatureUnsDlBooleanIndex,
+    ConcreteFeatureUnsBoolean as ConcreteFeatureUnsBoolean,
+    ConcreteFeatureUnsBooleanData as ConcreteFeatureUnsBooleanData,
+    ConcreteFeatureUnsBooleanIndex as ConcreteFeatureUnsBooleanIndex,
     FeatureUnsBoolean as FeatureUnsBoolean,
     FeatureUnsBooleanData as FeatureUnsBooleanData,
     FeatureUnsBooleanIndex as FeatureUnsBooleanIndex,

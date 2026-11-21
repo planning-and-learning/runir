@@ -26,14 +26,14 @@ public:
     }
 
     template<typename FeatureTag, typename RepositoryTypes>
-    RecordView<Family, RepositoryTypes, ConcreteFeature<Family, DlTag, FeatureTag>>
-    rewrite(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, DlTag, FeatureTag>> view, BasicRepository<Family, RepositoryTypes>& repository)
+    RecordView<Family, RepositoryTypes, ConcreteFeature<Family, FeatureTag>>
+    rewrite(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, FeatureTag>> view, BasicRepository<Family, RepositoryTypes>& repository)
     {
         const auto expression = view.get_feature();
         const auto optimized = m_optimizer.optimize(expression);
         if (optimized == expression)
             return view;
-        auto data = urd::data<ConcreteFeature<Family, DlTag, FeatureTag>>(optimized.index(), view.get_symbol());
+        auto data = urd::data<ConcreteFeature<Family, FeatureTag>>(optimized.index(), view.get_symbol());
         return ygg::formalism::insert(repository, data).first;
     }
 
@@ -47,7 +47,7 @@ class FeatureStatisticsCollector
 {
 public:
     template<typename FeatureTag, typename RepositoryTypes>
-    void add(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, DlTag, FeatureTag>> view)
+    void add(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, FeatureTag>> view)
     { m_collector.add(view.get_feature()); }
 
     [[nodiscard]] const runir::kr::dl::QueryStatisticsCollector& get_collector() const noexcept { return m_collector; }

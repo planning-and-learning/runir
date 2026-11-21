@@ -51,7 +51,7 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
                                               LanguageCapabilities { "classifiers", false, false } };
     const auto feature = parse_constructor(node.feature, domain, context);
     auto concrete_data =
-        runir::kr::uns::checkout<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(builder);
+        runir::kr::uns::checkout<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>(builder);
     urd::store(concrete_data->feature, feature);
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, builder, *concrete_data);

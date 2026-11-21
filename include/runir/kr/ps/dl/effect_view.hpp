@@ -12,7 +12,7 @@
 namespace urd
 {
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag, typename V>
-struct view_mixin<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, V>
+struct view_mixin<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, V>
 {
 private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }

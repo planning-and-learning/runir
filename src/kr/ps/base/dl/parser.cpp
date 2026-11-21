@@ -65,7 +65,7 @@ auto parse_feature(
         domain,
         ConstructorContext { repository.get<runir::kr::dl::ConstructorRepository>(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
-        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(*builders.ps);
+        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>(*builders.ps);
     urd::store(concrete_data->feature, constructor);
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *builders.ps, *concrete_data);
@@ -92,7 +92,7 @@ auto parse_feature(
         domain,
         ConstructorContext { repository.get<runir::kr::dl::ConstructorRepository>(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
-        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(*builders.ps);
+        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>(*builders.ps);
     urd::store(concrete_data->feature, constructor);
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *builders.ps, *concrete_data);

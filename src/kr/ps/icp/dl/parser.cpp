@@ -76,7 +76,7 @@ auto require(const Map& values, const ast::Identifier& name, const char* kind, c
 template<typename FeatureTag, typename Expression>
 auto make_feature(Repository& repository, Builder& builder, urd::index<Expression> expression, const std::string& symbol)
 {
-    auto concrete = checkout<runir::kr::ps::ConcreteFeature<IcpFamilyTag, DlTag, FeatureTag>>(builder);
+    auto concrete = checkout<runir::kr::ps::ConcreteFeature<IcpFamilyTag, FeatureTag>>(builder);
     urd::store(concrete->feature, repository.get<runir::kr::dl::ConstructorRepository>().view(expression));
     concrete->symbol = symbol;
     auto data = checkout<runir::kr::ps::Feature<IcpFamilyTag, FeatureTag>>(builder);

@@ -38,7 +38,7 @@ concept ConcreteFeatureContract =
        };
 
 template<typename Feature>
-using ConcreteFeature = kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, Feature>;
+using ConcreteFeature = kr::ps::ConcreteFeature<kr::ExtFamilyTag, Feature>;
 
 static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::ConceptTag>, kr::dl::Constructor<kr::dl::ConceptTag>>);
 static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::RoleTag>, kr::dl::Constructor<kr::dl::RoleTag>>);

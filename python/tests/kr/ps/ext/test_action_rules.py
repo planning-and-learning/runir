@@ -220,7 +220,7 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
     variant = module.get_memory_transitions()[0][0]
     rule = variant.get_variant()
     assert isinstance(feature, dl.FeatureExtQuery)
-    assert isinstance(feature.get_variant(), dl.ConcreteFeatureExtDlQuery)
+    assert isinstance(feature.get_variant(), dl.ConcreteFeatureExtQuery)
     assert isinstance(rule, ext.RuleAction)
     assert rule.get_query_feature() == feature
     assert rule.get_action_name() == "move"
@@ -231,7 +231,7 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
     assert feature.syntactic_complexity() > 0
     assert str(dl.parse_program(str(program), domain, repository)) == str(program)
 
-    concrete = dl.ConcreteFeatureExtDlQueryData()
+    concrete = dl.ConcreteFeatureExtQueryData()
     concrete.symbol = feature.get_variant().get_symbol()
     concrete.feature = feature.get_variant().get_feature().index()
     assert repository.insert(concrete)[0] == feature.get_variant()

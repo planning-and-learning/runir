@@ -15,7 +15,7 @@ namespace runir::kr::ps
 
 /// The concrete feature a feature of Family and FeatureTag holds (one alternative: a DL feature).
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
-using FeatureVariant = urd::flat_variant<urd::index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>>;
+using FeatureVariant = urd::flat_variant<urd::index<runir::kr::ps::ConcreteFeature<Family, FeatureTag>>>;
 
 }  // namespace runir::kr::ps
 

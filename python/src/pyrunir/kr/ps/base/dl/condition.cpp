@@ -16,22 +16,21 @@ namespace runir::kr::ps::base::dl
 void bind_condition(nb::module_& m, RepositoryBinding& repository)
 {
     using Family = runir::kr::BaseFamilyTag;
-    using runir::kr::DlTag;
     using runir::kr::dl::BooleanTag;
     using runir::kr::dl::NumericalTag;
     using namespace runir::kr::ps::dl;
-    urd::python::bind_index<runir::kr::ps::ConcreteCondition<Family, DlTag, BooleanTag, Positive>>(m);
-    urd::python::bind_data<runir::kr::ps::ConcreteCondition<Family, DlTag, BooleanTag, Positive>>(m);
-    urd::python::bind_index<runir::kr::ps::ConcreteCondition<Family, DlTag, BooleanTag, Negative>>(m);
-    urd::python::bind_data<runir::kr::ps::ConcreteCondition<Family, DlTag, BooleanTag, Negative>>(m);
-    urd::python::bind_index<runir::kr::ps::ConcreteCondition<Family, DlTag, NumericalTag, EqualZero>>(m);
-    urd::python::bind_data<runir::kr::ps::ConcreteCondition<Family, DlTag, NumericalTag, EqualZero>>(m);
-    urd::python::bind_index<runir::kr::ps::ConcreteCondition<Family, DlTag, NumericalTag, GreaterZero>>(m);
-    urd::python::bind_data<runir::kr::ps::ConcreteCondition<Family, DlTag, NumericalTag, GreaterZero>>(m);
-    bind_observation<runir::kr::ps::ConcreteCondition<Family, DlTag, BooleanTag, Positive>>(m, repository);
-    bind_observation<runir::kr::ps::ConcreteCondition<Family, DlTag, BooleanTag, Negative>>(m, repository);
-    bind_observation<runir::kr::ps::ConcreteCondition<Family, DlTag, NumericalTag, EqualZero>>(m, repository);
-    bind_observation<runir::kr::ps::ConcreteCondition<Family, DlTag, NumericalTag, GreaterZero>>(m, repository);
+    urd::python::bind_index<runir::kr::ps::ConcreteCondition<Family, BooleanTag, Positive>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteCondition<Family, BooleanTag, Positive>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteCondition<Family, BooleanTag, Negative>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteCondition<Family, BooleanTag, Negative>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteCondition<Family, NumericalTag, EqualZero>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteCondition<Family, NumericalTag, EqualZero>>(m);
+    urd::python::bind_index<runir::kr::ps::ConcreteCondition<Family, NumericalTag, GreaterZero>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteCondition<Family, NumericalTag, GreaterZero>>(m);
+    bind_observation<runir::kr::ps::ConcreteCondition<Family, BooleanTag, Positive>>(m, repository);
+    bind_observation<runir::kr::ps::ConcreteCondition<Family, BooleanTag, Negative>>(m, repository);
+    bind_observation<runir::kr::ps::ConcreteCondition<Family, NumericalTag, EqualZero>>(m, repository);
+    bind_observation<runir::kr::ps::ConcreteCondition<Family, NumericalTag, GreaterZero>>(m, repository);
 }
 
 }  // namespace runir::kr::ps::base::dl

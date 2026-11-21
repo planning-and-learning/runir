@@ -30,7 +30,7 @@ concept ConditionContract = IndexedDataView<Entity> && requires(urd::data<Entity
 };
 
 template<typename Feature, typename Observation>
-using Condition = kr::ps::ConcreteCondition<kr::ExtFamilyTag, kr::DlTag, Feature, Observation>;
+using Condition = kr::ps::ConcreteCondition<kr::ExtFamilyTag, Feature, Observation>;
 
 using ConcreteTypes = boost::mp11::mp_list<Condition<kr::dl::BooleanTag, kr::ps::dl::Positive>,
                                            Condition<kr::dl::BooleanTag, kr::ps::dl::Negative>,

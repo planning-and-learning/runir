@@ -146,11 +146,11 @@ static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::Icp
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::LiftedTag>);
 
 template<typename Family>
-using Condition = urd::index<kr::ps::ConcreteCondition<Family, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>>;
+using Condition = urd::index<kr::ps::ConcreteCondition<Family, kr::dl::BooleanTag, kr::ps::dl::Positive>>;
 using BaseCondition = urd::index_view<typename Condition<kr::BaseFamilyTag>::element_type, kr::ps::base::Repository>;
 using ExtCondition = urd::index_view<typename Condition<kr::ExtFamilyTag>::element_type, kr::ps::ext::Repository>;
 using IcpCondition = urd::index_view<typename Condition<kr::IcpFamilyTag>::element_type, kr::ps::icp::Repository>;
-using IcpEffect = urd::index_view<kr::ps::ConcreteEffect<kr::IcpFamilyTag, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>, kr::ps::icp::Repository>;
+using IcpEffect = urd::index_view<kr::ps::ConcreteEffect<kr::IcpFamilyTag, kr::dl::BooleanTag, kr::ps::dl::Positive>, kr::ps::icp::Repository>;
 
 using kr::ps::is_compatible_with;
 using kr::ps::base::is_compatible_with;

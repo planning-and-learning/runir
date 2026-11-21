@@ -15,13 +15,13 @@ namespace runir::kr::ps
 /// The syntactic complexity of a concrete (DL) feature, its DL feature's (defined in syntactic_complexity.hpp),
 /// declared before its view, whose functions() list it.
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-std::size_t syntactic_complexity(const urd::index_view<ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>& view);
+std::size_t syntactic_complexity(const urd::index_view<ConcreteFeature<Family, FeatureTag>, C>& view);
 }  // namespace runir::kr::ps
 
 namespace urd
 {
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename V>
-struct view_mixin<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, V>
+struct view_mixin<runir::kr::ps::ConcreteFeature<Family, FeatureTag>, V>
 {
 private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }

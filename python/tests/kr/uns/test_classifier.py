@@ -12,7 +12,7 @@ from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, SemanticError, uns
 from pyrunir.kr.dl import semantics
 from pyrunir.kr.uns import classify
-from pyrunir.kr.uns.dl import ConcreteFeatureUnsDlBoolean, FeatureUnsBoolean, parse_classifier
+from pyrunir.kr.uns.dl import ConcreteFeatureUnsBoolean, FeatureUnsBoolean, parse_classifier
 
 
 class ClassifierFixture(TypedDict):
@@ -43,7 +43,7 @@ def test_classifier_fixture(
         for feature in classifier.get_features():
             assert isinstance(feature, FeatureUnsBoolean)
             concrete = feature.get_variant()
-            assert isinstance(concrete, ConcreteFeatureUnsDlBoolean)
+            assert isinstance(concrete, ConcreteFeatureUnsBoolean)
             assert feature.get_variant().get_feature() == concrete.get_feature()
             assert feature.get_variant().get_symbol() == concrete.get_symbol()
         for clause in classifier.get_clauses():

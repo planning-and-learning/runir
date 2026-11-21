@@ -35,9 +35,9 @@ namespace urd
 {
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
-struct data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>
+struct data<runir::kr::ps::ConcreteFeature<Family, FeatureTag>>
 {
-    urd::index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> index;
+    urd::index<runir::kr::ps::ConcreteFeature<Family, FeatureTag>> index;
     urd::index<typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type> feature;
     urd::flat_string symbol;
 

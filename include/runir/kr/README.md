@@ -30,12 +30,11 @@ At the policy layer, the main feature types are:
 
 ```cpp
 ps::Feature<Family, FeatureTag>
-ps::ConcreteFeature<Family, LanguageTag, FeatureTag>
+ps::ConcreteFeature<Family, FeatureTag>
 ```
 
-`Feature` wraps the language-specific concrete feature. `DlTag` is currently the
-only implemented `LanguageTag`; its expressions include DL constructors and
-relational queries. There is no second interchangeable feature language today.
+`Feature` wraps the concrete feature. There is one feature language: its
+expressions include DL constructors and relational queries.
 
 [FeatureExpression](ps/dl/feature_data.hpp) maps a concrete feature to an expression:
 
@@ -104,8 +103,7 @@ the policy family:
 namespace kr = runir::kr;
 using Family = kr::IcpFamilyTag;
 
-using Feature = kr::ps::ConcreteFeature<Family, kr::DlTag,
-                                      kr::dl::NumericalTag>;
+using Feature = kr::ps::ConcreteFeature<Family, kr::dl::NumericalTag>;
 using StateContext = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
 using TransitionContext = kr::ps::dl::TransitionEvaluationContext<Family, tyr::LiftedTag>;
 ```

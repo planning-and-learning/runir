@@ -18,12 +18,12 @@ BindingRuleData: TypeAlias = (
     ext.RuleLoadConceptData | ext.RuleLoadRoleData | ext.RuleChooseConceptData | ext.RuleChooseRoleData
 )
 EffectIndex: TypeAlias = (
-    ext.dl.ConcreteEffectExtDlBooleanPositiveIndex
-    | ext.dl.ConcreteEffectExtDlBooleanNegativeIndex
-    | ext.dl.ConcreteEffectExtDlBooleanUnchangedIndex
-    | ext.dl.ConcreteEffectExtDlNumericalIncreasesIndex
-    | ext.dl.ConcreteEffectExtDlNumericalDecreasesIndex
-    | ext.dl.ConcreteEffectExtDlNumericalUnchangedIndex
+    ext.dl.ConcreteEffectExtBooleanPositiveIndex
+    | ext.dl.ConcreteEffectExtBooleanNegativeIndex
+    | ext.dl.ConcreteEffectExtBooleanUnchangedIndex
+    | ext.dl.ConcreteEffectExtNumericalIncreasesIndex
+    | ext.dl.ConcreteEffectExtNumericalDecreasesIndex
+    | ext.dl.ConcreteEffectExtNumericalUnchangedIndex
 )
 RULE_TYPES = {
     ("concept", "load"): ext.RuleLoadConcept,
@@ -119,7 +119,7 @@ def test_binding_rules_parse_construct_and_serialize(
     register_table(dictionaries, ext.MemoryStateExt, "memory", "m")
     register_table(
         dictionaries,
-        ext.dl.ConcreteEffectExtDlNumericalIncreases,
+        ext.dl.ConcreteEffectExtNumericalIncreases,
         "effects",
         "e",
         project=lambda effect: {"text": str(effect)},
@@ -134,7 +134,7 @@ def test_binding_rules_parse_construct_and_serialize(
         }
     ]
     effects_table = [{"text": str(effect)} for effect in rule.get_effects()]
-    assert table(dictionaries, ext.dl.ConcreteEffectExtDlNumericalIncreases) == effects_table
+    assert table(dictionaries, ext.dl.ConcreteEffectExtNumericalIncreases) == effects_table
 
 
 @pytest.mark.parametrize(("category", "expression"), [("concept", "c_top"), ("role", "r_universal")])

@@ -31,7 +31,7 @@ from pyrunir.kr.ps.base import (
     find_ground_solution,
 )
 from pyrunir.kr.ps.base.dl import (
-    ConcreteFeatureBaseDlBoolean,
+    ConcreteFeatureBaseBoolean,
     GroundTransitionEvaluationContext,
     LiftedTransitionEvaluationContext,
     SketchFactory,
@@ -215,7 +215,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert isinstance(base.dl.is_compatible_with(condition, transition_context), bool)
     feature = condition.get_feature()
     concrete_feature = feature.get_variant()
-    assert isinstance(concrete_feature, ConcreteFeatureBaseDlBoolean)
+    assert isinstance(concrete_feature, ConcreteFeatureBaseBoolean)
     dl_constructor = concrete_feature.get_feature()
     dl_denotation = semantics.evaluate(dl_constructor, state_context)
     assert isinstance(base.dl.evaluate(feature, state_context).get_value(), bool)

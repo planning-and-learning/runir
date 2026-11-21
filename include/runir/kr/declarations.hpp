@@ -17,11 +17,6 @@ struct TaskContext;
 template<tyr::TaskKind Kind>
 using TaskContextPtr = std::shared_ptr<TaskContext<Kind>>;
 
-struct DlTag
-{
-    static constexpr auto name = "Dl";
-};
-
 struct BaseFamilyTag
 {
     static constexpr auto name = "Base";

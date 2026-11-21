@@ -27,7 +27,7 @@ static_assert(std::is_constructible_v<kr::ps::icp::Repository, ExtConstructors>)
 static_assert(
     !std::same_as<urd::index<kr::ps::Feature<kr::IcpFamilyTag, kr::dl::ConceptTag>>, urd::index<kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>>>);
 
-using IcpQuery = kr::ps::ConcreteFeature<kr::IcpFamilyTag, kr::DlTag, kr::ps::dl::QueryFeature>;
+using IcpQuery = kr::ps::ConcreteFeature<kr::IcpFamilyTag, kr::ps::dl::QueryFeature>;
 static_assert(std::same_as<decltype(urd::data<IcpQuery>::feature), urd::index<kr::dl::Query<>>>);
 
 // Classifiers expose Boolean features, without acquiring policy conditions or effects.
@@ -53,10 +53,10 @@ static_assert(usable_inventory<kr::ps::icp::Repository>(kr::ps::PsCoreTypes<kr::
 static_assert(usable_inventory<kr::uns::Repository>(kr::ps::PsCoreTypes<kr::UnsFamilyTag> {}));
 
 // Default repository inventories do not restrict the reusable semantic types.
-using BaseRole = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::RoleTag>;
-using BaseQuery = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::ps::dl::QueryFeature>;
-using UnsNumerical = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::NumericalTag>;
-using UnsPositive = kr::ps::ConcreteCondition<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>;
+using BaseRole = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::dl::RoleTag>;
+using BaseQuery = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::ps::dl::QueryFeature>;
+using UnsNumerical = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::dl::NumericalTag>;
+using UnsPositive = kr::ps::ConcreteCondition<kr::UnsFamilyTag, kr::dl::BooleanTag, kr::ps::dl::Positive>;
 using BaseCustomTypes = boost::mp11::mp_append<
     kr::ps::PsCoreTypes<kr::BaseFamilyTag>,
     boost::mp11::
@@ -107,8 +107,8 @@ concept CanEvaluate =
 using BaseStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
 using UnsStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
 using ExtStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
-using BaseBoolean = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
-using UnsBoolean = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
+using BaseBoolean = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::dl::BooleanTag>;
+using UnsBoolean = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::dl::BooleanTag>;
 static_assert(CanEvaluate<BaseBoolean, kr::ps::base::Repository, BaseStateContext>);
 static_assert(CanEvaluate<UnsBoolean, kr::uns::Repository, UnsStateContext>);
 static_assert(CanEvaluate<BaseRole, BaseCustomRepository, BaseStateContext>);
@@ -119,12 +119,11 @@ static_assert(CanEvaluate<UnsNumerical, UnsCustomRepository, UnsStateContext>);
 static_assert(CanEvaluate<IcpQuery, kr::ps::icp::Repository, ExtStateContext>);
 
 // Invalid semantic categories and observation pairs still fail substitution.
-using InvalidFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, int>;
-using NumericalPositive = kr::ps::ConcreteCondition<kr::BaseFamilyTag, kr::DlTag, kr::dl::NumericalTag, kr::ps::dl::Positive>;
-using BooleanDecreases = kr::ps::ConcreteEffect<kr::ExtFamilyTag, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Decreases>;
+using InvalidFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, int>;
+using NumericalPositive = kr::ps::ConcreteCondition<kr::BaseFamilyTag, kr::dl::NumericalTag, kr::ps::dl::Positive>;
+using BooleanDecreases = kr::ps::ConcreteEffect<kr::ExtFamilyTag, kr::dl::BooleanTag, kr::ps::dl::Decreases>;
 static_assert(!StoredType<InvalidFeature>);
 static_assert(!StoredType<kr::ps::Feature<kr::BaseFamilyTag, int>>);
-static_assert(!StoredType<kr::ps::ConcreteFeature<kr::ExtFamilyTag, void, kr::dl::BooleanTag>>);
 static_assert(!StoredType<NumericalPositive>);
 static_assert(!StoredType<BooleanDecreases>);
 static_assert(!CanEvaluate<InvalidFeature, BaseCustomRepository, BaseStateContext>);
@@ -140,16 +139,14 @@ consteval bool observation_contracts()
     using Context = kr::ps::dl::TransitionEvaluationContext<Family, tyr::GroundTag>;
     using Boolean = kr::dl::BooleanTag;
     using Numerical = kr::dl::NumericalTag;
-    using Condition = kr::ps::ConcreteCondition<Family, kr::DlTag, Boolean, kr::ps::dl::Positive>;
-    using Effect = kr::ps::ConcreteEffect<Family, kr::DlTag, Numerical, kr::ps::dl::Decreases>;
+    using Condition = kr::ps::ConcreteCondition<Family, Boolean, kr::ps::dl::Positive>;
+    using Effect = kr::ps::ConcreteEffect<Family, Numerical, kr::ps::dl::Decreases>;
     static_assert(CanCheckCompatibility<tyr::GroundTag, Condition, Repository, Context>);
     static_assert(CanCheckCompatibility<tyr::GroundTag, Effect, Repository, Context>);
     static_assert(!CanCheckCompatibility<tyr::LiftedTag, Condition, Repository, Context>);
     static_assert(!CanCheckCompatibility<tyr::LiftedTag, Effect, Repository, Context>);
-    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteCondition<Family, kr::DlTag, Numerical, kr::ps::dl::Positive>, Repository, Context>);
-    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffect<Family, kr::DlTag, Boolean, kr::ps::dl::Decreases>, Repository, Context>);
-    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteCondition<Family, void, Boolean, kr::ps::dl::Positive>, Repository, Context>);
-    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffect<Family, void, Numerical, kr::ps::dl::Decreases>, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteCondition<Family, Numerical, kr::ps::dl::Positive>, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffect<Family, Boolean, kr::ps::dl::Decreases>, Repository, Context>);
 
     // The variant alternatives and repository inventory share one ordered list.
     using Conditions = urd::index_variant<kr::ps::detail::PsConcreteConditionTypes<Family>>;

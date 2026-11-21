@@ -18,7 +18,7 @@
 namespace runir::tests
 {
 
-using Entity = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
+using Entity = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::dl::BooleanTag>;
 using Index = urd::index<Entity>;
 using Data = urd::data<Entity>;
 using View = urd::index_view<Entity, kr::uns::Repository>;

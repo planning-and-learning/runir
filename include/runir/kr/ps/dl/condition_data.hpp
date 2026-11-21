@@ -16,9 +16,9 @@ namespace urd
 {
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag>
-struct data<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>
+struct data<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>>
 {
-    urd::index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>> index;
+    urd::index<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>> index;
     urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature;
 
     data() = default;

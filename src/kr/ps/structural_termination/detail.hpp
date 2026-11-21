@@ -54,7 +54,7 @@ std::size_t feature_position(const Features& features, Feature feature)
 template<runir::kr::FamilyTag Family, typename C, typename Definition, typename FeatureTag, typename ObservationTag>
 void record_condition(Definition definition,
                       RuleProfile& profile,
-                      urd::index_view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> condition)
+                      urd::index_view<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>, C> condition)
 {
     const auto position = feature_position(definition.template get_features<FeatureTag>(), condition.get_feature());
     profile.template conditions<ObservationTag>() |= std::uint64_t { 1 } << position;
@@ -63,7 +63,7 @@ void record_condition(Definition definition,
 template<runir::kr::FamilyTag Family, typename C, typename Definition, typename FeatureTag, typename ObservationTag>
 void record_effect(Definition definition,
                    RuleProfile& profile,
-                   urd::index_view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> effect)
+                   urd::index_view<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, C> effect)
 {
     const auto position = feature_position(definition.template get_features<FeatureTag>(), effect.get_feature());
     const auto bit = std::uint64_t { 1 } << position;

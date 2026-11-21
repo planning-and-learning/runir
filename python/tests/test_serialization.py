@@ -165,7 +165,7 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: form
     )
     register_table(
         dictionaries,
-        base.dl.ConcreteFeatureBaseDlNumerical,
+        base.dl.ConcreteFeatureBaseNumerical,
         "features",
         "f",
         project=lambda value: {"symbol": value.get_symbol(), "feature": str(value.get_feature())},
@@ -179,9 +179,9 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: form
             "effects": [str(effect) for effect in rule.get_effects()],
         }
     ]
-    assert table(dictionaries, base.dl.ConcreteFeatureBaseDlNumerical) == []
+    assert table(dictionaries, base.dl.ConcreteFeatureBaseNumerical) == []
     assert serialize(dictionaries, feature) == "f0"
-    assert table(dictionaries, base.dl.ConcreteFeatureBaseDlNumerical) == [
+    assert table(dictionaries, base.dl.ConcreteFeatureBaseNumerical) == [
         {
             "symbol": feature.get_symbol(),
             "feature": str(feature.get_feature()),

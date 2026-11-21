@@ -387,7 +387,7 @@ void append_argument(Repository& repository,
 template<typename FeatureTag, typename Expression>
 auto intern_dl_feature(Repository& repository, runir::kr::ps::ext::Builder& builder, urd::index<Expression> constructor, const std::string& symbol)
 {
-    auto concrete_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>(builder);
+    auto concrete_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, FeatureTag>>(builder);
     urd::store(concrete_data->feature, repository.get<runir::kr::dl::ConstructorRepository>().view(constructor));
     concrete_data->symbol = symbol;
     const auto concrete = intern(repository, builder, *concrete_data);
