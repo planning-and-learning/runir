@@ -24,13 +24,13 @@ public:
 
     [[nodiscard]] size_t get_arity() const { return self().template member<&urd::record_of<V>::arity>(); }
 
-    [[nodiscard]] bool is_input() const { return self().template member<&urd::record_of<V>::input>(); }
+    [[nodiscard]] bool get_input() const { return self().template member<&urd::record_of<V>::input>(); }
 
     [[nodiscard]] size_t get_input_slot() const { return self().template member<&urd::record_of<V>::input_slot>(); }
 
     [[nodiscard]] std::string_view get_name() const noexcept { return std::string_view(self().template member<&urd::record_of<V>::name>()); }
 
-    [[nodiscard]] bool is_weighted() const { return self().template member<&urd::record_of<V>::weighted>(); }
+    [[nodiscard]] bool get_weighted() const { return self().template member<&urd::record_of<V>::weighted>(); }
 };
 
 template<typename V>
@@ -86,10 +86,10 @@ public:
     [[nodiscard]] std::span<const runir::kr::database::datalog::Comparison> get_comparisons() const
     { return { self().template member<&urd::record_of<V>::comparisons>().data(), self().template member<&urd::record_of<V>::comparisons>().size() }; }
 
+    [[nodiscard]] auto get_aggregates() const { return self().template member<&urd::record_of<V>::aggregates>(); }
+
     [[nodiscard]] std::span<const runir::kr::database::datalog::Arithmetic> get_arithmetic() const
     { return { self().template member<&urd::record_of<V>::arithmetic>().data(), self().template member<&urd::record_of<V>::arithmetic>().size() }; }
-
-    [[nodiscard]] auto get_aggregates() const { return self().template member<&urd::record_of<V>::aggregates>(); }
 };
 
 template<typename V>

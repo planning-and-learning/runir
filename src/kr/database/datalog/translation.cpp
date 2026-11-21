@@ -32,14 +32,14 @@ public:
 
     size_t table_of(RelationView relation)
     {
-        auto& map = relation.is_input() ? m_input_tables : m_derived_tables;
-        const auto key = relation.is_input() ? relation.get_input_slot() : relation.get_id();
+        auto& map = relation.get_input() ? m_input_tables : m_derived_tables;
+        const auto key = relation.get_input() ? relation.get_input_slot() : relation.get_id();
         if (const auto it = map.find(key); it != map.end())
             return it->second;
         const auto table = add_table(relation.get_arity());
-        m_program.tables[table]->weighted = relation.is_weighted();
+        m_program.tables[table]->weighted = relation.get_weighted();
         map.emplace(key, table);
-        if (relation.is_input())
+        if (relation.get_input())
         {
             m_program.tables[table]->slot = key;
             if (m_program.slot_tables.size() <= key)

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <functional>
 #include <gtest/gtest.h>
+#include <limits>
 #include <map>
 #include <optional>
 #include <random>
@@ -31,18 +32,21 @@ dl::Term var(uint_t variable) { return dl::Term::variable(variable); }
 
 dl::Term obj(uint_t object) { return dl::Term::constant(object); }
 
+/// The slot of a derived relation, which reads no input.
+constexpr size_t derived_slot = std::numeric_limits<size_t>::max();
+
 /// Interns programs with short calls.
 struct Programs
 {
     dl::DatalogRepository repository;
     dl::DatalogBuilder builder;
 
-    dl::RelationView relation(size_t id, size_t arity, size_t slot = urd::data<dl::Relation>::derived)
+    dl::RelationView relation(size_t id, size_t arity, size_t slot = derived_slot)
     {
         auto data = dl::checkout<dl::Relation>(builder);
         data->id = id;
         data->arity = arity;
-        data->input = slot != urd::data<dl::Relation>::derived;
+        data->input = slot != derived_slot;
         data->input_slot = data->input ? slot : 0;
         return repository.insert(*data, builder).first;
     }
@@ -127,7 +131,7 @@ class Interpreter
     [[nodiscard]] const Tuples& rows(dl::RelationView relation) const
     {
         static const Tuples none;
-        if (relation.is_input())
+        if (relation.get_input())
             return (*m_inputs)[relation.get_input_slot()];
         const auto it = m_relations.find(relation.get_id());
         return it == m_relations.end() ? none : it->second;
@@ -261,7 +265,7 @@ class Interpreter
         auto& target = m_relations[head.get_relation().get_id()];
         const auto before = target;
         target.insert(derived.begin(), derived.end());
-        if (head.get_relation().is_weighted())
+        if (head.get_relation().get_weighted())
         {
             // The least weight per row of the other columns (Bellman-Ford over the rounds).
             auto least = std::map<Tuple, uint_t>();
@@ -295,7 +299,7 @@ public:
                 auto& level = stratum[rule.get_head().get_relation().get_id()];
                 const auto require = [&](dl::AtomView atom, size_t above)
                 {
-                    if (atom.get_relation().is_input())
+                    if (atom.get_relation().get_input())
                         return;
                     const auto needed = stratum[atom.get_relation().get_id()] + above;
                     if (needed > level)

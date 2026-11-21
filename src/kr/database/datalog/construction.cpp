@@ -85,14 +85,14 @@ void prepare_for_insert(DatalogRepository& repository, urd::data<Aggregate>& dat
 void prepare_for_insert(DatalogRepository& repository, urd::data<Rule>& data)
 {
     const auto head = repository.view(data.head);
-    if (head.get_relation().is_input())
+    if (head.get_relation().get_input())
         throw std::invalid_argument("Datalog: a rule's head is an input relation.");
     auto head_variables = urd::Store<urd::sequence<ygg::uint_t>>();
     const auto terms = head.get_terms();
     for (size_t i = 0; i < terms.size(); ++i)
     {
         // A weighted head's weight may be a constant, the weight of a base case.
-        if (!terms[i].is_variable() && head.get_relation().is_weighted() && i + 1 == terms.size())
+        if (!terms[i].is_variable() && head.get_relation().get_weighted() && i + 1 == terms.size())
             continue;
         if (!terms[i].is_variable() || std::ranges::find(head_variables, terms[i].value) != head_variables.end())
             throw std::invalid_argument("Datalog: a rule's head must have distinct variables.");

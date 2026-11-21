@@ -77,7 +77,7 @@ void prepare(urd::data<DatalogProgram>& data, const ConstructorRepository& repos
     auto arities = urd::Store<urd::sequence<std::optional<size_t>>>(data.inputs.size());
     const auto read = [&](runir::kr::database::datalog::RelationView relation)
     {
-        if (!relation.is_input())
+        if (!relation.get_input())
             return;
         const auto slot = relation.get_input_slot();
         if (slot >= data.inputs.size())

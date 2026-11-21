@@ -9,7 +9,6 @@
 #include "runir/kr/database/datalog/formatter.hpp"
 
 #include <cstddef>
-#include <limits>
 #include <span>
 #include <string_view>
 #include <urd/elements/flat.hpp>
@@ -21,8 +20,6 @@ namespace urd
 template<>
 struct data<runir::kr::database::datalog::Relation>
 {
-    static constexpr size_t derived = std::numeric_limits<size_t>::max();
-
     urd::index<runir::kr::database::datalog::Relation> index;
     /// A derived relation's id is its relation in the compiled program.
     size_t id = 0;
@@ -45,6 +42,12 @@ struct data<runir::kr::database::datalog::Relation>
         weighted(weighted_)
     {
     }
+
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
+    ~data() = default;
 
     static constexpr auto fields() noexcept
     {
@@ -77,6 +80,12 @@ struct data<runir::kr::database::datalog::Atom>
         terms(std::move(terms_))
     {
     }
+
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"relation", &data::relation>, urd::field<"terms", &data::terms>> {}; }
 
@@ -118,6 +127,12 @@ struct data<runir::kr::database::datalog::Aggregate>
         arithmetic(std::move(arithmetic_))
     {
     }
+
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
     static constexpr auto fields() noexcept
     {
@@ -166,6 +181,12 @@ struct data<runir::kr::database::datalog::Rule>
     {
     }
 
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
     static constexpr auto fields() noexcept
     {
         return urd::Fields<urd::field<"head", &data::head>,
@@ -192,6 +213,12 @@ struct data<runir::kr::database::datalog::Program>
     data() = default;
 
     data(urd::flat_vector<urd::index<runir::kr::database::datalog::Rule>> rules_) : rules(std::move(rules_)) {}
+
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"rules", &data::rules>> {}; }
 
