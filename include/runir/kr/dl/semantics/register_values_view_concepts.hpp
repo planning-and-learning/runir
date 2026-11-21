@@ -6,7 +6,7 @@
 
 #include <concepts>
 #include <type_traits>
-#include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::dl::semantics

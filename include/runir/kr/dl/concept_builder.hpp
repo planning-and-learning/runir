@@ -4,8 +4,8 @@
 #include "runir/kr/dl/concept_data.hpp"
 
 #include <optional>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/object_builder.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/predicate_builder.hpp>
 #include <urd/elements/builder.hpp>
 #include <urd/elements/children.hpp>

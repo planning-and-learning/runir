@@ -8,7 +8,7 @@
 #include "runir/kr/dl/semantics/register_values_builder.hpp"
 
 #include <concepts>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/elements/handle.hpp>
 #include <utility>
 #include <yggdrasil/formalism/builder.hpp>

@@ -24,7 +24,7 @@
 #include <type_traits>
 #include <tyr/formalism/conjunctive_condition_view.hpp>
 #include <tyr/formalism/declarations.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <tyr/planning/state_builder.hpp>

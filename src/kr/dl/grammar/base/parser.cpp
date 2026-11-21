@@ -12,7 +12,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <utility>
 

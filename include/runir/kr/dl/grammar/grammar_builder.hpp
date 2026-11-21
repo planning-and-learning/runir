@@ -5,7 +5,7 @@
 #include "runir/kr/dl/grammar/grammar_view.hpp"
 
 #include <optional>
-#include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/domain_builder.hpp>
 #include <urd/elements/builder.hpp>
 #include <urd/elements/children.hpp>

@@ -29,7 +29,7 @@
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <tyr/planning/algorithms/declarations.hpp>
 #include <urd/repr/graphs/csr_graph.hpp>
 #include <utility>

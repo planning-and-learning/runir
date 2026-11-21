@@ -6,7 +6,7 @@
 #include <cista/containers/optional.h>
 #include <optional>
 #include <tuple>
-#include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>

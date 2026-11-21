@@ -12,7 +12,6 @@
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/object_view.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>

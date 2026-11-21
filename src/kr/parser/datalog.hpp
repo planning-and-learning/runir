@@ -11,7 +11,7 @@
 #include <optional>
 #include <runir/kr/database/datalog/declarations.hpp>
 #include <string>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/maps/flat_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>

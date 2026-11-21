@@ -9,7 +9,7 @@
 #include <cassert>
 #include <concepts>
 #include <string>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <unordered_set>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/values/std_set.hpp>

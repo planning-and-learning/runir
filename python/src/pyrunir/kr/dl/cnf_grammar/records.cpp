@@ -9,7 +9,7 @@
 #include <runir/kr/dl/formatter.hpp>
 #include <runir/kr/dl/record_view.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/python/bindings.hpp>
 #include <urd/python/sequences/sequence.hpp>
 #include <urd/repr/sequences/sequence.hpp>

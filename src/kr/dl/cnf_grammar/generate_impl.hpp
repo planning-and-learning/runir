@@ -8,7 +8,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 
 #include <stdexcept>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/state_view.hpp>

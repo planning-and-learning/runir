@@ -6,7 +6,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <type_traits>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/elements/concepts.hpp>
 #include <urd/elements/view.hpp>
 #include <utility>

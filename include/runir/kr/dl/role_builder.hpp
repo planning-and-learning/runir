@@ -4,7 +4,7 @@
 #include "runir/kr/dl/role_data.hpp"
 
 #include <optional>
-#include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/predicate_builder.hpp>
 #include <urd/elements/builder.hpp>
 #include <urd/elements/children.hpp>

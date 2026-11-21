@@ -17,7 +17,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <unordered_map>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/store.hpp>

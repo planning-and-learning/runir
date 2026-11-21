@@ -7,8 +7,8 @@
 #include <cstddef>
 #include <optional>
 #include <ranges>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/object_builder.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
 #include <urd/elements/builder.hpp>
 #include <urd/elements/children.hpp>
 #include <utility>

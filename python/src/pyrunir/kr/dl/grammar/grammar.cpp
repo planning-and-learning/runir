@@ -5,7 +5,7 @@
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
 #include <runir/kr/dl/grammar/grammar_view.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/python/bindings.hpp>
 
 namespace runir::kr::dl

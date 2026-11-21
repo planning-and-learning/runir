@@ -14,7 +14,7 @@
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/object_view.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/bits.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/elements/view.hpp>

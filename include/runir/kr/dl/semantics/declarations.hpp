@@ -11,7 +11,6 @@
 #include <runir/kr/database/declarations.hpp>
 #include <span>
 #include <tyr/formalism/declarations.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
 #include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 #include <variant>

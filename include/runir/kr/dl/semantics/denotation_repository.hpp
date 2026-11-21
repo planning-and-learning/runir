@@ -11,7 +11,7 @@
 #include <cassert>
 #include <memory>
 #include <runir/kr/database/semantics/relation_view.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/pools/pools.hpp>

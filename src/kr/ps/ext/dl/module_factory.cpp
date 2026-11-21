@@ -7,7 +7,7 @@
 #include <fmt/format.h>
 #include <stdexcept>
 #include <string>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>

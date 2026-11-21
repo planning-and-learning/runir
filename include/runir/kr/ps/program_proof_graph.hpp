@@ -7,7 +7,7 @@
 #include <cista/containers/optional.h>
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/graphs/csr_graph.hpp>

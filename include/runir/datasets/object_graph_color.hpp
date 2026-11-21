@@ -29,9 +29,9 @@
 #include <optional>
 #include <tuple>
 #include <type_traits>
-#include <tyr/formalism/planning/repository.hpp>
 #include <tyr/formalism/predicate_data.hpp>
 #include <tyr/formalism/predicate_view.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>

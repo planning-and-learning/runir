@@ -1,7 +1,7 @@
 #include <concepts>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <utility>
 
 namespace runir::tests::dl_constructor

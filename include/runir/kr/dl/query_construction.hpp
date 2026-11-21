@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>

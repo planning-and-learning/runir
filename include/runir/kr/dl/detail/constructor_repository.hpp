@@ -7,7 +7,7 @@
 #include <cassert>
 #include <memory>
 #include <runir/kr/database/datalog/repository.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
 #include <utility>

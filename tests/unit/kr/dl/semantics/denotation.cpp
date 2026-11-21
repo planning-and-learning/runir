@@ -9,7 +9,7 @@
 #include <runir/kr/dl/semantics/interning.hpp>
 #include <string>
 #include <tyr/formalism/object_data.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/elements/equal_to.hpp>
 #include <urd/elements/hash.hpp>
 #include <utility>

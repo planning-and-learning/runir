@@ -6,7 +6,7 @@
 #include <fmt/format.h>
 #include <stdexcept>
 #include <string>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 
 namespace runir::kr::ps::base::dl
 {

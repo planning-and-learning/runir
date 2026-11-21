@@ -5,7 +5,7 @@
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/grammar_data.hpp>
 #include <runir/kr/dl/grammar/grammar_view.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 

@@ -6,7 +6,7 @@
 #include <runir/kr/dl/semantics/incremental/detail/set_operations.hpp>
 #include <string>
 #include <tyr/formalism/object_data.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/repository.hpp>
 #include <urd/bits.hpp>
 
 namespace runir::tests

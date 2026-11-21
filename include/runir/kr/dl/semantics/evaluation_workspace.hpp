@@ -21,7 +21,6 @@
 #include <tuple>
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
 #include <urd/repr/maps/postings.hpp>
 #include <urd/repr/sequences/segmented.hpp>
 #include <urd/repr/sequences/sequence.hpp>
