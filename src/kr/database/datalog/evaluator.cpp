@@ -244,7 +244,7 @@ const incremental::Delta& Evaluator::get_delta(size_t output) const
     return m_impl->deltas.at(output);
 }
 
-size_t Evaluator::memory_usage() const noexcept
+size_t Evaluator::memory_usage() const
 {
     size_t result = 0;
     for (const auto& table : m_impl->program.tables)

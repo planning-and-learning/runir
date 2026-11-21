@@ -346,7 +346,7 @@ Relation relation_of(const Tuples& tuples, size_t arity)
 {
     auto columns = std::vector<urd::data<ygg::ColumnLayout>>();
     for (size_t i = 0; i < arity; ++i)
-        columns.push_back(urd::data<ygg::ColumnLayout> { urd::index<ygg::Column>(ygg::to_uint_t(i)), ygg::type_id<uint_t> });
+        columns.emplace_back(urd::index<ygg::Column>(ygg::to_uint_t(i)), ygg::type_id<uint_t>);
     auto result = scratch().draw(columns);
     auto values = std::vector<ygg::Value>(arity);
     for (const auto& tuple : tuples)

@@ -4,7 +4,6 @@
 #include "runir/kr/database/datalog/evaluator.hpp"
 #include "yggdrasil/python/bindings.hpp"
 
-#include <nanobind/operators.h>
 #include <nanobind/stl/pair.h>
 #include <urd/python/sequences/sequence.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -57,7 +56,7 @@ void bind_database_datalog(nb::module_& m)
         .def_static("constant", &dl::Term::constant, "object"_a)
         .def("is_variable", &dl::Term::is_variable)
         .def_ro("value", &dl::Term::value)
-        .def(nb::self == nb::self);
+        .def("__eq__", [](const dl::Term& lhs, const dl::Term& rhs) { return lhs == rhs; }, nb::is_operator());
 
     auto comparison = nb::class_<dl::Comparison>(m, "DatalogComparison", "lhs kind rhs, ordered as uint_t (the largest value is infinity).");
     nb::enum_<dl::Comparison::Kind>(m, "DatalogComparisonKind")

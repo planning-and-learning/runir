@@ -73,9 +73,9 @@ class Evaluator
             ygg::with_values(held,
                              [&](const auto& values)
                              {
-                                 auto value = std::ranges::begin(values);
-                                 for (size_t c = 0; c < arity; ++c, ++value)
-                                     row[c] = ygg::decode_value<ygg::uint_t>(*value);
+                                 size_t c = 0;
+                                 for (const auto& value : values)
+                                     row[c++] = ygg::decode_value<ygg::uint_t>(value);
                                  f(std::span<const ygg::uint_t>(row));
                              });
     }
@@ -139,7 +139,7 @@ public:
     [[nodiscard]] ygg::FreeRelationBuilderView get_result(size_t output = 0) const;
     /// The last update's exact change of an output.
     [[nodiscard]] const incremental::Delta& get_delta(size_t output = 0) const;
-    [[nodiscard]] size_t memory_usage() const noexcept;
+    [[nodiscard]] size_t memory_usage() const;
 };
 }  // namespace runir::kr::database::datalog
 
