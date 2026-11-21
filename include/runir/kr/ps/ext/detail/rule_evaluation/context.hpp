@@ -48,7 +48,7 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
     /// one is registered and the storage builds its successors).
     template<urd::ViewOf<ext::ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> Candidate,
-             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+             ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     auto make_dl_transition_context(State state, const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate)
     {
         environment->select_source(state);

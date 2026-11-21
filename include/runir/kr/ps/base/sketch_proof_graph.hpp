@@ -56,10 +56,10 @@ struct SketchProofVertexLabel : urd::compared_by_identity<SketchProofVertexLabel
 
 struct SketchProofEdgeLabel : urd::compared_by_identity<SketchProofEdgeLabel>
 {
-    tyr::formalism::planning::ActionRowView action;
+    tyr::formalism::ActionRowView action;
     RuleView rule;
 
-    SketchProofEdgeLabel(tyr::formalism::planning::ActionRowView action_, RuleView rule_) noexcept : action(action_), rule(rule_) {}
+    SketchProofEdgeLabel(tyr::formalism::ActionRowView action_, RuleView rule_) noexcept : action(action_), rule(rule_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
 

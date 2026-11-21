@@ -40,10 +40,10 @@ urd::builder<T, runir::kr::dl::semantics::DenotationRepository> copy_denotation(
 struct Words
 {
     runir::kr::dl::semantics::Builder storage;
-    std::shared_ptr<tyr::formalism::planning::Repository> planning;
+    std::shared_ptr<tyr::formalism::Repository> planning;
     runir::kr::dl::semantics::DenotationRepository repository;
 
-    explicit Words(std::shared_ptr<tyr::formalism::planning::Repository> planning_ = std::make_shared<tyr::formalism::planning::Repository>()) :
+    explicit Words(std::shared_ptr<tyr::formalism::Repository> planning_ = std::make_shared<tyr::formalism::Repository>()) :
         storage(),
         planning(planning_),
         repository(std::move(planning_))

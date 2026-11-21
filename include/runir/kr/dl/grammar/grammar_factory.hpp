@@ -18,13 +18,13 @@ enum class GrammarSpecification : std::uint8_t
 class GrammarFactory
 {
 public:
-    static GrammarView create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository);
+    static GrammarView create(GrammarSpecification specification, tyr::formalism::DomainView domain, ConstructorRepository& repository);
 
-    static std::string create_description(GrammarSpecification specification, tyr::formalism::planning::DomainView domain);
+    static std::string create_description(GrammarSpecification specification, tyr::formalism::DomainView domain);
 
-    static GrammarView create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepository& repository);
+    static GrammarView create_france_et_al_aaai2021(tyr::formalism::DomainView domain, ConstructorRepository& repository);
 
-    static std::string create_france_et_al_aaai2021_description(tyr::formalism::planning::DomainView domain);
+    static std::string create_france_et_al_aaai2021_description(tyr::formalism::DomainView domain);
 };
 
 }  // namespace runir::kr::dl::grammar

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import pytest
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 
 from pyrunir.kr.dl import ConstructorRepository as DlRepository
 from pyrunir.kr.ps import ext

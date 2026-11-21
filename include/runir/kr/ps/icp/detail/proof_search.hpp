@@ -47,9 +47,8 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
     auto positions = urd::Store<urd::set<ygg::uint_t>, urd::positional>(urd::layer { 0 });
     urd::Store<urd::queue<std::size_t>, urd::lifo> pending;
     std::optional<std::size_t> goal;
-    const auto admit = [&](ProgramStateView<Kind> state,
-                           std::optional<std::size_t> parent,
-                           std::optional<tyr::formalism::planning::ActionRowView> action) -> std::optional<std::size_t>
+    const auto admit =
+        [&](ProgramStateView<Kind> state, std::optional<std::size_t> parent, std::optional<tyr::formalism::ActionRowView> action) -> std::optional<std::size_t>
     {
         const auto found = positions.find(ygg::uint_t(state.index().value));
         if (found != positions.end())

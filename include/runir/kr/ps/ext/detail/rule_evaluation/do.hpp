@@ -33,12 +33,12 @@ class DoRuleEvaluator
 {
     RuleView<DoTag> m_rule;
     RuleVariantView m_variant;
-    tyr::formalism::planning::ActionView<tyr::LiftedTag> m_action;
+    tyr::formalism::ActionView<tyr::LiftedTag> m_action;
 
 public:
     using RuleTag = DoTag;
 
-    DoRuleEvaluator(RuleView<DoTag> rule, RuleVariantView variant, tyr::formalism::planning::ActionView<tyr::LiftedTag> action) :
+    DoRuleEvaluator(RuleView<DoTag> rule, RuleVariantView variant, tyr::formalism::ActionView<tyr::LiftedTag> action) :
         m_rule(rule),
         m_variant(variant),
         m_action(action)
@@ -68,7 +68,7 @@ private:
         return denotations;
     }
 
-    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding, typename ConceptDenotations>
+    template<ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding, typename ConceptDenotations>
     static bool action_matches_do_arguments(RuleView<DoTag> rule, Binding action, const ConceptDenotations& denotations)
     {
         if (urd::visit_view(action.get_relation(), [](const auto& relation) { return relation.get_name(); }) != rule.get_action_name())
@@ -111,7 +111,7 @@ private:
              urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate,
-             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+             ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool do_rule_matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                          DoRuleWorkspace& workspace,
                          RuleView<DoTag> rule,
@@ -174,7 +174,7 @@ public:
              urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate,
-             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+             ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate) const

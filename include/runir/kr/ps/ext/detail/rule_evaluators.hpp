@@ -145,7 +145,7 @@ class RuleEvaluators
              urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate,
-             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+             ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool matches(const Evaluator& evaluator,
                  RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
@@ -257,7 +257,7 @@ public:
             const auto borrowed_candidate =
                 tyr::planning::LabeledNode<Kind, typename Storage::PlanningState, tyr::planning::ActionBindingView<Kind>> { binding, candidate };
             context.environment->reset_target();
-            auto label = std::optional<tyr::formalism::planning::ActionRowView> {};
+            auto label = std::optional<tyr::formalism::ActionRowView> {};
             for (const auto& evaluator : m_sketch_rules)
             {
                 if (stop())

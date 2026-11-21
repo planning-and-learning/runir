@@ -9,7 +9,7 @@
 namespace runir::kr::ps::base::dl
 {
 
-SketchView parse_sketch(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
+SketchView parse_sketch(const std::string& description, tyr::formalism::DomainView domain, Repository& repository);
 
 }
 

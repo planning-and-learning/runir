@@ -6,7 +6,7 @@ from typing import NotRequired, TypedDict, cast
 
 import pytest
 from fixture_utils import load_fixture, read_fixture
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, SemanticError, uns

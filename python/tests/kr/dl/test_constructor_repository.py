@@ -8,7 +8,7 @@ from typing import TypeVar
 
 import pytest
 from fixture_utils import record
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, dl

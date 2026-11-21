@@ -5,7 +5,7 @@ from typing import Literal, TypedDict, cast
 
 import pytest
 from fixture_utils import load_fixture, read_fixture
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 
 from pyrunir.kr import SemanticError
 from pyrunir.kr.dl import ConstructorRepository as DlRepository

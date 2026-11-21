@@ -72,7 +72,7 @@ concept ExecutionStorageConcept = requires(Storage& storage,
                                            runir::kr::dl::semantics::CallArgumentsView arguments,
                                            std::optional<CallStackView> caller,
                                            const typename Storage::PlanningState& planning_state,
-                                           tyr::formalism::planning::ActionRowView binding,
+                                           tyr::formalism::ActionRowView binding,
                                            tyr::planning::ActionBindingView<Kind> borrowed_binding) {
     requires tyr::TaskKind<Kind>;
     requires std::copyable<StorageStoredState<Storage>>;
@@ -170,7 +170,7 @@ public:
     }
 
     /// From a planning state of either kind (registered, or being built).
-    template<tyr::planning::StateViewConcept<Kind> S, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    template<tyr::planning::StateViewConcept<Kind> S, ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     tyr::planning::Node<Kind> successor(const S& state, Binding binding)
     {
         auto& search = *m_context->search_context;
@@ -308,7 +308,7 @@ public:
     /// The returned state borrows scratch storage until the next successor() call.
     /// Consume or copy it before then; the source must not borrow this same scratch storage.
     /// From a planning state of either kind (registered, or being built).
-    template<tyr::planning::StateViewConcept<Kind> S, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    template<tyr::planning::StateViewConcept<Kind> S, ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     tyr::planning::Node<Kind, tyr::planning::StateBuilderView<Kind>> successor(const S& state, Binding binding)
     {
         auto& search = *m_context->search_context;

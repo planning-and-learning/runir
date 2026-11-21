@@ -29,7 +29,7 @@ struct builder<runir::kr::dl::grammar::GrammarTag, C>
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::RoleTag>>>, C> role_derivation_rules;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::BooleanTag>>>, C> boolean_derivation_rules;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::NumericalTag>>>, C> numerical_derivation_rules;
-    urd::built_t<urd::index<::tyr::formalism::planning::Domain>, ::tyr::formalism::planning::Repository> domain;
+    urd::built_t<urd::index<::tyr::formalism::Domain>, ::tyr::formalism::Repository> domain;
 
     static constexpr auto fields() noexcept
     {

@@ -23,16 +23,16 @@ class SketchFactory
 public:
     static SketchView create_empty(Repository& repository);
 
-    static SketchView create(SketchSpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository);
+    static SketchView create(SketchSpecification specification, tyr::formalism::DomainView domain, Repository& repository);
 
     static std::string create_empty_description();
 
     static std::string create_description(SketchSpecification specification);
 
-    static SketchView create_gripper_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository);
-    static SketchView create_blocks3ops_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository);
-    static SketchView create_spanner_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository);
-    static SketchView create_delivery_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository);
+    static SketchView create_gripper_france_et_al_aaai2021(tyr::formalism::DomainView domain, Repository& repository);
+    static SketchView create_blocks3ops_france_et_al_aaai2021(tyr::formalism::DomainView domain, Repository& repository);
+    static SketchView create_spanner_france_et_al_aaai2021(tyr::formalism::DomainView domain, Repository& repository);
+    static SketchView create_delivery_france_et_al_aaai2021(tyr::formalism::DomainView domain, Repository& repository);
 
     static std::string create_gripper_france_et_al_aaai2021_description();
     static std::string create_blocks3ops_france_et_al_aaai2021_description();

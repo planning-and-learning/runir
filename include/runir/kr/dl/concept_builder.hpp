@@ -33,7 +33,7 @@ template<typename F, typename Tag, typename C>
 struct builder<runir::kr::dl::Concept<F, Tag>, C>
 {
     urd::index<runir::kr::dl::Concept<F, Tag>> index;
-    urd::built_t<urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>>, ::tyr::formalism::planning::Repository> predicate;
+    urd::built_t<urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>>, ::tyr::formalism::Repository> predicate;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &builder::predicate>> {}; }
 
@@ -46,7 +46,7 @@ template<typename F, typename Tag, typename C>
 struct builder<runir::kr::dl::Concept<F, Tag>, C>
 {
     urd::index<runir::kr::dl::Concept<F, Tag>> index;
-    urd::built_t<urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>>, ::tyr::formalism::planning::Repository> predicate;
+    urd::built_t<urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>>, ::tyr::formalism::Repository> predicate;
     urd::built_t<bool, C> polarity = false;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &builder::predicate>, urd::field<"polarity", &builder::polarity>> {}; }
@@ -141,7 +141,7 @@ struct builder<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>, C>
 {
     urd::index<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>> index;
     urd::built_t<runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, C> role;
-    urd::built_t<urd::flat_vector<urd::index<tyr::formalism::Object>>, ::tyr::formalism::planning::Repository> objects;
+    urd::built_t<urd::flat_vector<urd::index<tyr::formalism::Object>>, ::tyr::formalism::Repository> objects;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"role", &builder::role>, urd::field<"objects", &builder::objects>> {}; }
 
@@ -153,7 +153,7 @@ template<typename F, typename C>
 struct builder<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>, C>
 {
     urd::index<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>> index;
-    urd::built_t<urd::flat_vector<urd::index<tyr::formalism::Object>>, ::tyr::formalism::planning::Repository> objects;
+    urd::built_t<urd::flat_vector<urd::index<tyr::formalism::Object>>, ::tyr::formalism::Repository> objects;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"objects", &builder::objects>> {}; }
 
@@ -165,7 +165,7 @@ template<typename F, typename C>
 struct builder<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>, C>
 {
     urd::index<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>> index;
-    urd::built_t<urd::index<tyr::formalism::Object>, ::tyr::formalism::planning::Repository> object;
+    urd::built_t<urd::index<tyr::formalism::Object>, ::tyr::formalism::Repository> object;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"object", &builder::object>> {}; }
 

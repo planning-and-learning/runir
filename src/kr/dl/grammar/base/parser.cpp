@@ -59,7 +59,7 @@ auto intern(const ConstructorContext& context, Initialize&& initialize)
 }
 
 template<runir::kr::dl::CategoryTag Category>
-auto parse(const ast::NonTerminal<Category>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::NonTerminal<Category>& node, tyr::formalism::DomainView, const ConstructorContext& context)
 {
     return intern<NonTerminal<Category>>(context, [&](auto& data) { data.name = node.name.text; });
 }
@@ -69,45 +69,43 @@ template<runir::kr::dl::CategoryTag Category, typename Node>
     -> runir::kr::parser::constructors::GrammarTarget::ParsedConstructor<Category>
 { context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError(std::string(what) + " are not supported in generation grammars.")); }
 
-auto parse(const ast::ConceptRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::ConceptRegister& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<ConceptTag>(node, context, "Registers"); }
 
-auto parse(const ast::RoleRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
-{ return reject<RoleTag>(node, context, "Registers"); }
+auto parse(const ast::RoleRegister& node, tyr::formalism::DomainView, const ConstructorContext& context) { return reject<RoleTag>(node, context, "Registers"); }
 
-auto parse(const ast::ConceptArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::ConceptArgument& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<ConceptTag>(node, context, "Arguments"); }
 
-auto parse(const ast::RoleArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
-{ return reject<RoleTag>(node, context, "Arguments"); }
+auto parse(const ast::RoleArgument& node, tyr::formalism::DomainView, const ConstructorContext& context) { return reject<RoleTag>(node, context, "Arguments"); }
 
-auto parse(const ast::BooleanArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::BooleanArgument& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<BooleanTag>(node, context, "Arguments"); }
 
-auto parse(const ast::NumericalArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::NumericalArgument& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<NumericalTag>(node, context, "Arguments"); }
 
 template<typename Tag>
     requires(ComparisonTag<Tag> || LogicalBinaryTag<Tag>)
-auto parse(const ast::Constructor<BooleanTag, Tag>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::Constructor<BooleanTag, Tag>& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<BooleanTag>(node, context, "Boolean comparisons and connectives"); }
 
-auto parse(const ast::BooleanNot& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::BooleanNot& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<BooleanTag>(node, context, "Boolean comparisons and connectives"); }
 
-auto parse(const ast::BooleanConstant& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::BooleanConstant& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<BooleanTag>(node, context, "Boolean constants"); }
 
-auto parse(const ast::NumericalConstant& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::NumericalConstant& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<NumericalTag>(node, context, "Arithmetic expressions"); }
 
 template<NumericalBinaryTag Tag>
-auto parse(const ast::Constructor<NumericalTag, Tag>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::Constructor<NumericalTag, Tag>& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { return reject<NumericalTag>(node, context, "Arithmetic expressions"); }
 
 template<runir::kr::dl::CategoryTag Category>
 urd::built_t<ConstructorOrNonTerminal<Category>, ConstructorRepository>
-parse(const ast::ConstructorOrNonTerminal<Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
+parse(const ast::ConstructorOrNonTerminal<Category>& node, tyr::formalism::DomainView domain, const ConstructorContext& context)
 {
     return boost::apply_visitor(
         [&]<typename Arg>(const Arg& arg) -> urd::built_t<ConstructorOrNonTerminal<Category>, ConstructorRepository>
@@ -124,19 +122,19 @@ parse(const ast::ConstructorOrNonTerminal<Category>& node, tyr::formalism::plann
 }
 
 runir::kr::parser::constructors::GrammarTarget::ParsedConstructor<ConceptTag>
-parse(const ast::ConceptProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+parse(const ast::ConceptProject& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
 
 runir::kr::parser::constructors::GrammarTarget::ParsedConstructor<RoleTag>
-parse(const ast::RoleProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+parse(const ast::RoleProject& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
 
 template<typename Result>
-Result parse_collection_operand(const ast::Query& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+Result parse_collection_operand(const ast::Query& node, tyr::formalism::DomainView, const ConstructorContext& context)
 { context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
 
 template<runir::kr::dl::CategoryTag Category>
-auto parse(const ast::DerivationRule<Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
+auto parse(const ast::DerivationRule<Category>& node, tyr::formalism::DomainView domain, const ConstructorContext& context)
 {
     return intern<DerivationRule<Category>>(context,
                                             [&](auto& data)
@@ -150,13 +148,13 @@ auto parse(const ast::DerivationRule<Category>& node, tyr::formalism::planning::
 template<runir::kr::dl::CategoryTag Category>
 void append_derivation_rule(std::vector<urd::child<DerivationRule<Category>, ConstructorRepository>>& rules,
                             const ast::DerivationRule<Category>& node,
-                            tyr::formalism::planning::DomainView domain,
+                            tyr::formalism::DomainView domain,
                             const ConstructorContext& context)
 { urd::append(rules, parse(node, domain, context)); }
 
 void append_derivation_rule(urd::builder<GrammarTag, ConstructorRepository>& data,
                             const ast::DerivationRuleVariant& node,
-                            tyr::formalism::planning::DomainView domain,
+                            tyr::formalism::DomainView domain,
                             const ConstructorContext& context)
 {
     boost::apply_visitor(
@@ -190,14 +188,14 @@ auto fixed_start_name()
 }
 
 template<runir::kr::dl::CategoryTag Category>
-auto parse_fixed_start(tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
+auto parse_fixed_start(tyr::formalism::DomainView domain, const ConstructorContext& context)
 {
     ast::NonTerminal<Category> start;
     start.name.text = fixed_start_name<Category>();
     return parse(start, domain, context);
 }
 
-auto parse_grammar_impl(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+auto parse_grammar_impl(const std::string& description, tyr::formalism::DomainView domain, ConstructorRepository& repository)
 {
     auto errors = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), errors);
@@ -224,7 +222,7 @@ auto parse_grammar_impl(const std::string& description, tyr::formalism::planning
 
 }  // namespace
 
-GrammarView parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+GrammarView parse_grammar(const std::string& description, tyr::formalism::DomainView domain, ConstructorRepository& repository)
 { return parse_grammar_impl(description, domain, repository); }
 
 }  // namespace runir::kr::dl::grammar

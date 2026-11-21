@@ -46,13 +46,13 @@ struct DenotationElementType<runir::kr::dl::NumericalTag>
 template<>
 struct DenotationElementType<runir::kr::dl::ConceptTag>
 {
-    using Type = tyr::formalism::planning::ObjectView;
+    using Type = tyr::formalism::ObjectView;
 };
 
 template<>
 struct DenotationElementType<runir::kr::dl::RoleTag>
 {
-    using Type = std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>;
+    using Type = std::pair<tyr::formalism::ObjectView, tyr::formalism::ObjectView>;
 };
 
 template<runir::kr::dl::CategoryTag Category>
@@ -174,12 +174,12 @@ public:
 
     auto views() const
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return urd::resolve(indices(), self().context().template get<tyr::formalism::planning::Repository>()); }
+    { return urd::resolve(indices(), self().context().template get<tyr::formalism::Repository>()); }
 
     /// Objects reached from this source.
-    auto views_from(tyr::formalism::planning::ObjectView source) const
+    auto views_from(tyr::formalism::ObjectView source) const
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return urd::resolve(indices(source.index()), self().context().template get<tyr::formalism::planning::Repository>()); }
+    { return urd::resolve(indices(source.index()), self().context().template get<tyr::formalism::Repository>()); }
 
     static constexpr auto functions() noexcept
     {

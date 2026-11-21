@@ -9,7 +9,7 @@
 namespace runir::kr::dl::grammar
 {
 
-GrammarView parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository);
+GrammarView parse_grammar(const std::string& description, tyr::formalism::DomainView domain, ConstructorRepository& repository);
 
 }  // namespace runir::kr::dl::grammar
 

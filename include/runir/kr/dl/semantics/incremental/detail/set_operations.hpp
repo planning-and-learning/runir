@@ -148,8 +148,8 @@ void evaluate_rows(Tag, DenotationBuilderView<RoleTag> lhs, DenotationBuilderVie
 
 template<typename Objects, typename Emit>
     requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects>
-             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
-             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
+             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::ObjectView>
+             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::ObjectView&>
              && std::invocable<Emit, urd::index<tyr::formalism::Object>, bool>
 void evaluate_rows(RoleFillersTag, DenotationBuilderView<RoleTag> role, const Objects& fillers, SetOperationWorkspace& workspace, Emit emit)
 {
@@ -352,7 +352,7 @@ inline void update_set(RestrictionTag,
                   role,
                   concept_,
                   workspace,
-                  [&](auto source, auto row) { output.update_row(source, row, role.context().template get<tyr::formalism::planning::Repository>()); });
+                  [&](auto source, auto row) { output.update_row(source, row, role.context().template get<tyr::formalism::Repository>()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -386,7 +386,7 @@ void update_set(Tag,
                   role,
                   concept_,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::planning::Repository>()); });
+                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::Repository>()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -417,7 +417,7 @@ void update_set(Tag,
                   role,
                   threshold,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::planning::Repository>()); });
+                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::Repository>()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -454,7 +454,7 @@ void update_set(Tag,
                   concept_,
                   threshold,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::planning::Repository>()); });
+                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::Repository>()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -488,13 +488,13 @@ void update_set(Tag,
                   lhs,
                   rhs,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, lhs.context().template get<tyr::formalism::planning::Repository>()); });
+                  [&](auto source, bool present) { output.set(source, present, lhs.context().template get<tyr::formalism::Repository>()); });
 }
 
 template<typename Objects>
     requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects>
-             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
-             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
+             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::ObjectView>
+             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::ObjectView&>
 void initialize_set(RoleFillersTag,
                     DenotationState<ConceptTag>& output,
                     DenotationBuilderView<RoleTag> role,
@@ -509,8 +509,8 @@ void initialize_set(RoleFillersTag,
 
 template<typename Objects>
     requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects>
-             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
-             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
+             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::ObjectView>
+             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::ObjectView&>
 void update_set(RoleFillersTag,
                 DenotationState<ConceptTag>& output,
                 DenotationBuilderView<RoleTag> role,
@@ -525,7 +525,7 @@ void update_set(RoleFillersTag,
                   role,
                   fillers,
                   workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::planning::Repository>()); });
+                  [&](auto source, bool present) { output.set(source, present, role.context().template get<tyr::formalism::Repository>()); });
 }
 
 inline void initialize_set(CompositionTag,
@@ -558,7 +558,7 @@ inline void update_set(CompositionTag,
                   lhs,
                   rhs,
                   workspace,
-                  [&](auto source, auto row) { output.update_row(source, row, lhs.context().template get<tyr::formalism::planning::Repository>()); });
+                  [&](auto source, auto row) { output.update_row(source, row, lhs.context().template get<tyr::formalism::Repository>()); });
 }
 
 template<BaseRoleConstructorTag Tag>
@@ -589,7 +589,7 @@ void update_set(Tag,
                   output.get_builder(),
                   role,
                   workspace,
-                  [&](auto source, auto row) { output.update_row(source, row, role.context().template get<tyr::formalism::planning::Repository>()); });
+                  [&](auto source, auto row) { output.update_row(source, row, role.context().template get<tyr::formalism::Repository>()); });
 }
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

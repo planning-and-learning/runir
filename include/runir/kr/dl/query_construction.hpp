@@ -133,7 +133,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         data.schema = query_columns(data.columns);
         const auto arity = data.schema.size();
         if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
-            require_query_arity(arity, urd::resolve(data.predicate, repository.template get<tyr::formalism::planning::Repository>()).get_arity());
+            require_query_arity(arity, urd::resolve(data.predicate, repository.template get<tyr::formalism::Repository>()).get_arity());
         else if constexpr (std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>)
             require_query_arity(arity, std::same_as<Tag, QueryConceptTag> ? 1 : 2);
         else if constexpr (std::same_as<Tag, QueryBooleanTag> || std::same_as<Tag, QueryNumericalTag>)

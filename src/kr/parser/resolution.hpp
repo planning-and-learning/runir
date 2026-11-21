@@ -17,7 +17,7 @@ namespace runir::kr::parser
 {
 
 template<tyr::formalism::FactKind T>
-auto require_predicate(tyr::formalism::planning::DomainView domain,
+auto require_predicate(tyr::formalism::DomainView domain,
                        const ast::Identifier& name,
                        size_t arity,
                        const char* constructor_name,
@@ -31,11 +31,11 @@ auto require_predicate(tyr::formalism::planning::DomainView domain,
             diagnostics.throw_at(name, ArityMismatchError(constructor_name, arity, predicate.get_arity()));
         return std::optional(predicate);
     }
-    return std::optional<tyr::formalism::planning::PredicateView<T>> {};
+    return std::optional<tyr::formalism::PredicateView<T>> {};
 }
 
 template<typename Make>
-auto resolve_predicate(tyr::formalism::planning::DomainView domain,
+auto resolve_predicate(tyr::formalism::DomainView domain,
                        const ast::Identifier& name,
                        size_t arity,
                        const char* constructor_name,
@@ -52,8 +52,7 @@ auto resolve_predicate(tyr::formalism::planning::DomainView domain,
     diagnostics.throw_at(name, UndefinedSymbolError("predicate", name.text));
 }
 
-inline tyr::formalism::planning::ObjectView
-require_object(tyr::formalism::planning::DomainView domain, const ast::Identifier& name, const DiagnosticContext& diagnostics)
+inline tyr::formalism::ObjectView require_object(tyr::formalism::DomainView domain, const ast::Identifier& name, const DiagnosticContext& diagnostics)
 {
     for (auto object : domain.get_constants())
         if (object.get_name() == name.text)
@@ -64,10 +63,10 @@ require_object(tyr::formalism::planning::DomainView domain, const ast::Identifie
 
 /// The constants of these names, appended to a builder's list of object children.
 template<typename Identifier>
-void append_objects(tyr::formalism::planning::DomainView domain,
+void append_objects(tyr::formalism::DomainView domain,
                     const urd::Store<urd::sequence<Identifier>>& names,
                     const DiagnosticContext& diagnostics,
-                    std::vector<urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>>& result)
+                    std::vector<urd::child<tyr::formalism::Object, tyr::formalism::Repository>>& result)
 {
     result.reserve(result.size() + names.size());
     for (const auto& name : names)

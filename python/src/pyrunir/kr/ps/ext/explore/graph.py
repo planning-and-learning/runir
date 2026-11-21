@@ -9,7 +9,7 @@ import re
 from collections import deque
 from collections.abc import Mapping
 
-from pytyr.formalism.planning import AtomGroundDerived, AtomGroundFluent, AtomGroundStatic, Object
+from pytyr.formalism import AtomGroundDerived, AtomGroundFluent, AtomGroundStatic, Object
 from pytyr.planning import lifted
 
 from pyrunir.kr.ps import ProofStatus

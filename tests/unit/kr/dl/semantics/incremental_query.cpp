@@ -41,7 +41,7 @@ using Fluent = tyr::formalism::FluentTag;
 using Derived = tyr::formalism::DerivedTag;
 using Object = urd::index<tyr::formalism::Object>;
 
-auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepository& repository)
+auto parse_query(const std::string& expression, tyr::formalism::DomainView domain, kr::dl::ConstructorRepository& repository)
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
     return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(

@@ -51,7 +51,7 @@ auto intern(runir::kr::ps::base::Repository& repository, runir::kr::ps::base::Bu
 
 auto parse_feature(
     const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr::BaseFamilyTag>& node,
-    tyr::formalism::planning::DomainView domain,
+    tyr::formalism::DomainView domain,
     Repository& repository,
     Builders& builders,
     urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&
@@ -78,7 +78,7 @@ auto parse_feature(
 
 auto parse_feature(
     const runir::kr::ps::base::dl::ast::NumericalFeature<runir::kr::BaseFamilyTag>& node,
-    tyr::formalism::planning::DomainView domain,
+    tyr::formalism::DomainView domain,
     Repository& repository,
     Builders& builders,
     urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&,
@@ -129,7 +129,7 @@ auto parse_rule(const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTa
 
 }  // namespace
 
-SketchView parse_sketch(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+SketchView parse_sketch(const std::string& description, tyr::formalism::DomainView domain, Repository& repository)
 {
     auto first = description.cbegin();
     const auto last = description.cend();

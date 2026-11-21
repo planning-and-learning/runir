@@ -18,7 +18,7 @@ SketchView SketchFactory::create_empty(Repository& repository)
     return repository.insert(*data, builder).first;
 }
 
-SketchView SketchFactory::create(SketchSpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository)
+SketchView SketchFactory::create(SketchSpecification specification, tyr::formalism::DomainView domain, Repository& repository)
 { return parse_sketch(create_description(specification), domain, repository); }
 
 std::string SketchFactory::create_empty_description()
@@ -46,16 +46,16 @@ std::string SketchFactory::create_description(SketchSpecification specification)
     throw std::runtime_error(fmt::format("Unknown sketch specification: {}.", static_cast<int>(specification)));
 }
 
-SketchView SketchFactory::create_gripper_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
+SketchView SketchFactory::create_gripper_france_et_al_aaai2021(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_sketch(create_gripper_france_et_al_aaai2021_description(), domain, repository); }
 
-SketchView SketchFactory::create_blocks3ops_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
+SketchView SketchFactory::create_blocks3ops_france_et_al_aaai2021(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_sketch(create_blocks3ops_france_et_al_aaai2021_description(), domain, repository); }
 
-SketchView SketchFactory::create_spanner_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
+SketchView SketchFactory::create_spanner_france_et_al_aaai2021(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_sketch(create_spanner_france_et_al_aaai2021_description(), domain, repository); }
 
-SketchView SketchFactory::create_delivery_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
+SketchView SketchFactory::create_delivery_france_et_al_aaai2021(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_sketch(create_delivery_france_et_al_aaai2021_description(), domain, repository); }
 
 std::string SketchFactory::create_gripper_france_et_al_aaai2021_description()

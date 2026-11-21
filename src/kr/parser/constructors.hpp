@@ -121,7 +121,7 @@ auto intern_constructor(const Context& context, urd::index<T> index)
 }
 
 template<runir::kr::dl::CategoryTag Category, typename Context>
-auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>& node, tyr::formalism::planning::DomainView domain, const Context& context) ->
+auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>& node, tyr::formalism::DomainView domain, const Context& context) ->
     typename Context::Target::template ParsedConstructor<Category>;
 
 using QueryView = runir::kr::dl::QueryView<>;
@@ -152,10 +152,10 @@ auto parse_columns(const urd::Store<urd::sequence<runir::kr::dl::grammar::ast::I
 }
 
 template<typename Context>
-QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::planning::DomainView domain, const Context& context);
+QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::DomainView domain, const Context& context);
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryAtomicState& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QueryAtomicState& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return runir::kr::parser::resolve_predicate(domain,
                                                 node.predicate_name,
@@ -172,7 +172,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicState& node, tyr::forma
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryAtomicGoal& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QueryAtomicGoal& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return runir::kr::parser::resolve_predicate(domain,
                                                 node.predicate_name,
@@ -190,7 +190,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicGoal& node, tyr::formal
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryConcept& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QueryConcept& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>(context);
@@ -200,7 +200,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryConcept& node, tyr::formalism
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryRole& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QueryRole& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>(context);
@@ -210,7 +210,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryRole& node, tyr::formalism::p
 }
 
 template<typename Tag, typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryBinary<Tag>& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QueryBinary<Tag>& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto lhs = parse(node.left_operand.get(), domain, context);
     auto rhs = parse(node.right_operand.get(), domain, context);
@@ -221,7 +221,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryBinary<Tag>& node, tyr::forma
 }
 
 template<typename Tag, typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryColumns<Tag>& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QueryColumns<Tag>& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto arg = parse(node.operand.get(), domain, context);
     auto data = checkout<runir::kr::dl::Query<Tag>>(context);
@@ -231,7 +231,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryColumns<Tag>& node, tyr::form
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryGenericJoin& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QueryGenericJoin& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>(context);
     for (const auto& arg : node.args)
@@ -242,7 +242,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryGenericJoin& node, tyr::forma
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QueryEmpty& node, tyr::formalism::planning::DomainView, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QueryEmpty& node, tyr::formalism::DomainView, const Context& context)
 {
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>(context);
     data->columns = parse_columns(node.columns, context);
@@ -250,7 +250,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryEmpty& node, tyr::formalism::
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QuerySelectEqual& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QuerySelectEqual& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto arg = parse(node.operand.get(), domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>(context);
@@ -261,7 +261,7 @@ auto parse(const runir::kr::dl::grammar::ast::QuerySelectEqual& node, tyr::forma
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::QuerySelectValue& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::QuerySelectValue& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto arg = parse(node.operand.get(), domain, context);
     auto object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics());
@@ -273,7 +273,7 @@ auto parse(const runir::kr::dl::grammar::ast::QuerySelectValue& node, tyr::forma
 }
 
 template<typename Context>
-QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::planning::DomainView domain, const Context& context)
+QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return boost::apply_visitor(
         [&](const auto& value) -> QueryView
@@ -300,7 +300,7 @@ QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::
 /// Parses one alternative of a concept/role/query operand into Result, a builder's member (a variant of children):
 /// the alternative its view or built form is.
 template<typename Result, typename Node, typename Context>
-Result parse_collection_operand(const Node& node, tyr::formalism::planning::DomainView domain, const Context& context)
+Result parse_collection_operand(const Node& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto result = Result();
     take(result, parse(node, domain, context));
@@ -308,15 +308,13 @@ Result parse_collection_operand(const Node& node, tyr::formalism::planning::Doma
 }
 
 template<typename Result, typename Operand, typename Context>
-Result parse_operand(const Operand& node, tyr::formalism::planning::DomainView domain, const Context& context)
+Result parse_operand(const Operand& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return boost::apply_visitor([&](const auto& value) { return parse_collection_operand<Result>(unwrap(value), domain, context); }, node.get());
 }
 
 template<runir::kr::dl::CategoryTag Category, typename Context>
-auto parse(const runir::kr::dl::grammar::ast::Constructor<Category, runir::kr::dl::ProjectTag>& node,
-           tyr::formalism::planning::DomainView domain,
-           const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::Constructor<Category, runir::kr::dl::ProjectTag>& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::QueryProjection<Category>>(context);
@@ -333,21 +331,21 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<Category, runir::kr::d
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptBot&, tyr::formalism::planning::DomainView, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptBot&, tyr::formalism::DomainView, const Context& context)
 {
     auto data = checkout<TargetConcept<Context, runir::kr::dl::BotTag>>(context);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptTop&, tyr::formalism::planning::DomainView, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptTop&, tyr::formalism::DomainView, const Context& context)
 {
     auto data = checkout<TargetConcept<Context, runir::kr::dl::TopTag>>(context);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return runir::kr::parser::resolve_predicate(domain,
                                                 node.predicate_name,
@@ -363,7 +361,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState& node, tyr::for
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return runir::kr::parser::resolve_predicate(domain,
                                                 node.predicate_name,
@@ -380,7 +378,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal& node, tyr::form
 }
 
 template<typename Tag, typename Ast, typename Context>
-auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse_binary_concept(const Ast& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto left = parse(node.left_operand, domain, context);
     auto right = parse(node.right_operand, domain, context);
@@ -391,7 +389,7 @@ auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView 
 }
 
 template<typename Tag, typename Ast, typename Context>
-auto parse_quantification_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse_quantification_concept(const Ast& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto role = parse(node.role, domain, context);
     auto qualifier = parse(node.qualifier, domain, context);
@@ -402,23 +400,23 @@ auto parse_quantification_concept(const Ast& node, tyr::formalism::planning::Dom
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptIntersection& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptIntersection& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_binary_concept<runir::kr::dl::IntersectionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptUnion& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptUnion& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_binary_concept<runir::kr::dl::UnionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptValueRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptValueRestriction& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_quantification_concept<runir::kr::dl::ValueRestrictionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_quantification_concept<runir::kr::dl::ExistentialQuantificationTag>(node, domain, context); }
 
 template<typename Tag, typename Ast, typename Context>
-auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse_number_restriction_concept(const Ast& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto role = parse(node.role, domain, context);
     auto data = checkout<TargetConcept<Context, Tag>>(context);
@@ -428,19 +426,19 @@ auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning:
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_number_restriction_concept<runir::kr::dl::AtLeastNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_number_restriction_concept<runir::kr::dl::AtMostNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptExactNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptExactNumberRestriction& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_number_restriction_concept<runir::kr::dl::ExactNumberRestrictionTag>(node, domain, context); }
 
 template<typename Tag, typename Ast, typename Context>
-auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto role = parse(node.role, domain, context);
     auto qualifier = parse(node.qualifier, domain, context);
@@ -452,31 +450,27 @@ auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism:
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction& node,
-           tyr::formalism::planning::DomainView domain,
-           const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction& node,
-           tyr::formalism::planning::DomainView domain,
-           const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_binary_concept<runir::kr::dl::RoleValueMapTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto role = parse(node.role, domain, context);
     auto data = checkout<TargetConcept<Context, runir::kr::dl::RoleFillersTag>>(context);
@@ -486,7 +480,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node, tyr::for
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto data = checkout<TargetConcept<Context, runir::kr::dl::OneOfTag>>(context);
     runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics(), data->objects);
@@ -494,7 +488,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf& node, tyr::formalism
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetConcept<Context, runir::kr::dl::NegationTag>>(context);
@@ -503,7 +497,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node, tyr::formal
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::ConceptNominal& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::ConceptNominal& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto data = checkout<TargetConcept<Context, runir::kr::dl::NominalTag>>(context);
     take(data->object, runir::kr::parser::require_object(domain, node.object_name, context.diagnostics()));
@@ -511,14 +505,14 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptNominal& node, tyr::formali
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleUniversal&, tyr::formalism::planning::DomainView, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleUniversal&, tyr::formalism::DomainView, const Context& context)
 {
     auto data = checkout<TargetRole<Context, runir::kr::dl::UniversalTag>>(context);
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return runir::kr::parser::resolve_predicate(domain,
                                                 node.predicate_name,
@@ -534,7 +528,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState& node, tyr::formal
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return runir::kr::parser::resolve_predicate(domain,
                                                 node.predicate_name,
@@ -551,7 +545,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal& node, tyr::formali
 }
 
 template<typename Tag, typename Ast, typename Context>
-auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse_binary_role(const Ast& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto left = parse(node.left_operand, domain, context);
     auto right = parse(node.right_operand, domain, context);
@@ -562,19 +556,19 @@ auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView dom
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleIntersection& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleIntersection& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_binary_role<runir::kr::dl::IntersectionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleUnion& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleUnion& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_binary_role<runir::kr::dl::UnionTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleComposition& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleComposition& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_binary_role<runir::kr::dl::CompositionTag>(node, domain, context); }
 
 template<typename Tag, typename Ast, typename Context>
-auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse_unary_role(const Ast& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetRole<Context, Tag>>(context);
@@ -583,23 +577,23 @@ auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView doma
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleComplement& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleComplement& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_unary_role<runir::kr::dl::ComplementTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleInverse& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleInverse& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_unary_role<runir::kr::dl::InverseTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleTransitiveClosure& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleTransitiveClosure& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_unary_role<runir::kr::dl::TransitiveClosureTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure& node, tyr::formalism::DomainView domain, const Context& context)
 { return parse_unary_role<runir::kr::dl::ReflexiveTransitiveClosureTag>(node, domain, context); }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleRestriction& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto role = parse(node.role, domain, context);
     auto qualifier = parse(node.qualifier, domain, context);
@@ -610,7 +604,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleRestriction& node, tyr::formal
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::RoleIdentity& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::RoleIdentity& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetRole<Context, runir::kr::dl::IdentityTag>>(context);
@@ -619,7 +613,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleIdentity& node, tyr::formalism
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return runir::kr::parser::resolve_predicate(domain,
                                                 node.predicate_name,
@@ -636,7 +630,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState& node, tyr::for
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal& node, tyr::formalism::DomainView domain, const Context& context)
 {
     return runir::kr::parser::resolve_predicate(domain,
                                                 node.predicate_name,
@@ -653,7 +647,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal& node, tyr::form
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty& node, tyr::formalism::DomainView domain, const Context& context)
 {
     using Data = urd::data<TargetBoolean<Context, runir::kr::dl::NonemptyTag>>;
     auto operand = parse_operand<urd::built_t<decltype(Data::operand), typename Context::Repository>>(node.operand, domain, context);
@@ -664,7 +658,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty& node, tyr::formal
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::NumericalCount& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::NumericalCount& node, tyr::formalism::DomainView domain, const Context& context)
 {
     using Data = urd::data<TargetNumerical<Context, runir::kr::dl::CountTag>>;
     auto operand = parse_operand<urd::built_t<decltype(Data::operand), typename Context::Repository>>(node.operand, domain, context);
@@ -675,7 +669,7 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalCount& node, tyr::formali
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::NumericalDistance& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::NumericalDistance& node, tyr::formalism::DomainView domain, const Context& context)
 {
     using Data = urd::data<TargetNumerical<Context, runir::kr::dl::DistanceTag>>;
     auto sources = parse_operand<urd::built_t<decltype(Data::sources), typename Context::Repository>>(node.sources, domain, context);
@@ -690,9 +684,7 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalDistance& node, tyr::form
 
 template<typename Tag, typename Context>
     requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
-auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::BooleanTag, Tag>& node,
-           tyr::formalism::planning::DomainView domain,
-           const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::BooleanTag, Tag>& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto left = parse(node.left_operand, domain, context);
     auto right = parse(node.right_operand, domain, context);
@@ -703,9 +695,7 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::Boolean
 }
 
 template<runir::kr::dl::NumericalBinaryTag Tag, typename Context>
-auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::NumericalTag, Tag>& node,
-           tyr::formalism::planning::DomainView domain,
-           const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::NumericalTag, Tag>& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto left = parse(node.left_operand, domain, context);
     auto right = parse(node.right_operand, domain, context);
@@ -716,7 +706,7 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::Numeric
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::BooleanConstant& node, tyr::formalism::planning::DomainView, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::BooleanConstant& node, tyr::formalism::DomainView, const Context& context)
 {
     auto data = checkout<TargetBoolean<Context, runir::kr::dl::BooleanConstantTag>>(context);
     data->value = node.value;
@@ -724,7 +714,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanConstant& node, tyr::formal
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::NumericalConstant& node, tyr::formalism::planning::DomainView, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::NumericalConstant& node, tyr::formalism::DomainView, const Context& context)
 {
     auto data = checkout<TargetNumerical<Context, runir::kr::dl::NumericalConstantTag>>(context);
     data->value = node.value;
@@ -732,7 +722,7 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalConstant& node, tyr::form
 }
 
 template<typename Context>
-auto parse(const runir::kr::dl::grammar::ast::BooleanNot& node, tyr::formalism::planning::DomainView domain, const Context& context)
+auto parse(const runir::kr::dl::grammar::ast::BooleanNot& node, tyr::formalism::DomainView domain, const Context& context)
 {
     auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetBoolean<Context, runir::kr::dl::NotTag>>(context);
@@ -741,7 +731,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanNot& node, tyr::formalism::
 }
 
 template<runir::kr::dl::CategoryTag Category, typename Context>
-auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>& node, tyr::formalism::planning::DomainView domain, const Context& context) ->
+auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>& node, tyr::formalism::DomainView domain, const Context& context) ->
     typename Context::Target::template ParsedConstructor<Category>
 {
     return boost::apply_visitor([&](const auto& arg) { return parse(unwrap(arg), domain, context); }, node.get());

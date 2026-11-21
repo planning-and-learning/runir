@@ -31,7 +31,7 @@ struct SearchNode
 {
     // First arrival is permanent; the initial state has no parent.
     std::optional<ProgramStateView<Kind>> parent_state = std::nullopt;
-    std::optional<tyr::formalism::planning::ActionRowView> action = std::nullopt;
+    std::optional<tyr::formalism::ActionRowView> action = std::nullopt;
     // Number of non-singleton Choose bindings on the first-parent path.
     ygg::uint_t choice_depth = 0;
     // Maximum post-filter Choose binding count on the first-parent path.
@@ -56,7 +56,7 @@ struct Predecessor
 {
     ProgramStateView<Kind> source;
     ProgramStateView<Kind> target;
-    std::optional<tyr::formalism::planning::ActionRowView> action;
+    std::optional<tyr::formalism::ActionRowView> action;
     std::optional<RuleVariantView> rule;
 };
 

@@ -72,7 +72,7 @@ class DatalogSection
 public:
     DatalogSection(const DatalogRules* rules,
                    urd::Store<urd::set<std::string>, urd::sorted> read_heads,
-                   tyr::formalism::planning::DomainView domain,
+                   tyr::formalism::DomainView domain,
                    runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
                    FeatureResolver& features,
@@ -90,7 +90,7 @@ private:
     urd::Store<urd::set<std::string>, urd::sorted> m_weighted;
     /// The heads that q_head constructors read anywhere in the module, the program's outputs.
     urd::Store<urd::set<std::string>, urd::sorted> m_read_heads;
-    tyr::formalism::planning::DomainView m_domain;
+    tyr::formalism::DomainView m_domain;
     runir::kr::dl::ConstructorRepository* m_repository;
     runir::kr::dl::Builder* m_builder;
     FeatureResolver* m_features;

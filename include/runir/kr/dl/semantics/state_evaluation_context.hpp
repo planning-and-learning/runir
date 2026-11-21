@@ -30,7 +30,7 @@ namespace detail
 
 /// Defined in the library, so that the contexts need only declarations of their resources.
 EvaluationWorkspace& get_workspace(Builder& builder) noexcept;
-const tyr::formalism::planning::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept;
+const tyr::formalism::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept;
 const urd::builder<RegisterValues, DenotationRepository>& empty_register_values() noexcept;
 [[noreturn]] void throw_unbound_register(size_t index, size_t count);
 [[noreturn]] void throw_unbound_argument(size_t index, size_t count);
@@ -96,8 +96,8 @@ private:
         if (m_arguments && detail::get_formalism_repository(m_arguments->context()) != repository)
             throw std::invalid_argument("Evaluation requires arguments for the same planning task.");
         if (&urd::visit_view(m_registers,
-                             [](const auto& registers) -> const tyr::formalism::planning::Repository&
-                             { return registers.context().template get<tyr::formalism::planning::Repository>(); })
+                             [](const auto& registers) -> const tyr::formalism::Repository&
+                             { return registers.context().template get<tyr::formalism::Repository>(); })
             != repository)
             throw std::invalid_argument("Evaluation requires registers for the same planning task.");
     }
@@ -120,7 +120,7 @@ private:
         m_registers(registers),
         m_arguments(arguments)
     {
-        if (storage.get_denotation_repository(false).template get_ptr<tyr::formalism::planning::Repository>() != m_state.get_formalism_repository())
+        if (storage.get_denotation_repository(false).template get_ptr<tyr::formalism::Repository>() != m_state.get_formalism_repository())
             throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
     }
 

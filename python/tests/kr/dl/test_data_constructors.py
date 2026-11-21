@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from fixture_utils import record
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 
 from pyrunir.kr import dl
 

@@ -22,7 +22,7 @@ namespace detail
 {
 /// Appends the atoms of kind F true in `lhs` but not in `rhs`.
 template<tyr::TaskKind Kind, tyr::formalism::FactKind F, tyr::planning::StateViewConcept<Kind> Lhs, tyr::planning::StateViewConcept<Kind> Rhs>
-void append_only_in(const Lhs& lhs, const Rhs& rhs, urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, F>>>& atoms)
+void append_only_in(const Lhs& lhs, const Rhs& rhs, urd::Store<urd::sequence<tyr::formalism::AtomView<tyr::GroundTag, F>>>& atoms)
 {
     for (const auto atom : lhs.template get_atoms<F>())
         if (!rhs.test(atom))
@@ -67,11 +67,10 @@ struct Delta
 {
     struct Values
     {
-        urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, tyr::formalism::FluentTag>>> fluent_atoms;
-        urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, tyr::formalism::DerivedTag>>> derived_atoms;
-        urd::Store<urd::sequence<std::pair<RegisterIdentifier<ConceptTag>, tyr::formalism::planning::ObjectView>>> concept_registers;
-        urd::Store<urd::sequence<std::pair<RegisterIdentifier<RoleTag>, std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>>>
-            role_registers;
+        urd::Store<urd::sequence<tyr::formalism::AtomView<tyr::GroundTag, tyr::formalism::FluentTag>>> fluent_atoms;
+        urd::Store<urd::sequence<tyr::formalism::AtomView<tyr::GroundTag, tyr::formalism::DerivedTag>>> derived_atoms;
+        urd::Store<urd::sequence<std::pair<RegisterIdentifier<ConceptTag>, tyr::formalism::ObjectView>>> concept_registers;
+        urd::Store<urd::sequence<std::pair<RegisterIdentifier<RoleTag>, std::pair<tyr::formalism::ObjectView, tyr::formalism::ObjectView>>>> role_registers;
 
         void clear() noexcept
         {
@@ -159,8 +158,8 @@ template<tyr::TaskKind Kind,
 void Delta::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
 {
     const auto* repository = source.get_formalism_repository().get();
-    if (&source_registers.context().template get<tyr::formalism::planning::Repository>() != repository
-        || &target_registers.context().template get<tyr::formalism::planning::Repository>() != repository)
+    if (&source_registers.context().template get<tyr::formalism::Repository>() != repository
+        || &target_registers.context().template get<tyr::formalism::Repository>() != repository)
         throw std::invalid_argument("Feature delta requires registers for the same planning task.");
 
     detail::assign_atom_delta<Kind>(source, target, *this);

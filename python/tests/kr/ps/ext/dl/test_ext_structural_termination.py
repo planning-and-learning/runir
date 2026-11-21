@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 import pytest
 from fixture_utils import read_fixture
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 
 from pyrunir.kr.dl import ConstructorRepository as DlRepository
 from pyrunir.kr.ps import IncompleteStructuralTerminationStatus, ext

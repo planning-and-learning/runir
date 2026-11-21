@@ -4,7 +4,7 @@
 import gc
 
 import pytest
-from pytyr.formalism.planning import Object, PlanningDomain
+from pytyr.formalism import Object, PlanningDomain
 from pyyggdrasil import formalism
 from pyyggdrasil.formalism import ObjectIndex
 from pyyggdrasil.serialization import Dictionaries

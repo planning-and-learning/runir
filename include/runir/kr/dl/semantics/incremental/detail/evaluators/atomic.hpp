@@ -22,17 +22,17 @@ namespace runir::kr::dl::semantics::incremental::detail
 template<tyr::TaskKind Kind, CategoryTag Category, tyr::formalism::FactKind Fact>
 struct AtomicEvaluator
 {
-    tyr::formalism::planning::PredicateView<Fact> predicate;
+    tyr::formalism::PredicateView<Fact> predicate;
     bool polarity = true;  ///< a Boolean atom's; a concept or role atom is the state's atoms of its predicate
     DenotationState<Category> value;
 
-    explicit AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate_)
+    explicit AtomicEvaluator(tyr::formalism::PredicateView<Fact> predicate_)
         requires ConceptOrRoleTag<Category>
         : predicate(predicate_)
     {
     }
 
-    AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate_, bool polarity_)
+    AtomicEvaluator(tyr::formalism::PredicateView<Fact> predicate_, bool polarity_)
         requires std::same_as<Category, BooleanTag>
         : predicate(predicate_), polarity(polarity_)
     {
@@ -73,7 +73,7 @@ struct AtomicEvaluator
     }
 
 private:
-    static DenotationElementView<Category> atom_element(tyr::formalism::planning::AtomView<tyr::GroundTag, Fact> atom)
+    static DenotationElementView<Category> atom_element(tyr::formalism::AtomView<tyr::GroundTag, Fact> atom)
         requires ConceptOrRoleTag<Category>
     {
         const auto objects = atom.get_row().get_objects();
@@ -83,8 +83,8 @@ private:
             return std::pair(objects[0], objects[1]);
     }
 
-    void update_atoms(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
-                      std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed)
+    void update_atoms(std::span<const tyr::formalism::AtomView<tyr::GroundTag, Fact>> added,
+                      std::span<const tyr::formalism::AtomView<tyr::GroundTag, Fact>> removed)
     {
         // A Boolean atom has no element, so only the concept and role branches read the atom.
         const auto present = [&]([[maybe_unused]] auto atom)

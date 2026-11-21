@@ -32,7 +32,7 @@ struct data<runir::kr::dl::cnf_grammar::Grammar>
     urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::RoleTag>>> role_substitution_rules;
     urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::BooleanTag>>> boolean_substitution_rules;
     urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::NumericalTag>>> numerical_substitution_rules;
-    urd::index<::tyr::formalism::planning::Domain> domain;
+    urd::index<::tyr::formalism::Domain> domain;
 
     data() = default;
 
@@ -48,7 +48,7 @@ struct data<runir::kr::dl::cnf_grammar::Grammar>
          urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::RoleTag>>> role_substitution_rules_,
          urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::BooleanTag>>> boolean_substitution_rules_,
          urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::NumericalTag>>> numerical_substitution_rules_,
-         urd::index<::tyr::formalism::planning::Domain> domain_) :
+         urd::index<::tyr::formalism::Domain> domain_) :
         index(),
         concept_start(std::move(concept_start_)),
         role_start(std::move(role_start_)),

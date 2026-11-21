@@ -7,7 +7,7 @@ from typing import TypedDict, cast
 
 import pytest
 from fixture_utils import load_fixture, read_fixture
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 
 from pyrunir.kr.dl.semantics import ConstructorRepository
 from pyrunir.kr.ps import IncompleteStructuralTerminationStatus

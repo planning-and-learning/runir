@@ -14,36 +14,36 @@ namespace runir::kr::ps::ext::dl
 {
 
 runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>
-parse_concept(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository);
+parse_concept(const std::string& description, tyr::formalism::DomainView domain, runir::kr::dl::ConstructorRepository& repository);
 
 runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>
-parse_role(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository);
+parse_role(const std::string& description, tyr::formalism::DomainView domain, runir::kr::dl::ConstructorRepository& repository);
 
 runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>
-parse_boolean(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository);
+parse_boolean(const std::string& description, tyr::formalism::DomainView domain, runir::kr::dl::ConstructorRepository& repository);
 
 runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>
-parse_numerical(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository);
+parse_numerical(const std::string& description, tyr::formalism::DomainView domain, runir::kr::dl::ConstructorRepository& repository);
 
 /// Parse a standalone expression in the scope of a module: registers and arguments may be referenced by their declared names.
 runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>
-parse_concept(const std::string& description, tyr::formalism::planning::DomainView domain, ModuleView module, Repository& repository);
+parse_concept(const std::string& description, tyr::formalism::DomainView domain, ModuleView module, Repository& repository);
 
 runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>
-parse_role(const std::string& description, tyr::formalism::planning::DomainView domain, ModuleView module, Repository& repository);
+parse_role(const std::string& description, tyr::formalism::DomainView domain, ModuleView module, Repository& repository);
 
 runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>
-parse_boolean(const std::string& description, tyr::formalism::planning::DomainView domain, ModuleView module, Repository& repository);
+parse_boolean(const std::string& description, tyr::formalism::DomainView domain, ModuleView module, Repository& repository);
 
 runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>
-parse_numerical(const std::string& description, tyr::formalism::planning::DomainView domain, ModuleView module, Repository& repository);
+parse_numerical(const std::string& description, tyr::formalism::DomainView domain, ModuleView module, Repository& repository);
 
-ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
+ModuleView parse_module(const std::string& description, tyr::formalism::DomainView domain, Repository& repository);
 
-ProgramView parse_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
+ProgramView parse_program(const std::string& description, tyr::formalism::DomainView domain, Repository& repository);
 
 urd::Store<urd::sequence<ModuleView>>
-parse_modules(const urd::Store<urd::sequence<std::string>>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository);
+parse_modules(const urd::Store<urd::sequence<std::string>>& descriptions, tyr::formalism::DomainView domain, Repository& repository);
 
 }  // namespace runir::kr::ps::ext::dl
 

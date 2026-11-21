@@ -47,7 +47,7 @@ private:
     template<typename Feature>
     struct KeyedFeature
     {
-        std::weak_ptr<const tyr::formalism::planning::Repository> formalism;  ///< Its control block identifies it while kept.
+        std::weak_ptr<const tyr::formalism::Repository> formalism;  ///< Its control block identifies it while kept.
         Feature feature;
     };
 
@@ -73,7 +73,7 @@ private:
         requires std::same_as<std::invoke_result_t<Make&>, Feature>
     static Feature& find_or_make(urd::Store<urd::sequence<KeyedFeature<Feature>>, urd::stable_refs>& features,
                                  FeaturePositions& positions,
-                                 const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
+                                 const std::shared_ptr<tyr::formalism::Repository>& formalism,
                                  const Constructors& constructors,
                                  ygg::uint_t constructor,
                                  Make make)
@@ -112,7 +112,7 @@ public:
     /// make() at first use. References stay valid while this workspace lives.
     template<std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, FullDistanceFeature>
-    FullDistanceFeature& get_distance_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
+    FullDistanceFeature& get_distance_feature(const std::shared_ptr<tyr::formalism::Repository>& formalism,
                                               const ConstructorRepository& constructors,
                                               ygg::uint_t constructor,
                                               Make&& make)
@@ -129,7 +129,7 @@ public:
     /// made by make() at first use. References stay valid while this workspace lives.
     template<std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, DatalogFeature>
-    DatalogFeature& get_datalog_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
+    DatalogFeature& get_datalog_feature(const std::shared_ptr<tyr::formalism::Repository>& formalism,
                                         const ConstructorRepository& constructors,
                                         ygg::uint_t program,
                                         Make&& make)

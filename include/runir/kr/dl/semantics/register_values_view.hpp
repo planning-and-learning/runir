@@ -24,9 +24,9 @@ namespace runir::kr::dl::semantics::detail
 /// task: throws std::logic_error).
 struct object_of
 {
-    tyr::formalism::planning::ObjectView operator()(const tyr::formalism::planning::Repository* repository, const auto& object) const
+    tyr::formalism::ObjectView operator()(const tyr::formalism::Repository* repository, const auto& object) const
     {
-        if (const auto* interned = std::get_if<urd::interned_child<tyr::formalism::Object, tyr::formalism::planning::Repository>>(&object))
+        if (const auto* interned = std::get_if<urd::interned_child<tyr::formalism::Object, tyr::formalism::Repository>>(&object))
             return urd::resolve(*interned, *repository);
         throw std::logic_error("a register's object is one of the task's: interned");
     }
@@ -35,15 +35,15 @@ struct object_of
 /// A concept register's value, its object interned.
 struct concept_value_of
 {
-    std::optional<tyr::formalism::planning::ObjectView> operator()(const tyr::formalism::planning::Repository* repository, const auto& value) const
+    std::optional<tyr::formalism::ObjectView> operator()(const tyr::formalism::Repository* repository, const auto& value) const
     { return value.has_value() ? std::optional(object_of {}(repository, *value)) : std::nullopt; }
 };
 
 /// A role register's value, its objects interned.
 struct role_value_of
 {
-    std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>
-    operator()(const tyr::formalism::planning::Repository* repository, const auto& value) const
+    std::optional<std::pair<tyr::formalism::ObjectView, tyr::formalism::ObjectView>> operator()(const tyr::formalism::Repository* repository,
+                                                                                                const auto& value) const
     { return value.has_value() ? std::optional(std::pair(object_of {}(repository, value->first), object_of {}(repository, value->second))) : std::nullopt; }
 };
 }  // namespace runir::kr::dl::semantics::detail
@@ -100,14 +100,14 @@ public:
     auto get_concept_values() const noexcept
     {
         return urd::transform(urd::detail::view_access::record(self()).concept_values,
-                              &self().context().template get<tyr::formalism::planning::Repository>(),
+                              &self().context().template get<tyr::formalism::Repository>(),
                               runir::kr::dl::semantics::detail::concept_value_of {});
     }
 
     auto get_role_values() const noexcept
     {
         return urd::transform(urd::detail::view_access::record(self()).role_values,
-                              &self().context().template get<tyr::formalism::planning::Repository>(),
+                              &self().context().template get<tyr::formalism::Repository>(),
                               runir::kr::dl::semantics::detail::role_value_of {});
     }
 

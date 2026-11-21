@@ -6,7 +6,7 @@ import sys
 from collections import Counter
 
 from fixture_utils import read_fixture
-from pytyr.formalism.planning import PlanningDomain, RowActionLifted
+from pytyr.formalism import PlanningDomain, RowActionLifted
 from pytyr.planning.ground import LabeledNode, Node, State
 
 from pyrunir.datasets import GroundTaskSearchContext

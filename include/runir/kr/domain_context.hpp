@@ -20,10 +20,10 @@ struct DomainContext
     runir::kr::ps::icp::RepositoryPtr icp_repository;
     runir::kr::uns::RepositoryPtr uns_repository;
 
-    static DomainContextPtr create(const tyr::formalism::planning::PlanningDomain& domain);
+    static DomainContextPtr create(const tyr::formalism::PlanningDomain& domain);
 
 private:
-    explicit DomainContext(const tyr::formalism::planning::PlanningDomain& domain);
+    explicit DomainContext(const tyr::formalism::PlanningDomain& domain);
 };
 
 }  // namespace runir::kr

@@ -126,7 +126,7 @@ through ``.get_value()``, concept and role ones give their objects (or object pa
 
 ``relation`` is an interned ``pyyggdrasil.formalism.RelationView`` with ``get_index()``, ``columns()``, ``arity()``,
 ``at()``, ``len()`` and iteration. Each row yields object indices as integers in column order; look an object up with
-``denotation_repository.get_object(ObjectIndex(value))`` (``pytyr.formalism.planning.ObjectIndex``). Rows form a
+``denotation_repository.get_object(ObjectIndex(value))`` (``pyyggdrasil.formalism.ObjectIndex``). Rows form a
 canonical set iterated by interned row identity, not insertion order, so the tuple order can change which binding a
 nonuniversal search visits first.
 

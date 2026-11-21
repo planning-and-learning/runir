@@ -1487,7 +1487,7 @@ void check_transient_builder_values_and_reuse()
     auto module_pool = urd::Store<urd::slots<ModuleStateBuilder>> {};
     auto pool = urd::Store<urd::slots<ProgramStateBuilder>> {};
     const auto object = [](ygg::uint_t at) { return urd::index<tyr::formalism::Object>(at); };
-    using Object = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
+    using Object = urd::child<tyr::formalism::Object, tyr::formalism::Repository>;
     auto first = pool.make_shared();
     auto& first_state = urd::builder_of(first->state, state_pool);
     auto& first_module = urd::builder_of(first->module_state, module_pool);

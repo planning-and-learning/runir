@@ -20,8 +20,8 @@ class EvaluationStorage
 
 public:
     explicit EvaluationStorage(const DenotationRepository& prototype) :
-        m_static_denotations(std::make_shared<DenotationRepository>(prototype.template get_ptr<tyr::formalism::planning::Repository>())),
-        m_dynamic_denotations(std::make_shared<DenotationRepository>(prototype.template get_ptr<tyr::formalism::planning::Repository>()))
+        m_static_denotations(std::make_shared<DenotationRepository>(prototype.template get_ptr<tyr::formalism::Repository>())),
+        m_dynamic_denotations(std::make_shared<DenotationRepository>(prototype.template get_ptr<tyr::formalism::Repository>()))
     {
     }
 

@@ -9,7 +9,7 @@
 namespace runir::kr::uns::dl
 {
 
-ClassifierView parse_classifier(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
+ClassifierView parse_classifier(const std::string& description, tyr::formalism::DomainView domain, Repository& repository);
 
 }
 

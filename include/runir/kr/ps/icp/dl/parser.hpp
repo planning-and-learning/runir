@@ -12,8 +12,8 @@ using runir::kr::ps::ext::dl::parse_concept;
 using runir::kr::ps::ext::dl::parse_numerical;
 using runir::kr::ps::ext::dl::parse_role;
 
-ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
-ProgramView parse_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
+ModuleView parse_module(const std::string& description, tyr::formalism::DomainView domain, Repository& repository);
+ProgramView parse_program(const std::string& description, tyr::formalism::DomainView domain, Repository& repository);
 
 }  // namespace runir::kr::ps::icp::dl
 

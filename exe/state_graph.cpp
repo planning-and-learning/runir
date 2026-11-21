@@ -78,7 +78,7 @@ int run(int argc, char** argv)
     const auto disable_invariant_synthesis = program.get<bool>("--disable-invariant-synthesis");
 
     auto parser_options = loki::semantic::ParserOptions();
-    auto parser = tyr::formalism::planning::Parser(domain_filepath, parser_options);
+    auto parser = tyr::formalism::Parser(domain_filepath, parser_options);
     auto lifted_task = tyr::planning::Task<tyr::LiftedTag>::create(parser.parse_task(problem_filepath));
     auto execution_context = ygg::ExecutionContext::create(num_datalog_threads);
 

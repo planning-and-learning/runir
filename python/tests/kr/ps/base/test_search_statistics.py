@@ -8,7 +8,7 @@ from typing import TypeAlias
 import pytest
 from fixture_utils import read_fixture
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser
+from pytyr.formalism import Parser
 from pytyr.planning import ground, lifted
 from pyyggdrasil.execution import ExecutionContext
 

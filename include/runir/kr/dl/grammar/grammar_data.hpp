@@ -29,7 +29,7 @@ struct data<runir::kr::dl::grammar::GrammarTag>
     urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::RoleTag>>> role_derivation_rules;
     urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::BooleanTag>>> boolean_derivation_rules;
     urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::NumericalTag>>> numerical_derivation_rules;
-    urd::index<::tyr::formalism::planning::Domain> domain;
+    urd::index<::tyr::formalism::Domain> domain;
 
     data() = default;
 
@@ -41,7 +41,7 @@ struct data<runir::kr::dl::grammar::GrammarTag>
          urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::RoleTag>>> role_derivation_rules_,
          urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::BooleanTag>>> boolean_derivation_rules_,
          urd::flat_vector<urd::index<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::NumericalTag>>> numerical_derivation_rules_,
-         urd::index<::tyr::formalism::planning::Domain> domain_) :
+         urd::index<::tyr::formalism::Domain> domain_) :
         index(),
         concept_start(std::move(concept_start_)),
         role_start(std::move(role_start_)),

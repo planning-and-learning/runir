@@ -32,7 +32,7 @@ ModuleView ModuleFactory::create_empty(Repository& repository)
     return repository.insert(*data, builder).first;
 }
 
-ModuleView ModuleFactory::create(ModuleSpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository)
+ModuleView ModuleFactory::create(ModuleSpecification specification, tyr::formalism::DomainView domain, Repository& repository)
 { return parse_module(create_description(specification), domain, repository); }
 
 std::string ModuleFactory::create_empty_description()
@@ -65,7 +65,7 @@ std::string ModuleFactory::create_description(ModuleSpecification specification)
     throw std::runtime_error(fmt::format("Unknown module specification: {}.", static_cast<int>(specification)));
 }
 
-urd::Store<urd::sequence<ModuleView>> ModuleFactory::create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository)
+urd::Store<urd::sequence<ModuleView>> ModuleFactory::create_bonet_et_al_icaps2024_modules(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_modules(create_bonet_et_al_icaps2024_descriptions(), domain, repository); }
 
 urd::Store<urd::sequence<std::string>> ModuleFactory::create_bonet_et_al_icaps2024_descriptions()
@@ -829,19 +829,19 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
 ))RUNIR";
 }
 
-ProgramView ModuleFactory::create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository)
+ProgramView ModuleFactory::create_bonet_et_al_icaps2024_program(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_program(create_bonet_et_al_icaps2024_program_description(), domain, repository); }
 
-ModuleView ModuleFactory::create_on_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)
+ModuleView ModuleFactory::create_on_bonet_et_al_icaps2024(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_module(create_on_bonet_et_al_icaps2024_description(), domain, repository); }
 
-ModuleView ModuleFactory::create_on_table_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)
+ModuleView ModuleFactory::create_on_table_bonet_et_al_icaps2024(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_module(create_on_table_bonet_et_al_icaps2024_description(), domain, repository); }
 
-ModuleView ModuleFactory::create_tower_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)
+ModuleView ModuleFactory::create_tower_bonet_et_al_icaps2024(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_module(create_tower_bonet_et_al_icaps2024_description(), domain, repository); }
 
-ModuleView ModuleFactory::create_blocks_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)
+ModuleView ModuleFactory::create_blocks_bonet_et_al_icaps2024(tyr::formalism::DomainView domain, Repository& repository)
 { return parse_module(create_blocks_bonet_et_al_icaps2024_description(), domain, repository); }
 
 std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()

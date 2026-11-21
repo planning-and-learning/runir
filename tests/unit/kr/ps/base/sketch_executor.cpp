@@ -123,8 +123,8 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_EQ(dl_denotation_repository, task_context->dl_denotation_repository.get());
         // Evaluation owns reusable result storage; the task repository remains durable.
         EXPECT_NE(dl_denotation_repository, &dl_context.get_denotation_repository());
-        EXPECT_EQ(dl_denotation_repository->get_ptr<tyr::formalism::planning::Repository>(),
-                  dl_context.get_denotation_repository().get_ptr<tyr::formalism::planning::Repository>());
+        EXPECT_EQ(dl_denotation_repository->get_ptr<tyr::formalism::Repository>(),
+                  dl_context.get_denotation_repository().get_ptr<tyr::formalism::Repository>());
         EXPECT_EQ(&dl_context.get_caches(), &expander.get_environment().get_dl_caches());
     }
 }

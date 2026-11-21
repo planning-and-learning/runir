@@ -184,7 +184,7 @@ TEST(RunirTests, ParserDiagnosticsCoverSketchModuleAndClassifier)
 
 TEST(RunirTests, LookupErrorsPreserveIdentifierSpansAcrossLanguages)
 {
-    const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    const auto planning_domain = tyr::formalism::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     const auto domain = planning_domain.get_domain();
     const auto context = kr::DomainContext::create(planning_domain);
     const auto grammar_repository = std::make_shared<kr::dl::grammar::ConstructorRepository>(planning_domain.get_repository());

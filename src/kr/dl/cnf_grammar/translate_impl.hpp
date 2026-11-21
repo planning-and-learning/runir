@@ -38,8 +38,7 @@ struct TranslationContext
         data(runir::kr::dl::cnf_grammar::checkout<Grammar>(builder))
     {
         // Compare raw pointers: operator== on the shared_ptrs would complete the planning repository type.
-        assert(repository.template get_ptr<tyr::formalism::planning::Repository>().get()
-               == source.context().template get_ptr<tyr::formalism::planning::Repository>().get());
+        assert(repository.template get_ptr<tyr::formalism::Repository>().get() == source.context().template get_ptr<tyr::formalism::Repository>().get());
         urd::store(data->domain, source.get_domain());
     }
 };

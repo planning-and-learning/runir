@@ -15,14 +15,14 @@ namespace runir::kr::dl::semantics
 template<typename V>
 concept RegisterValuesViewConcept =
     requires(const std::remove_reference_t<V>& values, RegisterIdentifier<ConceptTag> concept_id, RegisterIdentifier<RoleTag> role_id) {
-        { values.context().template get<tyr::formalism::planning::Repository>() } -> std::same_as<const tyr::formalism::planning::Repository&>;
+        { values.context().template get<tyr::formalism::Repository>() } -> std::same_as<const tyr::formalism::Repository&>;
         values.template values<ConceptTag>();
         values.template values<RoleTag>();
         { values.at(concept_id).has_value() } -> std::same_as<bool>;
-        requires std::same_as<std::remove_cvref_t<decltype(values.at(concept_id).value())>, tyr::formalism::planning::ObjectView>;
+        requires std::same_as<std::remove_cvref_t<decltype(values.at(concept_id).value())>, tyr::formalism::ObjectView>;
         { values.at(role_id).has_value() } -> std::same_as<bool>;
-        requires std::same_as<std::remove_cvref_t<decltype(values.at(role_id).value().first)>, tyr::formalism::planning::ObjectView>;
-        requires std::same_as<std::remove_cvref_t<decltype(values.at(role_id).value().second)>, tyr::formalism::planning::ObjectView>;
+        requires std::same_as<std::remove_cvref_t<decltype(values.at(role_id).value().first)>, tyr::formalism::ObjectView>;
+        requires std::same_as<std::remove_cvref_t<decltype(values.at(role_id).value().second)>, tyr::formalism::ObjectView>;
     };
 
 }  // namespace runir::kr::dl::semantics

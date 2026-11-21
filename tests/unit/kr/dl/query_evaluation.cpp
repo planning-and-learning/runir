@@ -92,7 +92,7 @@ auto query_search_context()
         return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
 }
 
-auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepository& repository)
+auto parse_query(const std::string& expression, tyr::formalism::DomainView domain, kr::dl::ConstructorRepository& repository)
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
     return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
@@ -1080,8 +1080,7 @@ void check_predicate_repository_identity()
   (:goal (and (flag) (marked a) (edge a b))))
 )");
     auto execution = ygg::ExecutionContext::create(1);
-    auto lifted =
-        tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(domain_source, std::nullopt).parse_task(task_source, std::nullopt));
+    auto lifted = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::Parser(domain_source, std::nullopt).parse_task(task_source, std::nullopt));
     auto task = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
@@ -1093,7 +1092,7 @@ void check_predicate_repository_identity()
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto& domain = task->get_domain();
     // Use one factory so repository identities differ even though predicate indices collide.
-    const auto foreign = std::make_shared<tyr::formalism::planning::Repository>();
+    const auto foreign = std::make_shared<tyr::formalism::Repository>();
     auto predicates = std::array<urd::index<Predicate>, 3> {};
     ASSERT_EQ(domain.get_domain().template get_predicates<Fact>().size(), predicates.size());
     for (const auto predicate : domain.get_domain().template get_predicates<Fact>())
@@ -1101,7 +1100,7 @@ void check_predicate_repository_identity()
         ASSERT_LT(predicate.get_arity(), predicates.size());
         predicates[predicate.get_arity()] = predicate.index();
         auto data = urd::data<Predicate>("foreign_" + predicate.get_name().str(), predicate.get_arity());
-        const auto other = tyr::formalism::planning::insert(*foreign, data).first;
+        const auto other = tyr::formalism::insert(*foreign, data).first;
         ASSERT_EQ(other.index(), predicate.index());
         ASSERT_NE(other, predicate);
         EXPECT_EQ(task->get_repository()->view(predicate.index()), predicate);
@@ -1155,13 +1154,13 @@ template<tyr::TaskKind Kind>
 void check_query_object_views()
 {
     const auto execution = ygg::ExecutionContext::create(1);
-    auto lifted = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(R"(
+    auto lifted = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::Parser(R"(
 (define (domain query-objects)
   (:requirements :strips)
   (:constants parent)
   (:predicates (fixed ?x ?y)))
 )",
-                                                                                               "query-objects-domain.pddl")
+                                                                                     "query-objects-domain.pddl")
                                                                   .parse_task(R"(
 (define (problem query-objects-task)
   (:domain query-objects)
@@ -1236,8 +1235,7 @@ void check_multiword_bit_evaluation()
         task_source += " (edge " + name(from) + " " + name(to) + ")";
     task_source += ") (:goal (and)))";
     auto execution = ygg::ExecutionContext::create(1);
-    auto lifted =
-        tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(domain_source, std::nullopt).parse_task(task_source, std::nullopt));
+    auto lifted = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::Parser(domain_source, std::nullopt).parse_task(task_source, std::nullopt));
     auto task = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)

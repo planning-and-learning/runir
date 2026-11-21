@@ -64,18 +64,18 @@ static_assert(IndexedDataView<Classifier> && std::same_as<View<Classifier>, kr::
 
 struct Fixture
 {
-    tyr::formalism::planning::PlanningDomain planning_domain;
+    tyr::formalism::PlanningDomain planning_domain;
     kr::dl::ConstructorRepositoryPtr dl_repository;
     kr::uns::RepositoryPtr repository;
 
     Fixture() :
-        planning_domain(tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain()),
+        planning_domain(tyr::formalism::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain()),
         dl_repository(std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository())),
         repository(std::make_shared<kr::uns::Repository>(dl_repository))
     {
     }
 
-    [[nodiscard]] tyr::formalism::planning::DomainView domain() const { return planning_domain.get_domain(); }
+    [[nodiscard]] tyr::formalism::DomainView domain() const { return planning_domain.get_domain(); }
 };
 
 }  // namespace

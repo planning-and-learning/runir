@@ -50,12 +50,12 @@ struct ProgramProofVertexLabel : urd::compared_by_identity<ProgramProofVertexLab
 template<ProgramFamilyTag Family>
 struct ProgramProofEdgeLabel : urd::compared_by_identity<ProgramProofEdgeLabel<Family>>
 {
-    urd::flat_optional<tyr::formalism::planning::ActionRowView> action;
+    urd::flat_optional<tyr::formalism::ActionRowView> action;
     urd::flat_optional<RuleView<Family>> rule;
 
     ProgramProofEdgeLabel() = default;
 
-    ProgramProofEdgeLabel(urd::flat_optional<tyr::formalism::planning::ActionRowView> action_, urd::flat_optional<RuleView<Family>> rule_) :
+    ProgramProofEdgeLabel(urd::flat_optional<tyr::formalism::ActionRowView> action_, urd::flat_optional<RuleView<Family>> rule_) :
         action(std::move(action_)),
         rule(std::move(rule_))
     {

@@ -11,7 +11,7 @@ from ext_execution_utils import ExecutionStep, Outcome, collect_steps
 from fixture_utils import FIXTURE_ROOT, load_fixture, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import LiftedPlanningTask, Parser, PlanningDomain, RowActionLifted
+from pytyr.formalism import LiftedPlanningTask, Parser, PlanningDomain, RowActionLifted
 from pytyr.planning.ground import PackedPlan as GroundPackedPlan, Task as GroundTask
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext

@@ -36,11 +36,11 @@ class ActionRuleEvaluator
 {
     RuleView<ActionTag> m_rule;
     RuleVariantView m_variant;
-    tyr::formalism::planning::ActionView<tyr::LiftedTag> m_action;
+    tyr::formalism::ActionView<tyr::LiftedTag> m_action;
     // Retained scratch for decoding query rows; each use completes before any callback.
     /// The offered binding (the action and the row's objects), read through the planning repository when checked.
     /// The binding offered for the action, being filled: a row's builder.
-    mutable urd::builder<ygg::Row<tyr::formalism::planning::Action<tyr::LiftedTag>>, tyr::formalism::planning::Repository> m_offer;
+    mutable urd::builder<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>, tyr::formalism::Repository> m_offer;
     mutable urd::Store<urd::sequence<ygg::Value>> m_row;
 
     static void require_applicable(tyr::planning::ActionBindingStatus status)
@@ -54,7 +54,7 @@ class ActionRuleEvaluator
 public:
     using RuleTag = ActionTag;
 
-    ActionRuleEvaluator(RuleView<ActionTag> rule, RuleVariantView variant, tyr::formalism::planning::ActionView<tyr::LiftedTag> action) :
+    ActionRuleEvaluator(RuleView<ActionTag> rule, RuleVariantView variant, tyr::formalism::ActionView<tyr::LiftedTag> action) :
         m_rule(rule),
         m_variant(variant),
         m_action(action)
@@ -139,7 +139,7 @@ public:
              urd::ViewOf<ProgramState<Kind>> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              tyr::planning::StateViewConcept<Kind> Candidate,
-             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+             ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate) const

@@ -9,7 +9,7 @@ from typing import Protocol, TypeVar
 import pytest
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import Parser
+from pytyr.formalism import Parser
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries

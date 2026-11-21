@@ -120,7 +120,7 @@ void require_arguments(const Node& node, const ConstructorContext& context)
 }
 
 /// q_head: the rows of a head of the module's :datalog section.
-inline auto parse(const runir::kr::dl::grammar::ast::QueryHead& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+inline auto parse(const runir::kr::dl::grammar::ast::QueryHead& node, tyr::formalism::DomainView, const ConstructorContext& context)
 {
     const auto* references = context.references();
     if (!references || !references->datalog)
@@ -145,7 +145,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::QueryHead& node, tyr::forma
 
 template<runir::kr::dl::CategoryTag Category>
 inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Category>& node,
-                  tyr::formalism::planning::DomainView domain,
+                  tyr::formalism::DomainView domain,
                   const ConstructorContext& context) -> runir::kr::dl::ConstructorView<Category>
 {
     return boost::apply_visitor(
@@ -175,7 +175,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Ca
 /// choice, so it may name a feature of any of the operand's categories.
 template<typename Result, runir::kr::dl::CategoryTag Category>
 Result parse_collection_operand(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Category>& node,
-                                tyr::formalism::planning::DomainView domain,
+                                tyr::formalism::DomainView domain,
                                 const ConstructorContext& context)
 {
     if (const auto* name = boost::get<runir::kr::dl::grammar::ast::FeatureName>(&node.get()))
@@ -237,7 +237,7 @@ resolve_reference(const Reference& reference, const ReferenceTable<Entity>* decl
         reference.get());
 }
 
-inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister& node, tyr::formalism::DomainView, const ConstructorContext& context)
 {
     require_registers(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::RegisterTag>>(context.builder());
@@ -249,7 +249,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister& node, tyr:
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
-inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr::formalism::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(
@@ -262,7 +262,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr:
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
-inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::formalism::DomainView, const ConstructorContext& context)
 {
     require_registers(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::RegisterTag>>(context.builder());
@@ -274,7 +274,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::fo
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
-inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::formalism::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
     auto data =
@@ -287,7 +287,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::fo
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
-inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr::formalism::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(
@@ -300,7 +300,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr:
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
 }
 
-inline auto parse(const runir::kr::dl::grammar::ast::NumericalArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+inline auto parse(const runir::kr::dl::grammar::ast::NumericalArgument& node, tyr::formalism::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(

@@ -99,12 +99,12 @@ struct AnnotatedStateGraphVertexLabel : urd::compared_by_identity<AnnotatedState
 
 struct StateGraphEdgeLabel : urd::compared_by_identity<StateGraphEdgeLabel>
 {
-    tyr::formalism::planning::ActionRowView action;
+    tyr::formalism::ActionRowView action;
     ygg::float_t cost = 0;
 
     StateGraphEdgeLabel() = delete;
 
-    StateGraphEdgeLabel(tyr::formalism::planning::ActionRowView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
+    StateGraphEdgeLabel(tyr::formalism::ActionRowView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action, &StateGraphEdgeLabel::cost> {}; }
 

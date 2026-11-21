@@ -75,17 +75,14 @@ public:
     }
 
     /// Internal computations use indices; construct views only for recorded changes.
-    void set(urd::index<tyr::formalism::Object> object, bool present, const tyr::formalism::planning::Repository& repository)
+    void set(urd::index<tyr::formalism::Object> object, bool present, const tyr::formalism::Repository& repository)
         requires std::same_as<Category, ConceptTag>
     {
         if (result().contains(object) != present)
             set(urd::resolve(object, repository), present);
     }
 
-    void set(urd::index<tyr::formalism::Object> source,
-             urd::index<tyr::formalism::Object> target,
-             bool present,
-             const tyr::formalism::planning::Repository& repository)
+    void set(urd::index<tyr::formalism::Object> source, urd::index<tyr::formalism::Object> target, bool present, const tyr::formalism::Repository& repository)
         requires std::same_as<Category, RoleTag>
     {
         if (result().contains(source, target) != present)
@@ -94,7 +91,7 @@ public:
 
     /// Row computations produce a complete row; dependent evaluators need only changed pairs.
     /// Compare old and new membership before overwriting it, recording the exact delta.
-    void update_row(urd::index<tyr::formalism::Object> source, urd::bitset_span<const ygg::uint_t> row, const tyr::formalism::planning::Repository& repository)
+    void update_row(urd::index<tyr::formalism::Object> source, urd::bitset_span<const ygg::uint_t> row, const tyr::formalism::Repository& repository)
         requires std::same_as<Category, RoleTag>
     {
         // Each XOR word is captured before its changed memberships are updated.

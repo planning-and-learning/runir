@@ -47,7 +47,7 @@ template<typename T, typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>, C>
 {
     urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
-    urd::built_t<urd::index<tyr::formalism::Predicate<T>>, ::tyr::formalism::planning::Repository> predicate {};
+    urd::built_t<urd::index<tyr::formalism::Predicate<T>>, ::tyr::formalism::Repository> predicate {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
 
@@ -62,7 +62,7 @@ template<typename T, typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>, C>
 {
     urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>> index;
-    urd::built_t<urd::index<tyr::formalism::Predicate<T>>, ::tyr::formalism::planning::Repository> predicate {};
+    urd::built_t<urd::index<tyr::formalism::Predicate<T>>, ::tyr::formalism::Repository> predicate {};
     urd::built_t<bool, C> polarity {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
@@ -211,7 +211,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>, C>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::index<runir::kr::dl::QueryColumn>, C> column {};
-    urd::built_t<urd::index<tyr::formalism::Object>, ::tyr::formalism::planning::Repository> object {};
+    urd::built_t<urd::index<tyr::formalism::Object>, ::tyr::formalism::Repository> object {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<tyr::datalog::database::SelectValuePlan, C> plan {};
 

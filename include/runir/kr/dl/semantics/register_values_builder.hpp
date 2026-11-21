@@ -23,9 +23,9 @@ template<typename C>
 struct builder<runir::kr::dl::semantics::RegisterValues, C>
 {
     urd::index<runir::kr::dl::semantics::RegisterValues> index;
-    urd::built_t<urd::flat_vector<urd::flat_optional<urd::index<tyr::formalism::Object>>>, ::tyr::formalism::planning::Repository> concept_values;
+    urd::built_t<urd::flat_vector<urd::flat_optional<urd::index<tyr::formalism::Object>>>, ::tyr::formalism::Repository> concept_values;
     urd::built_t<urd::flat_vector<urd::flat_optional<urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>>,
-                 ::tyr::formalism::planning::Repository>
+                 ::tyr::formalism::Repository>
         role_values;
 
     static constexpr auto fields() noexcept

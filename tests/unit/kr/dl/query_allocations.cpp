@@ -321,7 +321,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     auto registers = std::array<urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>, 3> {};
     const auto objects = domain.get_constants();
     ASSERT_GE(objects.size(), 3);
-    using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
+    using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::Repository>;
     const auto object = [&](size_t at) { return ObjectChild(objects[static_cast<std::ptrdiff_t>(at)].index()); };
     for (size_t i = 0; i < registers.size(); ++i)
     {

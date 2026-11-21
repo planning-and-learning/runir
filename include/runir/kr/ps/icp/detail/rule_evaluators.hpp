@@ -25,7 +25,7 @@ class RuleEvaluators
     using CruleEvaluator = RuleEvaluator<Kind, CruleTag>;
     using Evaluator =
         std::variant<RuleEvaluator<Kind, LoadTag<runir::kr::dl::ConceptTag>>, RuleEvaluator<Kind, LoadTag<runir::kr::dl::RoleTag>>, CruleEvaluator>;
-    using Action = tyr::formalism::planning::ActionView<tyr::LiftedTag>;
+    using Action = tyr::formalism::ActionView<tyr::LiftedTag>;
 
     struct ActionRules
     {
@@ -68,7 +68,7 @@ class RuleEvaluators
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, candidate);
             auto histories = std::optional<HistoriesView> {};
-            auto label = std::optional<tyr::formalism::planning::ActionRowView> {};
+            auto label = std::optional<tyr::formalism::ActionRowView> {};
             for (const auto& evaluator : m_matching)
             {
                 if (stop())

@@ -33,7 +33,7 @@ struct builder<runir::kr::dl::cnf_grammar::Grammar, C>
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::RoleTag>>>, C> role_substitution_rules;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::BooleanTag>>>, C> boolean_substitution_rules;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::NumericalTag>>>, C> numerical_substitution_rules;
-    urd::built_t<urd::index<::tyr::formalism::planning::Domain>, ::tyr::formalism::planning::Repository> domain;
+    urd::built_t<urd::index<::tyr::formalism::Domain>, ::tyr::formalism::Repository> domain;
 
     static constexpr auto fields() noexcept
     {

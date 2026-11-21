@@ -84,10 +84,8 @@ auto make_feature(Repository& repository, Builder& builder, urd::index<Expressio
     return intern(repository, builder, *data).index();
 }
 
-ModuleView lower_module(const ast::Module& module,
-                        tyr::formalism::planning::DomainView domain,
-                        Repository& repository,
-                        const runir::kr::parser::DiagnosticContext& diagnostics)
+ModuleView
+lower_module(const ast::Module& module, tyr::formalism::DomainView domain, Repository& repository, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto builder = Builder {};
     auto dl_builder = runir::kr::dl::Builder {};
@@ -220,7 +218,7 @@ ModuleView lower_module(const ast::Module& module,
                     {
                         auto rule = checkout<Rule<CruleTag>>(builder);
                         initialize_rule(*rule, concrete, entry);
-                        auto action = std::optional<tyr::formalism::planning::ActionView<tyr::LiftedTag>> {};
+                        auto action = std::optional<tyr::formalism::ActionView<tyr::LiftedTag>> {};
                         for (const auto candidate : domain.get_actions())
                             if (candidate.get_name() == concrete.action.text)
                             {
@@ -327,7 +325,7 @@ ModuleView lower_module(const ast::Module& module,
 
 }  // namespace
 
-ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+ModuleView parse_module(const std::string& description, tyr::formalism::DomainView domain, Repository& repository)
 {
     auto errors = std::ostringstream {};
     auto handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), errors);
@@ -338,7 +336,7 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
     return lower_module(node, domain, repository, diagnostics);
 }
 
-ProgramView parse_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+ProgramView parse_program(const std::string& description, tyr::formalism::DomainView domain, Repository& repository)
 {
     auto errors = std::ostringstream {};
     auto handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), errors);

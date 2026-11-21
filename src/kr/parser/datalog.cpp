@@ -61,7 +61,7 @@ namespace constructors = runir::kr::parser::constructors;
 class ProgramBuilder
 {
 public:
-    ProgramBuilder(tyr::formalism::planning::DomainView domain,
+    ProgramBuilder(tyr::formalism::DomainView domain,
                    dl::ConstructorRepository& repository,
                    dl::Builder& builder,
                    FeatureResolver& features,
@@ -164,7 +164,7 @@ public:
     [[nodiscard]] urd::index<ydl::Relation> derived(const std::string& name) const { return m_derived.at(name); }
 
 private:
-    tyr::formalism::planning::DomainView m_domain;
+    tyr::formalism::DomainView m_domain;
     ext_constructors::ConstructorContext m_context;
     FeatureResolver* m_features;
     urd::Store<urd::map<std::string, urd::index<ydl::Relation>>, urd::sorted> m_derived;
@@ -446,7 +446,7 @@ private:
 
 DatalogSection::DatalogSection(const DatalogRules* rules,
                                urd::Store<urd::set<std::string>, urd::sorted> read_heads,
-                               tyr::formalism::planning::DomainView domain,
+                               tyr::formalism::DomainView domain,
                                runir::kr::dl::ConstructorRepository& repository,
                                runir::kr::dl::Builder& builder,
                                FeatureResolver& features,

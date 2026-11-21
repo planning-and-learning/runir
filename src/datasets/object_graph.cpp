@@ -42,7 +42,7 @@ namespace
 class ObjectGraphConstructionContext
 {
 private:
-    using ObjectView = tyr::formalism::planning::ObjectView;
+    using ObjectView = tyr::formalism::ObjectView;
     using Edge = std::pair<VertexIndex, VertexIndex>;
 
     ColorRepository* m_repository;
@@ -76,7 +76,7 @@ public:
     void add_object(ObjectView object) { static_cast<void>(get_or_create_vertex(object)); }
 
     template<PredicateContext Context, tyr::formalism::FactKind T>
-    void add_atom(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom)
+    void add_atom(tyr::formalism::AtomView<::tyr::GroundTag, T> atom)
     {
         const auto objects = atom.get_row().get_objects();
         auto vertices = VertexIndexList {};
@@ -164,13 +164,13 @@ void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructio
 template<tyr::TaskKind Kind>
 auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>
 {
-    const auto root = [](const tyr::formalism::planning::Repository* layer)
+    const auto root = [](const tyr::formalism::Repository* layer)
     {
         while (layer->parent() != nullptr)
             layer = layer->parent();
         return layer;
     };
-    if (root(state.get_formalism_repository().get()) != root(&repository.get<tyr::formalism::planning::Repository>()))
+    if (root(state.get_formalism_repository().get()) != root(&repository.get<tyr::formalism::Repository>()))
         throw std::invalid_argument("State and ColorRepository use different planning repositories.");
 
     auto context = ObjectGraphConstructionContext(repository);

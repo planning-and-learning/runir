@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser
+from pytyr.formalism import Parser
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
 

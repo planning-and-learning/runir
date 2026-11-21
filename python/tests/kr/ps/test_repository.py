@@ -6,7 +6,7 @@ from typing import Protocol, TypeVar
 
 import pytest
 from fixture_utils import read_fixture, record
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 
 from pyrunir.datasets import GroundTaskClass
 from pyrunir.kr import DomainContext

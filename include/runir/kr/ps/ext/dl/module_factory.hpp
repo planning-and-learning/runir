@@ -25,20 +25,20 @@ class ModuleFactory
 {
 public:
     static ModuleView create_empty(Repository& repository);
-    static ModuleView create(ModuleSpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository);
+    static ModuleView create(ModuleSpecification specification, tyr::formalism::DomainView domain, Repository& repository);
 
     static std::string create_empty_description();
     static std::string create_description(ModuleSpecification specification);
 
-    static urd::Store<urd::sequence<ModuleView>> create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository);
+    static urd::Store<urd::sequence<ModuleView>> create_bonet_et_al_icaps2024_modules(tyr::formalism::DomainView domain, Repository& repository);
     static urd::Store<urd::sequence<std::string>> create_bonet_et_al_icaps2024_descriptions();
     static std::string create_bonet_et_al_icaps2024_program_description();
-    static ProgramView create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository);
+    static ProgramView create_bonet_et_al_icaps2024_program(tyr::formalism::DomainView domain, Repository& repository);
 
-    static ModuleView create_on_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository);
-    static ModuleView create_on_table_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository);
-    static ModuleView create_tower_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository);
-    static ModuleView create_blocks_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository);
+    static ModuleView create_on_bonet_et_al_icaps2024(tyr::formalism::DomainView domain, Repository& repository);
+    static ModuleView create_on_table_bonet_et_al_icaps2024(tyr::formalism::DomainView domain, Repository& repository);
+    static ModuleView create_tower_bonet_et_al_icaps2024(tyr::formalism::DomainView domain, Repository& repository);
+    static ModuleView create_blocks_bonet_et_al_icaps2024(tyr::formalism::DomainView domain, Repository& repository);
 
     static std::string create_on_bonet_et_al_icaps2024_description();
     static std::string create_on_table_bonet_et_al_icaps2024_description();

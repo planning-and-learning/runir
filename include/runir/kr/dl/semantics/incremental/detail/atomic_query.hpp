@@ -35,7 +35,7 @@ template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
 class AtomicQueryEvaluator
 {
-    tyr::formalism::planning::PredicateView<Fact> m_predicate;
+    tyr::formalism::PredicateView<Fact> m_predicate;
     bool m_initialized = false;
     urd::handle<ygg::FreeScratchRelation> m_result;
     tyr::datalog::database::incremental::Delta m_delta;
@@ -52,8 +52,7 @@ public:
 
     /// Actual, disjoint atom changes from the initialized task. Other predicates are ignored.
     /// Additions must be absent and removals present in the current result.
-    void update(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
-                std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed);
+    void update(std::span<const tyr::formalism::AtomView<tyr::GroundTag, Fact>> added, std::span<const tyr::formalism::AtomView<tyr::GroundTag, Fact>> removed);
 
     [[nodiscard]] ygg::FreeRelationBuilderView get_result() const& noexcept { return m_result->view(); }
 
@@ -91,8 +90,8 @@ void AtomicQueryEvaluator<Fact>::initialize(const State& state)
 
 template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
-void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
-                                        std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed)
+void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::AtomView<tyr::GroundTag, Fact>> added,
+                                        std::span<const tyr::formalism::AtomView<tyr::GroundTag, Fact>> removed)
 {
     if (!std::exchange(m_initialized, false))
         throw std::logic_error("Incremental atomic query: initialize before updating.");

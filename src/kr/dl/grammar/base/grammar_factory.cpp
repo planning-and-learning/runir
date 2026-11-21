@@ -195,7 +195,7 @@ void add_numerical_distance(std::stringstream& out,
 }
 
 template<tyr::formalism::FactKind FactKind>
-void add_predicate_primitives(tyr::formalism::planning::DomainView domain,
+void add_predicate_primitives(tyr::formalism::DomainView domain,
                               std::stringstream& out,
                               urd::Store<urd::sequence<std::string>>& concept_heads,
                               urd::Store<urd::sequence<std::string>>& role_heads,
@@ -258,10 +258,10 @@ void add_category_rules(std::stringstream& rule_out,
 
 }  // namespace
 
-GrammarView GrammarFactory::create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+GrammarView GrammarFactory::create(GrammarSpecification specification, tyr::formalism::DomainView domain, ConstructorRepository& repository)
 { return runir::kr::dl::grammar::parse_grammar(create_description(specification, domain), domain, repository); }
 
-std::string GrammarFactory::create_description(GrammarSpecification specification, tyr::formalism::planning::DomainView domain)
+std::string GrammarFactory::create_description(GrammarSpecification specification, tyr::formalism::DomainView domain)
 {
     switch (specification)
     {
@@ -272,10 +272,10 @@ std::string GrammarFactory::create_description(GrammarSpecification specificatio
     throw std::runtime_error(fmt::format("Unknown grammar specification: {}.", static_cast<int>(specification)));
 }
 
-GrammarView GrammarFactory::create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+GrammarView GrammarFactory::create_france_et_al_aaai2021(tyr::formalism::DomainView domain, ConstructorRepository& repository)
 { return runir::kr::dl::grammar::parse_grammar(create_france_et_al_aaai2021_description(domain), domain, repository); }
 
-std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formalism::planning::DomainView domain)
+std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formalism::DomainView domain)
 {
     auto next_concept = size_t { 0 };
     auto next_role = size_t { 0 };

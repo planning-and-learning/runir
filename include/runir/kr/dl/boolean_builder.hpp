@@ -20,7 +20,7 @@ template<typename F, runir::kr::dl::AtomicTag Tag, typename C>
 struct builder<runir::kr::dl::Boolean<F, Tag>, C>
 {
     urd::index<runir::kr::dl::Boolean<F, Tag>> index;
-    urd::built_t<urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>>, ::tyr::formalism::planning::Repository> predicate;
+    urd::built_t<urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>>, ::tyr::formalism::Repository> predicate;
     urd::built_t<bool, C> polarity = false;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &builder::predicate>, urd::field<"polarity", &builder::polarity>> {}; }

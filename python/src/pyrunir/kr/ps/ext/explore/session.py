@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import TypeVar
 
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser
+from pytyr.formalism import Parser
 from pytyr.planning import SearchBudget, lifted
 from pytyr.planning.algorithms import gbfs_lazy
 from pyyggdrasil.execution import ExecutionContext

@@ -186,10 +186,10 @@ using ColorTypes = boost::mp11::mp_list<PredicateColor<::tyr::formalism::StaticT
 /// Colors, over the planning repository whose predicates they refer to (nested, read only).
 class ColorRepository :
     public ygg::formalism::SymbolContext<ColorRepository, ColorTypes, true>,
-    public ygg::formalism::Nests<ColorRepository, ygg::formalism::Nested<const ::tyr::formalism::planning::Repository>>
+    public ygg::formalism::Nests<ColorRepository, ygg::formalism::Nested<const ::tyr::formalism::Repository>>
 {
     using Base = ygg::formalism::SymbolContext<ColorRepository, ColorTypes, true>;
-    using NestsBase = ygg::formalism::Nests<ColorRepository, ygg::formalism::Nested<const ::tyr::formalism::planning::Repository>>;
+    using NestsBase = ygg::formalism::Nests<ColorRepository, ygg::formalism::Nested<const ::tyr::formalism::Repository>>;
 
 private:
     std::size_t m_index;
@@ -197,7 +197,7 @@ private:
 public:
     /// Over the planning repository whose predicates its colors refer to. Numbered by ygg::next_layer(), the process-wide
     /// counter, so that no two contexts share a number.
-    explicit ColorRepository(std::shared_ptr<const ::tyr::formalism::planning::Repository> planning_repository) :
+    explicit ColorRepository(std::shared_ptr<const ::tyr::formalism::Repository> planning_repository) :
         Base(),
         NestsBase(std::move(planning_repository)),
         m_index(ygg::next_layer())

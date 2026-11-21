@@ -4,7 +4,7 @@
 import gc
 
 import pytest
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism import PlanningDomain
 from pyyggdrasil.diagnostics import Diagnostic, format_diagnostic
 
 from pyrunir.kr import DuplicateDefinitionError, ParseError, SemanticError

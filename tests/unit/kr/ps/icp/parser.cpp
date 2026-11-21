@@ -61,7 +61,7 @@ std::string replaced(std::string value, const std::string& from, const std::stri
 
 TEST(RunirTests, IcpParserRoundTripAndValidation)
 {
-    const auto planning = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    const auto planning = tyr::formalism::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     auto constructors = std::make_shared<kr::dl::ConstructorRepository>(planning.get_repository());
     auto repository = std::make_shared<kr::ps::icp::Repository>(constructors);
     const auto parse = [&](const std::string& text) { return kr::ps::icp::dl::parse_module(text, planning.get_domain(), *repository); };

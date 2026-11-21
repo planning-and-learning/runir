@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser, PlanningDomain
+from pytyr.formalism import Parser, PlanningDomain
 from pytyr.planning.ground import State
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext

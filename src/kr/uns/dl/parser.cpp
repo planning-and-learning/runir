@@ -38,7 +38,7 @@ auto intern(runir::kr::uns::Repository& repository, runir::kr::uns::Builder& bui
 { return repository.insert(built, builder).first; }
 
 auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
-                   tyr::formalism::planning::DomainView domain,
+                   tyr::formalism::DomainView domain,
                    Repository& repository,
                    runir::kr::dl::Builder& dl_builder,
                    runir::kr::uns::Builder& builder,
@@ -63,7 +63,7 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
 
 }  // namespace
 
-ClassifierView parse_classifier(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+ClassifierView parse_classifier(const std::string& description, tyr::formalism::DomainView domain, Repository& repository)
 {
     auto dl_builder = runir::kr::dl::Builder {};
     auto builder = runir::kr::uns::Builder {};

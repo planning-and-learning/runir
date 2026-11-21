@@ -19,7 +19,7 @@ void check_composition_and_closures()
 {
     SCOPED_TRACE(size);
     constexpr auto cells = std::size_t { size } * size;
-    auto repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto repository = std::make_shared<tyr::formalism::Repository>();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
         auto data = urd::data<tyr::formalism::Object>("o" + std::to_string(i));
@@ -228,7 +228,7 @@ TEST(RunirIncrementalSetOperations, CompositionAndClosuresMatchFreshResultsAndEx
 TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundaries)
 {
     constexpr auto digits = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits), size = digits + 2;
-    auto repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto repository = std::make_shared<tyr::formalism::Repository>();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
         auto data = urd::data<tyr::formalism::Object>("o" + std::to_string(i));
@@ -278,7 +278,7 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
 TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedRoleRows)
 {
     constexpr auto size = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits + 3);
-    auto repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto repository = std::make_shared<tyr::formalism::Repository>();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
         auto data = urd::data<tyr::formalism::Object>("o" + std::to_string(i));
@@ -348,7 +348,7 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
 TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWordBoundaries)
 {
     constexpr auto size = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits + 3);
-    auto repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto repository = std::make_shared<tyr::formalism::Repository>();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
         auto data = urd::data<tyr::formalism::Object>("o" + std::to_string(i));

@@ -183,7 +183,7 @@ void check_incremental_evaluation()
     auto builder = kr::dl::semantics::Builder {};
     auto workspace = tyr::datalog::database::Workspace {};
     // Registers being built: each context reads its own builder (no copy).
-    using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::planning::Repository>;
+    using ObjectChild = urd::child<tyr::formalism::Object, tyr::formalism::Repository>;
     const auto object = [](auto index) { return ObjectChild(index); };
     auto register_data = std::array<urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>, 3> {};
     for (auto& data : register_data)

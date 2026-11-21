@@ -80,7 +80,7 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
 {
     using Concrete = kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>;
     using Constructor = kr::dl::Constructor<kr::dl::ConceptTag>;
-    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto planning_repository = std::make_shared<tyr::formalism::Repository>();
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
     auto data = urd::data<Constructor>(urd::index<Concrete>(6), false);
     const auto constructor = repository->insert(data).first;
@@ -93,7 +93,7 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
 {
     const auto check = []()
     {
-        auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
+        auto planning_repository = std::make_shared<tyr::formalism::Repository>();
         auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
         auto top = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
         auto bot = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::BotTag>>();

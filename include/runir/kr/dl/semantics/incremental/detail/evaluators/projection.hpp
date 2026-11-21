@@ -41,7 +41,7 @@ struct ProjectionEvaluator
                         present);
     }
 
-    static void set_row(DenotationState<Category>& state, const auto& row, bool present, const tyr::formalism::planning::Repository& repository)
+    static void set_row(DenotationState<Category>& state, const auto& row, bool present, const tyr::formalism::Repository& repository)
     {
         using ObjectIndex = urd::index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)

@@ -120,14 +120,14 @@ Or represent a Tyr action binding with its name and references to objects:
 .. code:: python
 
    from pytyr.serialization import register_table
-   from pytyr.formalism import planning as fp
+   from pytyr import formalism
    from pyyggdrasil.serialization import Dictionaries
 
    dictionaries = Dictionaries()
-   register_table(dictionaries, fp.Object, "objects", "o")
+   register_table(dictionaries, formalism.Object, "objects", "o")
    register_table(
        dictionaries,
-       fp.RowActionLifted,
+       formalism.RowActionLifted,
        "actions",
        "a",
        project=lambda binding: {

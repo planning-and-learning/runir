@@ -30,7 +30,7 @@ namespace runir::tests
 namespace
 {
 
-auto parse_gripper_domain() { return tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain(); }
+auto parse_gripper_domain() { return tyr::formalism::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain(); }
 
 template<typename Parse>
 void expect_error_containing(Parse parse, const std::string& expected)
@@ -391,14 +391,14 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
 
 TEST(RunirTests, ExtendedQueryActionRuleUsesNormalizedActionArity)
 {
-    const auto planning_domain = tyr::formalism::planning::Parser(std::string(R"((define (domain witness)
+    const auto planning_domain = tyr::formalism::Parser(std::string(R"((define (domain witness)
           (:requirements :strips :existential-preconditions)
           (:predicates (edge ?x ?y) (done ?x))
           (:action mark
             :parameters (?x)
             :precondition (exists (?w) (edge ?x ?w))
             :effect (done ?x))))"),
-                                                                  std::nullopt)
+                                                        std::nullopt)
                                      .get_domain();
     const auto domain = planning_domain.get_domain();
     ASSERT_EQ(domain.get_actions().size(), 1);

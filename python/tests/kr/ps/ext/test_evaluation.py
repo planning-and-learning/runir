@@ -29,7 +29,7 @@ from ext_execution_utils import (
 from fixture_utils import FIXTURE_ROOT, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import Object, Parser, PlanningDomain
+from pytyr.formalism import Object, Parser, PlanningDomain
 from pytyr.planning import ground, lifted
 from pyyggdrasil.execution import ExecutionContext
 

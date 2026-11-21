@@ -19,7 +19,7 @@ namespace runir::tests
 
 TEST(RunirTests, RejectsUnknownGrammarFactorySpecification)
 {
-    const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    const auto planning_domain = tyr::formalism::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     const auto domain = planning_domain.get_domain();
 
     EXPECT_THROW(
@@ -41,7 +41,7 @@ TEST(RunirTests, GrammarFactoryFixturesMatch)
     for (const auto& value : cases)
     {
         const auto& test_case = ygg::common::as_object(value, "case");
-        const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path(ygg::common::as_string(test_case, "domain_file", "case"))).get_domain();
+        const auto planning_domain = tyr::formalism::Parser(benchmark_path(ygg::common::as_string(test_case, "domain_file", "case"))).get_domain();
         const auto domain = planning_domain.get_domain();
         auto repository = std::make_shared<kr::dl::grammar::ConstructorRepository>(planning_domain.get_repository());
         const auto grammar = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);
@@ -66,7 +66,7 @@ TEST(RunirTests, GrammarFactoryFixturesMatch)
 
 TEST(RunirTests, GrammarFactoryHandlesBooleanPrimitivePredicates)
 {
-    const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/ferry/domain.pddl")).get_domain();
+    const auto planning_domain = tyr::formalism::Parser(benchmark_path("classical/tests/ferry/domain.pddl")).get_domain();
     const auto domain = planning_domain.get_domain();
     auto repository = std::make_shared<kr::dl::grammar::ConstructorRepository>(planning_domain.get_repository());
     const auto grammar = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);

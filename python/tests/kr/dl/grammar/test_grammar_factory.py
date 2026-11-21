@@ -8,7 +8,7 @@ import pytest
 from fixture_utils import load_fixture, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import Parser
+from pytyr.formalism import Parser
 
 from pyrunir.kr.dl import cnf_grammar
 from pyrunir.kr.dl.grammar import ConstructorRepository, GrammarFactory, GrammarSpecification, parse_grammar

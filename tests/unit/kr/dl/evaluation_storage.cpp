@@ -131,7 +131,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
 {
     constexpr auto digits = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits);
     constexpr auto num_objects = digits + 3;
-    auto formalism = std::make_shared<tyr::formalism::planning::Repository>();
+    auto formalism = std::make_shared<tyr::formalism::Repository>();
     for (ygg::uint_t i = 0; i < num_objects; ++i)
     {
         auto object = urd::data<tyr::formalism::Object>("object" + std::to_string(i));
@@ -187,7 +187,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
         }();
         const auto indexed = kr::dl::semantics::insert(repository, builder, scratch).first;
         EXPECT_EQ(indexed.get_num_objects(), num_objects);
-        EXPECT_EQ(&indexed.context().template get<tyr::formalism::planning::Repository>(), formalism.get());
+        EXPECT_EQ(&indexed.context().template get<tyr::formalism::Repository>(), formalism.get());
         EXPECT_TRUE(borrowed.storage_bits().any());
         EXPECT_EQ(borrowed.storage_bits().count(), expected.size());
         EXPECT_EQ(indexed.storage_bits().count(), expected.size());

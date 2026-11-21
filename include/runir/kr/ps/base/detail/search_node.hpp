@@ -19,7 +19,7 @@ template<tyr::TaskKind Kind>
 struct SearchNode
 {
     std::optional<tyr::planning::PackedStateView<Kind>> parent_state = std::nullopt;
-    std::optional<tyr::formalism::planning::ActionRowView> action = std::nullopt;
+    std::optional<tyr::formalism::ActionRowView> action = std::nullopt;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;
@@ -39,7 +39,7 @@ struct Predecessor
 {
     tyr::planning::PackedStateView<Kind> source;
     tyr::planning::PackedStateView<Kind> target;
-    tyr::formalism::planning::ActionRowView action;
+    tyr::formalism::ActionRowView action;
     RuleView rule;
 };
 

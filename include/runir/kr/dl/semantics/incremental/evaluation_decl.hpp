@@ -186,7 +186,7 @@ public:
 
     [[nodiscard]] bool nonempty(QueryEvaluationIndex index) const { return !result(index).get_rows().empty(); }
 
-    [[nodiscard]] const tyr::formalism::planning::Repository& repository() const { return *m_task->get_repository(); }
+    [[nodiscard]] const tyr::formalism::Repository& repository() const { return *m_task->get_repository(); }
 
     [[nodiscard]] ygg::FreeScratchRelations& scratch() noexcept { return *m_scratch; }
 

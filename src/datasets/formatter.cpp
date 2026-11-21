@@ -49,7 +49,7 @@ fmt::format_context::iterator fmt::formatter<rd::AnnotatedStateGraphVertexLabel<
 }
 
 fmt::format_context::iterator fmt::formatter<rd::StateGraphEdgeLabel, char>::format(const rd::StateGraphEdgeLabel& value, fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}\ncost={}", std::make_pair(value.action, tf::planning::PlanFormatting {}), value.cost); }
+{ return fmt::format_to(context.out(), "{}\ncost={}", std::make_pair(value.action, tf::PlanFormatting {}), value.cost); }
 
 fmt::format_context::iterator fmt::formatter<rd::EquivalenceVertexLabel, char>::format(const rd::EquivalenceVertexLabel& value,
                                                                                        fmt::format_context& context) const

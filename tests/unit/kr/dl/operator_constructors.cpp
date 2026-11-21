@@ -28,7 +28,7 @@ auto wrap_role(runir::kr::dl::ConstructorRepository& repository, auto role)
 
 TEST(RunirTests, SyntacticComplexityRecursesIntoConceptChildren)
 {
-    const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    const auto planning_domain = tyr::formalism::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     auto repository = std::make_shared<runir::kr::dl::ConstructorRepository>(planning_domain.get_repository());
     auto& repo = *repository;
 

@@ -21,10 +21,10 @@ namespace runir::kr::dl::detail
 template<typename RepositoryTypes>
 class BasicConstructorRepository :
     public ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>,
-    public ygg::formalism::Nests<BasicConstructorRepository<RepositoryTypes>, ygg::formalism::Nested<const tyr::formalism::planning::Repository>>
+    public ygg::formalism::Nests<BasicConstructorRepository<RepositoryTypes>, ygg::formalism::Nested<const tyr::formalism::Repository>>
 {
     using Base = ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>;
-    using NestsBase = ygg::formalism::Nests<BasicConstructorRepository<RepositoryTypes>, ygg::formalism::Nested<const tyr::formalism::planning::Repository>>;
+    using NestsBase = ygg::formalism::Nests<BasicConstructorRepository<RepositoryTypes>, ygg::formalism::Nested<const tyr::formalism::Repository>>;
 
 private:
     /// The rules of the repository's DatalogPrograms.
@@ -34,7 +34,7 @@ private:
 public:
     /// Over the planning repository whose symbols its records refer to. Numbered by ygg::next_layer(), the process-wide
     /// counter, so that no two contexts share a number.
-    explicit BasicConstructorRepository(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
+    explicit BasicConstructorRepository(std::shared_ptr<const tyr::formalism::Repository> planning_repository) :
         Base(),
         NestsBase(std::move(planning_repository)),
         m_datalog_repository(std::make_unique<tyr::datalog::database::datalog::DatalogRepository>()),

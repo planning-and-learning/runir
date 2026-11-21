@@ -138,7 +138,7 @@ TEST(RunirKrDlSemanticsDenotation, BuilderIdentityUsesValuesRatherThanRegistrati
 
 TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
 {
-    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto planning_repository = std::make_shared<tyr::formalism::Repository>();
     auto words = Words(planning_repository);
     auto& repository = words.repository;
 
@@ -299,7 +299,7 @@ TEST(RunirKrDlSemanticsDenotation, BuilderAssignmentClearsIdentityAndRetainsBuff
 
 TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
 {
-    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto planning_repository = std::make_shared<tyr::formalism::Repository>();
     for (const auto* name : { "a", "b", "c" })
     {
         auto data = urd::data<tyr::formalism::Object>(std::string(name));
@@ -359,7 +359,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
         EXPECT_EQ(iterator, indices.end());
     };
     constexpr ygg::uint_t num_objects = 130;
-    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto planning_repository = std::make_shared<tyr::formalism::Repository>();
     for (ygg::uint_t i = 0; i < num_objects; ++i)
     {
         auto data = urd::data<tyr::formalism::Object>("object" + std::to_string(i));
@@ -442,7 +442,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
 TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
 {
     constexpr auto digits = static_cast<ygg::uint_t>(urd::bitset_span<ygg::uint_t>::Digits);
-    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
+    auto planning_repository = std::make_shared<tyr::formalism::Repository>();
     for (ygg::uint_t i = 0; i < 130; ++i)
     {
         auto data = urd::data<tyr::formalism::Object>("object" + std::to_string(i));

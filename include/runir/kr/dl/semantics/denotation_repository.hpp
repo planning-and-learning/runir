@@ -30,10 +30,10 @@ namespace runir::kr::dl::semantics
 /// Denotations, over the planning repository whose objects they range over (nested, read only).
 class DenotationRepository :
     public ygg::formalism::SymbolContext<DenotationRepository, DenotationRecordTypes>,
-    public ygg::formalism::Nests<DenotationRepository, ygg::formalism::Nested<const tyr::formalism::planning::Repository>>
+    public ygg::formalism::Nests<DenotationRepository, ygg::formalism::Nested<const tyr::formalism::Repository>>
 {
     using Base = ygg::formalism::SymbolContext<DenotationRepository, DenotationRecordTypes>;
-    using NestsBase = ygg::formalism::Nests<DenotationRepository, ygg::formalism::Nested<const tyr::formalism::planning::Repository>>;
+    using NestsBase = ygg::formalism::Nests<DenotationRepository, ygg::formalism::Nested<const tyr::formalism::Repository>>;
 
     ygg::FreeRelationRepository m_relation_repository;
     size_t m_index;
@@ -42,7 +42,7 @@ public:
     /// Over the planning repository whose objects its denotations range over. Numbered by ygg::next_layer(), the
     /// process-wide counter, so that no two contexts share a number. The constructor and destructor are defined in the
     /// library (template rule 7): inline ones would construct and destroy the vector and relation pools in each caller.
-    explicit DenotationRepository(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
+    explicit DenotationRepository(std::shared_ptr<const tyr::formalism::Repository> formalism_repository);
     ~DenotationRepository();
     DenotationRepository(const DenotationRepository&) = delete;
     DenotationRepository& operator=(const DenotationRepository&) = delete;

@@ -13,7 +13,7 @@ namespace runir::kr::ps::icp::detail
 template<tyr::TaskKind Kind>
 class RuleEvaluator<Kind, CruleTag>
 {
-    using Action = tyr::formalism::planning::ActionView<tyr::LiftedTag>;
+    using Action = tyr::formalism::ActionView<tyr::LiftedTag>;
     RuleView<CruleTag> m_rule;
     RuleVariantView m_variant;
     Action m_action;
@@ -26,7 +26,7 @@ class RuleEvaluator<Kind, CruleTag>
         throw std::invalid_argument("Unknown ICP action schema.");
     }
 
-    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    template<ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     [[nodiscard]] std::optional<ygg::uint_t> resolve(const auto& reference, runir::kr::dl::semantics::RegisterValuesView registers, Binding binding) const
     {
         return std::visit(
@@ -62,7 +62,7 @@ public:
     { return all_compatible<Kind, IcpFamilyTag>(m_rule.get_conditions(), context); }
 
     /// Reject a binding before generating its target; matches() also checks this for direct callers.
-    template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context, ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool xconditions_match(Context& context, ProgramStateView<Kind> state, Binding binding) const
     {
         for (const auto condition : m_rule.get_xconditions())
@@ -79,8 +79,7 @@ public:
 
     /// Match a supplied candidate independently of the aggregate's early binding filter.
     /// History admission remains shared by the aggregate across matching rules.
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
-             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy, ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool matches(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
                  ProgramStateView<Kind> state,
                  const tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, Binding>& candidate) const

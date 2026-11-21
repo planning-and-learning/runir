@@ -10,7 +10,7 @@ import pytest
 import pytyr.serialization as tyr_serialization
 from ext_execution_utils import collect_steps, initial_node
 from fixture_utils import read_fixture
-from pytyr.formalism import planning as fp
+from pytyr import formalism
 from pytyr.planning import ground
 from pyyggdrasil.serialization import Dictionaries
 
@@ -47,7 +47,7 @@ def test_fields_describe_native_layouts_without_instances() -> None:
     assert list(ext.ProgramProofEdgeLabel.Fields.__members__) == ["action", "rule"]
     assert list(StateGraphEdgeLabel.Fields.__members__) == ["action", "cost"]
     assert list(semantics.BooleanSemanticNonempty.Fields.__members__) == ["operand"]
-    assert list(fp.RowPredicateFluent.Fields.__members__) == ["relation", "objects"]
+    assert list(formalism.RowPredicateFluent.Fields.__members__) == ["relation", "objects"]
     assert list(ext.ModuleState.Fields.__members__) == ["mod", "memory_state", "registers", "arguments"]
     assert list(ext.CallStack.Fields.__members__) == ["module_state", "caller"]
     for program_state in (ext.ProgramStateGround, ext.ProgramStateLifted):
@@ -60,11 +60,11 @@ def test_runir_preserves_tyr_field_enum_identity() -> None:
             sys.executable,
             "-c",
             """
-from pytyr.formalism import planning as fp
+from pytyr import formalism
 import pytyr.serialization
-fields = fp.RowActionLifted.Fields
+fields = formalism.RowActionLifted.Fields
 import pyrunir.serialization
-assert fp.RowActionLifted.Fields is fields
+assert formalism.RowActionLifted.Fields is fields
 """,
         ],
         check=True,
@@ -81,19 +81,23 @@ def test_matching_field_enums_are_accepted_by_their_library(native_type: str) ->
         assert runir_serialization.table(dictionaries, base.RuleBase) == []
     elif native_type == "RowActionLifted":
         tyr_serialization.register_table(
-            dictionaries, fp.RowActionLifted, "selected", "s", fields=[fp.RowActionLifted.Fields.objects]
+            dictionaries, formalism.RowActionLifted, "selected", "s", fields=[formalism.RowActionLifted.Fields.objects]
         )
-        assert tyr_serialization.table(dictionaries, fp.RowActionLifted) == []
+        assert tyr_serialization.table(dictionaries, formalism.RowActionLifted) == []
     else:
         tyr_serialization.register_table(
-            dictionaries, fp.RowPredicateFluent, "selected", "s", fields=[fp.RowPredicateFluent.Fields.relation]
+            dictionaries,
+            formalism.RowPredicateFluent,
+            "selected",
+            "s",
+            fields=[formalism.RowPredicateFluent.Fields.relation],
         )
-        assert tyr_serialization.table(dictionaries, fp.RowPredicateFluent) == []
+        assert tyr_serialization.table(dictionaries, formalism.RowPredicateFluent) == []
 
 
 @pytest.mark.parametrize("operand", ["c_top", "r_universal"])
 def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(
-    gripper_planning_domain: fp.PlanningDomain, operand: str
+    gripper_planning_domain: formalism.PlanningDomain, operand: str
 ) -> None:
     context = DomainContext(gripper_planning_domain)
     policy = parse_sketch(
@@ -128,7 +132,7 @@ def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(
     assert table(dictionaries, semantics.BooleanSemanticNonempty) == [{"operand": f"({operand})"}]
 
 
-def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: fp.PlanningDomain) -> None:
+def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: formalism.PlanningDomain) -> None:
     context = DomainContext(gripper_planning_domain)
     policy = parse_sketch(
         read_fixture("kr/ps/base/dl/declared_features.sketch"),
@@ -219,7 +223,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
 
     dictionaries = Dictionaries()
     tyr_serialization.register_table(dictionaries, ground.StateBuilderShared, "states", "s")
-    tyr_serialization.register_table(dictionaries, fp.AtomGroundFluent, "atoms", "a", fields=())
+    tyr_serialization.register_table(dictionaries, formalism.AtomGroundFluent, "atoms", "a", fields=())
     register_table(dictionaries, ext.ProgramStateGround, "program_states", "e")
     register_table(dictionaries, ext.ModuleState, "module_states", "z")
     register_table(dictionaries, ext.CallStack, "call_stacks", "c")
@@ -274,7 +278,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     (state,) = rows(tyr_serialization.table(dictionaries, ground.StateBuilderShared))
     assert set(state) == {"fluent_ground_atoms", "derived_ground_atoms", "fluent_ground_function_term_values"}
     assert state["fluent_ground_atoms"] == [
-        f"a{index}" for index in range(len(rows(tyr_serialization.table(dictionaries, fp.AtomGroundFluent))))
+        f"a{index}" for index in range(len(rows(tyr_serialization.table(dictionaries, formalism.AtomGroundFluent))))
     ]
     assert dictionaries.tables()["program_states"]["rows"] == [first, second]
 
