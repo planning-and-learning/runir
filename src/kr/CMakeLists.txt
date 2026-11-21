@@ -17,7 +17,9 @@ add_library(kr SHARED
     dl/cnf_grammar/builder.cpp
     dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/formatter.cpp
-    dl/cnf_grammar/generate.cpp
+    dl/cnf_grammar/generate_ground.cpp
+    dl/cnf_grammar/generate_lifted.cpp
+    dl/cnf_grammar/generation_state.cpp
     dl/cnf_grammar/symbol_repositories.cpp
     dl/cnf_grammar/translate.cpp
     dl/grammar/constructor_repository.cpp

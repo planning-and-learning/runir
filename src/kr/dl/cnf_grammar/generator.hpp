@@ -1,192 +1,31 @@
-#include "runir/kr/dl/cnf_grammar/generate.hpp"
+#ifndef RUNIR_KR_DL_CNF_GRAMMAR_GENERATOR_HPP_
+#define RUNIR_KR_DL_CNF_GRAMMAR_GENERATOR_HPP_
 
+#include "generation_state.hpp"
+#include "pruning.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
 #include "runir/kr/dl/cnf_grammar/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/cnf_grammar/generate.hpp"
 #include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/builder.hpp"
-#include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
-#include "runir/kr/dl/semantics/evaluation_storage.hpp"
-#include "runir/kr/dl/semantics/evaluation_workspace.hpp"
-#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <chrono>
 #include <concepts>
-#include <cstdint>
-#include <optional>
-#include <ranges>
-#include <stdexcept>
-#include <tuple>
-#include <type_traits>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
-#include <tyr/planning/state_builder.hpp>
-#include <tyr/planning/state_repository.hpp>
-#include <urd/repr/maps/postings.hpp>
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/repr/maps/unordered_flat_map.hpp>
-#include <urd/repr/pools/pools.hpp>
-#include <urd/repr/sequences/segmented.hpp>
+#include <cstddef>
+#include <tyr/formalism/declarations.hpp>
+#include <tyr/planning/declarations.hpp>
 #include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/std_set.hpp>
-#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 #include <utility>
-#include <yggdrasil/core/chrono.hpp>
+#include <variant>
 
-namespace runir::kr::dl::cnf_grammar
+namespace runir::kr::dl::cnf_grammar::detail
 {
-namespace
-{
-
-/// The constructors generated so far, by the nonterminal that derives them and their complexity, in the order
-/// generated: a multimap per category.
-class GeneratedSentences
-{
-private:
-    template<runir::kr::dl::CategoryTag Category>
-    using Sentences = urd::Store<urd::map<std::pair<urd::index<NonTerminal<Category>>, size_t>, urd::index<runir::kr::dl::Constructor<Category>>>, urd::multi>;
-
-    std::tuple<Sentences<runir::kr::dl::ConceptTag>,
-               Sentences<runir::kr::dl::RoleTag>,
-               Sentences<runir::kr::dl::BooleanTag>,
-               Sentences<runir::kr::dl::NumericalTag>>
-        m_sentences;
-
-public:
-    template<runir::kr::dl::CategoryTag Category>
-    void add(NonTerminalView<Category> nonterminal, size_t complexity, urd::index<runir::kr::dl::Constructor<Category>> constructor)
-    { std::get<Sentences<Category>>(m_sentences).insert({ { nonterminal.index(), complexity }, constructor }); }
-
-    template<runir::kr::dl::CategoryTag Category>
-    [[nodiscard]] auto get(NonTerminalView<Category> nonterminal, size_t complexity) const
-    {
-        // A copy: sentences are added while these are read, and iterators into the map do not survive that.
-        const auto [first, last] = std::get<Sentences<Category>>(m_sentences).equal_range({ nonterminal.index(), complexity });
-        auto result = urd::Store<urd::sequence<urd::index<runir::kr::dl::Constructor<Category>>>>();
-        for (const auto constructor : std::ranges::subrange(first, last) | std::views::values)
-            result.push_back(constructor);
-        return result;
-    }
-};
-
-class Timeout
-{
-private:
-    std::optional<ygg::CountdownWatch> m_stopwatch;
-
-public:
-    explicit Timeout(const GenerateOptions& options) : m_stopwatch(options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt) {}
-
-    [[nodiscard]] bool has_finished() const { return m_stopwatch && m_stopwatch->has_finished(); }
-};
-
-template<runir::kr::dl::CategoryTag Category>
-struct SeenDenotationsFor
-{
-    using Constructor = runir::kr::dl::ConstructorView<Category>;
-    using Denotation = runir::kr::dl::semantics::DenotationView<Category>;
-    using NonTerminal = NonTerminalView<Category>;
-
-    /// The denotation rows seen (one denotation per state), interned in a urd pool by the denotations' indices: they
-    /// all live in the one canonical repository, so an index identifies a denotation. A handle's value identifies a row.
-    urd::Store<urd::pool<urd::Store<urd::sequence<urd::index<runir::kr::dl::semantics::Denotation<Category>>>, urd::frozen>>> vectors;
-    urd::Store<urd::sequence<urd::index<runir::kr::dl::semantics::Denotation<Category>>>> scratch_indices;
-    urd::Store<urd::set<std::pair<NonTerminal, ygg::uint_t>>> signatures;
-    urd::Store<urd::set<std::pair<NonTerminal, Constructor>>> constructors;
-    urd::Store<urd::sequence<Denotation>> scratch;
-
-    explicit SeenDenotationsFor(size_t num_states) : vectors(), scratch_indices(), signatures(), constructors(), scratch()
-    {
-        scratch.reserve(num_states);
-        scratch_indices.reserve(num_states);
-    }
-};
-
-struct SeenDenotations
-{
-    template<runir::kr::dl::CategoryTag Category>
-    using Seen = SeenDenotationsFor<Category>;
-
-    std::tuple<Seen<runir::kr::dl::ConceptTag>, Seen<runir::kr::dl::RoleTag>, Seen<runir::kr::dl::BooleanTag>, Seen<runir::kr::dl::NumericalTag>> values;
-
-    explicit SeenDenotations(size_t num_states) :
-        values(Seen<runir::kr::dl::ConceptTag>(num_states),
-               Seen<runir::kr::dl::RoleTag>(num_states),
-               Seen<runir::kr::dl::BooleanTag>(num_states),
-               Seen<runir::kr::dl::NumericalTag>(num_states))
-    {
-    }
-
-    template<runir::kr::dl::CategoryTag Category>
-    auto& get() noexcept
-    { return std::get<Seen<Category>>(values); }
-};
-
-template<tyr::TaskKind Kind>
-class Pruning
-{
-private:
-    const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>* m_states;
-    runir::kr::dl::semantics::Builder m_builder;
-    runir::kr::dl::semantics::DenotationRepository* m_denotation_repository;
-    urd::Store<urd::sequence<runir::kr::dl::semantics::EvaluationStorage>, urd::stable_refs> m_intermediate_storage;
-    urd::Store<urd::sequence<runir::kr::dl::semantics::DenotationCaches>> m_denotation_caches;
-    SeenDenotations m_seen_denotations;
-
-public:
-    Pruning(const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
-            runir::kr::dl::semantics::DenotationRepository& denotation_repository) :
-        m_states(&states),
-        m_builder(),
-        m_denotation_repository(&denotation_repository),
-        m_intermediate_storage(),
-        m_denotation_caches(states.size()),
-        m_seen_denotations(states.size())
-    {
-        for (size_t i = 0; i < states.size(); ++i)
-            m_intermediate_storage.emplace_back(denotation_repository);
-    }
-
-    template<runir::kr::dl::CategoryTag Category>
-    bool should_prune(NonTerminalView<Category> lhs, runir::kr::dl::ConstructorView<Category> constructor)
-    {
-        auto& seen = m_seen_denotations.template get<Category>();
-        if (m_states->empty())
-            return !seen.constructors.insert(std::pair(lhs, constructor)).second;
-
-        const auto was_cached = m_denotation_caches.front().find(constructor.get_is_static(), constructor).has_value();
-        seen.scratch.clear();
-
-        for (size_t i = 0; i < m_states->size(); ++i)
-        {
-            auto context = runir::kr::dl::semantics::StateEvaluationContext<Kind>((*m_states)[i].unpack(),
-                                                                                  m_builder,
-                                                                                  m_denotation_caches[i],
-                                                                                  *m_denotation_repository,
-                                                                                  m_intermediate_storage[i]);
-            // Roots share one canonical repository across example states; their
-            // intermediate results remain in the per-state reusable storage.
-            seen.scratch.push_back(runir::kr::dl::semantics::evaluate<Kind>(constructor, context));
-        }
-
-        seen.scratch_indices.clear();
-        for (const auto& denotation : seen.scratch)
-            seen.scratch_indices.push_back(denotation.index());
-        const auto vector = seen.vectors.insert(seen.scratch_indices).first.value;
-        const auto is_novel = seen.signatures.insert(std::pair(lhs, vector)).second;
-
-        if (!is_novel && !was_cached)
-            for (auto& caches : m_denotation_caches)
-                caches.erase(constructor.get_is_static(), constructor);
-
-        return !is_novel;
-    }
-};
 
 template<tyr::TaskKind Kind>
 class Generator
@@ -942,46 +781,6 @@ public:
     }
 };
 
-}  // namespace
-
-template<tyr::TaskKind Kind>
-GenerateResultsFor generate(GrammarView grammar,
-                            const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
-                            runir::kr::dl::ConstructorRepository& output_repository,
-                            runir::kr::dl::semantics::DenotationRepository& denotation_repository,
-                            const GenerateOptions& options)
-{
-    const auto& planning_repository = output_repository.get_ptr<tyr::formalism::Repository>();
-    const auto root = [](const tyr::formalism::Repository* layer)
-    {
-        while (layer->parent() != nullptr)
-            layer = layer->parent();
-        return layer;
-    };
-    if (root(&grammar.context().get<tyr::formalism::Repository>()) != root(planning_repository.get()))
-        throw std::invalid_argument("generate requires grammar and output repository for the same planning domain");
-
-    for (const auto& state : states)
-    {
-        const auto& task = state.context().get_task();
-        if (task->get_repository() != planning_repository && task->get_domain().get_repository() != planning_repository)
-            throw std::invalid_argument("generate requires states and output repository for the same planning domain");
-        if (task->get_repository().get() != &denotation_repository.get<tyr::formalism::Repository>())
-            throw std::invalid_argument("generate requires states and denotation repository for the same planning task");
-    }
-
-    return Generator<Kind>(grammar, states, output_repository, denotation_repository, options).run();
 }
 
-template GenerateResultsFor generate<tyr::GroundTag>(GrammarView,
-                                                     const urd::Store<urd::sequence<tyr::planning::PackedStateView<tyr::GroundTag>>>&,
-                                                     runir::kr::dl::ConstructorRepository&,
-                                                     runir::kr::dl::semantics::DenotationRepository&,
-                                                     const GenerateOptions&);
-
-template GenerateResultsFor generate<tyr::LiftedTag>(GrammarView,
-                                                     const urd::Store<urd::sequence<tyr::planning::PackedStateView<tyr::LiftedTag>>>&,
-                                                     runir::kr::dl::ConstructorRepository&,
-                                                     runir::kr::dl::semantics::DenotationRepository&,
-                                                     const GenerateOptions&);
-}
+#endif
