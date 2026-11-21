@@ -1,6 +1,6 @@
 #include "runir/kr/database/semantics/distance.hpp"
 
-#include "module.hpp"
+#include "bindings.hpp"
 #include "pyrunir/module.hpp"
 #include "runir/kr/database/semantics/incremental/distance.hpp"
 
@@ -9,27 +9,20 @@
 #include <stdexcept>
 #include <utility>
 
-namespace runir::kr
+namespace runir::kr::database
 {
 
 namespace
 {
-using Relation = ygg::FreeScratchRelation;
-using Column = urd::index<ygg::Column>;
-using ColumnIndices = std::span<const urd::data<ygg::ColumnLayout>>;
-using Plan = runir::kr::database::DistancePlan;
-using Evaluator = runir::kr::database::incremental::DistanceEvaluator;
-using Delta = runir::kr::database::incremental::Delta;
-using Workspace = runir::kr::database::DistanceWorkspace;
 
 /// Binds distance and the evaluator members for one input relation type.
 template<typename Input>
-void bind_inputs(nb::class_<Evaluator>& evaluator, nb::module_& m)
+void bind_inputs(nb::class_<incremental::DistanceEvaluator>& evaluator, nb::module_& m)
 {
     using Change = std::pair<Input, Input>;
     m.def(
         "distance",
-        [](const Input& sources, const Input& edges, const Input& targets, const Plan& plan, Relation& out, Workspace& workspace)
+        [](const Input& sources, const Input& edges, const Input& targets, const DistancePlan& plan, ScratchRelation& out, DistanceWorkspace& workspace)
         {
             require_columns(sources.columns(), plan.source_columns());
             require_columns(edges.columns(), plan.edge_columns());
@@ -37,7 +30,7 @@ void bind_inputs(nb::class_<Evaluator>& evaluator, nb::module_& m)
             require_columns(out.view().columns(), plan.output_columns());
             if (!workspace.matches(plan))
                 throw std::invalid_argument("Distance: workspace vertex size does not match the plan.");
-            runir::kr::database::distance(sources, edges, targets, plan, out, workspace);
+            distance(sources, edges, targets, plan, out, workspace);
         },
         nb::arg("sources"),
         nb::arg("edges"),
@@ -46,9 +39,10 @@ void bind_inputs(nb::class_<Evaluator>& evaluator, nb::module_& m)
         nb::arg("out"),
         nb::arg("workspace"),
         "Replaces out's rows by the reachable source/target tuples and their shortest distance, including zero-length paths.");
-    evaluator.def("initialize", &Evaluator::template initialize<Input, Input, Input>, nb::arg("sources"), nb::arg("edges"), nb::arg("targets"))
+    evaluator
+        .def("initialize", &incremental::DistanceEvaluator::template initialize<Input, Input, Input>, nb::arg("sources"), nb::arg("edges"), nb::arg("targets"))
         .def("update",
-             &Evaluator::template update<Change, Change, Change>,
+             &incremental::DistanceEvaluator::template update<Change, Change, Change>,
              nb::arg("sources"),
              nb::arg("edges"),
              nb::arg("targets"),
@@ -56,45 +50,45 @@ void bind_inputs(nb::class_<Evaluator>& evaluator, nb::module_& m)
 }
 }  // namespace
 
-void bind_database_distance(nb::module_& m)
+void bind_distance(nb::module_& m)
 {
-    using RelationBuilderView = ygg::FreeRelationBuilderView;
-
-    nb::class_<Plan>(m, "DistancePlan", "Validated schemas for directed, unweighted distances between endpoint tuples.")
+    nb::class_<DistancePlan>(m, "DistancePlan", "Validated schemas for directed, unweighted distances between endpoint tuples.")
         .def(nb::init<ColumnIndices, ColumnIndices, ColumnIndices, Column>(),
              nb::arg("source_columns"),
              nb::arg("edge_columns"),
              nb::arg("target_columns"),
              nb::arg("distance_column"))
-        .def("arity", &Plan::arity)
-        .def("output_columns", &Plan::output_columns);
+        .def("arity", &DistancePlan::arity)
+        .def("output_columns", &DistancePlan::output_columns);
 
-    nb::class_<Workspace>(m, "DistanceWorkspace", "Scratch storage of distance for one plan's vertex size; reuse one, never concurrently.")
-        .def(nb::init<const Plan&>(), nb::arg("plan"))
-        .def("memory_usage", &Workspace::memory_usage);
+    nb::class_<DistanceWorkspace>(m, "DistanceWorkspace", "Scratch storage of distance for one plan's vertex size; reuse one, never concurrently.")
+        .def(nb::init<const DistancePlan&>(), nb::arg("plan"))
+        .def("memory_usage", &DistanceWorkspace::memory_usage);
 
-    nb::class_<Delta>(m, "RelationDelta", "Read-only added and removed rows from the last evaluator update. The next update replaces them.")
+    nb::class_<incremental::Delta>(m, "RelationDelta", "Read-only added and removed rows from the last evaluator update. The next update replaces them.")
         .def_prop_ro(
             "added",
-            [](const Delta& delta) { return delta.change().first; },
+            [](const incremental::Delta& delta) { return delta.change().first; },
             nb::keep_alive<0, 1>())
-        .def_prop_ro("removed", [](const Delta& delta) { return delta.change().second; }, nb::keep_alive<0, 1>());
+        .def_prop_ro("removed", [](const incremental::Delta& delta) { return delta.change().second; }, nb::keep_alive<0, 1>());
 
     auto evaluator =
-        nb::class_<Evaluator>(m, "DistanceEvaluator", "Maintains distances and exact output deltas. Input relations are borrowed only during each call.");
-    evaluator.def(nb::init<ygg::FreeScratchRelations&, Plan>(), nb::arg("scratch"), nb::arg("plan"), nb::keep_alive<1, 2>())
+        nb::class_<incremental::DistanceEvaluator>(m,
+                                                   "DistanceEvaluator",
+                                                   "Maintains distances and exact output deltas. Input relations are borrowed only during each call.");
+    evaluator.def(nb::init<ygg::FreeScratchRelations&, DistancePlan>(), nb::arg("scratch"), nb::arg("plan"), nb::keep_alive<1, 2>())
         .def(
             "get_result",
-            [](const Evaluator& self) { return self.get_result(); },
+            [](const incremental::DistanceEvaluator& self) { return self.get_result(); },
             nb::keep_alive<0, 1>(),
             "A view of the result builder; the next initialize or update invalidates it.")
         .def(
             "get_delta",
-            [](const Evaluator& self) -> const Delta& { return self.get_delta(); },
+            [](const incremental::DistanceEvaluator& self) -> const incremental::Delta& { return self.get_delta(); },
             nb::rv_policy::reference_internal)
-        .def("memory_usage", &Evaluator::memory_usage);
+        .def("memory_usage", &incremental::DistanceEvaluator::memory_usage);
 
-    bind_inputs<RelationBuilderView>(evaluator, m);
+    bind_inputs<ygg::FreeRelationBuilderView>(evaluator, m);
     bind_inputs<ygg::FreeRelationView>(evaluator, m);
 }
-}  // namespace runir::kr
+}  // namespace runir::kr::database

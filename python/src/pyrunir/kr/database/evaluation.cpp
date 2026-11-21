@@ -1,4 +1,4 @@
-#include "module.hpp"
+#include "bindings.hpp"
 #include "pyrunir/module.hpp"
 #include "runir/kr/database/optimization/optimization.hpp"
 #include "runir/kr/database/semantics/incremental/query.hpp"
@@ -12,13 +12,13 @@
 #include <utility>
 #include <vector>
 
-namespace runir::kr
+namespace runir::kr::database
 {
 
 namespace
 {
-using FullEvaluator = runir::kr::database::QueryEvaluator;
-using IncrementalEvaluator = runir::kr::database::incremental::QueryEvaluator;
+using FullEvaluator = QueryEvaluator;
+using IncrementalEvaluator = incremental::QueryEvaluator;
 
 /// Binds the evaluator members for one input relation type.
 template<typename Input>
@@ -29,14 +29,12 @@ void bind_inputs(nb::class_<FullEvaluator>& full, nb::class_<IncrementalEvaluato
     full.def("evaluate", &FullEvaluator::template evaluate<Inputs>, nb::arg("inputs"));
     incremental.def("initialize", &IncrementalEvaluator::template initialize<Inputs>, nb::arg("inputs"))
         .def("update", &IncrementalEvaluator::template update<Changes>, nb::arg("changes"), "One (added, removed) pair per input slot.");
-    m.def("collect_statistics", &runir::kr::database::collect_statistics<Inputs>, nb::arg("inputs"));
+    m.def("collect_statistics", &collect_statistics<Inputs>, nb::arg("inputs"));
 }
 }  // namespace
 
-void bind_database_evaluation(nb::module_& m)
+void bind_evaluation(nb::module_& m)
 {
-    using QueryPlan = runir::kr::database::QueryPlan;
-
     auto full = nb::class_<FullEvaluator>(m,
                                           "QueryEvaluator",
                                           "Evaluate a compiled query DAG; its results are drawn from the scratch relations. Input relations are "
@@ -60,7 +58,7 @@ void bind_database_evaluation(nb::module_& m)
             "Borrowed result; the next initialize or update invalidates it.")
         .def(
             "get_delta",
-            [](const IncrementalEvaluator& evaluator, size_t root) -> const runir::kr::database::incremental::Delta& { return evaluator.get_delta(root); },
+            [](const IncrementalEvaluator& evaluator, size_t root) -> const incremental::Delta& { return evaluator.get_delta(root); },
             nb::arg("root") = 0,
             nb::rv_policy::reference_internal)
         .def("memory_usage", &IncrementalEvaluator::memory_usage);
@@ -68,4 +66,4 @@ void bind_database_evaluation(nb::module_& m)
     bind_inputs<ygg::FreeRelationBuilderView>(full, incremental, m);
     bind_inputs<ygg::FreeRelationView>(full, incremental, m);
 }
-}  // namespace runir::kr
+}  // namespace runir::kr::database

@@ -1,5 +1,6 @@
 #include "module.hpp"
 
+#include "bindings.hpp"
 #include "pyrunir/module.hpp"
 #include "runir/kr/database/semantics/operations.hpp"
 #include "runir/kr/database/semantics/plans.hpp"
@@ -10,20 +11,15 @@
 #include <span>
 #include <vector>
 
-namespace runir::kr
+namespace runir::kr::database
 {
 
 namespace
 {
-using Column = urd::index<ygg::Column>;
-using Relation = ygg::FreeScratchRelation;
-using ColumnIndices = std::span<const urd::data<ygg::ColumnLayout>>;
-using Workspace = runir::kr::database::Workspace;
 
 /// The plans, built from their inputs' columns (validated there), and the scratch storage of the operations.
 void bind_plans(nb::module_& m)
 {
-    using namespace runir::kr::database;
     nb::class_<Workspace>(m, "Workspace", "Scratch storage of the relational operations; reuse one, never concurrently.")
         .def(nb::init<>())
         .def("memory_usage", &Workspace::memory_usage);
@@ -58,10 +54,9 @@ void bind_plans(nb::module_& m)
 template<typename V>
 void bind_unary(nb::module_& m)
 {
-    using namespace runir::kr::database;
     m.def(
         "project",
-        [](const V& input, const ProjectionPlan& plan, Relation& out, Workspace& workspace)
+        [](const V& input, const ProjectionPlan& plan, ScratchRelation& out, Workspace& workspace)
         {
             require_columns(input.columns(), plan.input_columns());
             require_columns(out.view().columns(), plan.output_columns());
@@ -73,7 +68,7 @@ void bind_unary(nb::module_& m)
         nb::arg("workspace"));
     m.def(
         "select_equal_columns",
-        [](const V& input, const SelectEqualPlan& plan, Relation& out)
+        [](const V& input, const SelectEqualPlan& plan, ScratchRelation& out)
         {
             require_columns(input.columns(), plan.output_columns());
             require_columns(out.view().columns(), plan.output_columns());
@@ -84,7 +79,7 @@ void bind_unary(nb::module_& m)
         nb::arg("out"));
     m.def(
         "select_equal_value",
-        [](const V& input, const SelectValuePlan& plan, Relation& out)
+        [](const V& input, const SelectValuePlan& plan, ScratchRelation& out)
         {
             require_columns(input.columns(), plan.output_columns());
             require_columns(out.view().columns(), plan.output_columns());
@@ -95,9 +90,9 @@ void bind_unary(nb::module_& m)
         nb::arg("out"));
     m.def(
         "assign",
-        [](nb::typed<nb::handle, Relation> destination, const V& source)
+        [](nb::typed<nb::handle, ScratchRelation> destination, const V& source)
         {
-            assign(nb::cast<Relation&>(destination), source);
+            assign(nb::cast<ScratchRelation&>(destination), source);
             return destination;
         },
         nb::arg("destination"),
@@ -108,12 +103,11 @@ void bind_unary(nb::module_& m)
 template<typename L, typename R>
 void bind_binary(nb::module_& m)
 {
-    using namespace runir::kr::database;
     const auto bind_join = [&m](const char* name, auto operation, bool output_is_left)
     {
         m.def(
             name,
-            [operation, output_is_left](const L& left_operand, const R& right_operand, const JoinPlan& plan, Relation& out, Workspace& workspace)
+            [operation, output_is_left](const L& left_operand, const R& right_operand, const JoinPlan& plan, ScratchRelation& out, Workspace& workspace)
             {
                 require_columns(left_operand.columns(), plan.left_columns());
                 require_columns(right_operand.columns(), plan.right_columns());
@@ -133,7 +127,7 @@ void bind_binary(nb::module_& m)
     {
         m.def(
             name,
-            [operation](const L& left_operand, const R& right_operand, const SetPlan& plan, Relation& out)
+            [operation](const L& left_operand, const R& right_operand, const SetPlan& plan, ScratchRelation& out)
             {
                 for (const auto columns : { left_operand.columns(), right_operand.columns(), out.view().columns() })
                     require_columns(columns, plan.output_columns());
@@ -151,74 +145,72 @@ void bind_binary(nb::module_& m)
 /// The relations the operations write and the evaluators draw: each a builder with a repository of its own rows.
 void bind_scratch_relations(nb::module_& m)
 {
-    nb::class_<Relation>(m, "ScratchRelation", "A relation being built, its rows in tuple order in a repository of its own: an operation's output.")
+    nb::class_<ScratchRelation>(m, "ScratchRelation", "A relation being built, its rows in tuple order in a repository of its own: an operation's output.")
         .def(
             "__init__",
-            [](Relation* self)
+            [](ScratchRelation* self)
             {
-                new (self) Relation();
+                new (self) ScratchRelation();
                 self->relation.initialize(self->rows, self->rows.schema(std::span<const urd::data<ygg::ColumnLayout>>()), {});
             },
             "The nullary relation, empty.")
         .def(
             "__init__",
-            [](Relation* self, ColumnIndices columns)
+            [](ScratchRelation* self, ColumnIndices columns)
             {
-                new (self) Relation();
+                new (self) ScratchRelation();
                 self->relation.initialize(self->rows, self->rows.schema(columns), columns);
             },
             nb::arg("columns"))
         .def(
             "initialize",
-            [](Relation& relation, ColumnIndices columns) { relation.relation.initialize(relation.rows, relation.rows.schema(columns), columns); },
+            [](ScratchRelation& relation, ColumnIndices columns) { relation.relation.initialize(relation.rows, relation.rows.schema(columns), columns); },
             nb::arg("columns"))
         .def(
             "rename",
-            [](Relation& relation, ColumnIndices columns) { relation.relation.rename(relation.rows, columns); },
+            [](ScratchRelation& relation, ColumnIndices columns) { relation.relation.rename(relation.rows, columns); },
             nb::arg("columns"))
         .def(
             "insert",
-            [](Relation& relation, std::span<const ygg::Value> values) { return relation.insert(values).first; },
+            [](ScratchRelation& relation, std::span<const ygg::Value> values) { return relation.insert(values).first; },
             nb::arg("values"),
             "Its position in tuple order.")
         .def(
             "erase",
-            [](Relation& relation, std::span<const ygg::Value> values) { return relation.erase(values); },
+            [](ScratchRelation& relation, std::span<const ygg::Value> values) { return relation.erase(values); },
             nb::arg("values"))
-        .def("clear", [](Relation& relation) { relation.clear(); })
+        .def("clear", [](ScratchRelation& relation) { relation.clear(); })
         .def("columns",
-             [](const Relation& relation)
+             [](const ScratchRelation& relation)
              { return std::vector<urd::data<ygg::ColumnLayout>>(relation.view().columns().begin(), relation.view().columns().end()); })
-        .def("size", [](const Relation& relation) { return relation.view().get_rows().size(); })
-        .def("arity", [](const Relation& relation) { return relation.view().columns().size(); })
-        .def("empty", [](const Relation& relation) { return relation.view().get_rows().size() == 0; })
-        .def("__len__", [](const Relation& relation) { return relation.view().get_rows().size(); })
+        .def("size", [](const ScratchRelation& relation) { return relation.view().get_rows().size(); })
+        .def("arity", [](const ScratchRelation& relation) { return relation.view().columns().size(); })
+        .def("empty", [](const ScratchRelation& relation) { return relation.view().get_rows().size() == 0; })
+        .def("__len__", [](const ScratchRelation& relation) { return relation.view().get_rows().size(); })
         .def(
             "contains",
-            [](const Relation& relation, std::span<const ygg::Value> values) { return relation.view().contains(values); },
+            [](const ScratchRelation& relation, std::span<const ygg::Value> values) { return relation.view().contains(values); },
             nb::arg("values"))
-        .def("view", &Relation::view, nb::keep_alive<0, 1>(), "Its builder, read through its repository; the next change invalidates the view.");
+        .def("view", &ScratchRelation::view, nb::keep_alive<0, 1>(), "Its builder, read through its repository; the next change invalidates the view.");
     nb::class_<ygg::FreeScratchRelations>(m, "ScratchRelations", "The scratch relations an evaluator draws; they must outlive it.").def(nb::init<>());
 }
 }  // namespace
 
-void bind_database_module_definitions(nb::module_& m)
+void bind_module_definitions(nb::module_& m)
 {
-    using RelationView = ygg::FreeRelationView;
-    using RelationBuilderView = ygg::FreeRelationBuilderView;
     bind_scratch_relations(m);
     bind_plans(m);
-    bind_unary<RelationView>(m);
-    bind_unary<RelationBuilderView>(m);
-    bind_binary<RelationView, RelationView>(m);
-    bind_binary<RelationView, RelationBuilderView>(m);
-    bind_binary<RelationBuilderView, RelationView>(m);
-    bind_binary<RelationBuilderView, RelationBuilderView>(m);
-    bind_database_queries(m);
-    bind_database_optimization(m);
-    bind_database_evaluation(m);
-    bind_database_distance(m);
-    bind_database_datalog(m);
+    bind_unary<ygg::FreeRelationView>(m);
+    bind_unary<ygg::FreeRelationBuilderView>(m);
+    bind_binary<ygg::FreeRelationView, ygg::FreeRelationView>(m);
+    bind_binary<ygg::FreeRelationView, ygg::FreeRelationBuilderView>(m);
+    bind_binary<ygg::FreeRelationBuilderView, ygg::FreeRelationView>(m);
+    bind_binary<ygg::FreeRelationBuilderView, ygg::FreeRelationBuilderView>(m);
+    bind_queries(m);
+    bind_optimization(m);
+    bind_evaluation(m);
+    bind_distance(m);
+    bind_datalog(m);
 }
 
-}  // namespace runir::kr
+}  // namespace runir::kr::database

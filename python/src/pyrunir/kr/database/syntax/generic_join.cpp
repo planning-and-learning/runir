@@ -5,14 +5,14 @@
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
-namespace runir::kr::database_python
+namespace runir::kr::database
 {
 void bind_query_generic_join(nb::module_& m, QueryRepositoryBinding& repository)
 {
-    urd::python::bind_index<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>>(m);
-    urd::python::bind_data<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>>(m);
-    urd::python::bind_builder<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>, runir::kr::database::QueryRepository>(m);
-    bind_query_operation<runir::kr::database::QueryGenericJoinTag>(m, repository);
+    urd::python::bind_index<Query<QueryGenericJoinTag>>(m);
+    urd::python::bind_data<Query<QueryGenericJoinTag>>(m);
+    urd::python::bind_builder<Query<QueryGenericJoinTag>, QueryRepository>(m);
+    bind_query_operation<QueryGenericJoinTag>(m, repository);
 }
 
-}  // namespace runir::kr::database_python
+}  // namespace runir::kr::database

@@ -30,8 +30,9 @@ void bind_module_definitions(nb::module_& m)
     bind_errors(m);
     bind_domain_context(m);
     bind_task_context(m);
+
     auto database = m.def_submodule("database", "Relational operations, queries and their evaluation.");
-    bind_database_module_definitions(database);
+    runir::kr::database::bind_module_definitions(database);
 
     auto dl = m.def_submodule("dl");
     runir::kr::dl::bind_module_definitions(dl);
