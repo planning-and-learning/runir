@@ -63,6 +63,9 @@ public:
 
     [[nodiscard]] auto get_memory_transitions() const noexcept { return self().template member<&urd::record_of<V>::memory_transitions>(); }
 
+    /// The rules of its :datalog section as written; empty without one.
+    [[nodiscard]] std::string_view get_datalog() const noexcept { return std::string_view(self().template member<&urd::record_of<V>::datalog>()); }
+
     // user: one getter templated on the tag over the fields it chooses (next to the record), besides the plain getters.
     template<runir::kr::dl::CategoryTag Category>
     [[nodiscard]] auto get_arguments() const noexcept
@@ -110,9 +113,6 @@ public:
 
     static constexpr auto functions() noexcept
     { return urd::Functions<urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::ps::ext::syntactic_complexity)>> {}; }
-
-    /// The rules of its :datalog section as written; empty without one.
-    [[nodiscard]] std::string_view get_datalog() const noexcept { return std::string_view(self().template member<&urd::record_of<V>::datalog>()); }
 };
 }  // namespace urd
 

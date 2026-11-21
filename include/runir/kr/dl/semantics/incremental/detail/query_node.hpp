@@ -41,7 +41,7 @@ public:
 
     /// Whether this node lifts argument into a relation with exactly these columns.
     template<ConceptOrRoleTag Category>
-    bool lifts(EvaluationIndex<Category> argument, std::span<const urd::data<ygg::ColumnLayout>> columns) const
+    [[nodiscard]] bool lifts(EvaluationIndex<Category> argument, std::span<const urd::data<ygg::ColumnLayout>> columns) const
     {
         const auto* lifted = std::get_if<QueryFromDenotationEvaluator<Kind, Category>>(&m_operation);
         return !m_expression && lifted && lifted->argument == argument && std::ranges::equal(lifted->result->view().columns(), columns);

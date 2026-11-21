@@ -103,18 +103,6 @@ public:
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
     { return self().template member<&urd::record_of<V>::output_order>(); }
 
-    auto get_columns() const noexcept
-        requires(!std::same_as<Tag, void>)
-    { return self().template member<&urd::record_of<V>::columns>(); }
-
-    /// Its plan, derived when it was interned.
-    const auto& get_plan() const noexcept
-        requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
-                 || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag> || std::same_as<Tag, runir::kr::dl::QueryProjectTag>
-                 || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
-                 || std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>)
-    { return self().template member<&urd::record_of<V>::plan>(); }
-
     auto get_program() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
     { return self().template member<&urd::record_of<V>::program>(); }
@@ -126,6 +114,18 @@ public:
         return self().context().get_datalog_repository().view(
             urd::index<tyr::datalog::database::datalog::Relation>(self().template member<&urd::record_of<V>::relation>()));
     }
+
+    auto get_columns() const noexcept
+        requires(!std::same_as<Tag, void>)
+    { return self().template member<&urd::record_of<V>::columns>(); }
+
+    /// Its plan, derived when it was interned.
+    const auto& get_plan() const noexcept
+        requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
+                 || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag> || std::same_as<Tag, runir::kr::dl::QueryProjectTag>
+                 || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
+                 || std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>)
+    { return self().template member<&urd::record_of<V>::plan>(); }
 
     [[nodiscard]] std::span<const urd::data<ygg::ColumnLayout>> get_schema() const noexcept
         requires(!std::same_as<Tag, void>)
