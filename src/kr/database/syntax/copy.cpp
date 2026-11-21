@@ -5,6 +5,7 @@
 
 #include "runir/kr/database/syntax/query.hpp"
 
+#include <urd/elements/copy.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -32,8 +33,8 @@ QueryPlan compile_plan(std::span<const QueryView<>> roots)
     auto repository = std::make_shared<QueryRepository>();
     QueryBuilder builder;
     urd::Store<urd::sequence<urd::index<Query<>>>> outputs;
-    for (const auto copied : database::copy(roots, [](size_t slot) { return slot; }, *repository, builder))
-        outputs.push_back(copied.index());
+    for (const auto root : roots)
+        outputs.push_back(urd::copy(root, *repository, builder));
     return QueryPlan(std::move(repository), std::move(outputs));
 }
 }

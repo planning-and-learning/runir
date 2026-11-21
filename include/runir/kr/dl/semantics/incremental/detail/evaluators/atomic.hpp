@@ -76,7 +76,7 @@ private:
     static DenotationElementView<Category> atom_element(tyr::formalism::AtomView<tyr::GroundTag, Fact> atom)
         requires ConceptOrRoleTag<Category>
     {
-        const auto objects = atom.get_row().get_objects();
+        const auto objects = atom.get_row().template resolve<tyr::formalism::Object>();
         if constexpr (std::same_as<Category, ConceptTag>)
             return objects[0];
         else

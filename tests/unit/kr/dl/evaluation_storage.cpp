@@ -28,9 +28,11 @@
 #include <tyr/formalism/object_data.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <urd/bits.hpp>
+#include <urd/elements/copy.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
+#include <yggdrasil/formalism/copy.hpp>
 
 namespace runir::tests
 {
@@ -90,17 +92,15 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
         else
             source.get() = 7;
         const auto expected = runir::tests::copy_denotation(source, builder, repository);
-        const auto [view, inserted] = kr::dl::semantics::insert(repository, source, builder);
+        const auto [view, inserted] = repository.insert(source, builder.records());
         EXPECT_TRUE(inserted);
         EXPECT_EQ(&view.context(), &repository);
-        EXPECT_EQ(source.index, view.index());
         EXPECT_TRUE((urd::EqualTo<urd::builder<Denotation, runir::kr::dl::semantics::DenotationRepository>> {}(source, expected)));
 
         source.index = {};
-        const auto [duplicate, duplicate_inserted] = kr::dl::semantics::insert(repository, source, builder);
+        const auto [duplicate, duplicate_inserted] = repository.insert(source, builder.records());
         EXPECT_FALSE(duplicate_inserted);
         EXPECT_EQ(duplicate, view);
-        EXPECT_EQ(source.index, view.index());
         EXPECT_EQ(repository.size<Denotation>(), 1);
 
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
@@ -185,7 +185,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
                                     std::pair(object(num_objects - 1), object(digits)) };
             }
         }();
-        const auto indexed = kr::dl::semantics::insert(repository, builder, scratch).first;
+        const auto indexed = repository.insert(builder, scratch.records()).first;
         EXPECT_EQ(indexed.get_num_objects(), num_objects);
         EXPECT_EQ(&indexed.context().template get<tyr::formalism::Repository>(), formalism.get());
         EXPECT_TRUE(borrowed.storage_bits().any());
@@ -245,16 +245,11 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     const auto expected_index = values.index;
     const auto expected = runir::tests::copy_fields(values);
     const auto borrowed = urd::resolve(values, repository);
-    const auto [view, inserted] = kr::dl::semantics::copy(borrowed, { repository, builder });
-    EXPECT_TRUE(inserted);
+    const auto view = repository.view(urd::copy(borrowed, repository, builder.records()));
     EXPECT_EQ(&view.context(), &repository);
     EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(repository[view.index()], expected));
-    const auto [duplicate, duplicate_inserted] = kr::dl::semantics::copy(borrowed, { repository, builder });
-    EXPECT_FALSE(duplicate_inserted);
-    EXPECT_EQ(duplicate, view);
-    const auto [same_repository, same_inserted] = kr::dl::semantics::copy(view, { repository, builder });
-    EXPECT_FALSE(same_inserted);
-    EXPECT_EQ(same_repository, view);
+    EXPECT_EQ(urd::copy(borrowed, repository, builder.records()), view.index());  // interned once
+    EXPECT_EQ(urd::copy(view, repository, builder.records()), view.index());      // its own
     EXPECT_EQ(repository.size<kr::dl::semantics::RegisterValues>(), 1);
     EXPECT_EQ(values.index, expected_index);
     EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(values, expected));
@@ -264,23 +259,20 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     const auto occupied = kr::dl::semantics::insert(other_repository, other_values).first;
     ASSERT_NE(other_repository.layer(), repository.layer());
     ASSERT_EQ(occupied.index(), view.index());
-    const auto [transferred, transferred_inserted] = kr::dl::semantics::copy(view, { other_repository, builder });
-    EXPECT_TRUE(transferred_inserted);
+    const auto transferred = other_repository.view(urd::copy(view, other_repository, builder.records()));
     EXPECT_EQ(&transferred.context(), &other_repository);
     EXPECT_NE(transferred.index(), occupied.index());
     EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(other_repository[transferred.index()], expected));
-    const auto [same_target, same_target_inserted] = kr::dl::semantics::copy(view, { other_repository, builder });
-    EXPECT_EQ(same_target, transferred);
-    EXPECT_FALSE(same_target_inserted);
+    EXPECT_EQ(urd::copy(view, other_repository, builder.records()), transferred.index());
     EXPECT_EQ(other_repository.size<kr::dl::semantics::RegisterValues>(), 2);
 
     const auto foreign_search = query_search();
     auto foreign_repository = kr::dl::semantics::DenotationRepository(foreign_search->task->get_repository());
-    EXPECT_THROW((void) kr::dl::semantics::copy(borrowed, { foreign_repository, builder }), std::invalid_argument);
+    EXPECT_THROW((void) urd::copy(borrowed, foreign_repository, builder.records()), std::invalid_argument);
     EXPECT_EQ(foreign_repository.size<kr::dl::semantics::RegisterValues>(), 0);
     auto foreign_values = runir::tests::copy_fields(expected);
     const auto foreign_view = kr::dl::semantics::insert(foreign_repository, foreign_values).first;
-    EXPECT_THROW((void) kr::dl::semantics::copy(foreign_view, { repository, builder }), std::invalid_argument);
+    EXPECT_THROW((void) urd::copy(foreign_view, repository, builder.records()), std::invalid_argument);
     EXPECT_EQ(repository.size<kr::dl::semantics::RegisterValues>(), 1);
 }
 
@@ -347,7 +339,7 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
         }
         else
             payload.value = 1;
-        const auto source = kr::dl::semantics::insert(source_repository, payload, scratch).first;
+        const auto source = source_repository.insert(payload, scratch.records()).first;
         auto destination = urd::builder<D, runir::kr::dl::semantics::DenotationRepository>();
         kr::dl::semantics::assign(destination, source, scratch.records());  // read as the payload is
         EXPECT_TRUE((urd::EqualTo<urd::builder<D, runir::kr::dl::semantics::DenotationRepository>> {}(destination, payload)));
@@ -363,13 +355,14 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
             kr::dl::semantics::initialize(payload, 0, scratch.records());
         else
             payload.initialize(0);
-        const auto unrelated = kr::dl::semantics::insert(target_repository, payload, scratch).first;
-        const auto [copied, created] = kr::dl::semantics::copy(source, { target_repository, scratch });
-        EXPECT_TRUE(created);
+        const auto unrelated = target_repository.insert(payload, scratch.records()).first;
+        const auto size = target_repository.size<D>();
+        const auto copied = target_repository.view(urd::copy(source, target_repository, scratch.records()));
+        EXPECT_EQ(target_repository.size<D>(), size + 1);
         EXPECT_NE(copied.index(), unrelated.index());
         EXPECT_EQ(&copied.context(), &target_repository);
-        EXPECT_FALSE(kr::dl::semantics::copy(source, { target_repository, scratch }).second);
-        EXPECT_EQ(kr::dl::semantics::copy(copied, { target_repository, scratch }).first, copied);
+        EXPECT_EQ(urd::copy(source, target_repository, scratch.records()), copied.index());  // interned once
+        EXPECT_EQ(urd::copy(copied, target_repository, scratch.records()), copied.index());  // its own
 
         source_repository.reset();
         kr::dl::semantics::assign(payload, copied, scratch.records());
@@ -647,8 +640,10 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
         for (size_t i = 0; i < left_result.get_rows().size(); ++i)
             ygg::with_values(left_result.row(i), [&direct](const auto& values) { direct->insert(values); });
         auto dl_builder = kr::dl::semantics::Builder();
-        const auto [interned, inserted] = kr::dl::semantics::insert(persistent, direct->view(), dl_builder);
-        EXPECT_FALSE(inserted);
+        const auto size = persistent.get_relation_repository().template size<ygg::Relation<ygg::Schema>>();
+        const auto interned =
+            persistent.get_relation_repository().view(urd::copy(direct->view(), persistent.get_relation_repository(), dl_builder.relations()));
+        EXPECT_EQ(persistent.get_relation_repository().template size<ygg::Relation<ygg::Schema>>(), size);  // found, not added
         EXPECT_EQ(interned, left_result);
     }
 

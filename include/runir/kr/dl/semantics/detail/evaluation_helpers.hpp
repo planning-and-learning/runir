@@ -29,11 +29,13 @@
 #include <tyr/planning/lifted/task.hpp>
 #include <tyr/planning/state_builder.hpp>
 #include <tyr/planning/state_repository.hpp>
+#include <urd/elements/copy.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
+#include <yggdrasil/formalism/copy.hpp>
 
 namespace runir::kr::dl::semantics::detail
 {
@@ -265,7 +267,8 @@ auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::
     const auto denotation = evaluate<Kind>(argument, context);
     auto result = context.get_workspace().get_scratch().draw(columns);
     insert_denotation_rows<Category>(denotation, *result);
-    return insert(context.get_denotation_repository(), result->view(), context.get_builder()).first;
+    auto& relations = context.get_denotation_repository().get_relation_repository();
+    return relations.view(urd::copy(result->view(), relations, context.get_builder().relations()));
 }
 
 }  // namespace runir::kr::dl::semantics::detail

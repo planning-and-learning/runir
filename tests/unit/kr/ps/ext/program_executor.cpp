@@ -386,7 +386,7 @@ void check_backtrack_execution()
             {
                 ASSERT_TRUE(selected.plan);
                 ASSERT_EQ(selected.plan->get_length(), 2);
-                EXPECT_EQ(selected.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
+                EXPECT_EQ(selected.plan->get_labeled_succ_nodes().front().label.template resolve<tyr::formalism::Object>()[1].get_name(), "good");
             }
 
             const auto blocked = kr::ps::ext::find_solution(context, called, options);
@@ -595,10 +595,10 @@ void check_choice_execution()
     EXPECT_EQ(plan.get_start_node().get_metric(), 0);
     EXPECT_EQ(plan_steps[0].node.get_metric(), 1);
     EXPECT_EQ(plan_steps[1].node.get_metric(), 2);
-    EXPECT_EQ(plan_steps[0].label.get_objects()[0].get_name(), "start");
-    EXPECT_EQ(plan_steps[0].label.get_objects()[1].get_name(), "good");
-    EXPECT_EQ(plan_steps[1].label.get_objects()[0].get_name(), "good");
-    EXPECT_EQ(plan_steps[1].label.get_objects()[1].get_name(), "goal");
+    EXPECT_EQ(plan_steps[0].label.template resolve<tyr::formalism::Object>()[0].get_name(), "start");
+    EXPECT_EQ(plan_steps[0].label.template resolve<tyr::formalism::Object>()[1].get_name(), "good");
+    EXPECT_EQ(plan_steps[1].label.template resolve<tyr::formalism::Object>()[0].get_name(), "good");
+    EXPECT_EQ(plan_steps[1].label.template resolve<tyr::formalism::Object>()[1].get_name(), "goal");
     auto expected_node = planning_node;
     EXPECT_EQ(plan.get_start_node(), expected_node.pack());
     for (const auto& step : plan_steps)
@@ -627,7 +627,7 @@ void check_choice_execution()
             ASSERT_TRUE(result.plan);
             EXPECT_EQ(result.plan->get_length(), 2);
             EXPECT_TRUE(is_planning_goal(expander, result.plan->get_labeled_succ_nodes().back().node.get_state().unpack()));
-            EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
+            EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.template resolve<tyr::formalism::Object>()[1].get_name(), "good");
         }
 
         const auto cyclic = make_program(choice_module(
@@ -751,7 +751,7 @@ void check_choice_execution()
         {
             ASSERT_TRUE(call_result.plan);
             EXPECT_EQ(call_result.plan->get_length(), 2);
-            EXPECT_EQ(call_result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
+            EXPECT_EQ(call_result.plan->get_labeled_succ_nodes().front().label.template resolve<tyr::formalism::Object>()[1].get_name(), "good");
         }
 
         // A normal return here would let the caller reach the goal: the empty choose must prevent it.
@@ -1221,7 +1221,7 @@ void check_state_memorization()
             if (result.plan)
             {
                 EXPECT_EQ(result.plan->get_length(), 2);
-                EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
+                EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.template resolve<tyr::formalism::Object>()[1].get_name(), "good");
             }
 
             const auto filtered = run(choice_module("main", choice_rule("select", "m0", "m1", singleton) + move_rules()), options);
@@ -1511,7 +1511,9 @@ void check_transient_builder_values_and_reuse()
     first_registers.concept_values.emplace_back(std::in_place, object(0));
     first_registers.role_values.emplace_back(std::in_place, Object(object(0)), Object(object(1)));
     ASSERT_EQ(std::ranges::size(registers_of(module_state).template values<kr::dl::ConceptTag>()), 1U);
-    const auto registered_registers = kr::dl::semantics::copy(registers_of(module_state), { denotations, context->dl_builder }).first;
+    auto registered_data = context->dl_builder.template get_builder<kr::dl::semantics::RegisterValues>();
+    kr::dl::semantics::assign(*registered_data, registers_of(module_state));
+    const auto registered_registers = denotations.insert(*registered_data, context->dl_builder.records()).first;
     const auto built_registers = registers_of(module_state);
     const auto concept_id = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0);
     const auto role_id = kr::dl::RegisterIdentifier<kr::dl::RoleTag>(0);

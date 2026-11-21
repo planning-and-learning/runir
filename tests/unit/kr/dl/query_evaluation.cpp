@@ -32,12 +32,14 @@
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/elements/copy.hpp>
 #include <urd/elements/hash.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/execution/onetbb.hpp>
+#include <yggdrasil/formalism/copy.hpp>
 
 namespace runir::tests
 {
@@ -1602,7 +1604,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
                                                   urd::data<ygg::ColumnLayout> { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
         for (const auto& row : rows)
             result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(row[0].value), ygg::encode_value<ygg::uint_t>(row[1].value) });
-        return kr::dl::semantics::insert(denotations, result->view(), dl_builder).first;
+        return denotations.get_relation_repository().view(urd::copy(result->view(), denotations.get_relation_repository(), dl_builder.relations()));
     };
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
     const auto rows = std::array<Row, 2> { Row { ObjectIndex(2), ObjectIndex(3) }, Row { ObjectIndex(4), ObjectIndex(5) } };

@@ -318,7 +318,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
         assert applied is not None
         assert _same_state(applied.target, step.target)
         del step, rule, successor, applied
-    good_step = next(step for step in steps if _action(step).get_objects()[1].get_name() == "good")
+    good_step = next(step for step in steps if _action(step).resolve_objects()[1].get_name() == "good")
     del relation, truth, empty
     state = good_step.target
     environment.reset_source()
@@ -588,7 +588,7 @@ def test_action_query_preserves_correlated_parameter_tuples(kind: str, tmp_path:
     state = initial_program_state(expander, initial_node(task_context).get_state())
 
     def arguments(action: RowActionLifted) -> tuple[str, ...]:
-        return tuple(object_.get_name() for object_ in action.get_objects())
+        return tuple(object_.get_name() for object_ in action.resolve_objects())
 
     broad = _labeled_successors(task_context)
     assert {arguments(successor.label) for successor in broad} == {

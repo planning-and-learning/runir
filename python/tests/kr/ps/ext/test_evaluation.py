@@ -339,7 +339,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         transition = step.state_transition
         assert transition is not None
         action = transition.action
-        return action.get_relation().get_name() == "move" and action.get_objects()[-1].get_name() == "roomb"
+        return action.get_relation().get_name() == "move" and action.resolve_objects()[-1].get_name() == "roomb"
 
     moved = next(step.target for step in collect_steps(expander, loaded) if moves_to_roomb(step))
     environment.reset_source()

@@ -29,6 +29,7 @@
 #include <tuple>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/elements/copy.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
@@ -36,6 +37,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <yggdrasil/formalism/copy.hpp>
 
 // This executable links urd::count_allocations, which replaces the C++ allocation functions only. That covers the
 // default std/GTL allocators and urd's containers, including aligned allocations. It does not intercept direct
@@ -478,7 +480,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     for (ygg::uint_t i = 0; i < 32; ++i)
         result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(i), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(i + 1)) });
     const auto* slot = result.get();
-    const auto stored = kr::dl::semantics::insert(denotations, result->view(), dl_builder).first;
+    const auto stored = denotations.get_relation_repository().view(urd::copy(result->view(), denotations.get_relation_repository(), dl_builder.relations()));
     const auto* stored_schema_buffer = stored.columns().data();
     const auto* stored_row_buffer = stored.row(0).get_values().data();
     const auto* stored_row_indices = stored.get_rows().base().data();
@@ -495,7 +497,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
         reused &= next.get() == slot;
         for (ygg::uint_t i = 0; i < 32; ++i)
             next->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(i), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(i + 1)) });
-        const auto value = kr::dl::semantics::insert(denotations, next->view(), dl_builder).first;
+        const auto value = denotations.get_relation_repository().view(urd::copy(next->view(), denotations.get_relation_repository(), dl_builder.relations()));
         reused &= value.columns().data() == stored_schema_buffer;
         reused &= value.row(0).get_values().data() == stored_row_buffer;
         reused &= value.get_rows().base().data() == stored_row_indices;
@@ -532,7 +534,8 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(1)) });
             owner->insert(
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
-            const auto value = kr::dl::semantics::insert(denotations, owner->view(), dl_builder).first;
+            const auto value =
+                denotations.get_relation_repository().view(urd::copy(owner->view(), denotations.get_relation_repository(), dl_builder.relations()));
             const auto alias = kr::dl::semantics::rename(denotations, value, aliases, dl_builder);
             valid &=
                 value.get_rows().size() == 2 && alias.get_rows().size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
@@ -542,7 +545,8 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
             duplicate->insert(
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(1)) });
-            valid &= kr::dl::semantics::insert(denotations, duplicate->view(), dl_builder).first == value;
+            valid &= denotations.get_relation_repository().view(urd::copy(duplicate->view(), denotations.get_relation_repository(), dl_builder.relations()))
+                     == value;
             valid &= kr::dl::semantics::rename(denotations, value, aliases, dl_builder) == alias;
         }
         valid &= repository.template size<ygg::Relation<ygg::Schema>>() == 1024;

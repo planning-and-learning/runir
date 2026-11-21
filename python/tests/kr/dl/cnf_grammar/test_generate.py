@@ -175,7 +175,7 @@ def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_di
             initial_node, search_context.state_repository, search_context.axiom_evaluator
         )
         if successor.label.get_relation().get_name() == "move"
-        and [object_.get_name() for object_ in successor.label.get_objects()] == ["rooma", "roomb"]
+        and [object_.get_name() for object_ in successor.label.resolve_objects()] == ["rooma", "roomb"]
     )
     states = [initial_node.get_state().pack(), move_to_roomb.node.get_state().pack()]
 

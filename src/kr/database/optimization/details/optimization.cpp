@@ -5,6 +5,7 @@
 
 #include "runir/kr/database/optimization/details/optimization.hpp"
 
+#include <urd/elements/copy.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -46,8 +47,7 @@ QueryPlan optimize(std::span<const QueryView<>> roots, std::span<const Evaluatio
     {
         const auto root = roots[i];
         // The bound evaluator orders each binding's joins itself, so a bound root keeps its normalized join structure.
-        outputs.push_back(
-            evaluations[i] == Evaluation::bound ? copy(normalize(root), [](size_t slot) { return slot; }, plans, builder) : planner.plan(normalize(root)));
+        outputs.push_back(evaluations[i] == Evaluation::bound ? plans.view(urd::copy(normalize(root), plans, builder)) : planner.plan(normalize(root)));
         assert(std::ranges::equal(columns_of(outputs.back()), columns_of(root)) && "Plans preserve ordered schemas.");
     }
     return compile_plan(std::span<const QueryView<>>(outputs));

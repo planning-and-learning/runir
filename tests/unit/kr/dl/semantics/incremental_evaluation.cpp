@@ -209,10 +209,10 @@ void check_incremental_evaluation()
     argument_concept.get().set(ygg::uint_t(a.value));
     argument_role.get(a).set(ygg::uint_t(b.value));
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
-    argument_data.concept_arguments.push_back(kr::dl::semantics::insert(denotations, argument_concept, builder).first.index());
-    argument_data.role_arguments.push_back(kr::dl::semantics::insert(denotations, argument_role, builder).first.index());
-    argument_data.boolean_arguments.push_back(kr::dl::semantics::insert(denotations, argument_boolean, builder).first.index());
-    argument_data.numerical_arguments.push_back(kr::dl::semantics::insert(denotations, argument_numerical, builder).first.index());
+    argument_data.concept_arguments.push_back(denotations.insert(argument_concept, builder.records()).first.index());
+    argument_data.role_arguments.push_back(denotations.insert(argument_role, builder.records()).first.index());
+    argument_data.boolean_arguments.push_back(denotations.insert(argument_boolean, builder.records()).first.index());
+    argument_data.numerical_arguments.push_back(denotations.insert(argument_numerical, builder.records()).first.index());
     const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
     argument_concept.get().reset(ygg::uint_t(a.value));
     argument_concept.get().set(ygg::uint_t(c.value));
@@ -220,10 +220,10 @@ void check_incremental_evaluation()
     argument_role.get(c).set(ygg::uint_t(a.value));
     argument_boolean.value = false;
     argument_numerical.value = 2;
-    argument_data.concept_arguments[0] = kr::dl::semantics::insert(denotations, argument_concept, builder).first.index();
-    argument_data.role_arguments[0] = kr::dl::semantics::insert(denotations, argument_role, builder).first.index();
-    argument_data.boolean_arguments[0] = kr::dl::semantics::insert(denotations, argument_boolean, builder).first.index();
-    argument_data.numerical_arguments[0] = kr::dl::semantics::insert(denotations, argument_numerical, builder).first.index();
+    argument_data.concept_arguments[0] = denotations.insert(argument_concept, builder.records()).first.index();
+    argument_data.role_arguments[0] = denotations.insert(argument_role, builder.records()).first.index();
+    argument_data.boolean_arguments[0] = denotations.insert(argument_boolean, builder.records()).first.index();
+    argument_data.numerical_arguments[0] = denotations.insert(argument_numerical, builder.records()).first.index();
     const auto other_arguments = kr::dl::semantics::insert(denotations, argument_data).first;
     const auto context_for = [&](const auto& state, size_t i, kr::dl::semantics::CallArgumentsView invocation)
     { return kr::dl::semantics::StateEvaluationContext<Kind, std::remove_cvref_t<decltype(state)>>(state, builder, storage, invocation, registers(i)); };

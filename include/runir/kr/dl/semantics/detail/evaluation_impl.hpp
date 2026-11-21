@@ -12,6 +12,7 @@
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <urd/bits.hpp>
+#include <urd/elements/copy.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -194,7 +195,7 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
         static_assert(false, "unhandled DL concept constructor tag in evaluate_impl");
     }
 
-    return insert(repository, *result, context.get_builder()).first;
+    return repository.insert(*result, context.get_builder().records()).first;
 }
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
@@ -319,7 +320,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
         static_assert(false, "unhandled DL role constructor tag in evaluate_impl");
     }
 
-    return insert(repository, *result, context.get_builder()).first;
+    return repository.insert(*result, context.get_builder().records()).first;
 }
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
@@ -370,7 +371,7 @@ auto evaluate_impl(urd::index_view<Boolean<SemanticFamily, Tag>, C> constructor,
     }
 
     auto result = context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
-    return insert(repository, *result, context.get_builder()).first;
+    return repository.insert(*result, context.get_builder().records()).first;
 }
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
@@ -409,7 +410,7 @@ auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, Tag>, C> constructo
     }
 
     auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(result_value);
-    return insert(repository, *result, context.get_builder()).first;
+    return repository.insert(*result, context.get_builder().records()).first;
 }
 
 template<tyr::TaskKind Kind, CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
@@ -449,7 +450,8 @@ auto evaluate_impl(urd::index_view<Query<Tag>, C> constructor, Context& context)
 {
     auto result = context.get_workspace().get_scratch().draw(constructor.get_schema());
     detail::evaluate_query<Kind>(constructor, context, *result);
-    return insert(context.get_denotation_repository(), result->view(), context.get_builder()).first;
+    auto& relations = context.get_denotation_repository().get_relation_repository();
+    return relations.view(urd::copy(result->view(), relations, context.get_builder().relations()));
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
@@ -493,7 +495,7 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
             result->get(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(row.value(source))))
                 .set(ygg::decode_value<ygg::uint_t>(row.value(target)));
     }
-    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
+    return context.get_denotation_repository().insert(*result, context.get_builder().records()).first;
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
@@ -506,7 +508,7 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, RegisterTag>, C> cons
     if (object)
         result_bitset.set(ygg::uint_t(object.value().index().value));
 
-    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
+    return context.get_denotation_repository().insert(*result, context.get_builder().records()).first;
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
@@ -521,7 +523,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, RegisterTag>, C> constru
         result->get(pair.first.index()).set(ygg::uint_t(pair.second.index().value));
     }
 
-    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
+    return context.get_denotation_repository().insert(*result, context.get_builder().records()).first;
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>

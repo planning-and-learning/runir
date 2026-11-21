@@ -90,48 +90,6 @@ namespace runir::kr::database
 /// The input slots read by the queries reachable from `roots`, each once, in increasing order.
 urd::Store<urd::sequence<size_t>> input_slots(std::span<const QueryView<>> roots);
 
-/// Copies the queries reachable from `roots` into `destination`, children first, each once, and returns the copy of
-/// each root. An input's slot s becomes slot_of(s).
-template<typename SlotOf>
-    requires std::convertible_to<std::invoke_result_t<SlotOf&, size_t>, size_t>
-urd::Store<urd::sequence<QueryView<>>> copy(std::span<const QueryView<>> roots, SlotOf slot_of, QueryRepository& destination, QueryBuilder& builder)
-{
-    if (roots.empty())
-        return {};
-    auto copies = urd::Store<urd::sequence<std::optional<QueryView<>>>>(get_repository(roots.front().context()).size());
-    auto children = urd::Store<urd::sequence<QueryView<>>>();
-    for (const auto query : reachable(roots))
-    {
-        auto& copied = copies[query.index().value];
-        if (is<QueryInputTag>(query))
-        {
-            auto data = checkout<Query<QueryInputTag>>(builder);
-            data->input_slot = slot_of(as<QueryInputTag>(query).get_input_slot());
-            const auto columns = columns_of(query);
-            data->columns.assign(columns.begin(), columns.end());
-            copied = insert_query(destination, builder, *data);
-            continue;
-        }
-        children.clear();
-        for_each_child(query, [&](QueryView<> child) { children.push_back(*copies[child.index().value]); });
-        copied = detail::clone_query(query, std::span<const QueryView<>>(children), destination, builder);
-    }
-    auto result = urd::Store<urd::sequence<QueryView<>>>();
-    for (const auto root : roots)
-    {
-        const auto& copy = copies[root.index().value];
-        URD_ASSUME(copy.has_value());  // the loop above copied every query reachable from a root
-        result.push_back(*copy);
-    }
-    return result;
-}
-
-/// Copies the queries reachable from `root` into `destination`; see the overload for several roots.
-template<typename SlotOf>
-    requires std::convertible_to<std::invoke_result_t<SlotOf&, size_t>, size_t>
-QueryView<> copy(QueryView<> root, SlotOf&& slot_of, QueryRepository& destination, QueryBuilder& builder)
-{ return database::copy(std::span<const QueryView<>>(&root, 1), std::forward<SlotOf>(slot_of), destination, builder).front(); }
-
 /// Copies the queries reachable from the roots into a fresh owning snapshot.
 QueryPlan compile_plan(std::span<const QueryView<>> roots);
 

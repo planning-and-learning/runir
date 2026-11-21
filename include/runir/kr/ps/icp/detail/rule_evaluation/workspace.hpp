@@ -47,7 +47,7 @@ public:
             throw std::invalid_argument("ICP requires a program from the domain context repository.");
         const auto planning_task = m_task->search_context->task->get_task();
         auto empty = m_task->dl_builder.template get_builder<Denotation>(static_cast<ygg::uint_t>(planning_task.get_num_objects()));
-        m_empty = runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *empty, m_task->dl_builder).first.index();
+        m_empty = m_task->dl_denotation_repository->insert(*empty, m_task->dl_builder.records()).first.index();
         const auto module = program.get_entry_mod();
         const auto features = module.template get_features<Concept>();
         m_reset_predecessors.resize(features.size());
@@ -121,7 +121,7 @@ public:
                             break;
                         }
                 entered->get() |= previous[i].value();
-                urd::store(histories->concepts[i], runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *entered, m_task->dl_builder).first);
+                urd::store(histories->concepts[i], m_task->dl_denotation_repository->insert(*entered, m_task->dl_builder.records()).first);
             }
         }
         if (!progress)

@@ -451,7 +451,7 @@ void check_rejected_bindings_stay_unpublished()
         {
             ASSERT_TRUE(accepted_steps[i].planning_successor);
             EXPECT_EQ(accepted_steps[i].planning_successor.value().label, repeated[i].planning_successor.value().label);
-            EXPECT_EQ(accepted_steps[i].planning_successor.value().unpack().label.get_objects().size(), 2);
+            EXPECT_EQ(accepted_steps[i].planning_successor.value().unpack().label.template resolve<tyr::formalism::Object>().size(), 2);
         }
     }
 }

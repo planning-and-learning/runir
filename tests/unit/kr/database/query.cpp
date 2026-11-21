@@ -542,7 +542,10 @@ TEST(DatabaseQuery, FactoriesRejectMalformedQueriesBeforePublishingPlans)
     auto other = runir::tests::qb::repository();
     const auto input = runir::tests::qb::input(repository, 0, { x });
     const auto foreign = runir::tests::qb::input(other, 0, { x });
-    EXPECT_THROW(runir::kr::database::compile_plan({ input, foreign }), std::invalid_argument);
+    // A plan copies its roots whatever repository holds them (urd::copy): equal queries are one there.
+    const auto copied = runir::kr::database::compile_plan({ input, foreign });
+    ASSERT_EQ(copied.root_count(), 2U);
+    EXPECT_EQ(copied.roots()[0], copied.roots()[1]);
     EXPECT_THROW(runir::tests::qb::generic_join(repository, { input }, { y }), std::invalid_argument);
     EXPECT_THROW(runir::tests::qb::generic_join(repository, { input }, { x, x }), std::invalid_argument);
     EXPECT_THROW(runir::tests::qb::generic_join(repository, { input }, { x }, { y }), std::invalid_argument);
