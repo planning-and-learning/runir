@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
