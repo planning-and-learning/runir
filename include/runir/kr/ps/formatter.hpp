@@ -34,18 +34,15 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>, C>> :
-    runir::detail::without_format_spec
+struct fmt::formatter<urd::index_view<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>, C>> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator
-    format(const urd::index_view<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>, C>& value,
-           fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::index_view<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>, C>& value,
+                                         fmt::format_context& context) const;
 };
 
 /// An effect: (observation feature-symbol).
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag, typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, C>> :
-    runir::detail::without_format_spec
+struct fmt::formatter<urd::index_view<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, C>> : runir::detail::without_format_spec
 {
     fmt::format_context::iterator format(const urd::index_view<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, C>& value,
                                          fmt::format_context& context) const;

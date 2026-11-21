@@ -87,9 +87,9 @@ fmt::formatter<urd::index_view<rp::Feature<Family, FeatureTag>, C>>::format(cons
 }
 
 template<rk::FamilyTag Family, rp::dl::FeatureTag FeatureTag, typename C>
-fmt::format_context::iterator fmt::formatter<urd::index_view<rp::ConcreteFeature<Family, FeatureTag>, C>>::format(
-    const urd::index_view<rp::ConcreteFeature<Family, FeatureTag>, C>& value,
-    fmt::format_context& context) const
+fmt::format_context::iterator
+fmt::formatter<urd::index_view<rp::ConcreteFeature<Family, FeatureTag>, C>>::format(const urd::index_view<rp::ConcreteFeature<Family, FeatureTag>, C>& value,
+                                                                                    fmt::format_context& context) const
 {
     auto out = fmt::format_to(context.out(), "(:{}", FeatureTag::keyword);
     {
@@ -146,33 +146,24 @@ template struct fmt::formatter<urd::index_view<rp::Feature<rk::BaseFamilyTag, rk
 template struct fmt::formatter<urd::index_view<rp::Feature<rk::BaseFamilyTag, rk::dl::NumericalTag>, rp::base::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::BaseFamilyTag, rk::dl::BooleanTag>, rp::base::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::BaseFamilyTag, rk::dl::NumericalTag>, rp::base::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::base::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::base::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::EqualZero>, rp::base::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::GreaterZero>, rp::base::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::base::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::base::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::EqualZero>, rp::base::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::GreaterZero>, rp::base::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::base::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::base::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Unchanged>, rp::base::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::Increases>, rp::base::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::Decreases>, rp::base::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::Unchanged>, rp::base::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::Increases>, rp::base::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::Decreases>, rp::base::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::Unchanged>, rp::base::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::Feature<rk::BaseFamilyTag, rk::dl::BooleanTag>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::Feature<rk::BaseFamilyTag, rk::dl::NumericalTag>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::BaseFamilyTag, rk::dl::BooleanTag>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::BaseFamilyTag, rk::dl::NumericalTag>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::ext::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::EqualZero>, rp::ext::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::GreaterZero>, rp::ext::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::EqualZero>, rp::ext::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::BaseFamilyTag, rk::dl::NumericalTag, rp::dl::GreaterZero>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::BaseFamilyTag, rk::dl::BooleanTag, rp::dl::Unchanged>, rp::ext::Repository>>;
@@ -191,10 +182,8 @@ template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::ExtFamily
 template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::ExtFamilyTag, rp::dl::QueryFeature>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::ExtFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::ExtFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::ext::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::ExtFamilyTag, rk::dl::NumericalTag, rp::dl::EqualZero>, rp::ext::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::ExtFamilyTag, rk::dl::NumericalTag, rp::dl::GreaterZero>, rp::ext::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::ExtFamilyTag, rk::dl::NumericalTag, rp::dl::EqualZero>, rp::ext::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::ExtFamilyTag, rk::dl::NumericalTag, rp::dl::GreaterZero>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::ExtFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::ExtFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::ext::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::ExtFamilyTag, rk::dl::BooleanTag, rp::dl::Unchanged>, rp::ext::Repository>>;
@@ -213,10 +202,8 @@ template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::IcpFamily
 template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::IcpFamilyTag, rp::dl::QueryFeature>, rp::icp::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::IcpFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::icp::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::IcpFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::icp::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::IcpFamilyTag, rk::dl::NumericalTag, rp::dl::EqualZero>, rp::icp::Repository>>;
-template struct fmt::formatter<
-    urd::index_view<rp::ConcreteCondition<rk::IcpFamilyTag, rk::dl::NumericalTag, rp::dl::GreaterZero>, rp::icp::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::IcpFamilyTag, rk::dl::NumericalTag, rp::dl::EqualZero>, rp::icp::Repository>>;
+template struct fmt::formatter<urd::index_view<rp::ConcreteCondition<rk::IcpFamilyTag, rk::dl::NumericalTag, rp::dl::GreaterZero>, rp::icp::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::IcpFamilyTag, rk::dl::BooleanTag, rp::dl::Positive>, rp::icp::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::IcpFamilyTag, rk::dl::BooleanTag, rp::dl::Negative>, rp::icp::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::IcpFamilyTag, rk::dl::BooleanTag, rp::dl::Unchanged>, rp::icp::Repository>>;

@@ -61,9 +61,7 @@ void record_condition(Definition definition,
 }
 
 template<runir::kr::FamilyTag Family, typename C, typename Definition, typename FeatureTag, typename ObservationTag>
-void record_effect(Definition definition,
-                   RuleProfile& profile,
-                   urd::index_view<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, C> effect)
+void record_effect(Definition definition, RuleProfile& profile, urd::index_view<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, C> effect)
 {
     const auto position = feature_position(definition.template get_features<FeatureTag>(), effect.get_feature());
     const auto bit = std::uint64_t { 1 } << position;

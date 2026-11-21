@@ -48,8 +48,7 @@ namespace runir::kr::uns::dl
 {
 
 using BooleanFeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
-using ConcreteBooleanFeatureView =
-    urd::index_view<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
+using ConcreteBooleanFeatureView = urd::index_view<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
 
 }  // namespace runir::kr::uns::dl
 
