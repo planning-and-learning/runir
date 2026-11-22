@@ -95,9 +95,9 @@ def test_matching_field_enums_are_accepted_by_their_library(native_type: str) ->
         assert tyr_serialization.table(dictionaries, formalism.RowPredicateFluent) == []
 
 
-@pytest.mark.parametrize("operand", ["c_top", "r_universal"])
+@pytest.mark.parametrize(("operand", "operand_tag"), [("c_top", "ConceptTag"), ("r_universal", "RoleTag")])
 def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(
-    gripper_planning_domain: formalism.PlanningDomain, operand: str
+    gripper_planning_domain: formalism.PlanningDomain, operand: str, operand_tag: str
 ) -> None:
     context = DomainContext(gripper_planning_domain)
     policy = parse_sketch(
@@ -115,7 +115,8 @@ def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(
     dictionaries = Dictionaries()
     register_table(dictionaries, semantics.ConstructorBoolean, "booleans", "x")
     register_table(dictionaries, semantics.BooleanSemanticNonempty, "nonempty", "b")
-    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ConceptTag.*RoleTag"):
+    # The message names the operand's own kind, the one that is unregistered.
+    with pytest.raises(ValueError, match=rf"^Unregistered serialization type: .*Constructor<[^>]*{operand_tag}>"):
         serialize(dictionaries, expression)
 
     dictionaries = Dictionaries()
