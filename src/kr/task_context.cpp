@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/state_builder.hpp>
 #include <utility>
 #include <yggdrasil/formalism/builder_instantiations.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
@@ -68,7 +69,7 @@ YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::GroundExecutionRepository, 1)
 YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::LiftedExecutionRepository, 1)
 YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::ControlBuilder, 9)
 YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::ControlBuilder, 8)
-YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::GroundExecutionBuilder, 10)
-YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::LiftedExecutionBuilder, 10)
-YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::GroundExecutionBuilder, 9)
-YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::LiftedExecutionBuilder, 9)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::GroundExecutionBuilder, 11)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::LiftedExecutionBuilder, 11)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::GroundExecutionBuilder, 10)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::LiftedExecutionBuilder, 10)

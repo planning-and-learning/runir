@@ -12,11 +12,14 @@
 #include <cassert>
 #include <cista/containers/vector.h>
 #include <memory>
+#include <span>
 #include <tuple>
 #include <urd/memory.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
+#include <yggdrasil/formalism/free_relations.hpp>
+#include <yggdrasil/formalism/values.hpp>
 
 namespace runir::kr::database::detail
 {
@@ -61,14 +64,58 @@ struct GenericJoinTrie
         return found == children.end() ? nullptr : found->second.get();
     }
 
-    [[nodiscard]] bool contains(const urd::packed_row<false>& row, std::span<const ColumnSlice> keys) const;
-    [[nodiscard]] bool contains(std::span<const ygg::Value> row, std::span<const ColumnSlice> keys) const;
+    /// Whether the trie holds the row's key values (its values at keys, in order).
+    template<ygg::RowValues R>
+    [[nodiscard]] bool contains(const R& row, std::span<const ColumnSlice> keys) const
+    {
+        const auto* node = this;
+        for (const auto key : keys)
+        {
+            node = node->find(field_value(row, key.position));
+            if (!node)
+                return false;
+        }
+        return node->rows != 0;
+    }
 
-    bool insert(const urd::packed_row<false>& row, std::span<const ColumnSlice> keys);
-    bool insert(std::span<const ygg::Value> row, std::span<const ColumnSlice> keys);
+    /// Adds the row's key values; whether they were new.
+    template<ygg::RowValues R>
+    bool insert(const R& row, std::span<const ColumnSlice> keys)
+    {
+        if (keys.empty())
+        {
+            const bool inserted = rows == 0;
+            rows = 1;
+            return inserted;
+        }
+        const auto value = field_value(row, keys.front().position);
+        auto found = children.find(value);
+        if (found == children.end())
+            found = children.emplace(value, std::make_unique<GenericJoinTrie>()).first;
+        if (!found->second->insert(row, keys.subspan(1)))
+            return false;
+        ++rows;
+        return true;
+    }
 
-    bool erase(const urd::packed_row<false>& row, std::span<const ColumnSlice> keys);
-    bool erase(std::span<const ygg::Value> row, std::span<const ColumnSlice> keys);
+    /// Removes the row's key values; whether the trie held them.
+    template<ygg::RowValues R>
+    bool erase(const R& row, std::span<const ColumnSlice> keys)
+    {
+        if (keys.empty())
+        {
+            const bool erased = rows != 0;
+            rows = 0;
+            return erased;
+        }
+        const auto found = children.find(field_value(row, keys.front().position));
+        if (found == children.end() || !found->second->erase(row, keys.subspan(1)))
+            return false;
+        --rows;
+        if (found->second->rows == 0)
+            children.erase(found);
+        return true;
+    }
 
     void clear()
     {

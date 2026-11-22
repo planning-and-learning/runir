@@ -78,8 +78,8 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     const auto object = search->task->get_domain().get_domain().get_constants()[0];
     registers.concept_values[5] = object.index();
     registers.role_values[7] = ::cista::pair(object.index(), object.index());
-    const auto empty_arguments = kr::dl::semantics::insert(denotations, arguments).first;
-    const auto register_values = kr::dl::semantics::insert(denotations, registers).first;
+    const auto empty_arguments = denotations.insert(arguments).first;
+    const auto register_values = denotations.insert(registers).first;
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(), builder, storage, empty_arguments, register_values);
     const auto nominal = kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", search->task->get_domain().get_domain(), *repository);
     auto persistent_memo = kr::dl::semantics::DenotationCaches {};
@@ -91,7 +91,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
                                                                                 empty_arguments,
                                                                                 register_values);
     arguments.concept_arguments.push_back(kr::dl::semantics::evaluate<tyr::GroundTag>(nominal, persistent).index());
-    const auto argument_values = kr::dl::semantics::insert(denotations, arguments).first;
+    const auto argument_values = denotations.insert(arguments).first;
     const auto expression = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_rename (source target)
                 (q_project (x z)
@@ -174,8 +174,8 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
-    const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
-    const auto register_values = kr::dl::semantics::insert(denotations, registers).first;
+    const auto arguments = denotations.insert(argument_data).first;
+    const auto register_values = denotations.insert(registers).first;
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(), builder, storage, arguments, register_values);
     ASSERT_EQ(graph.initialize(context).get_result().get_rows().size(), 2);
 
@@ -356,7 +356,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
-    const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
+    const auto arguments = denotations.insert(argument_data).first;
     const auto context_for = [&](size_t i)
     {
         return kr::dl::semantics::StateEvaluationContext<tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>(states[i],

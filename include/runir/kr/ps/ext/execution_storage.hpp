@@ -110,7 +110,7 @@ public:
     InternedExecutionStorage(runir::kr::TaskContextPtr<Kind> context, ProgramView program) : m_context(std::move(context)), m_program(program) {}
 
     runir::kr::dl::semantics::RegisterValuesView registers(urd::data<runir::kr::dl::semantics::RegisterValues>& data)
-    { return insert(*m_context->dl_denotation_repository, data).first; }
+    { return m_context->dl_denotation_repository->insert(data).first; }
 
     [[nodiscard]] StateView view(StoredState state) const noexcept { return state; }
 
@@ -148,7 +148,7 @@ public:
                      entry,
                      entry.get_entry_memory_state(),
                      registers(*empty),
-                     insert(*m_context->dl_denotation_repository, *arguments).first,
+                     m_context->dl_denotation_repository->insert(*arguments).first,
                      std::optional<CallStackView>());
     }
 
@@ -280,7 +280,7 @@ public:
                      entry,
                      entry.get_entry_memory_state(),
                      registers(*empty),
-                     insert(*m_context->dl_denotation_repository, *arguments).first,
+                     m_context->dl_denotation_repository->insert(*arguments).first,
                      std::optional<CallStackView>());
     }
 

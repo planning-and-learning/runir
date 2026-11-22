@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_DETAIL_CONSTRUCTOR_REPOSITORY_HPP_
 #define RUNIR_KR_DL_DETAIL_CONSTRUCTOR_REPOSITORY_HPP_
 
+#include "tyr/formalism/repository.hpp"
 #include "runir/kr/dl/declarations.hpp"
 
 #include <boost/mp11.hpp>
@@ -57,12 +58,8 @@ public:
     using Base::find;
     using Base::insert;
     using Base::view;
-    using NestsBase::find;
     using NestsBase::get;
     using NestsBase::get_ptr;
-    using NestsBase::insert;
-    using NestsBase::repository_for;
-    using NestsBase::view;
 };
 
 template<typename RepositoryTypes>

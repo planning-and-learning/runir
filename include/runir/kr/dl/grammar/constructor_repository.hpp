@@ -38,12 +38,6 @@ using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, boost::mp1
 using runir::kr::dl::detail::get_repository;
 using ygg::formalism::checkout;
 
-template<typename T>
-    requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-void prepare_for_insert(ConstructorRepository&, urd::data<T>& data)
-{ canonicalize(data); }
-
-using ygg::formalism::insert;
 
 }  // namespace runir::kr::dl::grammar
 

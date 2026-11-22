@@ -31,14 +31,10 @@ static_assert(requires(const View& view) {
     view.get_variant();
 });
 
-static_assert(requires(Data& data) {
-    canonicalize(data);
-    { is_canonical(data) } -> std::same_as<bool>;
-});
 static_assert(requires(kr::ps::ext::Repository& repository, urd::data<kr::ps::Rule<kr::BaseFamilyTag>>& data) {
     canonicalize(data);
     { is_canonical(data) } -> std::same_as<bool>;
-    kr::ps::ext::insert(repository, data);
+    repository.insert(data);
 });
 
 }

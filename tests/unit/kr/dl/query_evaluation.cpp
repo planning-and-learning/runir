@@ -2,7 +2,6 @@
 #include "record_copy.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
 
 #include <algorithm>
 #include <array>
@@ -150,8 +149,8 @@ void check_queries()
     auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
                                                                    builder,
                                                                    storage,
-                                                                   kr::dl::semantics::insert(denotations, empty_arguments).first,
-                                                                   kr::dl::semantics::insert(denotations, registers).first);
+                                                                   denotations.insert(empty_arguments).first,
+                                                                   denotations.insert(registers).first);
 
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
@@ -246,8 +245,8 @@ void check_queries()
         auto updated = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
                                                                        builder,
                                                                        storage,
-                                                                       kr::dl::semantics::insert(denotations, empty_arguments).first,
-                                                                       kr::dl::semantics::insert(denotations, registers).first);
+                                                                       denotations.insert(empty_arguments).first,
+                                                                       denotations.insert(registers).first);
         return kr::dl::semantics::evaluate<Kind>(expression, updated);
     };
     const auto register_count = kr::ps::ext::dl::parse_numerical("(n_count (q_join " + triple + " (q_concept x (c_register 0))))", domain, *repository);
@@ -286,8 +285,8 @@ void check_queries()
     auto argument_context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
                                                                             builder,
                                                                             storage,
-                                                                            kr::dl::semantics::insert(denotations, argument_values).first,
-                                                                            kr::dl::semantics::insert(denotations, registers).first);
+                                                                            denotations.insert(argument_values).first,
+                                                                            denotations.insert(registers).first);
     const auto argument_count = kr::ps::ext::dl::parse_numerical("(n_count (q_join " + triple + " (q_concept x (c_argument 0))))", domain, *repository);
     // An invalid Ext argument must propagate through DL/query variant dispatch, not terminate.
     EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(argument_count, context), std::invalid_argument);
@@ -311,8 +310,8 @@ void check_queries()
     auto other_argument_context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
                                                                                   builder,
                                                                                   storage,
-                                                                                  kr::dl::semantics::insert(denotations, argument_values).first,
-                                                                                  kr::dl::semantics::insert(denotations, registers).first);
+                                                                                  denotations.insert(argument_values).first,
+                                                                                  denotations.insert(registers).first);
     storage.reset_dynamic();
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument_count, other_argument_context).get_value(), 0);
     EXPECT_EQ(argument_context.arguments().template arguments<kr::dl::ConceptTag>()[0].index(), a_set.index());
@@ -322,8 +321,8 @@ void check_queries()
     auto next = kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().get_state(),
                                                                 builder,
                                                                 storage,
-                                                                kr::dl::semantics::insert(denotations, empty_arguments).first,
-                                                                kr::dl::semantics::insert(denotations, registers).first);
+                                                                denotations.insert(empty_arguments).first,
+                                                                denotations.insert(registers).first);
     const auto triple_count = kr::ps::ext::dl::parse_numerical("(n_count " + triple + ")", domain, *repository);
     const auto derived_count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_atomic_state "copied" (x y z))))", domain, *repository);
     const auto ready_test = kr::ps::ext::dl::parse_boolean("(b_nonempty " + ready + ")", domain, *repository);
@@ -339,7 +338,7 @@ void check_queries()
     {
         auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
         argument_data.concept_arguments.push_back(a_set.index());
-        const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
+        const auto arguments = denotations.insert(argument_data).first;
         const auto& planning_state = initial.get_state();
         auto planning_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
         planning_builder.assign(planning_state);
@@ -398,8 +397,8 @@ void check_distance_queries()
     auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
                                                                    builder,
                                                                    storage,
-                                                                   kr::dl::semantics::insert(denotations, arguments).first,
-                                                                   kr::dl::semantics::insert(denotations, registers).first);
+                                                                   denotations.insert(arguments).first,
+                                                                   denotations.insert(registers).first);
     // The previous evaluation: min_distance over fully evaluated sources, edges, and targets.
     const auto reference = [&](const std::string& expression)
     {
@@ -518,10 +517,10 @@ void check_distance_queries()
     mismatched.sources = source.index();
     mismatched.edges = role.index();
     mismatched.targets = parse_query(pair("c"), domain, *repository).index();
-    EXPECT_THROW(static_cast<void>(kr::dl::insert(*repository, mismatched)), std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(repository->insert(mismatched)), std::invalid_argument);
     mismatched.edges = parse_query(pair_edges, domain, *repository).index();
     mismatched.targets = source.index();
-    EXPECT_THROW(static_cast<void>(kr::dl::insert(*repository, mismatched)), std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(repository->insert(mismatched)), std::invalid_argument);
 }
 
 void check_cached_queries()
@@ -539,42 +538,42 @@ void check_cached_queries()
 
     auto column_data = urd::data<kr::dl::QueryColumn>();
     column_data.name = "x";
-    const auto x = kr::dl::insert(repo, column_data).first.index();
+    const auto x = repo.insert(column_data).first.index();
     column_data.name = "renamed";
-    const auto renamed_column = kr::dl::insert(repo, column_data).first.index();
+    const auto renamed_column = repo.insert(column_data).first.index();
     auto top_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
-    auto top_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(repo, top_data).first.index(), false);
-    const auto top = kr::dl::insert(repo, top_wrapper).first;
+    auto top_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(repo.insert(top_data).first.index(), false);
+    const auto top = repo.insert(top_wrapper).first;
     using Lift = kr::dl::Query<kr::dl::QueryConceptTag>;
     auto lift_data = urd::data<Lift>();
     lift_data.operand = top.index();
-    EXPECT_THROW(static_cast<void>(kr::dl::insert(repo, lift_data)), std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(repo.insert(lift_data)), std::invalid_argument);
     EXPECT_EQ(repo.template size<Lift>(), 0);
     lift_data.columns.push_back(x);
-    const auto [lift, created] = kr::dl::insert(repo, lift_data);
+    const auto [lift, created] = repo.insert(lift_data);
     EXPECT_TRUE(created);
-    const auto [duplicate_lift, duplicate_created] = kr::dl::insert(repo, lift_data);
+    const auto [duplicate_lift, duplicate_created] = repo.insert(lift_data);
     EXPECT_FALSE(duplicate_created);
     EXPECT_EQ(duplicate_lift.index(), lift.index());
     EXPECT_EQ(repo.template size<Lift>(), 1);
     auto query_data = urd::data<kr::dl::Query<>>();
     query_data.variant = lift.index();
-    const auto query = kr::dl::insert(repo, query_data).first;
+    const auto query = repo.insert(query_data).first;
     auto rename_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
     rename_data.operand = query.index();
     rename_data.columns.push_back(renamed_column);
-    query_data.variant = kr::dl::insert(repo, rename_data).first.index();
-    const auto renamed = kr::dl::insert(repo, query_data).first;
+    query_data.variant = repo.insert(rename_data).first.index();
+    const auto renamed = repo.insert(query_data).first;
 
     auto expected_columns = urd::flat_vector<urd::index<kr::dl::QueryColumn>>();
     expected_columns.push_back(renamed_column);
     expected_columns.push_back(x);
     const auto check_inferred_schema = [&](auto& data)
     {
-        const auto concrete = kr::dl::insert(repo, data).first;
-        EXPECT_EQ(repo[concrete.index()].columns, expected_columns);
+        const auto concrete = repo.insert(data).first;
+        EXPECT_EQ(repo[concrete.index()]->columns, expected_columns);
 
-        check_relocated_data(repo[concrete.index()],
+        check_relocated_data(*repo[concrete.index()],
                              [&](const auto& decoded)
                              {
                                  EXPECT_EQ(decoded.columns, expected_columns);
@@ -612,8 +611,8 @@ void check_cached_queries()
             stale.schema.clear();
         if constexpr (PlannedRecord<std::remove_cvref_t<decltype(stale)>>)
             stale.plan = {};
-        EXPECT_EQ(stale, repo[concrete.index()]);
-        const auto [same, stale_created] = ygg::formalism::insert(repo, stale);
+        EXPECT_EQ(stale, *repo[concrete.index()]);
+        const auto [same, stale_created] = repo.insert(stale);
         EXPECT_FALSE(stale_created);
         EXPECT_EQ(same.index(), concrete.index());
         EXPECT_EQ(stale.columns, expected_columns);
@@ -654,7 +653,7 @@ void check_cached_queries()
         }
 
         query_data.variant = concrete.index();
-        const auto wrapper = kr::dl::insert(repo, query_data).first;
+        const auto wrapper = repo.insert(query_data).first;
         EXPECT_TRUE(std::ranges::equal(columns_of(wrapper), expected_columns, {}, [](auto column) { return column.index(); }));
         return wrapper;
     };
@@ -685,8 +684,8 @@ void check_cached_queries()
     const auto slice_position = [](const runir::kr::database::ColumnSlice& slice) { return slice.position; };
     const auto check_projection_plan = [&](auto& data, auto positions)
     {
-        const auto concrete = kr::dl::insert(repo, data).first;
-        check_relocated_data(repo[concrete.index()],
+        const auto concrete = repo.insert(data).first;
+        check_relocated_data(*repo[concrete.index()],
                              [&](const auto& decoded)
                              {
                                  EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions, {}, slice_position));
@@ -708,8 +707,8 @@ void check_cached_queries()
                              });
         auto stale = runir::tests::copy_fields(data);
         stale.plan = {};
-        EXPECT_EQ(stale, repo[concrete.index()]);
-        const auto [same, stale_created] = kr::dl::insert(repo, stale);
+        EXPECT_EQ(stale, *repo[concrete.index()]);
+        const auto [same, stale_created] = repo.insert(stale);
         EXPECT_FALSE(stale_created);
         EXPECT_EQ(same.index(), concrete.index());
         EXPECT_TRUE(std::ranges::equal(stale.plan.positions(), positions, {}, slice_position));
@@ -748,8 +747,8 @@ void check_cached_queries()
     check_inferred_schema(value_data);
 
     auto count_data = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>>(renamed.index());
-    auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(kr::dl::insert(repo, count_data).first.index(), false);
-    const auto count = kr::dl::insert(repo, count_wrapper).first;
+    auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(repo.insert(count_data).first.index(), false);
+    const auto count = repo.insert(count_wrapper).first;
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).get_value(), 3);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).get_value(), 3);
     EXPECT_TRUE(caches.find(true, top).has_value());
@@ -758,8 +757,8 @@ void check_cached_queries()
     projection_data.operand = renamed.index();
     projection_data.columns.push_back(renamed_column);
     check_projection_plan(projection_data, std::array<size_t, 1> { 0 });
-    auto projection_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(repo, projection_data).first.index(), false);
-    const auto projection = kr::dl::insert(repo, projection_wrapper).first;
+    auto projection_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(repo.insert(projection_data).first.index(), false);
+    const auto projection = repo.insert(projection_wrapper).first;
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(projection, context).value().count(), 3);
 
     const auto held = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
@@ -772,8 +771,8 @@ void check_cached_queries()
     auto nested_rename_data = runir::tests::copy_fields(rename_data);
     nested_rename_data.operand = renamed.index();
     nested_rename_data.columns[0] = x;
-    query_data.variant = kr::dl::insert(repo, nested_rename_data).first.index();
-    const auto nested = kr::dl::semantics::evaluate<tyr::GroundTag>(kr::dl::insert(repo, query_data).first, context);
+    query_data.variant = repo.insert(nested_rename_data).first.index();
+    const auto nested = kr::dl::semantics::evaluate<tyr::GroundTag>(repo.insert(query_data).first, context);
     EXPECT_EQ(nested.columns()[0].label, ColumnIndex(ygg::uint_t(x.value)));
     EXPECT_TRUE(std::ranges::equal(nested.get_rows(), held_storage));
     EXPECT_EQ(nested.get_rows().size(), held.get_rows().size());
@@ -782,10 +781,10 @@ void check_cached_queries()
     for (int i = 0; i < 64; ++i)
     {
         column_data.name = "extra_" + std::to_string(i);
-        const auto extra_column = kr::dl::insert(repo, column_data).first.index();
+        const auto extra_column = repo.insert(column_data).first.index();
         rename_data.columns[0] = extra_column;
-        query_data.variant = kr::dl::insert(repo, rename_data).first.index();
-        const auto extra_query = kr::dl::insert(repo, query_data).first;
+        query_data.variant = repo.insert(rename_data).first.index();
+        const auto extra_query = repo.insert(query_data).first;
         const auto other = kr::dl::semantics::evaluate<tyr::GroundTag>(extra_query, context);
         EXPECT_TRUE(std::ranges::equal(other.get_rows(), held_storage));
         EXPECT_EQ(held.get_rows().size(), 3);
@@ -798,14 +797,14 @@ void check_cached_queries()
     auto& other_repo = *other_repository;
     EXPECT_NE(other_repo.layer(), repo.layer());
     column_data.name = "unused";
-    static_cast<void>(kr::dl::insert(other_repo, column_data));
+    static_cast<void>(other_repo.insert(column_data));
     column_data.name = "other";
-    const auto other_column = kr::dl::insert(other_repo, column_data).first.index();
-    top_wrapper.variant = kr::dl::insert(other_repo, top_data).first.index();
-    lift_data.operand = kr::dl::insert(other_repo, top_wrapper).first.index();
+    const auto other_column = other_repo.insert(column_data).first.index();
+    top_wrapper.variant = other_repo.insert(top_data).first.index();
+    lift_data.operand = other_repo.insert(top_wrapper).first.index();
     lift_data.columns[0] = other_column;
-    query_data.variant = kr::dl::insert(other_repo, lift_data).first.index();
-    const auto other_query = kr::dl::insert(other_repo, query_data).first;
+    query_data.variant = other_repo.insert(lift_data).first.index();
+    const auto other_query = other_repo.insert(query_data).first;
     ASSERT_EQ(other_query.index(), query.index());
     ASSERT_NE(other_column, x);
     const auto cached = kr::dl::semantics::evaluate<tyr::GroundTag>(query, context);
@@ -849,8 +848,8 @@ void check_query_cache_across_states()
     auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
                                                                    builder,
                                                                    storage,
-                                                                   kr::dl::semantics::insert(denotations, empty_arguments).first,
-                                                                   kr::dl::semantics::insert(denotations, registers).first);
+                                                                   denotations.insert(empty_arguments).first,
+                                                                   denotations.insert(registers).first);
     const auto fixed = parse_query(R"((q_atomic_state "fixed" (x y z)))", domain, *repository);
     const auto goal = parse_query(R"((q_atomic_goal "triple" false (x y z)))", domain, *repository);
     const auto derived = parse_query(R"((q_atomic_state "copied" (x y z)))", domain, *repository);
@@ -904,8 +903,8 @@ void check_query_cache_across_states()
     auto next = kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().get_state(),
                                                                 builder,
                                                                 storage,
-                                                                kr::dl::semantics::insert(denotations, empty_arguments).first,
-                                                                kr::dl::semantics::insert(denotations, registers).first);
+                                                                denotations.insert(empty_arguments).first,
+                                                                denotations.insert(registers).first);
     storage.reset_dynamic();
     EXPECT_TRUE(caches.get_queries(false).empty());
     EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
@@ -984,8 +983,8 @@ void check_query_cache_across_bindings()
     auto context = kr::dl::semantics::StateEvaluationContext<Kind>(state,
                                                                    builder,
                                                                    storage,
-                                                                   kr::dl::semantics::insert(denotations, empty_arguments).first,
-                                                                   kr::dl::semantics::insert(denotations, registers).first);
+                                                                   denotations.insert(empty_arguments).first,
+                                                                   denotations.insert(registers).first);
     const auto a = domain.get_constants()[0];
     const auto b = domain.get_constants()[1];
     const auto c = domain.get_constants()[2];
@@ -1000,8 +999,8 @@ void check_query_cache_across_bindings()
         return kr::dl::semantics::StateEvaluationContext<Kind>(state,
                                                                builder,
                                                                storage,
-                                                               kr::dl::semantics::insert(denotations, argument_values).first,
-                                                               kr::dl::semantics::insert(denotations, registers).first);
+                                                               denotations.insert(argument_values).first,
+                                                               denotations.insert(registers).first);
     };
     registers.concept_values[0] = a.index();
     registers.role_values[0] = ::cista::pair(a.index(), b.index());
@@ -1102,7 +1101,7 @@ void check_predicate_repository_identity()
         ASSERT_LT(predicate.get_arity(), predicates.size());
         predicates[predicate.get_arity()] = predicate.index();
         auto data = urd::data<Predicate>("foreign_" + predicate.get_name().str(), predicate.get_arity());
-        const auto other = tyr::formalism::insert(*foreign, data).first;
+        const auto other = foreign->insert(data).first;
         ASSERT_EQ(other.index(), predicate.index());
         ASSERT_NE(other, predicate);
         EXPECT_EQ(task->get_repository()->view(predicate.index()), predicate);
@@ -1122,30 +1121,30 @@ void check_predicate_repository_identity()
             concept_data.predicate = predicates[1];
             if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
                 concept_data.polarity = true;
-            auto concept_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*repository, concept_data).first.index(), false);
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, concept_wrapper).first, context).value().count(), size_t(expected));
+            auto concept_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(repository->insert(concept_data).first.index(), false);
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(concept_wrapper).first, context).value().count(), size_t(expected));
 
             auto role_data = urd::data<kr::dl::Role<kr::dl::SemanticFamily, Tag>>();
             role_data.predicate = predicates[2];
             if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
                 role_data.polarity = true;
-            auto role_wrapper = urd::data<kr::dl::Constructor<kr::dl::RoleTag>>(kr::dl::insert(*repository, role_data).first.index(), false);
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, role_wrapper).first, context).storage_bits().count(), size_t(expected));
+            auto role_wrapper = urd::data<kr::dl::Constructor<kr::dl::RoleTag>>(repository->insert(role_data).first.index(), false);
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(role_wrapper).first, context).storage_bits().count(), size_t(expected));
 
             auto boolean_data = urd::data<kr::dl::Boolean<kr::dl::SemanticFamily, Tag>>(predicates[0], true);
-            auto boolean_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(kr::dl::insert(*repository, boolean_data).first.index(), false);
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, boolean_wrapper).first, context).get_value(), expected);
+            auto boolean_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(repository->insert(boolean_data).first.index(), false);
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(boolean_wrapper).first, context).get_value(), expected);
 
             auto column = urd::data<kr::dl::QueryColumn>();
             column.name = "x";
             auto query_data = urd::data<kr::dl::Query<Tag>>();
             query_data.predicate = predicates[1];
-            query_data.columns.push_back(kr::dl::insert(*repository, column).first.index());
+            query_data.columns.push_back(repository->insert(column).first.index());
             if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
                 query_data.polarity = true;
             auto query_wrapper = urd::data<kr::dl::Query<>>();
-            query_wrapper.variant = kr::dl::insert(*repository, query_data).first.index();
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, query_wrapper).first, context).get_rows().size(), size_t(expected));
+            query_wrapper.variant = repository->insert(query_data).first.index();
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(query_wrapper).first, context).get_rows().size(), size_t(expected));
         };
         check.template operator()<kr::dl::AtomicStateTag<Fact>>();
         check.template operator()<kr::dl::AtomicGoalTag<Fact>>();
@@ -1187,11 +1186,8 @@ void check_query_object_views()
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto arguments = urd::data<kr::dl::semantics::CallArguments> {};
     auto registers = urd::data<kr::dl::semantics::RegisterValues> {};
-    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(state,
-                                                                   builder,
-                                                                   storage,
-                                                                   kr::dl::semantics::insert(denotations, arguments).first,
-                                                                   kr::dl::semantics::insert(denotations, registers).first);
+    auto context =
+        kr::dl::semantics::StateEvaluationContext<Kind>(state, builder, storage, denotations.insert(arguments).first, denotations.insert(registers).first);
     const auto query = parse_query(R"((q_atomic_state "fixed" (x y)))", task->get_domain().get_domain(), *constructors);
     const auto constant = task->get_task().get_domain().get_constants()[0];
     const auto local = task->get_task().get_objects()[0];
@@ -1263,8 +1259,8 @@ void check_multiword_bit_evaluation()
     auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
                                                                    builder,
                                                                    storage,
-                                                                   kr::dl::semantics::insert(denotations, arguments).first,
-                                                                   kr::dl::semantics::insert(denotations, registers).first);
+                                                                   denotations.insert(arguments).first,
+                                                                   denotations.insert(registers).first);
     const auto query = [&](const std::string& expression) { return kr::dl::semantics::evaluate<Kind>(parse_query(expression, domain, *repository), context); };
     const auto concept_value = [&](const std::string& expression)
     { return kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_concept(expression, domain, *repository), context); };
@@ -1382,8 +1378,8 @@ void check_distance_reuse_across_states()
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto arguments = urd::data<kr::dl::semantics::CallArguments>();
     auto registers = urd::data<kr::dl::semantics::RegisterValues>();
-    const auto argument_view = kr::dl::semantics::insert(denotations, arguments).first;
-    const auto register_view = kr::dl::semantics::insert(denotations, registers).first;
+    const auto argument_view = denotations.insert(arguments).first;
+    const auto register_view = denotations.insert(registers).first;
 
     const auto edge = std::string(R"((r_atomic_state "edge"))");
     const auto edges = "(q_role (x y) " + edge + ")";
@@ -1472,13 +1468,13 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
     const auto check_metadata = [&](auto expression, bool expected)
     {
         EXPECT_EQ(expression.get_is_static(), expected);
-        check_relocated_data((*repository)[expression.index()], [&](const auto& decoded) { EXPECT_EQ(decoded.is_static, expected); });
-        const auto& stored = (*repository)[expression.index()];
+        check_relocated_data(*(*repository)[expression.index()], [&](const auto& decoded) { EXPECT_EQ(decoded.is_static, expected); });
+        const auto& stored = *(*repository)[expression.index()];
         auto stale = std::remove_cvref_t<decltype(stored)>(stored.variant, !expected);
-        EXPECT_EQ(stale, (*repository)[expression.index()]);
+        EXPECT_EQ(stale, *(*repository)[expression.index()]);
         using Data = std::remove_cvref_t<decltype(stale)>;
-        EXPECT_EQ(urd::Hash<Data>()(stale), urd::Hash<Data>()((*repository)[expression.index()]));
-        const auto [same, created] = ygg::formalism::insert(*repository, stale);
+        EXPECT_EQ(urd::Hash<Data>()(stale), urd::Hash<Data>()(*(*repository)[expression.index()]));
+        const auto [same, created] = repository->insert(stale);
         EXPECT_FALSE(created);
         EXPECT_EQ(same.index(), expression.index());
         EXPECT_EQ(stale.is_static, expected);
@@ -1521,8 +1517,8 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state,
                                                                              builder,
                                                                              storage,
-                                                                             kr::dl::semantics::insert(denotations, empty_arguments).first,
-                                                                             kr::dl::semantics::insert(denotations, registers).first);
+                                                                             denotations.insert(empty_arguments).first,
+                                                                             denotations.insert(registers).first);
     const auto description = std::string(R"((q_atomic_state "fixed" (x y z)))");
     const auto query = parse_query(description, domain, *repository);
     const auto renamed = parse_query("(q_rename (u v w) " + description + ")", domain, *repository);
@@ -1553,41 +1549,42 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     for (const auto column : columns_of(query))
         raw_rename_data.columns.push_back(column.index());
     std::swap(raw_rename_data.columns.front(), raw_rename_data.columns.back());
-    auto raw_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*repository, raw_rename_data).first.index(), false);
+    auto raw_wrapper = urd::data<kr::dl::Query<>>(repository->insert(raw_rename_data).first.index(), false);
     const auto raw = repository->insert(raw_wrapper).first;
-    EXPECT_FALSE(raw.get_is_static());
+    // is_static is derived by preparation from the static operand, whatever the hand-built record says.
+    EXPECT_TRUE(raw.get_is_static());
     const auto raw_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
     EXPECT_TRUE(std::ranges::equal(raw_rows.get_rows(), original_rows.get_rows()));
-    EXPECT_TRUE(caches.find_query(false, raw).has_value());
+    EXPECT_TRUE(caches.find_query(true, raw).has_value());
 
     auto raw_nested_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
     raw_nested_data.operand = raw.index();
     for (const auto column : columns_of(nested))
         raw_nested_data.columns.push_back(column.index());
-    auto raw_nested_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*repository, raw_nested_data).first.index(), false);
+    auto raw_nested_wrapper = urd::data<kr::dl::Query<>>(repository->insert(raw_nested_data).first.index(), false);
     const auto raw_nested = repository->insert(raw_nested_wrapper).first;
-    EXPECT_FALSE(raw_nested.get_is_static());
+    EXPECT_TRUE(raw_nested.get_is_static());
     const auto raw_nested_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
     EXPECT_TRUE(std::ranges::equal(raw_nested_rows.get_rows(), original_rows.get_rows()));
     EXPECT_TRUE(std::ranges::equal(raw_nested_rows.columns(), schema_of(raw_nested)));
     EXPECT_TRUE(std::ranges::equal(raw_rows.columns(), schema_of(raw)));
     EXPECT_TRUE(std::ranges::equal(original_rows.columns(), schema_of(query)));
-    EXPECT_TRUE(caches.find_query(false, raw_nested).has_value());
+    EXPECT_TRUE(caches.find_query(true, raw_nested).has_value());
 
     storage.reset_all();
-    EXPECT_FALSE(caches.find_query(false, raw).has_value());
-    EXPECT_FALSE(caches.find_query(false, raw_nested).has_value());
+    EXPECT_FALSE(caches.find_query(true, raw).has_value());
+    EXPECT_FALSE(caches.find_query(true, raw_nested).has_value());
     EXPECT_FALSE(caches.find_query(true, query).has_value());
     const auto rebuilt_nested = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
     EXPECT_EQ(rebuilt_nested.get_rows().size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.columns(), schema_of(raw_nested)));
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
-    EXPECT_TRUE(caches.find_query(false, raw_nested).has_value());
+    EXPECT_TRUE(caches.find_query(true, raw_nested).has_value());
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
     EXPECT_EQ(rebuilt.get_rows().size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), schema_of(raw)));
     EXPECT_TRUE(std::ranges::equal(rebuilt.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
-    EXPECT_TRUE(caches.find_query(false, raw).has_value());
+    EXPECT_TRUE(caches.find_query(true, raw).has_value());
 }
 
 TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
@@ -1646,8 +1643,8 @@ TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorReleas
                                                                              output_memo,
                                                                              denotations,
                                                                              intermediates,
-                                                                             kr::dl::semantics::insert(denotations, arguments).first,
-                                                                             kr::dl::semantics::insert(denotations, registers).first);
+                                                                             denotations.insert(arguments).first,
+                                                                             denotations.insert(registers).first);
     const auto expression = parse_query(R"((q_rename (a b c) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto result = kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context);
     ASSERT_EQ(result.get_rows().size(), 4);

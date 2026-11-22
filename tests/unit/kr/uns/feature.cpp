@@ -35,8 +35,6 @@ static_assert(requires(Data& data) {
     data.variant;
     { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const Index&, const decltype(Data::variant)&>>;
     requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<Data>>>, decltype(Data::variant)>;
-    { canonicalize(data) } -> std::same_as<void>;
-    { is_canonical(data) } -> std::same_as<bool>;
 });
 static_assert(requires(const View& view) {
     view.index();

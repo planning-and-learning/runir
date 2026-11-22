@@ -144,7 +144,7 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     EXPECT_EQ(modules[0].get_symbol().get_name(), "caller");
     EXPECT_EQ(modules[1].get_symbol().get_name(), "callee");
 
-    ASSERT_EQ(modules[0].context()[modules[0].index()].memory_transitions.size(), 1);
+    ASSERT_EQ(modules[0].context()[modules[0].index()]->memory_transitions.size(), 1);
     const auto rules = modules[0].get_memory_transitions()[0];
     ASSERT_FALSE(rules.empty());
     auto found_call_rule = false;
@@ -650,7 +650,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                             EXPECT_EQ(std::visit([](auto concrete) { return concrete.get_symbol(); }, rule.get_feature().get_variant()), "F");
                             EXPECT_EQ(rule.get_slot().get_name(), "r");
                             EXPECT_EQ(rule.get_effects().size(), expected_effects);
-                            auto data = runir::tests::copy_fields(rule.context()[rule.index()]);
+                            auto data = runir::tests::copy_fields(*rule.context()[rule.index()]);
                             EXPECT_TRUE(kr::ps::ext::is_canonical(data));
                             urd::clear_fields(data);
                             EXPECT_TRUE(data.effects.empty());
@@ -808,19 +808,19 @@ TEST(RunirTests, ExtChooseOrderRoundTrip)
                 {
                     ASSERT_EQ(rule.get_order().size(), 3U);
                     EXPECT_EQ(rule.get_order()[0].get_direction(), kr::ps::ext::OrderDirection::MAX);
-                    auto bytes = cista::serialize(rule.context()[rule.index()]);
-                    using Data = std::remove_cvref_t<decltype(rule.context()[rule.index()])>;
+                    auto bytes = cista::serialize(*rule.context()[rule.index()]);
+                    using Data = std::remove_cvref_t<decltype(*rule.context()[rule.index()])>;
                     const auto* decoded = cista::deserialize<Data>(bytes);
                     EXPECT_EQ(decoded->order.size(), 3U);
                     EXPECT_EQ(decoded->order[1], rule.get_order()[1].index());
                     EXPECT_EQ(decoded->order[0], decoded->order[2]);
                     const auto term = rule.get_order()[1];
-                    const auto& term_data = term.context()[term.index()];
+                    const auto& term_data = *term.context()[term.index()];
                     auto term_bytes = cista::serialize(term_data);
                     const auto* decoded_term = cista::deserialize<urd::data<kr::ps::ext::OrderTerm>>(term_bytes);
                     EXPECT_TRUE(urd::EqualTo<urd::data<kr::ps::ext::OrderTerm>> {}(*decoded_term, term_data));
                     EXPECT_EQ(decoded_term->direction, kr::ps::ext::OrderDirection::MIN);
-                    EXPECT_TRUE(urd::EqualTo<Data> {}(*decoded, rule.context()[rule.index()]));
+                    EXPECT_TRUE(urd::EqualTo<Data> {}(*decoded, *rule.context()[rule.index()]));
                 }
             },
             module_.get_memory_transitions()[0][0].get_variant());

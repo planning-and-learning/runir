@@ -69,8 +69,7 @@ The relation code is data (``formalism/relation_data.hpp``), builders (``formali
 
 **Families.** A relation belongs to a family ``F`` of the layer's relation types, whose pools (one per key
 ``index<F>``) hold its rows. Free relations are the ``Schema`` family, keyed by their column types. The database's
-``Repository`` has only ``Relation<Schema>`` among its symbols (``HasRelations``; ``HasRows`` says a family has
-pools).
+``Repository`` has only ``Relation<Schema>`` among its symbols (``HasRows`` says a family has pools).
 
 **Builders.** ``urd::builder<Relation<F>>`` owns its columns (``urd::data<Columns>``) and a pool of its rows
 (``RowPool``), nothing else: no index and no content identity. The pool key is given where it is interned:
@@ -189,13 +188,16 @@ types share rows, and relations with identical columns and rows share identity r
 Iteration follows the sorted row ids, not value order.
 
 A relation is interned as any record, from scratch records checked out of a ``BuilderStorage`` that lists
-``Row<Schema>``, ``Columns`` and ``Relation<Schema>``: each row first, then the columns, then the relation (whose
-insertion sorts its row ids and checks its columns against its pool):
+``Schema``, ``Row<Schema>``, ``Columns`` and ``Relation<Schema>``: its pool (the Schema of its column types) first,
+then each row, then the columns, then the relation (whose insertion sorts its row ids and checks its columns against
+its pool):
 
 .. code:: cpp
 
    auto relation = checkout<ygg::Relation<ygg::Schema>>(builder);
-   relation->pool = repository.schema(types);
+   auto schema = checkout<ygg::Schema>(builder);
+   schema->column_types.set(types.begin(), types.end());
+   relation->pool = repository.insert(*schema).first.index();
    auto row = checkout<ygg::Row<ygg::Schema>>(builder);
    row->relation = relation->pool;
    for (const auto& values : rows)

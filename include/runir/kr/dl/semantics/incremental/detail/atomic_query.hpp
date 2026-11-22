@@ -78,7 +78,7 @@ template<tyr::formalism::FactKind Fact>
 template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
 void AtomicQueryEvaluator<Fact>::initialize(const State& state)
 {
-    if (!ygg::formalism::contains(*state.get_formalism_repository(), m_predicate))
+    if (!state.get_formalism_repository()->contains(m_predicate))
         throw std::invalid_argument("Incremental atomic query: predicate does not belong to the task repository.");
     m_initialized = false;
     m_result->clear();

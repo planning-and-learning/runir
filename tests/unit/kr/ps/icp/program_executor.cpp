@@ -294,9 +294,9 @@ void check_histories()
 
     // Equal planning state, memory, and registers with different histories must have distinct identities.
     const auto cleared_view = step2.front().target;
-    auto cleared = cleared_view.context()[cleared_view.index()];
+    auto cleared = runir::tests::copy_fields(*cleared_view.context()[cleared_view.index()]);
     cleared.histories = source.get_histories().index();
-    const auto unvisited = kr::ps::icp::insert(*context->icp_execution_repository, cleared).first;
+    const auto unvisited = context->icp_execution_repository->insert(cleared).first;
     EXPECT_NE(unvisited, step2.front().target);
     const auto allowed = successors(expander, unvisited);
     ASSERT_EQ(allowed.size(), 1);
@@ -407,7 +407,7 @@ void check_rejected_bindings_stay_unpublished()
         {
             size_t count = 0;
             for (const auto action : context->search_context->task->get_task().get_domain().get_actions())
-                count += context->search_context->task->get_repository()->size(action.index());
+                count += context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
             return count;
         };
         const auto before = count_bindings();
@@ -546,17 +546,17 @@ void check_rule_evaluator_scheduling()
     {
         auto data = urd::data<kr::ps::icp::Histories>();
         const auto source_histories = source.get_histories();
-        data.concepts = source_histories.context()[source_histories.index()].concepts;
+        data.concepts = source_histories.context()[source_histories.index()]->concepts;
         ASSERT_FALSE(data.concepts.empty());
         data.concepts.push_back(data.concepts.front());
         const auto* buffer = data.concepts.data();
         const auto expected_size = data.concepts.size();
-        const auto [stored, created] = ygg::formalism::insert(*context->icp_control_repository, data);
+        const auto [stored, created] = context->icp_control_repository->insert(data);
         EXPECT_TRUE(created);
-        EXPECT_EQ(stored.context()[stored.index()].concepts, data.concepts);
+        EXPECT_EQ(stored.context()[stored.index()]->concepts, data.concepts);
         EXPECT_EQ(data.concepts.size(), expected_size);
         EXPECT_EQ(data.concepts.data(), buffer);
-        EXPECT_FALSE(kr::ps::icp::insert(*context->icp_control_repository, data).second);
+        EXPECT_FALSE(context->icp_control_repository->insert(data).second);
     }
 
     // Repeated grouped expansions retain action-group and history scratch, while the
@@ -606,13 +606,13 @@ void check_rule_evaluator_scheduling()
     // Repeated occurrences keep module order in both natural and grouped expansion.
     auto& repository = *context->domain_context->icp_repository;
     const auto module_data_view = policy.get_entry_mod();
-    auto module_data = runir::tests::copy_fields(module_data_view.context()[module_data_view.index()]);
+    auto module_data = runir::tests::copy_fields(*module_data_view.context()[module_data_view.index()]);
     module_data.memory_transitions.clear();
     for (const auto row : { 1, 0, 1 })
-        module_data.memory_transitions.push_back(module_data_view.context()[module_data_view.index()].memory_transitions[row]);
-    auto program_data = policy.context()[policy.index()];
-    program_data.entry_mod = kr::ps::icp::insert(repository, module_data).first.index();
-    const auto repeated_policy = kr::ps::icp::insert(repository, program_data).first;
+        module_data.memory_transitions.push_back(module_data_view.context()[module_data_view.index()]->memory_transitions[row]);
+    auto program_data = runir::tests::copy_fields(*policy.context()[policy.index()]);
+    program_data.entry_mod = repository.insert(module_data).first.index();
+    const auto repeated_policy = repository.insert(program_data).first;
     auto repeated_expander = kr::ps::icp::SuccessorExpander<Kind>(context, repeated_policy);
     const auto repeated_source = initial(repeated_expander);
     const auto expected = std::array { natural[2].rule, natural[0].rule, natural[2].rule };

@@ -55,8 +55,8 @@ void check_optimized_queries()
     auto register_data = urd::data<kr::dl::semantics::RegisterValues>();
     register_data.concept_values.resize(1);
     register_data.role_values.resize(1);
-    const auto arguments = kr::dl::semantics::insert(denotations, empty_arguments).first;
-    const auto registers = kr::dl::semantics::insert(denotations, register_data).first;
+    const auto arguments = denotations.insert(empty_arguments).first;
+    const auto registers = denotations.insert(register_data).first;
     // One storage per state, so dynamic results are never shared across states.
     auto storages = urd::Store<urd::sequence<std::unique_ptr<kr::dl::semantics::EvaluationStorage>>>();
     auto contexts = urd::Store<urd::sequence<std::unique_ptr<Context>>>();

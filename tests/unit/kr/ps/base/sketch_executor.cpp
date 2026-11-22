@@ -281,7 +281,7 @@ void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>&
     {
         size_t count = 0;
         for (const auto action : task->get_task().get_domain().get_actions())
-            count += task->get_repository()->size(action.index());
+            count += task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
         return count;
     };
     const auto initial_binding_count = count_bindings();

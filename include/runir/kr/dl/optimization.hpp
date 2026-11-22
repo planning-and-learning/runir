@@ -83,7 +83,7 @@ private:
     {
         auto data = urd::data<T>();
         urd::map_children<ConstructorRepositoryTypes, T>(view, data, [&]<typename U>(RecordView<U> child) { return optimize<U>(child).index(); });
-        return runir::kr::dl::insert(*m_repository, data).first;
+        return m_repository->insert(data).first;
     }
 
     /// Only the projected columns of the query are used, so the optimizer may drop the others early. The projection
@@ -102,7 +102,7 @@ private:
             },
             root.get_variant());
         auto data = urd::make<QueryProjection<Category>>(root, view.get_columns(), runir::kr::database::ProjectionPlan());  // the plan: derived on insert
-        return runir::kr::dl::insert(*m_repository, data).first;
+        return m_repository->insert(data).first;
     }
 
     /// Only emptiness matters, so the optimizer may project the query onto no columns.

@@ -19,6 +19,7 @@ namespace runir::tests::ps_ext_execution
 namespace
 {
 
+/// A view of an index is checked: through the layer that owns it, std::out_of_range where none does.
 template<typename Repository, typename Entity>
 constexpr bool flat_view_is_nothrow = noexcept(std::declval<const Repository&>().view(std::declval<urd::index<Entity>>()));
 
@@ -29,14 +30,14 @@ using Constructors = kr::dl::ConstructorRepository;
 using Register = kr::dl::Register<kr::dl::ConceptTag>;
 using Denotations = kr::dl::semantics::DenotationRepository;
 using Registers = kr::dl::semantics::RegisterValues;
-static_assert(flat_view_is_nothrow<Constructors, Register>);
-static_assert(flat_view_is_nothrow<Denotations, Registers>);
-static_assert(flat_view_is_nothrow<kr::ps::ext::Repository, kr::ps::MemoryState<kr::ExtFamilyTag>>);
-static_assert(flat_view_is_nothrow<kr::ps::ext::ControlRepository, kr::ps::ext::ModuleState>);
+static_assert(!flat_view_is_nothrow<Constructors, Register>);
+static_assert(!flat_view_is_nothrow<Denotations, Registers>);
+static_assert(!flat_view_is_nothrow<kr::ps::ext::Repository, kr::ps::MemoryState<kr::ExtFamilyTag>>);
+static_assert(!flat_view_is_nothrow<kr::ps::ext::ControlRepository, kr::ps::ext::ModuleState>);
 static_assert(!indexed_access_is_nothrow<kr::ps::ext::ControlRepository, kr::ps::ext::ModuleState>);
-static_assert(flat_view_is_nothrow<kr::ps::icp::ControlRepository, kr::ps::icp::Histories>);
+static_assert(!flat_view_is_nothrow<kr::ps::icp::ControlRepository, kr::ps::icp::Histories>);
 static_assert(!indexed_access_is_nothrow<kr::ps::icp::ControlRepository, kr::ps::icp::Histories>);
-static_assert(flat_view_is_nothrow<kr::ps::ExecutionRepository<kr::ExtFamilyTag, tyr::GroundTag>, kr::ps::ext::ProgramState<tyr::GroundTag>>);
+static_assert(!flat_view_is_nothrow<kr::ps::ExecutionRepository<kr::ExtFamilyTag, tyr::GroundTag>, kr::ps::ext::ProgramState<tyr::GroundTag>>);
 
 template<typename Entity, tyr::TaskKind Kind>
 using View = urd::index_view<Entity, kr::ps::ExecutionRepository<kr::ExtFamilyTag, Kind>>;

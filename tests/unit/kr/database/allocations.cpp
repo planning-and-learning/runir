@@ -531,7 +531,7 @@ TEST(YggdrasilTests, DatabaseTypedTupleMembershipAcrossViewsAllocatesAndFreesNot
     const auto row = std::array { ygg::encode_value(ygg::uint_t { 2 }), ygg::encode_value(ygg::uint_t { 5 }) };
     relation.insert(row);
     const auto indexed = runir::tests::ops::intern(repository, relation).first;
-    const auto data_view = urd::resolve(repository[indexed.index()], repository);
+    const auto data_view = urd::resolve(*repository[indexed.index()], repository);
     const auto builder_view = relation.view();
     auto other = Relation(cols({ ColumnIndex(0), ColumnIndex(1) }));
     const auto other_values = std::array { ygg::encode_value(ygg::uint_t { 2 }), ygg::encode_value(ygg::uint_t { 6 }) };

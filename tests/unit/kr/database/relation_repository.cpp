@@ -30,10 +30,20 @@
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/formalism/free_relations.hpp>
 #include <yggdrasil/formalism/relation_repository.hpp>
 
 namespace runir::tests
 {
+/// The Schema of these column types, inserted into `repository` as any record.
+template<std::ranges::input_range Types>
+urd::index<ygg::Schema> insert_schema(ygg::FreeRelationRepository& repository, const Types& types)
+{
+    auto schema = urd::data<ygg::Schema>();
+    schema.column_types.set(std::ranges::begin(types), std::ranges::end(types));
+    return repository.insert(schema).first.index();
+}
+
 using Values = boost::mp11::mp_list<ygg::uint_t>;
 using ColumnIndex = urd::index<ygg::Column>;
 
@@ -68,7 +78,6 @@ using BuilderView = ygg::FreeRelationBuilderView;
 using DataView = urd::borrowed_view<RelationTag, Repository>;
 using IndexView = urd::index_view<RelationTag, Repository>;
 using ColumnsIndex = urd::index<ygg::Columns>;
-using RowIndex = urd::index<ygg::Row<ygg::Schema>>;
 using RowBuilderView = ygg::RowBuilderView<ygg::Schema, ygg::FreeRelationRepository>;
 using LayerRowView = ygg::RowView<ygg::Schema, Repository>;
 using ColumnsIndexView = urd::index_view<ygg::Columns, Repository>;
@@ -91,21 +100,20 @@ static_assert(!::ygg::formalism::SupportsSymbol<Repository, ygg::Column>);
 static_assert(urd::variant_value<decltype(std::declval<const BuilderView&>().row(0))>);  // a row child, in one of its forms
 static_assert(std::same_as<decltype(std::declval<const DataView&>().row(0)), LayerRowView>);
 static_assert(std::same_as<decltype(std::declval<const IndexView&>().row(0)), LayerRowView>);
-static_assert(std::same_as<decltype(std::declval<const IndexView&>().row(0).get_values()), urd::packed_row<false>>);
+static_assert(std::same_as<decltype(std::declval<const IndexView&>().row(0).get_values()), ygg::PackedRow<ygg::Schema>>);
 static_assert(ygg::RowViewConcept<RowBuilderView, ygg::Schema> && ygg::RowViewConcept<LayerRowView, ygg::Schema>);
 
-static_assert(::ygg::formalism::HasRows<Repository, ygg::Schema> && ::ygg::formalism::HasRelations<Repository, ygg::Schema>);
+static_assert(::ygg::formalism::HasRows<Repository, ygg::Schema>);
 static_assert(std::same_as<decltype(std::declval<const IndexView&>().index()), urd::index<RelationTag>>);
 static_assert(!std::is_trivially_copyable_v<urd::data<RelationTag>>);
 static_assert(!std::is_copy_constructible_v<RelationBuilder>);
 static_assert(std::is_copy_constructible_v<IndexView>);
 static_assert(std::same_as<decltype(urd::data<RelationTag>::columns), ColumnsIndex>);
-static_assert(std::same_as<std::ranges::range_value_t<decltype(urd::data<RelationTag>::rows)>, ygg::RowIndex<ygg::Schema>>);
-static_assert(!std::is_constructible_v<ColumnsIndex, RowIndex> && !std::is_constructible_v<RowIndex, ColumnsIndex>);
-static_assert(!std::is_convertible_v<ygg::uint_t, ColumnsIndex> && !std::is_convertible_v<ygg::uint_t, RowIndex>);
-static_assert(!std::is_convertible_v<ColumnsIndex, ygg::uint_t> && !std::is_convertible_v<RowIndex, ygg::uint_t>);
-static_assert(sizeof(ColumnsIndex) == sizeof(ygg::uint_t) && sizeof(RowIndex) == sizeof(ygg::uint_t));
-static_assert(std::is_trivially_copyable_v<ColumnsIndex> && std::is_trivially_copyable_v<RowIndex>);
+static_assert(std::same_as<std::ranges::range_value_t<decltype(urd::data<RelationTag>::rows)>, urd::key<ygg::Schema, ygg::Row<ygg::Schema>>>);
+static_assert(!std::is_convertible_v<ygg::uint_t, ColumnsIndex>);
+static_assert(!std::is_convertible_v<ColumnsIndex, ygg::uint_t>);
+static_assert(sizeof(ColumnsIndex) == sizeof(ygg::uint_t));
+static_assert(std::is_trivially_copyable_v<ColumnsIndex>);
 static_assert(std::same_as<decltype(std::declval<const ColumnsIndexView&>().index()), ColumnsIndex>);
 
 template<typename T, typename L, typename R>
@@ -171,7 +179,7 @@ TEST(YggdrasilTests, DatabaseColumnsInternOrderedSchemasThroughDataAndIndexViews
     pending.values.set(expected.begin(), expected.end());
     const auto index_view = repository.view(original.index());
     EXPECT_TRUE(std::ranges::equal(index_view.get_values(), expected));
-    EXPECT_EQ(index_view.get_values().data(), repository[original.index()].values.data());
+    EXPECT_EQ(index_view.get_values().data(), repository[original.index()]->values.data());
 
     pending.index = urd::index<ygg::Columns>(99);
     const auto [duplicate, duplicate_created] = repository.insert(pending);
@@ -281,8 +289,8 @@ TEST(YggdrasilTests, DatabaseRelationRepositorySharesRowsAcrossOverlappingRelati
     const auto second = runir::tests::ops::intern(repository, builder).first;
 
     EXPECT_NE(first.index(), second.index());
-    EXPECT_EQ(repository[first.index()].pool, repository[second.index()].pool);  // one pool
-    EXPECT_EQ(repository.size(repository[first.index()].pool), 3);
+    EXPECT_EQ(repository[first.index()]->pool, repository[second.index()]->pool);  // one pool
+    EXPECT_EQ(repository.size<ygg::Row<ygg::Schema>>(repository[first.index()]->pool), 3);
     EXPECT_EQ(repository.size<RelationTag>(), 2);
     EXPECT_TRUE(first.contains(cells(20, 21)));
     EXPECT_TRUE(second.contains(cells(20, 21)));
@@ -305,7 +313,7 @@ TEST(YggdrasilTests, DatabaseRelationViewsMixBuildersDataAndInternedIndicesInOpe
     right_operand.insert(cells(4, 400));
     right_operand.insert(cells(6, 600));
     const auto right_view = runir::tests::ops::intern(repository, right_operand).first;
-    const auto& right_data = repository[right_view.index()];
+    const auto& right_data = *repository[right_view.index()];
     const auto left_builder_view = left_operand.view();
     const auto right_data_view = urd::resolve(right_data, repository);
     const auto right_index_view = repository.view(right_view.index());
@@ -416,11 +424,11 @@ TEST(YggdrasilTests, DatabaseRelationRepositoryViewsKeepRepositoryIdentity)
     EXPECT_NE(first_repository.layer(), second_repository.layer());
     EXPECT_FALSE(urd::EqualTo<IndexView> {}(first, second));
 
-    auto data = urd::make<RelationTag>(first_repository[first.index()].pool, first.get_columns(), first.get_rows());
+    auto data = urd::make<RelationTag>(first_repository[first.index()]->pool, first.get_columns(), first.get_rows());
     const auto original_hash = urd::Hash<urd::data<RelationTag>> {}(data);
     data.index = urd::index<RelationTag>(123);
     EXPECT_EQ(urd::Hash<urd::data<RelationTag>> {}(data), original_hash);
-    EXPECT_TRUE(urd::EqualTo<urd::data<RelationTag>> {}(data, first_repository[first.index()]));
+    EXPECT_TRUE(urd::EqualTo<urd::data<RelationTag>> {}(data, *first_repository[first.index()]));
     const auto bytes = cista::serialize(data);
     auto relocated = bytes;
     const auto* round_trip = cista::deserialize<urd::data<RelationTag>>(relocated);
@@ -496,7 +504,7 @@ TEST(YggdrasilTests, DatabaseConversionsRemapStoredIdentityAndReuseMutableStorag
     EXPECT_TRUE(created);
     EXPECT_EQ(&target.context(), &target_repository);
     EXPECT_NE(target.get_columns().index(), source.get_columns().index());
-    EXPECT_NE(target_repository[target.index()].pool, source_repository[source.index()].pool);  // the target's second schema: the seed's came first
+    EXPECT_NE(target_repository[target.index()]->pool, source_repository[source.index()]->pool);  // the target's second schema: the seed's came first
     EXPECT_TRUE(std::ranges::equal(target.columns(), source.columns()));
     expect_rows(target, { { 4, 5 }, { 1, 2 } });
     EXPECT_FALSE(same_storage(target.row(0), source.row(0)));
@@ -601,7 +609,7 @@ TEST(YggdrasilTests, DatabaseRelationIteratorsSupportRandomAccessThroughTemporar
         EXPECT_TRUE(same_values(((begin + 1)[-1]), view.row(0)));
     };
     check(builder.view());
-    check(urd::resolve(repository[stored.index()], repository));
+    check(urd::resolve(*repository[stored.index()], repository));
     check(repository.view(stored.index()));
 
     auto nullary = RelationBuilder {};
@@ -612,7 +620,7 @@ TEST(YggdrasilTests, DatabaseRelationIteratorsSupportRandomAccessThroughTemporar
     };
     const auto empty = runir::tests::ops::intern(repository, nullary).first;
     check_empty(nullary.view());
-    check_empty(urd::resolve(repository[empty.index()], repository));
+    check_empty(urd::resolve(*repository[empty.index()], repository));
     check_empty(repository.view(empty.index()));
     nullary.insert(cells());
     const auto unit = runir::tests::ops::intern(repository, nullary).first;
@@ -624,7 +632,7 @@ TEST(YggdrasilTests, DatabaseRelationIteratorsSupportRandomAccessThroughTemporar
         EXPECT_EQ(it + 1, view.get_rows().end());
     };
     check_unit(nullary.view());
-    check_unit(urd::resolve(repository[unit.index()], repository));
+    check_unit(urd::resolve(*repository[unit.index()], repository));
     check_unit(repository.view(unit.index()));
 }
 
@@ -649,7 +657,7 @@ TEST(YggdrasilTests, TypedRelationRowsLeaveIndicesOfOtherRepositoriesRaw)
     builder.insert(std::array { ygg::encode_value(first_value), ygg::encode_value(second_value) });
     const auto published = runir::tests::ops::intern(rows, builder).first;
     const auto index_view = rows.view(published.index());
-    const auto data_view = urd::resolve(rows[published.index()], rows);
+    const auto data_view = urd::resolve(*rows[published.index()], rows);
     // Even in the repository that owns the values, a row leaves them raw.
     const auto builder_view = builder.view();
     static_assert(ygg::RelationViewConcept<decltype(index_view), ygg::Schema>);
@@ -728,8 +736,8 @@ static_assert(ygg::ColumnValueType<ygg::uint_t> && ygg::ColumnValueType<double> 
 static_assert(!ygg::ColumnValueType<ColumnsIndex> && !ygg::ColumnValueType<const ygg::uint_t> && !ygg::ColumnValueType<UnsupportedColumn>);
 static_assert(ygg::type_id<std::uint32_t> == ygg::TypeId { 0 } && ygg::type_id<bool> == ygg::TypeId { 6 }
               && ygg::type_id<urd::index<ygg::formalism::Object>> == ygg::TypeId { 7 });
-static_assert(ygg::column_bits(ygg::type_id<bool>, 5) == 1 && ygg::column_bits(ygg::type_id<double>, 5) == 64
-              && ygg::column_bits(ygg::type_id<urd::index<ygg::formalism::Object>>, 5) == 5);
+static_assert(ygg::column_bits(ygg::type_id<bool>) == 1 && ygg::column_bits(ygg::type_id<double>) == 64
+              && ygg::column_bits(ygg::type_id<urd::index<ygg::formalism::Object>>) == 32);
 }
 
 TEST(YggdrasilTests, ColumnValuesDecodeFromTheirBits)
@@ -767,6 +775,7 @@ TEST(YggdrasilTests, DatabaseMixedWidthRowsPreserveTypedValuesAndResolveIndices)
                         {
                             EXPECT_EQ(ygg::decode_value<ygg::uint_t>(row.value(at(ColumnIndex(4)))), 42);
                             EXPECT_DOUBLE_EQ(ygg::decode_value<double>(row.value(at(ColumnIndex(9)))), 1.25);
+                            // Typed reads, in every row form (a builder's reads its relation's column types too).
                             EXPECT_EQ(row.type(at(ColumnIndex(9))), ygg::type_id<double>);
                             EXPECT_DOUBLE_EQ(std::get<double>(row.get(at(ColumnIndex(9)))), 1.25);
                             EXPECT_EQ(std::get<ygg::uint_t>(row.get(at(ColumnIndex(7)))), entity.index().value);
@@ -781,7 +790,7 @@ TEST(YggdrasilTests, DatabaseMixedWidthRowsPreserveTypedValuesAndResolveIndices)
                         });
     };
     verify(builder.view());
-    verify(urd::resolve(rows[stored.index()], rows));
+    verify(urd::resolve(*rows[stored.index()], rows));
     verify(rows.view(stored.index()));
     EXPECT_EQ(ColumnsIndex(ygg::decode_value<ygg::uint_t>(value_of(borrow(builder).row(0), 3))), entity.index());
     EXPECT_TRUE(stored.contains(tuple));
@@ -890,40 +899,29 @@ TEST(YggdrasilTests, HomogeneousRowsRoundTripThroughReusableBuffers)
 
 TEST(YggdrasilTests, DatabasePoolsKeepTheirSchema)
 {
-    // The relation repository of free relations (a repository's rows), on its own.
-    using Relations = ygg::formalism::RelationRepository<urd::word, ygg::Schema>;
-    Relations relations;
-    auto unsigned_types = urd::data<ygg::Schema>();
-    unsigned_types.column_types.push_back(ygg::type_id<ygg::uint_t>);
-    unsigned_types.column_types.push_back(ygg::type_id<ygg::uint_t>);
-    auto double_types = urd::data<ygg::Schema>();
-    double_types.column_types.push_back(ygg::type_id<double>);
-    double_types.column_types.push_back(ygg::type_id<double>);
-    const auto key = relations.schema(unsigned_types);  // a free relation's pool is keyed by its Schema
-    const auto other = relations.schema(double_types);
-    EXPECT_EQ(relations.schema(unsigned_types), key);  // interned once
-    auto values = urd::flat_vector<ygg::Value>();
-    values.push_back(1);
-    values.push_back(2);
-    EXPECT_TRUE(relations.schema(key).is_none());                           // not declared yet
-    EXPECT_THROW((void) relations.insert(key, values), std::out_of_range);  // rows need a declared pool
-    relations.declare(key, key);
-    relations.declare(key, key);  // again with the same Schema: nothing changes
-    EXPECT_THROW(relations.declare(key, other), std::invalid_argument);
-    EXPECT_EQ(relations.schema(key), key);
-    EXPECT_TRUE(relations.insert(key, values).second);
-    EXPECT_TRUE(std::ranges::equal(relations.types(key), unsigned_types.column_types));
-    values.push_back(3);
-    EXPECT_THROW((void) relations.insert(key, values), std::invalid_argument);  // checked against the Schema
-    values.pop_back();
-    Relations child(&relations);
-    EXPECT_THROW(child.declare(key, other), std::invalid_argument);  // the parent's declaration
-    EXPECT_EQ(child.schema(key), key);
-    relations.clear();
-    EXPECT_EQ(relations.schema(key), key);  // the declaration and its Schema stay, the rows go
-    EXPECT_TRUE(std::ranges::equal(relations.types(key), unsigned_types.column_types));
-    EXPECT_EQ(relations.size(key), 0U);
-    EXPECT_TRUE(relations.insert(key, values).second);
+    // A free relation's pool is keyed by its Schema, whose record stores its column types: the widths of its pool.
+    const auto unsigned_types = std::array { ygg::type_id<ygg::uint_t>, ygg::type_id<ygg::uint_t> };
+    const auto double_types = std::array { ygg::type_id<double>, ygg::type_id<double> };
+    auto repository = ygg::FreeRelationRepository();
+    const auto key = insert_schema(repository, unsigned_types);
+    const auto other = insert_schema(repository, double_types);
+    EXPECT_EQ(insert_schema(repository, unsigned_types), key);  // interned once
+    EXPECT_NE(other, key);
+    EXPECT_TRUE(std::ranges::equal(repository.at(key)->column_types, unsigned_types));
+    EXPECT_EQ(repository.size<ygg::Row<ygg::Schema>>(key), 0U);  // no pool before its first row
+    auto row = urd::data<ygg::Row<ygg::Schema>>(key, urd::flat_vector<ygg::Value> { 1, 2 });
+    EXPECT_TRUE(repository.insert(row).second);
+    auto wrong = urd::data<ygg::Row<ygg::Schema>>(key, urd::flat_vector<ygg::Value> { 1, 2, 3 });
+    EXPECT_THROW((void) repository.insert(wrong), std::invalid_argument);  // checked against its column types
+    {
+        auto child = ygg::FreeRelationRepository(&repository);
+        EXPECT_TRUE(std::ranges::equal(child.at(key)->column_types, unsigned_types));  // the parent's Schema
+        EXPECT_FALSE(child.insert(row).second);                             // and the parent's row
+    }
+    repository.clear();  // the rows go, the Schema stays
+    EXPECT_TRUE(std::ranges::equal(repository.at(key)->column_types, unsigned_types));
+    EXPECT_EQ(repository.size<ygg::Row<ygg::Schema>>(key), 0U);
+    EXPECT_TRUE(repository.insert(row).second);
 }
 
 TEST(YggdrasilTests, DatabaseScratchRelationsAreReadThroughNumberedRepositoriesOfTheirOwn)

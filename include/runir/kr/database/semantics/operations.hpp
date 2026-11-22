@@ -155,7 +155,7 @@ ygg::FreeScratchRelation& assign(ygg::FreeScratchRelation& destination, const V&
 {
     if (reads(source, destination))
         return destination;
-    destination.relation.initialize(destination.rows, destination.rows.schema(source.columns()), source.columns());
+    destination.initialize(source.columns());
     for (const auto& held : source.get_rows())
         ygg::with_values(held, [&](const auto& values) { detail::insert(destination, values); });
     return destination;

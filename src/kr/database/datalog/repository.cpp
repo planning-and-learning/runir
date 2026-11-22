@@ -7,7 +7,6 @@
 
 #include "runir/kr/database/datalog/builder.hpp"
 #include "runir/kr/database/datalog/construction.hpp"
-#include "runir/kr/database/datalog/detail/repository_instantiations.hpp"
 
 #include <yggdrasil/formalism/builder_instantiations.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
@@ -20,7 +19,6 @@ DatalogRepository::DatalogRepository() : m_index(ygg::next_layer()) {}
 DatalogRepository::~DatalogRepository() = default;
 }
 
-RUNIR_KR_DATABASE_DATALOG_PROGRAM_INTERNS()
 
 // The repository's symbols, which the library's other sources only declare (yggdrasil/formalism/symbol_context.hpp).
 YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::database::datalog::DatalogRepository, 5)

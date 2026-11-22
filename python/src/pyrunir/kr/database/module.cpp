@@ -151,7 +151,7 @@ void bind_scratch_relations(nb::module_& m)
             [](ScratchRelation* self)
             {
                 new (self) ScratchRelation();
-                self->relation.initialize(self->rows, self->rows.schema(std::span<const urd::data<ygg::ColumnLayout>>()), {});
+                self->initialize(std::span<const urd::data<ygg::ColumnLayout>>());
             },
             "The nullary relation, empty.")
         .def(
@@ -159,12 +159,12 @@ void bind_scratch_relations(nb::module_& m)
             [](ScratchRelation* self, ColumnIndices columns)
             {
                 new (self) ScratchRelation();
-                self->relation.initialize(self->rows, self->rows.schema(columns), columns);
+                self->initialize(columns);
             },
             nb::arg("columns"))
         .def(
             "initialize",
-            [](ScratchRelation& relation, ColumnIndices columns) { relation.relation.initialize(relation.rows, relation.rows.schema(columns), columns); },
+            [](ScratchRelation& relation, ColumnIndices columns) { relation.initialize(columns); },
             nb::arg("columns"))
         .def(
             "rename",

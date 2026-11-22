@@ -35,8 +35,8 @@ enum class Version : uint8_t
 
 /// A row set of a table: rows of object ids in a pool with an index per access pattern (urd::multi_indexed).
 using Relation = Rows;
-/// A row stored in a relation, read in place.
-using StoredRow = decltype(std::declval<const Rows&>().at(RowHandle()));
+/// A row stored in a relation, read in place (Rows::at): its object ids, contiguous.
+using StoredRow = std::span<const ygg::uint_t>;
 
 /// The rows of a relation (an input, a derived relation, or an aggregate's body or groups) in each version a literal
 /// can read: a relation per row set, all with the same columns (object ids) and indexes (access patterns). The state

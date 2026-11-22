@@ -26,10 +26,10 @@ urd::flat_vector<urd::index<QueryColumn>> query_columns_from_labels(std::span<co
 template<typename Tag>
 QueryView<> insert_query(ConstructorRepository& repository, urd::data<Query<Tag>>& data)
 {
-    const auto concrete = runir::kr::dl::insert(repository, data).first;
+    const auto concrete = repository.insert(data).first;
     auto wrapper = urd::data<Query<>>();
     wrapper.variant = concrete.index();
-    return runir::kr::dl::insert(repository, wrapper).first;
+    return repository.insert(wrapper).first;
 }
 
 /// Inserts the runir counterparts of a plan's nodes; input slots map back to leaves. Returns the roots in plan order.
@@ -209,7 +209,7 @@ RecordView<Boolean<SemanticFamily, NonemptyTag>> QueryOptimizer::rewrite(RecordV
             {
                 auto data = urd::data<Boolean<SemanticFamily, NonemptyTag>>();
                 data.operand = optimize_root(arg, Labels {}).index();
-                return runir::kr::dl::insert(*m_repository, data).first;
+                return m_repository->insert(data).first;
             }
             else
                 return rewrite<Boolean<SemanticFamily, NonemptyTag>>(view);
@@ -224,7 +224,7 @@ RecordView<Numerical<SemanticFamily, DistanceTag>> QueryOptimizer::rewrite(Recor
     data.sources = optimize_argument<decltype(Data::sources)>(view.get_sources(), runir::kr::database::Evaluation::full);
     data.edges = optimize_argument<decltype(Data::edges)>(view.get_edges(), runir::kr::database::Evaluation::bound);
     data.targets = optimize_argument<decltype(Data::targets)>(view.get_targets(), runir::kr::database::Evaluation::full);
-    return runir::kr::dl::insert(*m_repository, data).first;
+    return m_repository->insert(data).first;
 }
 
 RecordView<DatalogProgram> QueryOptimizer::rewrite(RecordView<DatalogProgram> view)
@@ -238,7 +238,7 @@ RecordView<DatalogProgram> QueryOptimizer::rewrite(RecordView<DatalogProgram> vi
     }
     for (const auto output : view.get_outputs())
         data.outputs.push_back(output.index().value);
-    return runir::kr::dl::insert(*m_repository, data).first;
+    return m_repository->insert(data).first;
 }
 
 QueryView<> QueryOptimizer::optimize_root(QueryView<> root, const std::optional<Labels>& required, runir::kr::database::Evaluation evaluation)

@@ -25,8 +25,8 @@ def insert(builder: database.ScratchRelation, values: Sequence[Any]) -> int:
 # `row` is a row of a relation, of a builder's view (RelationSchemaBuilderBorrowed) or of an interned relation
 # (RelationSchema); the bindings give them no common base.
 def values(row: Any) -> tuple[object, ...]:  # noqa: ANN401
-    """The decoded values of `row`, an object column as its index (an int)."""
-    return tuple(_plain(row.get(i)) for i in range(len(row.get_values())))
+    """The decoded values of `row`, each by its relation's column type, an object column as its index (an int)."""
+    return tuple(_plain(row.get(column)) for column in range(len(row.get_values())))
 
 
 def _plain(value: object) -> object:
@@ -46,7 +46,7 @@ def intern(repository: formalism.RelationRepository, relation: Any) -> tuple[for
     if isinstance(relation, database.ScratchRelation):
         relation = relation.view()
     columns = relation.columns()
-    pool = repository.schema([column.type for column in columns])
+    pool = repository.insert(formalism.SchemaData([column.type for column in columns]))[0].index()
     rows = [repository.insert(formalism.RowSchemaData(pool, row.get_values()))[0] for row in relation.get_rows()]
     layout = repository.insert(formalism.ColumnsData(columns))[0]
     return repository.insert(formalism.RelationSchemaData(pool, layout.index(), [each.index() for each in rows]))

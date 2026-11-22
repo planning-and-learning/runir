@@ -101,7 +101,6 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         scratch_address = scratch.get();
         EXPECT_TRUE(scratch->concept_values.empty());
         EXPECT_TRUE(scratch->role_values.empty());
-        EXPECT_TRUE(kr::dl::semantics::is_canonical(*scratch));
         scratch->concept_values.resize(6);
         scratch->concept_values[0] = urd::index<tyr::formalism::Object>(0);
     }
@@ -122,7 +121,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         role.first = urd::index<tyr::formalism::Object>(0);
         role.second = urd::index<tyr::formalism::Object>(1);
         const auto* buffer = data->concept_values.data();
-        const auto result = ygg::formalism::insert(denotations, *data).first;
+        const auto result = denotations.insert(*data).first;
         EXPECT_EQ(data->concept_values.data(), buffer);
         return result;
     }();
@@ -135,11 +134,10 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         auto& role = data->role_values[0].emplace();
         role.first = urd::index<tyr::formalism::Object>(0);
         role.second = urd::index<tyr::formalism::Object>(1);
-        canonicalize(*data);
         const auto found = denotations.find(*data);
         ASSERT_TRUE(found);
         EXPECT_EQ(found.value().index(), registers.index());
-        const auto [duplicate, created] = ygg::formalism::insert(denotations, *data);
+        const auto [duplicate, created] = denotations.insert(*data);
         EXPECT_FALSE(created);
         EXPECT_EQ(duplicate.index(), registers.index());
         EXPECT_EQ(&duplicate.context(), &denotations);
@@ -158,12 +156,11 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         auto boolean = urd::data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>();
         boolean.value = true;
         data->boolean_arguments.push_back(denotations.insert(boolean).first.index());
-        canonicalize(*data);
         return denotations.insert(*data).first;
     }();
     {
         auto data = dl_builder.scratch<kr::dl::semantics::CallArguments>();
-        data->boolean_arguments = denotations[arguments.index()].boolean_arguments;
+        data->boolean_arguments = denotations[arguments.index()]->boolean_arguments;
         const auto found = denotations.find(*data);
         ASSERT_TRUE(found);
         EXPECT_EQ(found.value().index(), arguments.index());

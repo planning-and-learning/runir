@@ -1,6 +1,5 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
-#include <runir/kr/database/detail/repository_instantiations.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 

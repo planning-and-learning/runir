@@ -1,8 +1,6 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 #include "pyrunir/module.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
 #include <runir/kr/database/syntax/query_repository.hpp>

@@ -1495,7 +1495,7 @@ void check_transient_builder_values_and_reuse()
     urd::store(first_module.mod, module_);
     urd::store(first_module.memory_state, module_.get_entry_memory_state());
     auto arguments = context->dl_builder.template scratch<kr::dl::semantics::CallArguments>();
-    const auto argument_view = kr::dl::semantics::insert(denotations, *arguments).first;
+    const auto argument_view = denotations.insert(*arguments).first;
     urd::store(first_module.arguments, argument_view);
     const auto program_state = urd::resolve(*first, executions);
     // A transient state holds its planning state, its activation and its registers built.
@@ -1538,7 +1538,7 @@ void check_transient_builder_values_and_reuse()
         data->memory_state = module_.get_entry_memory_state().index();
         data->registers = values.index();
         data->arguments = argument_view.index();
-        return kr::ps::ext::insert(controls, *data).first;
+        return controls.insert(*data).first;
     };
     const auto frame_of = [&](kr::ps::ext::ModuleStateView activation, std::optional<CallStackView> caller_)
     {
@@ -1546,13 +1546,13 @@ void check_transient_builder_values_and_reuse()
         data->module_state = activation.index();
         if (caller_.has_value())
             data->caller = caller_->index();
-        return kr::ps::ext::insert(controls, *data).first;
+        return controls.insert(*data).first;
     };
     const auto tail = frame_of(activation_of(registered_registers), std::nullopt);
     auto head_registers = urd::data<kr::dl::semantics::RegisterValues>();
     kr::dl::semantics::assign(head_registers, registers_of(module_state));
     head_registers.concept_values.front() = urd::index<tyr::formalism::Object>(1);
-    const auto head_register_values = kr::dl::semantics::insert(denotations, head_registers).first;
+    const auto head_register_values = denotations.insert(head_registers).first;
     const auto head = frame_of(activation_of(head_register_values), tail);
     urd::store(first->call_stack, head);
     EXPECT_EQ(frame_of(activation_of(head_register_values), tail).index(), head.index());

@@ -15,15 +15,6 @@ namespace runir::kr::dl::grammar
 {
 
 template<runir::kr::dl::CategoryTag Category>
-bool is_canonical(const urd::data<NonTerminal<Category>>&) noexcept
-{ return true; }
-
-template<runir::kr::dl::CategoryTag Category>
-void canonicalize(urd::data<NonTerminal<Category>>&) noexcept
-{
-}
-
-template<runir::kr::dl::CategoryTag Category>
 inline bool is_canonical(const urd::data<DerivationRule<Category>>& data)
 { return ygg::is_canonical(data.rhs); }
 

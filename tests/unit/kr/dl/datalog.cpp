@@ -10,10 +10,8 @@
 #include <limits>
 #include <numeric>
 #include <random>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
@@ -342,7 +340,7 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
-    const auto registers = [&](size_t i) { return kr::dl::semantics::insert(denotations, register_data[i]).first; };
+    const auto registers = [&](size_t i) { return denotations.insert(register_data[i]).first; };
     // from = {a, b}: one marker. A static concept, interned in the persistent repository.
     auto persistent_caches = kr::dl::semantics::DenotationCaches {};
     auto static_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, persistent_caches, denotations, storage);
@@ -353,7 +351,7 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
         static_context);
     auto argument_data = urd::data<kr::dl::semantics::CallArguments>();
     argument_data.concept_arguments.push_back(from.index());
-    const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
+    const auto arguments = denotations.insert(argument_data).first;
     const auto context_for = [&](size_t i)
     { return kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage, arguments, registers(i)); };
     // near = successors of `here`: {b} for a, {} for c; linked = first of `link` if its second is a marker: {b}, {};
@@ -425,10 +423,10 @@ TEST(RunirTests, DatalogRulesReadBooleanAndNumericalArgumentsAndFeatures)
         auto data = urd::data<kr::dl::semantics::CallArguments>();
         data.boolean_arguments.push_back(denotations.insert(boolean).first.index());
         data.numerical_arguments.push_back(denotations.insert(numerical).first.index());
-        return kr::dl::semantics::insert(denotations, data).first;
+        return denotations.insert(data).first;
     };
     auto register_data = urd::data<kr::dl::semantics::RegisterValues>();
-    const auto registers = kr::dl::semantics::insert(denotations, register_data).first;
+    const auto registers = denotations.insert(register_data).first;
     auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
     for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
         roots.emplace_back(expression_of(feature));

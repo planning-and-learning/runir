@@ -4,7 +4,6 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_impl.hpp"
-#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluation_impl.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
@@ -12,7 +11,6 @@
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/tuple/elem.hpp>
 #include <cstddef>
-#include <runir/kr/database/detail/repository_instantiations.hpp>
 #include <runir/kr/database/syntax/query_repository.hpp>
 
 namespace runir::kr::dl::semantics

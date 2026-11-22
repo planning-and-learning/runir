@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_CANONICALIZATION_HPP_
 #define RUNIR_KR_PS_EXT_CANONICALIZATION_HPP_
 
-#include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/dl/condition_data.hpp"
 #include "runir/kr/ps/dl/effect_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
@@ -18,8 +17,6 @@
 namespace runir::kr::ps::ext
 {
 
-inline bool is_canonical(const urd::data<OrderTerm>&) noexcept { return true; }
-
 template<RuleKind Kind>
 bool is_canonical(const urd::data<Rule<Kind>>& data) noexcept
 {
@@ -34,10 +31,6 @@ inline bool is_canonical(const urd::data<Module>& data) noexcept
     return ygg::is_canonical(data.concept_features) && ygg::is_canonical(data.role_features) && ygg::is_canonical(data.boolean_features)
            && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.query_features) && ygg::is_canonical(data.memory_states);
 }
-
-inline bool is_canonical(const urd::data<Program>&) noexcept { return true; }
-
-inline void canonicalize(urd::data<OrderTerm>&) noexcept {}
 
 template<RuleKind Kind>
 void canonicalize(urd::data<Rule<Kind>>& data)
@@ -64,8 +57,6 @@ inline void canonicalize(urd::data<Module>& data)
     for (auto& transitions : data.memory_transitions)
         ygg::canonicalize(transitions);
 }
-
-inline void canonicalize(urd::data<Program>&) noexcept {}
 
 }  // namespace runir::kr::ps::ext
 

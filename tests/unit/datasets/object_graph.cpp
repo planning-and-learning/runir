@@ -33,7 +33,7 @@ TEST(ObjectGraphTest, InitialStateObjectGraphIsSimpleAndCanonicalizesVertexColor
     for (const auto vertex : graph->vertices())
     {
         const auto color = graph->vertex_value(vertex);
-        const auto& colors = color.context()[color.index()].values;
+        const auto& colors = color.context()[color.index()]->values;
         EXPECT_TRUE(std::ranges::is_sorted(colors));
         EXPECT_EQ(std::ranges::adjacent_find(colors), colors.end());
     }

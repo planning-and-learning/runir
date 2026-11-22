@@ -16,6 +16,7 @@
 #include <string_view>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/predicate_view.hpp>
+#include <tyr/formalism/repository.hpp>  // reads a predicate through it: its members declared instantiated in tyr
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <variant>
@@ -32,7 +33,7 @@ urd::Store<urd::sequence<urd::index<ygg::Column>>> query_labels(const R& columns
     urd::Store<urd::sequence<urd::index<ygg::Column>>> labels;
     labels.reserve(std::ranges::size(columns));
     for (const auto& column : columns)
-        labels.emplace_back(urd::stored<urd::index<QueryColumn>>(column).value);
+        labels.emplace_back(urd::as_member<urd::index<QueryColumn>>(column).value);
     return labels;
 }
 

@@ -2,7 +2,6 @@
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/resolution.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/errors.hpp"
 
 #include <algorithm>
@@ -80,7 +79,7 @@ public:
             data->arity = arity;
             data->name = name;
             data->weighted = weighted.contains(name);
-            m_derived.emplace(name, ydl::insert(datalog(), *data).first.index());
+            m_derived.emplace(name, datalog().insert(*data).first.index());
         }
     }
 
@@ -104,7 +103,7 @@ public:
                 literal);
         try
         {
-            m_rules.push_back(ydl::insert(datalog(), *rule).first.index());
+            m_rules.push_back(datalog().insert(*rule).first.index());
         }
         catch (const std::invalid_argument& error)
         {
@@ -120,7 +119,7 @@ public:
         auto program = std::make_unique<urd::data<ydl::Program>>();
         for (const auto rule : m_rules)
             program->rules.push_back(rule);
-        const auto view = ydl::insert(datalog(), *program).first;
+        const auto view = datalog().insert(*program).first;
         // The evaluators below only plan the program; they read no relations.
         auto scratch = ygg::FreeScratchRelations();
         try
@@ -156,7 +155,7 @@ public:
                 }
             }
             data.outputs.push_back(relation.value);
-            programs.emplace(name, dl::insert(m_context.repository(), data).first.index());
+            programs.emplace(name, m_context.repository().insert(data).first.index());
         }
         return programs;
     }
@@ -200,7 +199,7 @@ private:
             data->terms.push_back(term(t));
         try
         {
-            return ydl::insert(datalog(), *data).first;
+            return datalog().insert(*data).first;
         }
         catch (const std::invalid_argument&)
         {
@@ -240,7 +239,7 @@ private:
         data->input = true;
         data->input_slot = m_inputs.size();
         data->name = name;
-        const auto relation = ydl::insert(datalog(), *data).first.index();
+        const auto relation = datalog().insert(*data).first.index();
         m_inputs.push_back(query);
         m_input_relations.emplace(query.value, relation);
         return relation;
@@ -433,7 +432,7 @@ private:
             condition(literal, data->atoms, data->negated, data->comparisons, data->arithmetic);
         try
         {
-            aggregates.push_back(ydl::insert(datalog(), *data).first.index());
+            aggregates.push_back(datalog().insert(*data).first.index());
         }
         catch (const std::invalid_argument& error)
         {

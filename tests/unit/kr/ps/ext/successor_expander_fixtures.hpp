@@ -5,8 +5,6 @@
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
 #include "record_copy.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "successor_fixtures.hpp"
 
 #include <algorithm>
@@ -442,7 +440,7 @@ void expect_lazy_do_successors()
         {
             size_t count = 0;
             for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
-                count += task_context->search_context->task->get_repository()->size(action.index());
+                count += task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
             return count;
         };
         const auto initial_binding_count = count_bindings();
@@ -726,7 +724,7 @@ void expect_unknown_action_rejected_during_preparation()
     const auto action_rule = repository.insert(action_data).first;
     auto variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("missing-schema"), action_rule.index());
     const auto variant = repository.insert(variant_data).first;
-    auto module_data = runir::tests::copy_fields(parsed.context()[parsed.index()]);
+    auto module_data = runir::tests::copy_fields(*parsed.context()[parsed.index()]);
     auto transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
     transition.push_back(variant.index());
     module_data.memory_transitions.push_back(std::move(transition));
@@ -829,7 +827,7 @@ void expect_query_action_contracts()
                             if (action.get_name().str() == concrete.get_action_name())
                             {
                                 const auto evaluator = kr::ps::ext::detail::ActionRuleEvaluator<Kind>(concrete, rule, action);
-                                const auto count = task_context->search_context->task->get_repository()->size(action.index());
+                                const auto count = task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
                                 auto matched = static_cast<size_t>(0);
                                 EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
                                     planning_node,
@@ -847,7 +845,7 @@ void expect_query_action_contracts()
                                         return true;
                                     }));
                                 EXPECT_EQ(matched, 2);
-                                EXPECT_EQ(task_context->search_context->task->get_repository()->size(action.index()), count);
+                                EXPECT_EQ(task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index()), count);
                             }
                 },
                 rule.get_variant());
@@ -934,11 +932,11 @@ void expect_rule_occurrence_order()
 )",
                                                       domain,
                                                       repository);
-    auto data = runir::tests::copy_fields(parsed.context()[parsed.index()]);
+    auto data = runir::tests::copy_fields(*parsed.context()[parsed.index()]);
     data.memory_transitions.clear();
     // Occurrences, including repetitions, retain module order rather than rule-index order.
     for (const auto row : { 1, 2, 0, 1 })
-        data.memory_transitions.push_back(parsed.context()[parsed.index()].memory_transitions[row]);
+        data.memory_transitions.push_back(parsed.context()[parsed.index()]->memory_transitions[row]);
     const auto module_ = repository.insert(data).first;
     const auto other = kr::ps::ext::dl::parse_module(R"(
 (:module (:symbol other) (:arguments) (:registers)
@@ -996,7 +994,7 @@ void expect_callback_sketch_order_and_cancellation()
         {
             size_t count = 0;
             for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
-                count += task_context->search_context->task->get_repository()->size(action.index());
+                count += task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
             return count;
         };
         const auto initial_binding_count = count_bindings();
@@ -1169,7 +1167,7 @@ void expect_callback_expansion_counts()
                 const auto& task = task_context->search_context->task;
                 size_t count = 0;
                 for (const auto action : task->get_domain().get_domain().get_actions())
-                    count += task->get_repository()->size(action.index());
+                    count += task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
                 binding_counts.push_back(count);
             }
             ASSERT_FALSE(steps.empty());

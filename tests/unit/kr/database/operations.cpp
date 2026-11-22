@@ -820,7 +820,7 @@ TEST(YggdrasilTests, DatabaseRelationViewsQueryTypedRowsWithinTheirOwnRows)
     relation.insert(values);
     const auto encoded = borrow(relation).row(0);
     const auto indexed = runir::tests::ops::intern(repository, relation).first;
-    const auto data_view = urd::resolve(repository[indexed.index()], repository);
+    const auto data_view = urd::resolve(*repository[indexed.index()], repository);
     const auto builder_view = relation.view();
     auto other = Relation(columns_of<ygg::uint_t>({ ColumnIndex(0), ColumnIndex(1), ColumnIndex(2) }));
     const auto other_row = std::array { ygg::encode_value(ygg::uint_t { 2 }), ygg::encode_value(ygg::uint_t { 5 }), ygg::encode_value(ygg::uint_t { 6 }) };
@@ -848,12 +848,12 @@ TEST(YggdrasilTests, DatabaseRelationViewsQueryEmptyTypedRows)
     const auto row = std::array<ygg::Value, 0> {};
     const auto empty = runir::tests::ops::intern(repository, relation).first;
     EXPECT_FALSE(relation.view().contains(row));
-    EXPECT_FALSE(urd::resolve(repository[empty.index()], repository).contains(row));
+    EXPECT_FALSE(urd::resolve(*repository[empty.index()], repository).contains(row));
     EXPECT_FALSE(empty.contains(row));
     relation.insert(row);
     const auto unit = runir::tests::ops::intern(repository, relation).first;
     EXPECT_TRUE(relation.view().contains(row));
-    EXPECT_TRUE(urd::resolve(repository[unit.index()], repository).contains(row));
+    EXPECT_TRUE(urd::resolve(*repository[unit.index()], repository).contains(row));
     EXPECT_TRUE(unit.contains(row));
     EXPECT_FALSE(empty.contains(row));
 }

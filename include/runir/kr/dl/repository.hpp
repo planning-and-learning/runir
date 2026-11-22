@@ -34,13 +34,13 @@ using ygg::formalism::checkout;
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-void prepare_for_insert(ConstructorRepository& repository, urd::data<T>& data)
+void prepare_for_insert(const ConstructorRepository& repository, urd::data<T>& data)
 {
+    using ygg::formalism::canonicalize;  // the default, for a kind without a canonical form of its own
     canonicalize(data);
     detail::prepare(data, repository);
 }
 
-using ygg::formalism::insert;
 }
 
 #endif

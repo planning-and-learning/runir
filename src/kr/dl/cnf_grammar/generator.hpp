@@ -6,11 +6,9 @@
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
-#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 

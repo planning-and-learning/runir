@@ -1,6 +1,5 @@
 #include "bindings.hpp"
 #include "pyrunir/module.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
 
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/variant.h>

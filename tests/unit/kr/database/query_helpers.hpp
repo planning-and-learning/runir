@@ -14,6 +14,7 @@
 #include <runir/kr/database/syntax/query.hpp>
 #include <span>
 #include <stdexcept>
+#include <type_traits>
 #include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -79,7 +80,7 @@ public:
     void clear() { m_scratch->clear(); }
 
     void initialize(std::span<const urd::data<ygg::ColumnLayout>> columns)
-    { m_scratch->relation.initialize(m_scratch->rows, m_scratch->rows.schema(columns), columns); }
+    { m_scratch->initialize(columns); }
 
     void rename(std::span<const urd::data<ygg::ColumnLayout>> columns) { m_scratch->relation.rename(m_scratch->rows, columns); }
 
@@ -118,11 +119,20 @@ std::vector<ygg::Value> values_of(const R& row)
     return ygg::with_values(row, [](const auto& values) { return std::vector<ygg::Value>(std::ranges::begin(values), std::ranges::end(values)); });
 }
 
-/// The record of a scratch relation's row (its rows are records, held by their handles): the row stays the same row
-/// while this stays.
+/// Where a relation's row holds its values (a scratch relation's rows are row builders, held in their slots; a stored
+/// row's lie packed in its slot): the row stays the same row while this stays.
 template<typename R>
 const void* record_of(const R& row)
-{ return &std::get<2>(row).get_values(); }
+{
+    return urd::visit_view(row,
+                           []<typename V>(const V& held) -> const void*
+                           {
+                               if constexpr (std::is_lvalue_reference_v<decltype(held.get_values())>)
+                                   return &held.get_values();
+                               else
+                                   return held.get_values().data();
+                           });
+}
 
 }  // namespace runir::tests
 
@@ -320,7 +330,10 @@ template<typename V>
 std::pair<ygg::FreeRelationView, bool> intern(ygg::FreeRelationRepository& repository, const V& source)
 {
     auto relation = urd::data<ygg::Relation<ygg::Schema>>();
-    relation.pool = repository.schema(source.columns());
+    auto schema = urd::data<ygg::Schema>();
+    const auto types = source.columns() | std::views::transform(&urd::data<ygg::ColumnLayout>::type);
+    schema.column_types.set(types.begin(), types.end());
+    relation.pool = repository.insert(schema).first.index();
     auto row = urd::data<ygg::Row<ygg::Schema>>();
     row.relation = relation.pool;
     for (const auto& held : source.get_rows())
@@ -330,7 +343,6 @@ std::pair<ygg::FreeRelationView, bool> intern(ygg::FreeRelationRepository& repos
                              row.values.set(std::ranges::begin(values), std::ranges::end(values));
                              urd::append(relation.rows, repository.insert(row).first);
                          });
-    ygg::canonicalize(relation, repository);
     return intern_relation(repository, relation, source.columns());
 }
 
@@ -341,7 +353,7 @@ inline std::pair<ygg::FreeRelationView, bool> intern(ygg::FreeRelationRepository
 inline ygg::FreeRelationView rename(ygg::FreeRelationRepository& repository, ygg::FreeRelationView source, std::span<const urd::data<ygg::ColumnLayout>> labels)
 {
     auto relation = urd::data<ygg::Relation<ygg::Schema>>();
-    relation.pool = repository[source.index()].pool;
+    relation.pool = repository.at(source.index())->pool;  // std::out_of_range where the repository holds no such relation
     urd::store(relation.rows, source.get_rows());
     return intern_relation(repository, relation, labels).first;
 }

@@ -2,9 +2,7 @@
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/icp/canonicalization.hpp"
 #include "runir/kr/ps/icp/dl/parser/parser.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
@@ -348,7 +346,7 @@ ProgramView parse_program(const std::string& description, tyr::formalism::Domain
         diagnostics.throw_at(node.entry, UndefinedSymbolError("entry module", node.entry.text));
     auto data = urd::data<Program> {};
     data.entry_mod = lower_module(node.module, domain, repository, diagnostics).index();
-    return insert(repository, data).first;
+    return repository.insert(data).first;
 }
 
 }  // namespace runir::kr::ps::icp::dl

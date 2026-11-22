@@ -8,10 +8,12 @@
 
 #include "yggdrasil/core/config.hpp"
 #include "yggdrasil/formalism/relation_builder.hpp"
+#include "yggdrasil/formalism/values.hpp"
 
 #include <concepts>
 #include <cstddef>
 #include <limits>
+#include <ranges>
 #include <span>
 #include <urd/repr/pools/pools.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -61,20 +63,23 @@ struct BlindDistanceHeuristic
     { return 0; }
 };
 
-/// A vertex as its values: a row of values as it is, a stored row's values read into `buffer`, which the result
-/// borrows.
-inline std::span<const ygg::Value> vertex_values(std::span<const ygg::Value> vertex, urd::Store<urd::sequence<ygg::Value>>& /*buffer*/) noexcept
-{ return vertex; }
-
 inline std::span<const ygg::uint_t> vertex_values(std::span<const ygg::uint_t> vertex, urd::Store<urd::sequence<ygg::uint_t>>& /*buffer*/) noexcept
 { return vertex; }
 
-inline std::span<const ygg::Value> vertex_values(const urd::packed_row<false>& row, urd::Store<urd::sequence<ygg::Value>>& buffer)
+/// A vertex as its values: values held contiguously as they are, others (a stored row's, packed) read into `buffer`,
+/// which the result borrows.
+template<ygg::RowValues R>
+std::span<const ygg::Value> vertex_values(const R& row, urd::Store<urd::sequence<ygg::Value>>& buffer)
 {
-    buffer.clear();
-    for (size_t i = 0; i < row.size(); ++i)
-        buffer.push_back(row.get(i));
-    return buffer;
+    if constexpr (std::ranges::contiguous_range<R>)
+        return std::span<const ygg::Value>(row);
+    else
+    {
+        buffer.clear();
+        for (const ygg::Value value : row)
+            buffer.push_back(value);
+        return buffer;
+    }
 }
 
 /// A row's values, the row as it is held: a row view, or a builder's row child resolved (a variant of row views).

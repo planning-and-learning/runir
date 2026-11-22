@@ -5,7 +5,6 @@
 
 #include "runir/kr/database/syntax/query_construction.hpp"
 
-#include "runir/kr/database/detail/repository_instantiations.hpp"
 
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -73,7 +72,7 @@ void derive(urd::data<Query<QueryGenericJoinTag>>& data, const QueryRepository& 
 
 namespace runir::kr::database
 {
-void prepare_for_insert(QueryRepository& repository, urd::data<Query<>>& data)
+void prepare_for_insert(const QueryRepository& repository, urd::data<Query<>>& data)
 {
     data.variant.apply(
         [&]<typename Tag>(urd::index<Query<Tag>> index)

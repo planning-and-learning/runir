@@ -54,7 +54,7 @@ private:
         {
             auto data = urd::data<T>();
             urd::map_children<RepositoryTypes, T>(view, data, [&]<typename U>(View<U> child) { return optimize<U>(child).index(); });
-            return ygg::formalism::insert(*m_repository, data).first;
+            return m_repository->insert(data).first;
         }
     }
 

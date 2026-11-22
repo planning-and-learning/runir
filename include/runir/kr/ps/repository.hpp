@@ -2,7 +2,6 @@
 #define RUNIR_KR_PS_REPOSITORY_HPP_
 
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 
@@ -50,12 +49,8 @@ public:
     using Base::find;
     using Base::insert;
     using Base::view;
-    using NestsBase::find;
     using NestsBase::get;
     using NestsBase::get_ptr;
-    using NestsBase::insert;
-    using NestsBase::repository_for;
-    using NestsBase::view;
 };
 
 template<FamilyTag Family, typename RepositoryTypes>

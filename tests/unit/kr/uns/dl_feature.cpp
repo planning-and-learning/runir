@@ -39,8 +39,6 @@ static_assert(requires(Data& data) {
     { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const Index&, const ExpressionIndex&, const urd::flat_string&>>;
     requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<Data>>>, ExpressionIndex>;
     requires std::same_as<std::remove_cvref_t<std::tuple_element_t<1, urd::detail::identity_t<Data>>>, urd::flat_string>;
-    { canonicalize(data) } -> std::same_as<void>;
-    { is_canonical(data) } -> std::same_as<bool>;
 });
 static_assert(requires(const View& view) {
     view.index();

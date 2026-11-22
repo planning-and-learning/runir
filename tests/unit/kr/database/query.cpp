@@ -126,9 +126,9 @@ TEST(DatabaseQuery, RecordConstructorsMatchFieldsAndValidateConstantTypes)
     const auto b = runir::tests::qb::input(repository, 1, { y, z });
     const auto insert = [&]<typename Tag>(urd::data<runir::kr::database::Query<Tag>> data)
     {
-        const auto concrete = runir::kr::database::insert(repository, data).first;
+        const auto concrete = repository.insert(data).first;
         auto erased = urd::data<runir::kr::database::Query<>>(concrete.index());
-        return runir::kr::database::insert(repository, erased).first;
+        return repository.insert(erased).first;
     };
 
     auto by_index = urd::data<runir::kr::database::Query<runir::kr::database::QueryJoinTag>>(a.index(), b.index(), {});
@@ -156,7 +156,7 @@ TEST(DatabaseQuery, RecordConstructorsMatchFieldsAndValidateConstantTypes)
                                                                                                       ygg::type_id<std::int32_t>,
                                                                                                       {});
     EXPECT_EQ(mismatched.constant_type, (ygg::type_id<std::int32_t>) );
-    EXPECT_THROW(static_cast<void>(runir::kr::database::insert(repository, mismatched)), std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(repository.insert(mismatched)), std::invalid_argument);
 }
 
 TEST(DatabaseQuery, InternsValidatedNodesAndCompilesIndependentReachablePlan)
@@ -512,7 +512,7 @@ TEST(DatabaseQuery, CachedPlansSurviveRepositoryGrowthAndCistaRelocation)
     const auto round_trip = []<typename Concrete>(Concrete query)
     {
         using Record = urd::record_of<Concrete>;
-        auto original_bytes = cista::serialize(query.context()[query.index()]);
+        auto original_bytes = cista::serialize(*query.context()[query.index()]);
         auto relocated = original_bytes;
         original_bytes.clear();
         original_bytes.shrink_to_fit();

@@ -4,7 +4,6 @@
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/base/rule_data.hpp"
 #include "runir/kr/ps/base/sketch_data.hpp"
-#include "runir/kr/ps/canonicalization.hpp"
 
 #include <yggdrasil/semantics/canonicalization.hpp>
 

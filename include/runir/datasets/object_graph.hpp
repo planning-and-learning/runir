@@ -19,7 +19,7 @@
 #define RUNIR_DATASETS_OBJECT_GRAPH_HPP_
 
 #include "runir/datasets/graph_types.hpp"
-#include "runir/datasets/object_graph_color.hpp"
+#include "runir/datasets/object_graph/repository.hpp"
 
 #include <cstddef>
 #include <memory>

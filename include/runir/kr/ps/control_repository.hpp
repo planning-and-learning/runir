@@ -61,26 +61,13 @@ public:
     using Base::find;
     using Base::insert;
     using Base::view;
-    using NestsBase::find;
     using NestsBase::get;
     using NestsBase::get_ptr;
-    using NestsBase::insert;
-    using NestsBase::repository_for;
-    using NestsBase::view;
 };
 
 template<ProgramFamilyTag Family>
 inline const ControlRepository<Family>& get_repository(const ControlRepository<Family>& context URD_LIFETIMEBOUND) noexcept
 { return context; }
-
-/// Control records are canonical as built.
-template<ProgramFamilyTag Family, typename T>
-    requires ygg::formalism::SupportsSymbol<ControlRepository<Family>, T>
-void prepare_for_insert(ControlRepository<Family>&, urd::data<T>&)
-{
-}
-
-using ygg::formalism::insert;
 
 }  // namespace runir::kr::ps
 

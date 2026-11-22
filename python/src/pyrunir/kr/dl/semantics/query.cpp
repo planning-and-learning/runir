@@ -1,7 +1,6 @@
 #include "../query_bindings.hpp"
 #include "bindings.hpp"
 #include "pyrunir/module.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
 
 #include <runir/kr/database/syntax/formatter.hpp>
 #include <runir/kr/database/syntax/query_repository.hpp>

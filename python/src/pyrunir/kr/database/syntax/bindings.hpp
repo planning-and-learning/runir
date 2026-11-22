@@ -22,7 +22,7 @@ using QueryRepositoryBinding = nb::class_<QueryRepository>;
 template<typename Tag>
 nb::class_<QueryView<Tag>> bind_query_operation(nb::module_& m, QueryRepositoryBinding& repository)
 {
-    repository.def("insert", [](QueryRepository& self, urd::data<Query<Tag>>& data) { return insert(self, data); }, nb::arg("data"));
+    repository.def("insert", [](QueryRepository& self, urd::data<Query<Tag>>& data) { return self.insert(data); }, nb::arg("data"));
     return urd::python::bind_view<QueryView<Tag>>(m);
 }
 

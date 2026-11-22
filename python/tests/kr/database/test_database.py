@@ -47,17 +47,21 @@ def test_relation_rows_and_validation() -> None:
     view = relation.view()
     assert isinstance(view, formalism.RelationSchemaBuilderBorrowed)
     row = view.row(0)
-    assert isinstance(row, formalism.RowSchemaBorrowed)  # a scratch relation's row is a record, not interned
+    assert isinstance(
+        row, formalism.RowSchemaBuilderBorrowed
+    )  # a scratch relation's row is a row builder, not interned
     assert relation.size() == 1
     assert not relation.empty()
     assert values(row) == (3, 4)
     assert tuples(view) == [(3, 4)]
     with pytest.raises(IndexError):
         view.row(1)
+    # A builder's row reads its values as stored and typed, by its relation's column types.
+    assert row.value(1) == formalism.encode(4, formalism.ColumnType.UINT32)
+    assert row.value(0) == formalism.encode(3, formalism.ColumnType.UINT32)
     assert row.get(1) == 4
-    assert row.get(0) == 3
     with pytest.raises(IndexError):
-        row.get(2)
+        row.value(2)
     with pytest.raises(TypeError):  # read-only: no __setitem__ in the type hints either
         cast("Any", row)[0] = 7
     with pytest.raises(ValueError, match="a row has one value per column"):
@@ -88,7 +92,7 @@ def test_nullary_relation() -> None:
     assert values(row) == ()
     assert tuples(view) == [()]
     with pytest.raises(IndexError):
-        row.get(0)
+        row.value(0)
 
 
 def test_pooled_rows_keep_their_owners_alive() -> None:
@@ -278,7 +282,7 @@ def test_mixed_column_types_and_float_canonicalization() -> None:
     row = relation.view().row(insert(relation, [True, 0.0, -7]))
     assert values(row) == (True, 0.0, -7)
     assert [type(value) for value in values(row)] == [bool, float, int]
-    value = relation.view().row(insert(relation, [False, float("nan"), 9])).get(1)
+    value = values(relation.view().row(insert(relation, [False, float("nan"), 9])))[1]
     assert isinstance(value, float)
     assert math.isnan(value)
     interned, _ = intern(repository, relation)

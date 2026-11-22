@@ -3,7 +3,6 @@
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/parser/config.hpp"
@@ -12,7 +11,6 @@
 #include "runir/kr/ps/base/dl/parser/parser.hpp"
 #include "runir/kr/ps/base/dl/parser/parsers.hpp"
 #include "runir/kr/ps/base/repository.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>

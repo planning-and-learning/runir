@@ -117,6 +117,7 @@ static_assert(std::same_as<kr::dl::cnf_grammar::NumericalView<kr::dl::CountTag>,
 
 TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
 {
+    // The children name no records: read as the record holds them (a view of one is checked).
     using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     auto planning_repository = std::make_shared<tyr::formalism::Repository>();
@@ -124,17 +125,17 @@ TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
 
     auto unary_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::NegationTag>>(urd::index<Concept>(3));
     const auto unary = repository->insert(unary_data).first;
-    EXPECT_EQ(unary.get_operand().index(), urd::index<Concept>(3));
+    EXPECT_EQ((*repository)[unary.index()]->operand, urd::index<Concept>(3));
 
     auto binary_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::ValueRestrictionTag>>(urd::index<Role>(1), urd::index<Concept>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_role().index(), urd::index<Role>(1));
-    EXPECT_EQ(binary.get_qualifier().index(), urd::index<Concept>(2));
+    EXPECT_EQ((*repository)[binary.index()]->role, urd::index<Role>(1));
+    EXPECT_EQ((*repository)[binary.index()]->qualifier, urd::index<Concept>(2));
 
     auto restriction_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::AtLeastNumberRestrictionTag>>(5, urd::index<Role>(4));
     const auto restriction = repository->insert(restriction_data).first;
     EXPECT_EQ(restriction.get_n(), 5);
-    EXPECT_EQ(restriction.get_role().index(), urd::index<Role>(4));
+    EXPECT_EQ((*repository)[restriction.index()]->role, urd::index<Role>(4));
 }
 
 TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
@@ -146,12 +147,12 @@ TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
 
     auto unary_data = urd::data<kr::dl::Role<SemanticFamily, kr::dl::InverseTag>>(urd::index<Role>(3));
     const auto unary = repository->insert(unary_data).first;
-    EXPECT_EQ(unary.get_operand().index(), urd::index<Role>(3));
+    EXPECT_EQ((*repository)[unary.index()]->operand, urd::index<Role>(3));
 
     auto binary_data = urd::data<kr::dl::Role<SemanticFamily, kr::dl::RestrictionTag>>(urd::index<Role>(1), urd::index<Concept>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_role().index(), urd::index<Role>(1));
-    EXPECT_EQ(binary.get_qualifier().index(), urd::index<Concept>(2));
+    EXPECT_EQ((*repository)[binary.index()]->role, urd::index<Role>(1));
+    EXPECT_EQ((*repository)[binary.index()]->qualifier, urd::index<Concept>(2));
 }
 
 TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
@@ -166,12 +167,12 @@ TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 
     auto unary_data = urd::data<kr::dl::Boolean<SemanticFamily, kr::dl::NotTag>>(urd::index<Constructor>(4));
     const auto unary = repository->insert(unary_data).first;
-    EXPECT_EQ(unary.get_operand().index(), urd::index<Constructor>(4));
+    EXPECT_EQ((*repository)[unary.index()]->operand, urd::index<Constructor>(4));
 
     auto binary_data = urd::data<kr::dl::Boolean<SemanticFamily, kr::dl::AndTag>>(urd::index<Constructor>(1), urd::index<Constructor>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_left_operand().index(), urd::index<Constructor>(1));
-    EXPECT_EQ(binary.get_right_operand().index(), urd::index<Constructor>(2));
+    EXPECT_EQ((*repository)[binary.index()]->left_operand, urd::index<Constructor>(1));
+    EXPECT_EQ((*repository)[binary.index()]->right_operand, urd::index<Constructor>(2));
 }
 
 TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
@@ -187,8 +188,8 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
 
     auto binary_data = urd::data<kr::dl::Numerical<SemanticFamily, kr::dl::AddTag>>(urd::index<Numerical>(1), urd::index<Numerical>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_left_operand().index(), urd::index<Numerical>(1));
-    EXPECT_EQ(binary.get_right_operand().index(), urd::index<Numerical>(2));
+    EXPECT_EQ((*repository)[binary.index()]->left_operand, urd::index<Numerical>(1));
+    EXPECT_EQ((*repository)[binary.index()]->right_operand, urd::index<Numerical>(2));
 
     // Vertices are concept-or-query and edges role-or-query variants.
     using Query = kr::dl::Query<>;
@@ -200,11 +201,11 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     distance_data.sources = urd::index<Concept>(3);
     distance_data.edges = urd::index<Query>(4);
     distance_data.targets = urd::index<Query>(5);
-    const auto distance = repository->insert(distance_data).first;
-    EXPECT_EQ((std::get<urd::index_view<Concept, runir::kr::dl::ConstructorRepository>>(distance.get_sources()).index()), urd::index<Concept>(3));
-    EXPECT_EQ((std::get<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_edges()).index()), urd::index<Query>(4));
-    EXPECT_EQ((std::get<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_targets()).index()), urd::index<Query>(5));
-    EXPECT_TRUE((std::holds_alternative<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_edges())));
+    // Its children name no records (a view of one is checked; an insert reads their columns): read as the record holds them.
+    EXPECT_EQ(cista::get<urd::index<Concept>>(distance_data.sources), urd::index<Concept>(3));
+    EXPECT_EQ(cista::get<urd::index<Query>>(distance_data.edges), urd::index<Query>(4));
+    EXPECT_EQ(cista::get<urd::index<Query>>(distance_data.targets), urd::index<Query>(5));
+    EXPECT_TRUE(cista::holds_alternative<urd::index<Query>>(distance_data.edges));
 }
 
 namespace

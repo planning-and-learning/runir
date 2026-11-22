@@ -1,7 +1,5 @@
 #include "bindings.hpp"
 #include "pyrunir/module.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 
 #include <memory>
 #include <nanobind/stl/optional.h>

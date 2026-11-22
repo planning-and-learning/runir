@@ -65,7 +65,7 @@ public:
 
     auto& get_environment() noexcept { return m_environment; }
 
-    auto intern(urd::data<ProgramState<Kind>>& data) { return insert(*m_task->icp_execution_repository, data).first; }
+    auto intern(urd::data<ProgramState<Kind>>& data) { return m_task->icp_execution_repository->insert(data).first; }
 
     ProgramStateView<Kind> initial_state(tyr::planning::StateView<Kind> state)
     {
@@ -73,7 +73,7 @@ public:
         auto registers = m_task->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
         registers->concept_values.resize(module.template get_registers<Concept>().size());
         registers->role_values.resize(module.template get_registers<runir::kr::dl::RoleTag>().size());
-        const auto stored_registers = insert(*m_task->dl_denotation_repository, *registers).first;
+        const auto stored_registers = m_task->dl_denotation_repository->insert(*registers).first;
         auto histories = checkout<Histories>(m_task->icp_control_builder);
         for (std::size_t i = 0; i < module.template get_features<Concept>().size(); ++i)
             urd::append(histories->concepts, m_task->dl_denotation_repository->view(m_empty));

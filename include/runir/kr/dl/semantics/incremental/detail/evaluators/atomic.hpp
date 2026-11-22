@@ -41,7 +41,7 @@ struct AtomicEvaluator
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
-        if (!ygg::formalism::contains(graph.repository(), predicate))
+        if (!graph.repository().contains(predicate))
             throw std::invalid_argument("Incremental DL: predicate does not belong to the task repository.");
         if constexpr (std::same_as<Category, BooleanTag>)
         {

@@ -2,7 +2,6 @@
 #define RUNIR_KR_PS_HPP_
 
 #include "runir/kr/declarations.hpp"
-#include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/compatibility.hpp"
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"

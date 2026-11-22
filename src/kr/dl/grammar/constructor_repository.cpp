@@ -1,11 +1,9 @@
 #include "runir/kr/dl/grammar/constructor_repository.hpp"
 
-#include "runir/kr/dl/grammar/detail/repository_instantiations.hpp"
 
 #include <yggdrasil/formalism/builder_instantiations.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
-RUNIR_KR_DL_GRAMMAR_INTERNS()
 
 // The repository's symbols, which the library's other sources only declare (yggdrasil/formalism/symbol_context.hpp).
 YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::dl::grammar::ConstructorRepository, 58)

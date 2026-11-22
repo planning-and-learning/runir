@@ -1,6 +1,5 @@
 #include "runir/kr/ps/base/repository.hpp"
 
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/icp/execution_data.hpp"
@@ -10,7 +9,6 @@
 #include <yggdrasil/formalism/builder_instantiations.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
-RUNIR_KR_PS_INTERNS()
 
 // The symbols and builders of the library's repositories, which its other sources only declare.
 YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::base::Repository, 16)

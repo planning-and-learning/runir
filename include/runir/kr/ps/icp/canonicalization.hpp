@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_ICP_CANONICALIZATION_HPP_
 #define RUNIR_KR_PS_ICP_CANONICALIZATION_HPP_
 
-#include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/dl/condition_data.hpp"
 #include "runir/kr/ps/dl/effect_data.hpp"
 #include "runir/kr/ps/dl/feature_data.hpp"
@@ -20,15 +19,6 @@
 
 namespace runir::kr::ps::icp
 {
-
-template<typename T>
-bool is_canonical(const urd::data<T>&) noexcept
-{ return true; }
-
-template<typename T>
-void canonicalize(urd::data<T>&) noexcept
-{
-}
 
 template<RuleKind Kind>
 bool is_canonical(const urd::data<Rule<Kind>>& data) noexcept

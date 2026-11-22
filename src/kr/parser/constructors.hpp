@@ -106,7 +106,7 @@ template<runir::kr::dl::CategoryTag Category, typename Context, typename T>
 auto intern_constructor(const Context& context, urd::index<T> index)
 {
     using Constructor = typename Context::Target::template Constructor<Category>;
-    if constexpr (urd::is_flat_variant<Constructor>)
+    if constexpr (urd::FlatVariant<Constructor>)
     {
         auto result = typename Context::Target::template ParsedConstructor<Category>();
         take(result, context.repository().view(index));

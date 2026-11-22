@@ -1,8 +1,8 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 
+#include "tyr/formalism/repository.hpp"
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
-#include "runir/kr/dl/semantics/canonicalization.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
@@ -62,12 +62,8 @@ public:
     using Base::find;
     using Base::insert;
     using Base::view;
-    using NestsBase::find;
     using NestsBase::get;
     using NestsBase::get_ptr;
-    using NestsBase::insert;
-    using NestsBase::repository_for;
-    using NestsBase::view;
 
     [[nodiscard]] const auto& get_relation_repository() const noexcept { return m_relation_repository; }
 
@@ -77,12 +73,7 @@ public:
 /// A repository owns the records viewed through it.
 inline const DenotationRepository& get_repository(const DenotationRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 
-template<typename T>
-    requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-void prepare_for_insert(DenotationRepository&, urd::data<T>& data)
-{ canonicalize(data); }
 
-using ygg::formalism::insert;
 }
 
 #endif

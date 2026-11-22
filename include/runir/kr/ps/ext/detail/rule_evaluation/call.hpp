@@ -74,7 +74,7 @@ private:
                         result->numerical_arguments.push_back(denotation.index());
                 },
                 argument);
-        return insert(*(*context.task_context)->dl_denotation_repository, *result).first;
+        return (*context.task_context)->dl_denotation_repository->insert(*result).first;
     }
 
 public:

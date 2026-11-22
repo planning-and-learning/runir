@@ -40,7 +40,7 @@ rename(DenotationRepository& repository, QueryDenotationView source, std::span<c
         urd::append(relation->rows, row);
     auto columns = storage.template scratch<ygg::Columns>();
     columns->values.set(labels.begin(), labels.end());
-    relation->columns = ygg::formalism::insert(relations, *columns).first.index();
+    relation->columns = relations.insert(*columns).first.index();
     return relations.insert(*relation).first;
 }
 

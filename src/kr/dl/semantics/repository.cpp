@@ -1,6 +1,5 @@
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 
 #include <cassert>
 #include <memory>
@@ -23,7 +22,6 @@ DenotationRepository::~DenotationRepository() = default;
 
 }  // namespace runir::kr::dl::semantics
 
-RUNIR_KR_DL_SEMANTICS_INTERNS()
 
 // The symbols and builders of the library's repositories, which its other sources only declare.
 YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::dl::semantics::DenotationRepository, 7)

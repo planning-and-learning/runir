@@ -99,7 +99,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
     delta.template assign<Kind>(source, target);
     auto column = urd::data<kr::dl::QueryColumn> {};
     column.name = "x";
-    const auto x = kr::dl::insert(*constructors, column).first.index();
+    const auto x = constructors->insert(column).first.index();
     const auto check = [&]<tyr::formalism::FactKind Fact>()
     {
         for (const auto predicate : task.get_domain().get_domain().template get_predicates<Fact>())
@@ -107,16 +107,16 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
             if (predicate.get_arity() != 1)
                 continue;
             auto atom = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>>(predicate.index());
-            auto concept_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*constructors, atom).first.index(), false);
-            const auto concept_ = kr::dl::insert(*constructors, concept_data).first;
+            auto concept_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(constructors->insert(atom).first.index(), false);
+            const auto concept_ = constructors->insert(concept_data).first;
             auto query_data = urd::data<kr::dl::Query<kr::dl::QueryConceptTag>> {};
             query_data.operand = concept_.index();
             query_data.columns.push_back(x);
-            auto query_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*constructors, query_data).first.index(), false);
-            const auto query = kr::dl::insert(*constructors, query_wrapper).first;
+            auto query_wrapper = urd::data<kr::dl::Query<>>(constructors->insert(query_data).first.index(), false);
+            const auto query = constructors->insert(query_wrapper).first;
             auto count_data = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>>(query.index());
-            auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(kr::dl::insert(*constructors, count_data).first.index(), false);
-            const auto count = kr::dl::insert(*constructors, count_wrapper).first;
+            auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(constructors->insert(count_data).first.index(), false);
+            const auto count = constructors->insert(count_wrapper).first;
             auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Kind>(task, { count });
             const auto concept_id = evaluation.graph().get_index(concept_);
             const auto count_id = evaluation.graph().get_index(count);
@@ -213,7 +213,7 @@ void check_incremental_evaluation()
     argument_data.role_arguments.push_back(denotations.insert(argument_role, builder.records()).first.index());
     argument_data.boolean_arguments.push_back(denotations.insert(argument_boolean, builder.records()).first.index());
     argument_data.numerical_arguments.push_back(denotations.insert(argument_numerical, builder.records()).first.index());
-    const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
+    const auto arguments = denotations.insert(argument_data).first;
     argument_concept.get().reset(ygg::uint_t(a.value));
     argument_concept.get().set(ygg::uint_t(c.value));
     argument_role.get(a).reset(ygg::uint_t(b.value));
@@ -224,7 +224,7 @@ void check_incremental_evaluation()
     argument_data.role_arguments[0] = denotations.insert(argument_role, builder.records()).first.index();
     argument_data.boolean_arguments[0] = denotations.insert(argument_boolean, builder.records()).first.index();
     argument_data.numerical_arguments[0] = denotations.insert(argument_numerical, builder.records()).first.index();
-    const auto other_arguments = kr::dl::semantics::insert(denotations, argument_data).first;
+    const auto other_arguments = denotations.insert(argument_data).first;
     const auto context_for = [&](const auto& state, size_t i, kr::dl::semantics::CallArgumentsView invocation)
     { return kr::dl::semantics::StateEvaluationContext<Kind, std::remove_cvref_t<decltype(state)>>(state, builder, storage, invocation, registers(i)); };
     auto deltas = std::array<kr::dl::semantics::incremental::Delta, 2> {};
@@ -402,11 +402,11 @@ void check_incremental_evaluation()
     {
         check(expression);
         auto count = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>>(expression.index());
-        auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(kr::dl::insert(*constructors, count).first.index(), false);
-        check(kr::dl::insert(*constructors, count_wrapper).first);
+        auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(constructors->insert(count).first.index(), false);
+        check(constructors->insert(count_wrapper).first);
         auto nonempty = urd::data<kr::dl::Boolean<kr::dl::SemanticFamily, kr::dl::NonemptyTag>>(expression.index());
-        auto nonempty_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(kr::dl::insert(*constructors, nonempty).first.index(), false);
-        check(kr::dl::insert(*constructors, nonempty_wrapper).first);
+        auto nonempty_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(constructors->insert(nonempty).first.index(), false);
+        check(constructors->insert(nonempty_wrapper).first);
     };
     const auto present = kr::ps::ext::dl::parse_concept(R"((c_atomic_state "present"))", domain, *constructors);
     const auto copied_present = kr::ps::ext::dl::parse_concept(R"((c_atomic_state "copied-present"))", domain, *constructors);

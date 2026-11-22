@@ -247,7 +247,7 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     const auto borrowed = urd::resolve(values, repository);
     const auto view = repository.view(urd::copy(borrowed, repository, builder.records()));
     EXPECT_EQ(&view.context(), &repository);
-    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(repository[view.index()], expected));
+    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(*repository[view.index()], expected));
     EXPECT_EQ(urd::copy(borrowed, repository, builder.records()), view.index());  // interned once
     EXPECT_EQ(urd::copy(view, repository, builder.records()), view.index());      // its own
     EXPECT_EQ(repository.size<kr::dl::semantics::RegisterValues>(), 1);
@@ -256,13 +256,13 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
 
     auto other_values = runir::tests::copy_fields(expected);
     other_values.concept_values[0] = objects[1].index();
-    const auto occupied = kr::dl::semantics::insert(other_repository, other_values).first;
+    const auto occupied = other_repository.insert(other_values).first;
     ASSERT_NE(other_repository.layer(), repository.layer());
     ASSERT_EQ(occupied.index(), view.index());
     const auto transferred = other_repository.view(urd::copy(view, other_repository, builder.records()));
     EXPECT_EQ(&transferred.context(), &other_repository);
     EXPECT_NE(transferred.index(), occupied.index());
-    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(other_repository[transferred.index()], expected));
+    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(*other_repository[transferred.index()], expected));
     EXPECT_EQ(urd::copy(view, other_repository, builder.records()), transferred.index());
     EXPECT_EQ(other_repository.size<kr::dl::semantics::RegisterValues>(), 2);
 
@@ -271,7 +271,7 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     EXPECT_THROW((void) urd::copy(borrowed, foreign_repository, builder.records()), std::invalid_argument);
     EXPECT_EQ(foreign_repository.size<kr::dl::semantics::RegisterValues>(), 0);
     auto foreign_values = runir::tests::copy_fields(expected);
-    const auto foreign_view = kr::dl::semantics::insert(foreign_repository, foreign_values).first;
+    const auto foreign_view = foreign_repository.insert(foreign_values).first;
     EXPECT_THROW((void) urd::copy(foreign_view, repository, builder.records()), std::invalid_argument);
     EXPECT_EQ(repository.size<kr::dl::semantics::RegisterValues>(), 1);
 }
@@ -286,7 +286,7 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     values.concept_values.resize(2);
     values.concept_values[0] = objects[0].index();
     values.role_values.emplace_back(::cista::pair { objects[1].index(), objects[2].index() });
-    const auto view = kr::dl::semantics::insert(repository, values).first;
+    const auto view = repository.insert(values).first;
     auto extracted = urd::data<kr::dl::semantics::RegisterValues>();
     extracted.index = view.index();
     kr::dl::semantics::assign(extracted, view);
@@ -308,9 +308,9 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     EXPECT_EQ(extracted.concept_values.allocated_size_, concept_capacity);
     EXPECT_EQ(extracted.role_values.data(), role_buffer);
     EXPECT_EQ(extracted.role_values.allocated_size_, role_capacity);
-    EXPECT_EQ(repository[view.index()].concept_values.size(), 2);
-    EXPECT_EQ(repository[view.index()].concept_values[0].value(), objects[0].index());
-    EXPECT_TRUE(repository[view.index()].role_values[0].has_value());
+    EXPECT_EQ(repository[view.index()]->concept_values.size(), 2);
+    EXPECT_EQ(repository[view.index()]->concept_values[0].value(), objects[0].index());
+    EXPECT_TRUE(repository[view.index()]->role_values[0].has_value());
 
     extracted.index = view.index();
     kr::dl::semantics::assign(extracted, urd::resolve(extracted, repository));
@@ -423,7 +423,7 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
     auto registers_data = urd::data<kr::dl::semantics::RegisterValues>();
     registers_data.concept_values.resize(1);
     registers_data.concept_values[0] = search->task->get_domain().get_domain().get_constants()[0].index();
-    const auto arguments = kr::dl::semantics::insert(persistent, arguments_data).first;
+    const auto arguments = persistent.insert(arguments_data).first;
     const auto registers = urd::resolve(registers_data, persistent);
     using Context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
     auto transient = Context(initial.get_state(), builder, storage, arguments, registers);
@@ -496,8 +496,8 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(),
                                                                              builder,
                                                                              storage,
-                                                                             kr::dl::semantics::insert(prototype, arguments).first,
-                                                                             kr::dl::semantics::insert(prototype, registers).first);
+                                                                             prototype.insert(arguments).first,
+                                                                             prototype.insert(registers).first);
     const auto query = [&](const std::string& expression)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, *constructors);
@@ -561,8 +561,8 @@ TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBuiltAndIndexedRegi
     auto caches = kr::dl::semantics::DenotationCaches();
     auto arguments_data = urd::data<kr::dl::semantics::CallArguments>();
     auto registers_data = urd::data<kr::dl::semantics::RegisterValues>();
-    const auto arguments = kr::dl::semantics::insert(input_repository, arguments_data).first;
-    const auto foreign_arguments = kr::dl::semantics::insert(foreign_repository, arguments_data).first;
+    const auto arguments = input_repository.insert(arguments_data).first;
+    const auto foreign_arguments = foreign_repository.insert(arguments_data).first;
     const auto check = [&](auto registers, auto foreign_registers)
     {
         using Context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
@@ -574,7 +574,7 @@ TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBuiltAndIndexedRegi
         EXPECT_THROW(Context(initial.get_state(), builder, caches, repository, storage, arguments, foreign_registers), std::invalid_argument);
     };
     check(urd::resolve(registers_data, input_repository), urd::resolve(registers_data, foreign_repository));
-    check(kr::dl::semantics::insert(input_repository, registers_data).first, kr::dl::semantics::insert(foreign_repository, registers_data).first);
+    check(input_repository.insert(registers_data).first, foreign_repository.insert(registers_data).first);
 }
 
 TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
@@ -594,8 +594,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
                                                                              caches,
                                                                              persistent,
                                                                              storage,
-                                                                             kr::dl::semantics::insert(persistent, arguments_data).first,
-                                                                             kr::dl::semantics::insert(persistent, registers_data).first);
+                                                                             persistent.insert(arguments_data).first,
+                                                                             persistent.insert(registers_data).first);
     const auto query = [&](const std::string& expression, auto& repository)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", search->task->get_domain().get_domain(), repository);

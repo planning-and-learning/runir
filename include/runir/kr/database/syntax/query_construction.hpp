@@ -21,7 +21,6 @@ namespace runir::kr::database
 using QueryBuilder = boost::mp11::mp_apply<::ygg::formalism::BuilderStorage, boost::mp11::mp_push_front<QuerySymbolTypes, QueryRepository>>;
 
 using ::ygg::formalism::checkout;
-using ::ygg::formalism::insert;
 
 namespace detail
 {
@@ -61,7 +60,7 @@ void derive(urd::data<Query<QueryGenericJoinTag>>& data, const QueryRepository& 
 /// rename's columns) computed from them (detail::derive), its columns validated (an input's, an empty relation's).
 template<typename Tag>
     requires(!std::same_as<Tag, void>)
-void prepare_for_insert(QueryRepository& repository, urd::data<Query<Tag>>& data)
+void prepare_for_insert(const QueryRepository& repository, urd::data<Query<Tag>>& data)
 {
     detail::derive(data, repository);
     if constexpr (requires { data.columns; } && !std::same_as<Tag, QueryRenameTag>)
@@ -69,7 +68,7 @@ void prepare_for_insert(QueryRepository& repository, urd::data<Query<Tag>>& data
 }
 
 /// The concrete record must already be interned.
-void prepare_for_insert(QueryRepository& repository, urd::data<Query<>>& data);
+void prepare_for_insert(const QueryRepository& repository, urd::data<Query<>>& data);
 
 /// Interns a built query (prepared: prepare_for_insert), then its heterogeneous root.
 template<typename Tag>

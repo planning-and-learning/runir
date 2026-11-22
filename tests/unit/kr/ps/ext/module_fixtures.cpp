@@ -50,7 +50,6 @@ auto create_program(kr::ps::ext::Repository& repository, kr::ps::ext::ModuleView
     data.entry_mod = entry.index();
     for (auto module_ : modules)
         data.modules.push_back(module_.index());
-    kr::ps::ext::canonicalize(data);
     return repository.insert(data).first;
 }
 
@@ -59,7 +58,7 @@ auto create_top_concept(kr::dl::ConstructorRepository& repository) -> kr::dl::Co
     auto top_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
     const auto top = repository.insert(top_data).first;
     auto constructor_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(top.index(), false);
-    return kr::dl::insert(repository, constructor_data).first;
+    return repository.insert(constructor_data).first;
 }
 
 }  // namespace runir::tests

@@ -63,26 +63,13 @@ public:
     using Base::find;
     using Base::insert;
     using Base::view;
-    using NestsBase::find;
     using NestsBase::get;
     using NestsBase::get_ptr;
-    using NestsBase::insert;
-    using NestsBase::repository_for;
-    using NestsBase::view;
 };
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
 inline const ExecutionRepository<Family, Kind>& get_repository(const ExecutionRepository<Family, Kind>& context URD_LIFETIMEBOUND) noexcept
 { return context; }
-
-/// Execution records are canonical as built.
-template<ProgramFamilyTag Family, tyr::TaskKind Kind, typename T>
-    requires ygg::formalism::SupportsSymbol<ExecutionRepository<Family, Kind>, T>
-void prepare_for_insert(ExecutionRepository<Family, Kind>&, urd::data<T>&)
-{
-}
-
-using ygg::formalism::insert;
 
 }  // namespace runir::kr::ps
 

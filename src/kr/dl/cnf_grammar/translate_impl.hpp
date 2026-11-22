@@ -83,7 +83,7 @@ private:
 
     template<typename T, typename Initialize>
     ConstructorChild intern_concrete(Initialize&& initialize)
-    { return urd::stored<ConstructorChild>(intern<T>(std::forward<Initialize>(initialize))); }
+    { return urd::as_member<ConstructorChild>(intern<T>(std::forward<Initialize>(initialize))); }
 
     template<typename T>
     auto intern_nullary()

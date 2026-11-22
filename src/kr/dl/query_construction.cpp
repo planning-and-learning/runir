@@ -34,8 +34,8 @@ void require_generic_join_order(std::string_view name,
 
 const urd::flat_vector<urd::index<QueryColumn>>& get_query_columns(urd::index<Query<>> index, const ConstructorRepository& repository)
 {
-    return std::visit([&](auto concrete) -> const urd::flat_vector<urd::index<QueryColumn>>& { return repository[concrete].columns; },
-                      repository[index].variant);
+    return std::visit([&](auto concrete) -> const urd::flat_vector<urd::index<QueryColumn>>& { return repository[concrete]->columns; },
+                      repository[index]->variant);
 }
 
 void prepare(urd::data<Query<>>& data, const ConstructorRepository& repository)

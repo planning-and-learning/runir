@@ -44,7 +44,7 @@ class EvaluationEnvironment
     static auto empty_arguments(TaskContext<Kind>& task)
     {
         auto data = task.dl_builder.template scratch<runir::kr::dl::semantics::CallArguments>();
-        return insert(*task.dl_denotation_repository, *data).first;
+        return task.dl_denotation_repository->insert(*data).first;
     }
 
 public:

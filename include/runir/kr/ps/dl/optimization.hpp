@@ -34,7 +34,7 @@ public:
         if (optimized == expression)
             return view;
         auto data = urd::data<ConcreteFeature<Family, FeatureTag>>(optimized.index(), view.get_symbol());
-        return ygg::formalism::insert(repository, data).first;
+        return repository.insert(data).first;
     }
 
 private:

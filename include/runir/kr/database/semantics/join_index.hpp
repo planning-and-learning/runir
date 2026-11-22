@@ -27,8 +27,6 @@ namespace runir::kr::database::detail
 {
 /// The value of a row's field: a stored row's (read without decoding the others), or a row of values' (a built row's, a
 /// query's frame of variables).
-inline ygg::Value field_value(const urd::packed_row<false>& row, size_t position) noexcept { return row.get(position); }
-
 template<ygg::RowValues R>
 ygg::Value field_value(const R& values, size_t position) noexcept
 { return *std::ranges::next(std::ranges::begin(values), static_cast<std::ptrdiff_t>(position)); }

@@ -55,19 +55,19 @@ void require_bound(const Atoms& atoms, std::span<const Comparison> comparisons, 
 }
 }  // namespace
 
-void prepare_for_insert(DatalogRepository&, urd::data<Relation>& data)
+void prepare_for_insert(const DatalogRepository&, urd::data<Relation>& data)
 {
     if (data.weighted && (data.input || data.arity == 0))
         throw std::invalid_argument("Datalog: a weighted relation is derived and has a weight column.");
 }
 
-void prepare_for_insert(DatalogRepository& repository, urd::data<Atom>& data)
+void prepare_for_insert(const DatalogRepository& repository, urd::data<Atom>& data)
 {
     if (repository.view(data.relation).get_arity() != data.terms.size())
         throw std::invalid_argument("Datalog: an atom's terms do not match its relation's arity.");
 }
 
-void prepare_for_insert(DatalogRepository& repository, urd::data<Aggregate>& data)
+void prepare_for_insert(const DatalogRepository& repository, urd::data<Aggregate>& data)
 {
     auto bound = urd::Store<urd::sequence<ygg::uint_t>>();
     for (const auto atom : urd::resolve(data.atoms, repository))
@@ -82,7 +82,7 @@ void prepare_for_insert(DatalogRepository& repository, urd::data<Aggregate>& dat
         throw std::invalid_argument("Datalog: an aggregate's result is a variable of its atoms.");
 }
 
-void prepare_for_insert(DatalogRepository& repository, urd::data<Rule>& data)
+void prepare_for_insert(const DatalogRepository& repository, urd::data<Rule>& data)
 {
     const auto head = repository.view(data.head);
     if (head.get_relation().get_input())
