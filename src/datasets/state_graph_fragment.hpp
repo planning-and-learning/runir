@@ -121,8 +121,8 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
         throw std::logic_error("State graph search did not report its initial state.");
 
     using Graph = StateGraph<Kind>;
-    using Edge = std::tuple<VertexIndex, VertexIndex, StateGraphEdgeLabel>;
-    auto vertices = urd::Store<urd::sequence<StateGraphVertexLabel<Kind>, VertexIndex>> {};
+    using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<StateGraphEdgeLabel>>;
+    auto vertices = urd::Store<urd::sequence<urd::data<StateGraphVertexLabel<Kind>>, VertexIndex>> {};
     auto graph_edges = urd::Store<urd::sequence<Edge>> {};
     auto packed_to_vertex = urd::Store<urd::map<tyr::planning::PackedStateView<Kind>, VertexIndex>> {};
     /// The materialized states by vertex: a state's vertex is its position.
@@ -139,7 +139,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
         if (inserted)
         {
             assert(vertices.size() == vertex);
-            vertices.push_back(StateGraphVertexLabel<Kind> { std::move(state) });
+            vertices.push_back(urd::data<StateGraphVertexLabel<Kind>> { std::move(state) });
         }
         packed_to_vertex.emplace(packed, vertex);
         return vertex;
@@ -153,11 +153,11 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
             const auto source = get_or_create_vertex(transition.source);
             const auto target = get_or_create_vertex(transition.target);
             if (edges.emplace(source, target, transition.action, transition.cost).second)
-                graph_edges.emplace_back(source, target, StateGraphEdgeLabel { transition.action, transition.cost });
+                graph_edges.emplace_back(source, target, urd::data<StateGraphEdgeLabel> { transition.action, transition.cost });
         }
     }
 
-    return std::make_unique<Graph>(urd::graph_data<Edge, StateGraphVertexLabel<Kind>> { vertices.size(), graph_edges, {}, vertices });
+    return std::make_unique<Graph>(urd::graph_data<Edge, urd::data<StateGraphVertexLabel<Kind>>> { vertices.size(), graph_edges, {}, vertices });
 }
 
 }  // namespace runir::datasets::detail

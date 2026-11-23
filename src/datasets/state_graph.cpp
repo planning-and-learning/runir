@@ -138,16 +138,16 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     {
         const auto& state = graph.vertex_value(vertex_index).state;
         const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<ygg::float_t>::infinity();
-        vertices.push_back(AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                  goal_distance[vertex_index],
-                                                                  state == packed_initial_state,
-                                                                  is_goal.contains(vertex_index),
-                                                                  is_alive,
-                                                                  !is_alive });
+        vertices.push_back(urd::data<AnnotatedStateGraphVertexLabel<Kind>> { state,
+                                                                             goal_distance[vertex_index],
+                                                                             state == packed_initial_state,
+                                                                             is_goal.contains(vertex_index),
+                                                                             is_alive,
+                                                                             !is_alive });
     }
 
     // The same edges in the same order: the annotated graph numbers them as the state graph does.
-    using Edge = std::tuple<VertexIndex, VertexIndex, StateGraphEdgeLabel>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<StateGraphEdgeLabel>>;
     auto edges = urd::Store<urd::sequence<Edge>> {};
     edges.reserve(graph.num_edges());
     for (const auto edge : graph.edges())

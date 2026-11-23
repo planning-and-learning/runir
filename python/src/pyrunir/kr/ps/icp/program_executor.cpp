@@ -1,5 +1,6 @@
-#include "pyrunir/conversions.hpp"
+#include "pyrunir/kr/dl/conversions.hpp"
 #include "pyrunir/kr/ps/icp/bindings.hpp"
+#include "pyrunir/kr/ps/icp/conversions.hpp"
 #include "pyrunir/module.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
@@ -64,7 +65,6 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 {
     using namespace nb::literals;
     using StateView = ProgramStateView<Kind>;
-    using VertexLabel = ProgramProofVertexLabel<IcpFamilyTag, Kind>;
     using Graph = ProgramProofGraph<IcpFamilyTag, Kind>;
     using Results = ProgramProofResults<Kind>;
     using Options = ProgramSearchOptions<Kind>;
@@ -102,18 +102,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     urd::python::bind_view<StateView>(m);
     urd::python::bind_builder<ProgramState<Kind>, ExecutionRepository<IcpFamilyTag, Kind>>(m);
 
-    auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
-                            .def_ro("program_state", &VertexLabel::program_state)
-                            .def_prop_ro(
-                                "state",
-                                [](const VertexLabel& self) { return self.program_state.get_state(); },
-                                nb::keep_alive<0, 1>())
-                            .def_ro("is_initial", &VertexLabel::is_initial)
-                            .def_ro("is_goal", &VertexLabel::is_goal)
-                            .def_ro("is_alive", &VertexLabel::is_alive)
-                            .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
-    urd::python::add_comparison(vertex_label);
-    urd::python::add_hash(vertex_label);
+    urd::python::bind_data<ProgramProofVertexLabel<IcpFamilyTag, Kind>>(m);
 
     {
         auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
@@ -181,13 +170,7 @@ void bind_program_executor(nb::module_& m)
         .def_ro("num_expanded", &ProgramSearchStatistics::num_expanded)
         .def_ro("num_generated", &ProgramSearchStatistics::num_generated);
 
-    auto edge_label = nb::class_<ProgramProofEdgeLabel<IcpFamilyTag>>(m, "ProgramProofEdgeLabel")
-                          .def_ro("action", &ProgramProofEdgeLabel<IcpFamilyTag>::action)
-                          .def_ro("rule", &ProgramProofEdgeLabel<IcpFamilyTag>::rule);
-    urd::python::add_comparison(edge_label);
-    urd::python::add_hash(edge_label);
-    m.attr("GroundProgramProofEdgeLabel") = edge_label;
-    m.attr("LiftedProgramProofEdgeLabel") = edge_label;
+    urd::python::bind_data<ProgramProofEdgeLabel<IcpFamilyTag>>(m);
 
     urd::python::bind_index<Histories>(m);
     urd::python::bind_data<Histories>(m);

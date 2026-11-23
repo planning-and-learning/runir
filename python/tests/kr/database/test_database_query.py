@@ -149,7 +149,7 @@ def test_records_views_and_insertion_identity() -> None:
     assert join.get_left_operand() == a
     assert join.get_right_operand() == b
     assert labels(join.columns()) == columns(0, 1, 2)
-    assert labels(join.get_plan().output_columns()) == columns(0, 1, 2)
+    assert labels(join.get_plan().output_columns) == columns(0, 1, 2)
     assert repo.insert(record(db.QueryJoinData, left_operand=a, right_operand=b)) == (join, False)
     erased, _ = repo.insert(db.QueryData(join.index()))
     variant = erased.get_variant()

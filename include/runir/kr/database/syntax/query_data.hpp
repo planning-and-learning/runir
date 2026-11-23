@@ -6,8 +6,8 @@
 #define RUNIR_KR_DATABASE_SYNTAX_QUERY_DATA_HPP_
 
 #include "runir/kr/database/declarations.hpp"
-#include "runir/kr/database/semantics/distance_plan.hpp"
-#include "runir/kr/database/semantics/generic_join_plan.hpp"
+#include "runir/kr/database/semantics/distance_plan_data.hpp"
+#include "runir/kr/database/semantics/generic_join_plan_data.hpp"
 #include "yggdrasil/formalism/values.hpp"
 
 #include <array>
@@ -119,11 +119,13 @@ struct data<runir::kr::database::Query<Tag>>
     urd::key<runir::kr::database::Query<Tag>> index;
     urd::index<runir::kr::database::Query<>> left_operand;
     urd::index<runir::kr::database::Query<>> right_operand;
-    runir::kr::database::JoinPlan plan;
+    urd::data<runir::kr::database::JoinPlan> plan;
 
     data() = default;
 
-    data(urd::index<runir::kr::database::Query<>> left_operand_, urd::index<runir::kr::database::Query<>> right_operand_, runir::kr::database::JoinPlan plan_) :
+    data(urd::index<runir::kr::database::Query<>> left_operand_,
+         urd::index<runir::kr::database::Query<>> right_operand_,
+         urd::data<runir::kr::database::JoinPlan> plan_) :
         left_operand(left_operand_),
         right_operand(right_operand_),
         plan(std::move(plan_))
@@ -156,11 +158,13 @@ struct data<runir::kr::database::Query<Tag>>
     urd::key<runir::kr::database::Query<Tag>> index;
     urd::index<runir::kr::database::Query<>> left_operand;
     urd::index<runir::kr::database::Query<>> right_operand;
-    runir::kr::database::SetPlan plan;
+    urd::data<runir::kr::database::SetPlan> plan;
 
     data() = default;
 
-    data(urd::index<runir::kr::database::Query<>> left_operand_, urd::index<runir::kr::database::Query<>> right_operand_, runir::kr::database::SetPlan plan_) :
+    data(urd::index<runir::kr::database::Query<>> left_operand_,
+         urd::index<runir::kr::database::Query<>> right_operand_,
+         urd::data<runir::kr::database::SetPlan> plan_) :
         left_operand(left_operand_),
         right_operand(right_operand_),
         plan(std::move(plan_))
@@ -192,11 +196,13 @@ struct data<runir::kr::database::Query<runir::kr::database::QueryProjectTag>>
     urd::key<runir::kr::database::Query<runir::kr::database::QueryProjectTag>> index;
     urd::index<runir::kr::database::Query<>> operand;
     urd::flat_vector<urd::index<ygg::Column>> labels;
-    runir::kr::database::ProjectionPlan plan;
+    urd::data<runir::kr::database::ProjectionPlan> plan;
 
     data() = default;
 
-    data(urd::index<runir::kr::database::Query<>> operand_, std::span<const urd::index<ygg::Column>> labels_, runir::kr::database::ProjectionPlan plan_) :
+    data(urd::index<runir::kr::database::Query<>> operand_,
+         std::span<const urd::index<ygg::Column>> labels_,
+         urd::data<runir::kr::database::ProjectionPlan> plan_) :
         operand(operand_),
         plan(std::move(plan_))
     { labels.set(labels_.begin(), labels_.end()); }
@@ -261,14 +267,14 @@ struct data<runir::kr::database::Query<runir::kr::database::QuerySelectEqualTag>
     urd::index<runir::kr::database::Query<>> operand;
     urd::index<ygg::Column> left_column;
     urd::index<ygg::Column> right_column;
-    runir::kr::database::SelectEqualPlan plan;
+    urd::data<runir::kr::database::SelectEqualPlan> plan;
 
     data() = default;
 
     data(urd::index<runir::kr::database::Query<>> operand_,
          urd::index<ygg::Column> left_column_,
          urd::index<ygg::Column> right_column_,
-         runir::kr::database::SelectEqualPlan plan_) :
+         urd::data<runir::kr::database::SelectEqualPlan> plan_) :
         operand(operand_),
         left_column(left_column_),
         right_column(right_column_),
@@ -309,7 +315,7 @@ struct data<runir::kr::database::Query<runir::kr::database::QuerySelectValueTag>
     ygg::Value constant = 0;
     /// The constant's type.
     ygg::TypeId constant_type {};
-    runir::kr::database::SelectValuePlan plan;
+    urd::data<runir::kr::database::SelectValuePlan> plan;
 
     data() = default;
 
@@ -317,7 +323,7 @@ struct data<runir::kr::database::Query<runir::kr::database::QuerySelectValueTag>
          urd::index<ygg::Column> column_,
          ygg::Value constant_,
          ygg::TypeId constant_type_,
-         runir::kr::database::SelectValuePlan plan_) :
+         urd::data<runir::kr::database::SelectValuePlan> plan_) :
         operand(operand_),
         column(column_),
         constant(constant_),
@@ -357,7 +363,7 @@ struct data<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>
     urd::flat_vector<urd::index<runir::kr::database::Query<>>> inputs;
     urd::flat_vector<urd::index<ygg::Column>> variable_order;
     urd::flat_vector<urd::index<ygg::Column>> output_order;
-    runir::kr::database::GenericJoinPlan plan;
+    urd::data<runir::kr::database::GenericJoinPlan> plan;
 
     data() = default;
 
@@ -365,7 +371,7 @@ struct data<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>
     data(std::span<const urd::index<runir::kr::database::Query<>>> inputs_,
          std::span<const urd::index<ygg::Column>> variable_order_,
          std::span<const urd::index<ygg::Column>> output_order_,
-         runir::kr::database::GenericJoinPlan plan_) :
+         urd::data<runir::kr::database::GenericJoinPlan> plan_) :
         plan(std::move(plan_))
     {
         inputs.set(inputs_.begin(), inputs_.end());

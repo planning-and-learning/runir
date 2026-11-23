@@ -19,6 +19,7 @@
 #define RUNIR_DATASETS_EQUIVALENCE_GRAPH_HPP_
 
 #include "runir/datasets/config.hpp"
+#include "runir/datasets/declarations.hpp"
 #include "runir/datasets/equivalence_policy.hpp"
 #include "runir/datasets/graph_types.hpp"
 #include "runir/datasets/object_graph.hpp"
@@ -27,7 +28,10 @@
 
 #include <limits>
 #include <memory>
+#include <string_view>
 #include <tuple>
+#include <type_traits>
+#include <urd/elements/concepts.hpp>
 #include <urd/repr/graphs/csr_graph.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -35,48 +39,56 @@
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::datasets
+namespace urd
 {
-
-struct EquivalenceVertexLabel : urd::compared_by_identity<EquivalenceVertexLabel>
+template<>
+struct data<runir::datasets::EquivalenceVertexLabel>
 {
-    ygg::uint_t state_graph_index = 0;
-    VertexIndex state_vertex_index = 0;
+    ygg::uint_t state_graph_index {};
+    runir::VertexIndex state_vertex_index {};
 
-    EquivalenceVertexLabel() = default;
+    data() = default;
 
-    constexpr EquivalenceVertexLabel(ygg::uint_t state_graph_index_, VertexIndex state_vertex_index_) noexcept :
+    data(ygg::uint_t state_graph_index_, runir::VertexIndex state_vertex_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_vertex_index(state_vertex_index_)
     {
     }
 
-    static constexpr auto cista_members() noexcept
-    { return urd::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"state_graph_index", &data::state_graph_index>, urd::field<"state_vertex_index", &data::state_vertex_index>> {}; }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::state_graph_index, &data::state_vertex_index> {}; }
 };
 
-struct AnnotatedEquivalenceVertexLabel : urd::compared_by_identity<AnnotatedEquivalenceVertexLabel>
+template<>
+struct data<runir::datasets::AnnotatedEquivalenceVertexLabel>
 {
-    ygg::uint_t state_graph_index = 0;
-    VertexIndex state_vertex_index = 0;
-    ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
-    bool is_initial = false;
-    bool is_goal = false;
-    bool is_alive = false;
-    bool is_unsolvable = false;
+    ygg::uint_t state_graph_index {};
+    runir::VertexIndex state_vertex_index {};
+    ygg::float_t goal_distance {};
+    bool is_initial {};
+    bool is_goal {};
+    bool is_alive {};
+    bool is_unsolvable {};
 
-    AnnotatedEquivalenceVertexLabel() = default;
+    data() = default;
 
-    AnnotatedEquivalenceVertexLabel(ygg::uint_t state_graph_index_,
-                                    VertexIndex state_vertex_index_,
-                                    ygg::float_t goal_distance_,
-                                    bool is_initial_,
-                                    bool is_goal_,
-                                    bool is_alive_,
-                                    bool is_unsolvable_) noexcept :
+    data(ygg::uint_t state_graph_index_,
+         runir::VertexIndex state_vertex_index_,
+         ygg::float_t goal_distance_,
+         bool is_initial_,
+         bool is_goal_,
+         bool is_alive_,
+         bool is_unsolvable_) noexcept :
         state_graph_index(state_graph_index_),
         state_vertex_index(state_vertex_index_),
         goal_distance(goal_distance_),
@@ -87,56 +99,78 @@ struct AnnotatedEquivalenceVertexLabel : urd::compared_by_identity<AnnotatedEqui
     {
     }
 
-    static constexpr auto cista_members() noexcept
+    static constexpr bool copyable() noexcept
     {
-        return urd::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index,
-                            &AnnotatedEquivalenceVertexLabel::state_vertex_index,
-                            &AnnotatedEquivalenceVertexLabel::goal_distance,
-                            &AnnotatedEquivalenceVertexLabel::is_initial,
-                            &AnnotatedEquivalenceVertexLabel::is_goal,
-                            &AnnotatedEquivalenceVertexLabel::is_alive,
-                            &AnnotatedEquivalenceVertexLabel::is_unsolvable> {};
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
     }
 
-    static constexpr auto identifying_members() noexcept
+    static constexpr auto fields() noexcept
     {
-        return urd::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index,
-                            &AnnotatedEquivalenceVertexLabel::state_vertex_index,
-                            &AnnotatedEquivalenceVertexLabel::goal_distance,
-                            &AnnotatedEquivalenceVertexLabel::is_initial,
-                            &AnnotatedEquivalenceVertexLabel::is_goal,
-                            &AnnotatedEquivalenceVertexLabel::is_alive,
-                            &AnnotatedEquivalenceVertexLabel::is_unsolvable> {};
+        return urd::Fields<urd::field<"state_graph_index", &data::state_graph_index>,
+                           urd::field<"state_vertex_index", &data::state_vertex_index>,
+                           urd::field<"goal_distance", &data::goal_distance>,
+                           urd::field<"is_initial", &data::is_initial>,
+                           urd::field<"is_goal", &data::is_goal>,
+                           urd::field<"is_alive", &data::is_alive>,
+                           urd::field<"is_unsolvable", &data::is_unsolvable>> {};
+    }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
+    static constexpr auto cista_members() noexcept
+    {
+        return urd::Members<&data::state_graph_index,
+                            &data::state_vertex_index,
+                            &data::goal_distance,
+                            &data::is_initial,
+                            &data::is_goal,
+                            &data::is_alive,
+                            &data::is_unsolvable> {};
     }
 };
 
-struct EquivalenceEdgeLabel : urd::compared_by_identity<EquivalenceEdgeLabel>
+template<>
+struct data<runir::datasets::EquivalenceEdgeLabel>
 {
-    ygg::uint_t state_graph_index = 0;
-    EdgeIndex state_edge_index = 0;
+    ygg::uint_t state_graph_index {};
+    runir::EdgeIndex state_edge_index {};
 
-    EquivalenceEdgeLabel() = default;
+    data() = default;
 
-    constexpr EquivalenceEdgeLabel(ygg::uint_t state_graph_index_, EdgeIndex state_edge_index_) noexcept :
+    data(ygg::uint_t state_graph_index_, runir::EdgeIndex state_edge_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_edge_index(state_edge_index_)
     {
     }
 
-    static constexpr auto cista_members() noexcept
-    { return urd::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"state_graph_index", &data::state_graph_index>, urd::field<"state_edge_index", &data::state_edge_index>> {}; }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::state_graph_index, &data::state_edge_index> {}; }
 };
+}  // namespace urd
+
+namespace runir::datasets
+{
 
 /// The classes of states the equivalence policy finds across tasks, each represented by a state of a state graph, and an
 /// edge between two classes where a transition leads from a state of one to a state of the other (labelled by the first
 /// such transition, by its number in its state graph): a frozen graph that keeps its in-edges.
-using EquivalenceGraph = urd::Store<urd::graph<VertexIndex, EquivalenceEdgeLabel, EquivalenceVertexLabel>, urd::frozen, urd::bidirectional>;
+using EquivalenceGraph =
+    urd::Store<urd::graph<VertexIndex, urd::data<EquivalenceEdgeLabel>, urd::data<EquivalenceVertexLabel>>, urd::frozen, urd::bidirectional>;
 
 /// An equivalence graph whose classes know their goal distance and whether they are initial, goal, alive or unsolvable.
-using AnnotatedEquivalenceGraph = urd::Store<urd::graph<VertexIndex, EquivalenceEdgeLabel, AnnotatedEquivalenceVertexLabel>, urd::frozen, urd::bidirectional>;
+using AnnotatedEquivalenceGraph =
+    urd::Store<urd::graph<VertexIndex, urd::data<EquivalenceEdgeLabel>, urd::data<AnnotatedEquivalenceVertexLabel>>, urd::frozen, urd::bidirectional>;
 // The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
 static_assert(urd::bidirectional_graph<EquivalenceGraph> && urd::edge_list_graph<EquivalenceGraph>);
 static_assert(urd::bidirectional_graph<AnnotatedEquivalenceGraph> && urd::edge_list_graph<AnnotatedEquivalenceGraph>);

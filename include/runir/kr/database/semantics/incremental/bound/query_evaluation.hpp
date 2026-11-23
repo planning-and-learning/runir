@@ -35,7 +35,7 @@ struct InputChange
     size_t slot = 0;
     urd::handle<ygg::FreeScratchRelation> added;
     urd::handle<ygg::FreeScratchRelation> removed;
-    SetPlan plan;  ///< Of the slot's columns: what diffs the slot's rows.
+    urd::data<SetPlan> plan;  ///< Of the slot's columns: what diffs the slot's rows.
 };
 
 /// A bound::QueryEvaluator kept across input changes. initialize() binds the first inputs; update() takes a caller's
@@ -59,7 +59,7 @@ public:
         for (size_t slot = 0; slot < input_count(); ++slot)
         {
             const auto columns = std::span<const urd::data<ygg::ColumnLayout>>(m_base.query().input_columns[slot]);
-            m_changes.push_back(InputChange { slot, scratch.draw(columns), scratch.draw(columns), SetPlan(columns, columns) });
+            m_changes.push_back(InputChange { slot, scratch.draw(columns), scratch.draw(columns), make_set_plan(columns, columns) });
         }
         m_changed.reserve(input_count());
         const auto mark = [&](auto&& self, const database::bound::ConjunctiveBranch& branch, bool negated) -> void

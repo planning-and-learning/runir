@@ -24,8 +24,8 @@ static_assert(urd::incidence_graph<ProgramProofGraph<IcpFamilyTag, tyr::GroundTa
 template<tyr::TaskKind Kind>
 void build_proof_graph(ProgramProofResults<Kind>& result, const urd::Store<urd::sequence<SearchNode<Kind>>>& nodes, std::span<const Predecessor> predecessors)
 {
-    using VertexLabel = ProgramProofVertexLabel<IcpFamilyTag, Kind>;
-    using Edge = std::tuple<VertexIndex, VertexIndex, ProgramProofEdgeLabel<IcpFamilyTag>>;
+    using VertexLabel = urd::data<ProgramProofVertexLabel<IcpFamilyTag, Kind>>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<ProgramProofEdgeLabel<IcpFamilyTag>>>;
 
     auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     vertices.reserve(nodes.size());
@@ -44,7 +44,7 @@ void build_proof_graph(ProgramProofResults<Kind>& result, const urd::Store<urd::
     edges.reserve(predecessors.size());
     for (const auto& predecessor : predecessors)
     {
-        auto label = ProgramProofEdgeLabel<IcpFamilyTag> {};
+        auto label = urd::data<ProgramProofEdgeLabel<IcpFamilyTag>> {};
         if (predecessor.action)
             label.action = *predecessor.action;
         if (predecessor.rule)

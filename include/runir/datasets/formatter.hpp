@@ -52,44 +52,44 @@ struct formatter<runir::datasets::ColorView, char> : runir::detail::without_form
 
 /// A state graph's vertex: state=index.
 template<tyr::TaskKind Kind>
-struct formatter<runir::datasets::StateGraphVertexLabel<Kind>, char> : runir::detail::without_format_spec
+struct formatter<urd::data<runir::datasets::StateGraphVertexLabel<Kind>>, char> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::datasets::StateGraphVertexLabel<Kind>& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::datasets::StateGraphVertexLabel<Kind>>& value, fmt::format_context& context) const;
 };
 
 /// An annotated state graph's vertex: state, goal_distance, initial, goal, alive and unsolvable, one per line.
 template<tyr::TaskKind Kind>
-struct formatter<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>, char> : runir::detail::without_format_spec
+struct formatter<urd::data<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>, char> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::datasets::AnnotatedStateGraphVertexLabel<Kind>& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>& value, fmt::format_context& context) const;
 };
 
 /// A state graph's edge: its action as a plan lists it, then cost=c on the next line.
 template<>
-struct formatter<runir::datasets::StateGraphEdgeLabel, char> : runir::detail::without_format_spec
+struct formatter<urd::data<runir::datasets::StateGraphEdgeLabel>, char> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::datasets::StateGraphEdgeLabel& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::datasets::StateGraphEdgeLabel>& value, fmt::format_context& context) const;
 };
 
 /// An equivalence graph's vertex: state_graph and state_vertex, one per line.
 template<>
-struct formatter<runir::datasets::EquivalenceVertexLabel, char> : runir::detail::without_format_spec
+struct formatter<urd::data<runir::datasets::EquivalenceVertexLabel>, char> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::datasets::EquivalenceVertexLabel& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::datasets::EquivalenceVertexLabel>& value, fmt::format_context& context) const;
 };
 
 /// An annotated equivalence graph's vertex: state_graph, state_vertex, goal_distance, initial, goal, alive and unsolvable, one per line.
 template<>
-struct formatter<runir::datasets::AnnotatedEquivalenceVertexLabel, char> : runir::detail::without_format_spec
+struct formatter<urd::data<runir::datasets::AnnotatedEquivalenceVertexLabel>, char> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::datasets::AnnotatedEquivalenceVertexLabel& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::datasets::AnnotatedEquivalenceVertexLabel>& value, fmt::format_context& context) const;
 };
 
 /// An equivalence graph's edge: state_graph and state_edge, one per line.
 template<>
-struct formatter<runir::datasets::EquivalenceEdgeLabel, char> : runir::detail::without_format_spec
+struct formatter<urd::data<runir::datasets::EquivalenceEdgeLabel>, char> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::datasets::EquivalenceEdgeLabel& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::datasets::EquivalenceEdgeLabel>& value, fmt::format_context& context) const;
 };
 
 }  // namespace fmt

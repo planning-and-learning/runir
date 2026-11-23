@@ -50,9 +50,9 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::ConcreteEffect<Family, Feat
 
 /// A proof graph's edge: rule=symbol, or rule=<none>.
 template<runir::kr::ps::ProgramFamilyTag Family>
-struct fmt::formatter<runir::kr::ps::ProgramProofEdgeLabel<Family>> : runir::detail::without_format_spec
+struct fmt::formatter<urd::data<runir::kr::ps::ProgramProofEdgeLabel<Family>>> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::kr::ps::ProgramProofEdgeLabel<Family>& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::kr::ps::ProgramProofEdgeLabel<Family>>& value, fmt::format_context& context) const;
 };
 
 #endif

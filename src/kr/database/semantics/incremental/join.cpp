@@ -7,12 +7,12 @@
 
 namespace runir::kr::database::incremental
 {
-JoinEvaluator::JoinEvaluator(ygg::FreeScratchRelations& scratch, JoinPlan plan) :
-    m_plan(std::move(plan)),
-    m_left_operand(scratch.draw(m_plan.left_columns())),
-    m_right_operand(scratch.draw(m_plan.right_columns())),
-    m_result(scratch.draw(m_plan.output_columns())),
-    m_delta(scratch, m_plan.output_columns())
+JoinEvaluator::JoinEvaluator(ygg::FreeScratchRelations& scratch, const urd::data<JoinPlan>& plan) :
+    m_plan(&plan),
+    m_left_operand(scratch.draw(m_plan->left_columns)),
+    m_right_operand(scratch.draw(m_plan->right_columns)),
+    m_result(scratch.draw(m_plan->output_columns)),
+    m_delta(scratch, m_plan->output_columns)
 {
 }
 }

@@ -230,6 +230,23 @@ concept DenotationViewConcept =
     CategoryTag<Category>
     && (std::same_as<std::remove_cvref_t<V>, DenotationView<Category>> || std::same_as<std::remove_cvref_t<V>, DenotationBuilderView<Category>>);
 
+/// A denotation is serialized by what it denotes, not by its packed blocks: a Boolean or numerical one by its value, a
+/// concept or role one by its elements (pyyggdrasil.serialization).
+template<typename Archive, CategoryTag Category, typename C>
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<Denotation<Category>, C>> /*type*/)
+{
+    if constexpr (BooleanOrNumericalTag<Category>)
+        ar.field("value", [](const auto& value) -> decltype(auto) { return (value.get_value()); });
+    else
+        ar.field("values",
+                 [](const auto& value)
+                 {
+                     auto elements = DenotationElementViewList<Category> {};
+                     for (auto element : value.views())
+                         elements.push_back(element);
+                     return elements;
+                 });
+}
 }  // namespace runir::kr::dl::semantics
 
 #endif

@@ -2,7 +2,7 @@
 #define PYRUNIR_KR_DL_NON_TERMINAL_BINDINGS_HPP_
 
 #include "module.hpp"
-#include "pyrunir/conversions.hpp"
+#include "pyrunir/kr/dl/conversions.hpp"
 #include "pyrunir/module.hpp"
 
 #include <runir/kr/dl/declarations.hpp>

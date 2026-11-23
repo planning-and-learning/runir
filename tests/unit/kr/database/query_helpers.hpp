@@ -79,8 +79,7 @@ public:
 
     void clear() { m_scratch->clear(); }
 
-    void initialize(std::span<const urd::data<ygg::ColumnLayout>> columns)
-    { m_scratch->initialize(columns); }
+    void initialize(std::span<const urd::data<ygg::ColumnLayout>> columns) { m_scratch->initialize(columns); }
 
     void rename(std::span<const urd::data<ygg::ColumnLayout>> columns) { m_scratch->relation.rename(m_scratch->rows, columns); }
 
@@ -361,8 +360,8 @@ inline ygg::FreeRelationView rename(ygg::FreeRelationRepository& repository, ygg
 template<typename V>
 Relation projected(const V& input, std::span<const urd::index<ygg::Column>> labels)
 {
-    const kr::database::ProjectionPlan plan(input.columns(), labels);
-    Relation out(plan.output_columns());
+    const auto plan = kr::database::make_projection_plan(input.columns(), labels);
+    Relation out(plan.output_columns);
     kr::database::Workspace workspace;
     kr::database::project(input, plan, out, workspace);
     return out;
@@ -375,8 +374,8 @@ Relation projected(const V& input, std::initializer_list<urd::index<ygg::Column>
 template<typename L, typename R>
 Relation joined(const L& left_operand, const R& right_operand)
 {
-    const kr::database::JoinPlan plan(left_operand.columns(), right_operand.columns());
-    Relation out(plan.output_columns());
+    const auto plan = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
+    Relation out(plan.output_columns);
     kr::database::Workspace workspace;
     kr::database::join(left_operand, right_operand, plan, out, workspace);
     return out;
@@ -385,8 +384,8 @@ Relation joined(const L& left_operand, const R& right_operand)
 template<typename L, typename R>
 Relation unioned(const L& left_operand, const R& right_operand)
 {
-    const kr::database::SetPlan plan(left_operand.columns(), right_operand.columns());
-    Relation out(plan.output_columns());
+    const auto plan = kr::database::make_set_plan(left_operand.columns(), right_operand.columns());
+    Relation out(plan.output_columns);
     kr::database::union_(left_operand, right_operand, plan, out);
     return out;
 }
@@ -394,16 +393,16 @@ Relation unioned(const L& left_operand, const R& right_operand)
 template<typename L, typename R>
 Relation subtracted(const L& left_operand, const R& right_operand)
 {
-    const kr::database::SetPlan plan(left_operand.columns(), right_operand.columns());
-    Relation out(plan.output_columns());
+    const auto plan = kr::database::make_set_plan(left_operand.columns(), right_operand.columns());
+    Relation out(plan.output_columns);
     kr::database::difference(left_operand, right_operand, plan, out);
     return out;
 }
 
 template<typename S, typename E, typename T>
-Relation distances(const S& sources, const E& edges, const T& targets, const kr::database::DistancePlan& plan)
+Relation distances(const S& sources, const E& edges, const T& targets, const urd::data<kr::database::DistancePlan>& plan)
 {
-    Relation out(plan.output_columns());
+    Relation out(plan.output_columns);
     kr::database::DistanceWorkspace workspace(plan);
     kr::database::distance(sources, edges, targets, plan, out, workspace);
     return out;

@@ -42,12 +42,13 @@ existing query serializers; see :doc:`query features and Action rules <../action
 Tyr state rows contain changing state facts. Task metadata and static facts are available from a registered formalism
 task view. Runir register values and denotations also use Tyr serializers for their objects and object pairs.
 
-The native entry point is ``<runir/serialization/serialization.hpp>``. In Python, import the shared ``Dictionaries``
-registry from ``pyyggdrasil.serialization``. Runir provides
-``register_table(dictionaries, native_type, name, prefix, fields=None, project=None)``,
-``serialize(dictionaries, value)``, and ``table(dictionaries, native_type)`` in ``pyrunir.serialization`` for Runir
-entities. Use the corresponding functions in ``pytyr.serialization`` for Tyr entities, passing the same registry to both
-libraries. Its ``tables()`` method returns the collected snapshots.
+A record is serialized by its fields (``fields()``), in order, each under its name: Yggdrasil does this for every record
+of every library (``yggdrasil/serialization/fields.hpp``). A type that is no record, or a record serialized otherwise
+(a denotation by its elements, a query by what identifies it), declares ``describe_fields`` beside its type. In Python,
+import the shared ``Dictionaries`` registry from ``pyyggdrasil.serialization``: its methods
+``register_table(native_type, name, prefix, fields=None, project=None)``, ``serialize(value)`` and
+``table(native_type)`` serve the native types of every library, Runir's and Tyr's alike, and ``tables()`` returns the
+collected snapshots.
 
 Use a native type's ``Fields`` enum to discover the default columns without an instance or registry. The result follows
 declaration order:
@@ -58,18 +59,18 @@ declaration order:
 
    assert list(base.Rule.Fields.__members__) == ["symbol", "conditions", "effects"]
 
-The same C++ declaration provides both these names and the accessors used when serializing a registered value:
+These are the record's fields. A type described beside its declaration names its columns there, as a state graph's edge
+label does:
 
 .. code:: cpp
 
-   namespace ygg::serialization
+   namespace runir::datasets
    {
-   template<typename Archive, typename C>
-   void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::base::Rule>, C>>)
+   template<typename Archive>
+   void describe_fields(Archive& ar, std::type_identity<StateGraphEdgeLabelData> /*type*/)
    {
-       ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
-       ar.field("conditions", [](const auto& value) -> decltype(auto) { return (value.get_conditions()); });
-       ar.field("effects", [](const auto& value) -> decltype(auto) { return (value.get_effects()); });
+       ar.field("action", [](const auto& value) -> decltype(auto) { return (value.action); });
+       ar.field("cost", [](const auto& value) -> decltype(auto) { return (value.cost); });
    }
    }
 
@@ -83,18 +84,16 @@ this registration omits effects:
 
 .. code:: python
 
-   from pyrunir.serialization import register_table
    from pyyggdrasil.serialization import Dictionaries
 
    dictionaries = Dictionaries()
-   register_table(
-       dictionaries, base.Rule, "rules", "r",
+   dictionaries.register_table(
+       base.Rule, "rules", "r",
        fields=[base.Rule.Fields.symbol, base.Rule.Fields.conditions],
    )
 
-Generated overloads associate each native type with its own ``Fields`` enum so type checkers can detect selections from
-another type. Register Tyr entities and their field enums through ``pytyr.serialization``. String selections remain
-available, including arbitrary column names returned by a projection.
+A selection from another type's ``Fields`` enum is rejected at registration. String selections remain available,
+including arbitrary column names returned by a projection.
 
 The optional ``project`` callable receives a native entity and returns a complete row dictionary with arbitrary column
 names and transformed values. Its output replaces the declared fields. Callbacks can return native types whose owning
@@ -106,8 +105,8 @@ schema is unchanged. For example, keep rule conditions and effects as native tex
 .. code:: python
 
    dictionaries = Dictionaries()
-   register_table(
-       dictionaries, base.Rule, "rules", "r",
+   dictionaries.register_table(
+       base.Rule, "rules", "r",
        project=lambda rule: {
            "symbol": rule.get_symbol(),
            "conditions": [str(condition) for condition in rule.get_conditions()],
@@ -119,14 +118,12 @@ Or represent a Tyr action binding with its name and references to objects:
 
 .. code:: python
 
-   from pytyr.serialization import register_table
    from pytyr import formalism
    from pyyggdrasil.serialization import Dictionaries
 
    dictionaries = Dictionaries()
-   register_table(dictionaries, formalism.Object, "objects", "o")
-   register_table(
-       dictionaries,
+   dictionaries.register_table(formalism.Object, "objects", "o")
+   dictionaries.register_table(
        formalism.RowActionLifted,
        "actions",
        "a",

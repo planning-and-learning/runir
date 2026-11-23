@@ -94,10 +94,10 @@ urd::Store<urd::sequence<ConjunctiveBranch>> UnionNormalFormBuilder::flatten(Que
                 for (auto& branch : branches)
                 {
                     if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
-                        branch.equal.emplace_back(mapping[concrete.get_plan().left_position()], mapping[concrete.get_plan().right_position()]);
+                        branch.equal.emplace_back(mapping[concrete.get_plan().left_position], mapping[concrete.get_plan().right_position]);
                     else
                     {
-                        branch.value.emplace_back(mapping[concrete.get_plan().position()], concrete.get_constant());
+                        branch.value.emplace_back(mapping[concrete.get_plan().position], concrete.get_constant());
                     }
                 }
                 return branches;

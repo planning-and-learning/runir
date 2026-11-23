@@ -293,7 +293,7 @@ TEST(DatabaseQuery, MixedTypesAndConstants)
     EXPECT_THROW(runir::tests::qb::select_value(mixed, input, y, std::uint32_t(1)), std::invalid_argument);
     auto selected = runir::tests::qb::select_value(mixed, input, y, -0.0);
     const auto selected_view = std::get<runir::kr::database::QueryView<runir::kr::database::QuerySelectValueTag>>(selected.get_variant());
-    EXPECT_EQ(selected_view.get_plan().position(), 1);
+    EXPECT_EQ(selected_view.get_plan().position, 1);
     EXPECT_EQ(selected.index(), runir::tests::qb::select_value(mixed, input, y, 0.0).index());
     TypedRelation relation(schema);
     relation.insert(std::array { ygg::encode_value(static_cast<std::uint32_t>(4)), ygg::encode_value(0.0) });
@@ -507,7 +507,7 @@ TEST(DatabaseQuery, CachedPlansSurviveRepositoryGrowthAndCistaRelocation)
     for (size_t slot = 2; slot < 260; ++slot)
         runir::tests::qb::join(repository, runir::tests::qb::input(repository, slot, { x, y }), b);
     EXPECT_EQ(&view.get_plan(), original);
-    EXPECT_TRUE(std::ranges::equal(view.get_plan().output_columns(), columns_of(joined)));
+    EXPECT_TRUE(std::ranges::equal(view.get_plan().output_columns, columns_of(joined)));
 
     const auto round_trip = []<typename Concrete>(Concrete query)
     {
@@ -517,18 +517,18 @@ TEST(DatabaseQuery, CachedPlansSurviveRepositoryGrowthAndCistaRelocation)
         original_bytes.clear();
         original_bytes.shrink_to_fit();
         const auto* restored = cista::deserialize<Record>(relocated);
-        EXPECT_TRUE(std::ranges::equal(restored->plan.output_columns(), query.columns()));
+        EXPECT_TRUE(std::ranges::equal(restored->plan.output_columns, query.columns()));
         if constexpr (std::same_as<Concrete, runir::kr::database::QueryView<runir::kr::database::QueryGenericJoinTag>>)
         {
             const auto& expected = query.get_plan();
-            EXPECT_TRUE(std::ranges::equal(restored->plan.variable_order(), expected.variable_order()));
-            for (size_t input = 0; input < expected.input_count(); ++input)
+            EXPECT_TRUE(std::ranges::equal(restored->plan.variable_order, expected.variable_order));
+            for (size_t input = 0; input < expected.input_columns.size(); ++input)
             {
-                EXPECT_TRUE(std::ranges::equal(restored->plan.input_columns(input), expected.input_columns(input)));
-                EXPECT_EQ(restored->plan.input_keys(input).size(), expected.input_keys(input).size());
+                EXPECT_TRUE(std::ranges::equal(restored->plan.input_columns[input], expected.input_columns[input]));
+                EXPECT_EQ(restored->plan.input_keys[input].size(), expected.input_keys[input].size());
             }
-            for (size_t depth = 0; depth < expected.variable_order().size(); ++depth)
-                EXPECT_TRUE(std::ranges::equal(restored->plan.variable_inputs(depth), expected.variable_inputs(depth)));
+            for (size_t depth = 0; depth < expected.variable_order.size(); ++depth)
+                EXPECT_TRUE(std::ranges::equal(restored->plan.variable_inputs[depth], expected.variable_inputs[depth]));
         }
     };
     round_trip(view);

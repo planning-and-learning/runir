@@ -44,13 +44,13 @@ struct ThrowingRelation : ygg::FreeRelationBuilderView
 };
 
 template<kr::database::RelationViewRange R>
-kr::database::GenericJoinPlan plan_for(const R& inputs, std::initializer_list<ColumnIndex> variables, std::initializer_list<ColumnIndex> output)
+urd::data<kr::database::GenericJoinPlan> plan_for(const R& inputs, std::initializer_list<ColumnIndex> variables, std::initializer_list<ColumnIndex> output)
 {
     urd::Store<urd::sequence<urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>>>> schemas;
     schemas.reserve(inputs.size());
     for (const auto& input : inputs)
         schemas.emplace_back(input.columns().begin(), input.columns().end());
-    return kr::database::GenericJoinPlan(schemas, { variables.begin(), variables.size() }, { output.begin(), output.size() });
+    return kr::database::make_generic_join_plan(schemas, { variables.begin(), variables.size() }, { output.begin(), output.size() });
 }
 
 template<ygg::RelationViewConcept<ygg::Schema> A, ygg::RelationViewConcept<ygg::Schema> E>
@@ -63,14 +63,14 @@ void expect_same(const A& actual, const E& expected)
 }
 
 template<kr::database::RelationViewRange R>
-Relation binary_reference(const R& inputs, const kr::database::GenericJoinPlan& plan)
+Relation binary_reference(const R& inputs, const urd::data<kr::database::GenericJoinPlan>& plan)
 {
     Relation result;
     result.insert(std::array<ygg::Value, 0> {});
     for (const auto input : inputs)
         result = runir::tests::ops::joined(borrow(result), input);
     urd::Store<urd::sequence<ColumnIndex>> output;
-    for (const auto column : plan.output_columns())
+    for (const auto column : plan.output_columns)
         output.push_back(column.label);
     return runir::tests::ops::projected(borrow(result), std::span<const ColumnIndex>(output));
 }
@@ -120,9 +120,9 @@ TEST(YggdrasilTests, DatabaseGenericJoinTriangleMatchesBinaryForEveryVariableOrd
         schemas.emplace_back(input.columns().begin(), input.columns().end());
     for (bool more = true; more; more = std::ranges::next_permutation(variables).found)
     {
-        const kr::database::GenericJoinPlan plan(schemas, variables, output);
+        const auto plan = kr::database::make_generic_join_plan(schemas, variables, output);
         kr::database::GenericJoinWorkspace workspace(plan);
-        RelationBuilder result(plan.output_columns());
+        RelationBuilder result(plan.output_columns);
         const auto expected = binary_reference(inputs, plan);
         kr::database::generic_join(inputs, plan, result, workspace);
         expect_same(borrow(result), borrow(expected));
@@ -161,9 +161,9 @@ TEST(YggdrasilTests, DatabaseGenericJoinAvoidsQuadraticTriangleIntermediate)
         const auto output = variables;
         for (bool more = true; more; more = std::ranges::next_permutation(variables).found)
         {
-            const kr::database::GenericJoinPlan plan(schemas, variables, output);
+            const auto plan = kr::database::make_generic_join_plan(schemas, variables, output);
             kr::database::GenericJoinWorkspace workspace(plan);
-            RelationBuilder result(plan.output_columns());
+            RelationBuilder result(plan.output_columns);
             kr::database::detail::generic_join_work() = {};
             kr::database::generic_join(inputs, plan, result, workspace);
             const auto work = kr::database::detail::generic_join_work();
@@ -191,7 +191,7 @@ TEST(YggdrasilTests, DatabaseGenericJoinHandlesDisconnectedAndNullaryInputs)
     const std::array inputs { borrow(a), borrow(b), borrow(truth) };
     const auto plan = plan_for(inputs, { ColumnIndex(2), ColumnIndex(1) }, { ColumnIndex(1), ColumnIndex(2) });
     kr::database::GenericJoinWorkspace workspace(plan);
-    RelationBuilder result(plan.output_columns());
+    RelationBuilder result(plan.output_columns);
     kr::database::generic_join(inputs, plan, result, workspace);
     EXPECT_EQ(result.size(), 4);
     truth.clear();
@@ -235,7 +235,7 @@ TEST(YggdrasilTests, DatabaseGenericJoinUsesCanonicalTypedBytesWithoutValueCompa
     const std::array inputs { borrow(left), borrow(right) };
     const auto plan = plan_for(inputs, { ColumnIndex(2), ColumnIndex(3), ColumnIndex(1) }, { ColumnIndex(3), ColumnIndex(1), ColumnIndex(2) });
     kr::database::GenericJoinWorkspace workspace(plan);
-    Relation result(plan.output_columns());
+    Relation result(plan.output_columns);
     kr::database::generic_join(inputs, plan, result, workspace);
     const auto expected = binary_reference(inputs, plan);
     expect_same(borrow(result), borrow(expected));
@@ -340,7 +340,8 @@ TEST(YggdrasilTests, DatabaseGenericJoinIncrementalProjectionPreservesReplacedWi
     const auto plan = plan_for(inputs, { ColumnIndex(2), ColumnIndex(1), ColumnIndex(3) }, { ColumnIndex(1), ColumnIndex(2), ColumnIndex(3) });
     kr::database::incremental::GenericJoinEvaluator evaluator(scratch(), plan);
     evaluator.initialize(inputs);
-    kr::database::incremental::ProjectionEvaluator projected(scratch(), kr::database::ProjectionPlan(plan.output_columns(), std::array { ColumnIndex(3) }));
+    const auto projected_plan = kr::database::make_projection_plan(plan.output_columns, std::array { ColumnIndex(3) });
+    kr::database::incremental::ProjectionEvaluator projected(scratch(), projected_plan);
     kr::database::Workspace workspace;
     projected.initialize(evaluator.get_result(), workspace);
     Change a(left.columns());
@@ -415,7 +416,7 @@ TEST(YggdrasilTests, DatabaseGenericJoinValidatesPlansInputsAndFailureRecovery)
     EXPECT_THROW((plan_for(two_inputs, { ColumnIndex(1), ColumnIndex(1) }, { ColumnIndex(1), ColumnIndex(2) })), std::invalid_argument);
     const auto plan = plan_for(inputs, { ColumnIndex(1) }, { ColumnIndex(1) });
     kr::database::GenericJoinWorkspace workspace(plan);
-    RelationBuilder output(plan.output_columns());
+    RelationBuilder output(plan.output_columns);
     output.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(99)) });
     EXPECT_THROW(kr::database::generic_join(inputs, plan, input, workspace), std::invalid_argument);
     EXPECT_EQ(input.size(), 1);

@@ -121,7 +121,7 @@ public:
         auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
         step.rule = m_variant;
         step.planning_successor = candidate.pack();
-        step.state_transition = datasets::StateGraphEdgeLabel { candidate.label, static_cast<ygg::float_t>(1) };
+        step.state_transition = urd::data<datasets::StateGraphEdgeLabel> { candidate.label, static_cast<ygg::float_t>(1) };
         return step;
     }
 };

@@ -101,7 +101,8 @@ private:
                 return root;
             },
             root.get_variant());
-        auto data = urd::make<QueryProjection<Category>>(root, view.get_columns(), runir::kr::database::ProjectionPlan());  // the plan: derived on insert
+        auto data =
+            urd::make<QueryProjection<Category>>(root, view.get_columns(), urd::data<runir::kr::database::ProjectionPlan> {});  // the plan: derived on insert
         return m_repository->insert(data).first;
     }
 

@@ -52,7 +52,6 @@ target_link_libraries(runir_kr_database_allocations PRIVATE urd::count_allocatio
 add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_object_graph unit/datasets/object_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_state_graph unit/datasets/state_graph.cpp runir::datasets runir_test_planning_fixtures)
-add_runir_test(runir_serialization unit/serialization/serialization.cpp runir::datasets runir::kr)
 
 set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/argument.cpp

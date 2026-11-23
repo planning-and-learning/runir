@@ -35,16 +35,16 @@ namespace ri = runir::kr::ps::icp;
 using ArgumentNames = ri::ArgumentNames<ri::RuleView<ri::CruleTag>>;
 
 fmt::format_context::iterator fmt::formatter<ri::ConditionOperation>::format(ri::ConditionOperation value, fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value == ri::ConditionOperation::BELONGS ? "belongs" : "not-belongs"); }
+{ return fmt::format_to(context.out(), "{}", ri::to_string(value)); }
 
 fmt::format_context::iterator fmt::formatter<ri::EffectOperation>::format(ri::EffectOperation value, fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value == ri::EffectOperation::ENTER ? "enter" : "exit"); }
+{ return fmt::format_to(context.out(), "{}", ri::to_string(value)); }
 
 fmt::format_context::iterator fmt::formatter<ri::ArgumentPosition>::format(ri::ArgumentPosition value, fmt::format_context& context) const
 { return fmt::format_to(context.out(), "{}", value.value); }
 
-fmt::format_context::iterator fmt::formatter<ri::ResetPair>::format(const ri::ResetPair& value, fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "({}, {})", value.before, value.after); }
+fmt::format_context::iterator fmt::formatter<ri::ResetPairView>::format(const ri::ResetPairView& value, fmt::format_context& context) const
+{ return fmt::format_to(context.out(), "({}, {})", value.get_before(), value.get_after()); }
 
 template<typename X>
 fmt::format_context::iterator
@@ -215,7 +215,7 @@ fmt::format_context::iterator fmt::formatter<ri::ModuleView>::format(const ri::M
         { return std::visit([](auto concrete) { return concrete.get_symbol(); }, urd::resolve(feature, value.context()).get_variant()); };
         out = fmt::format_to(out, "{}(:reset-spo", urd::new_line());
         for (const auto& pair : value.get_reset_pairs())
-            out = fmt::format_to(out, " (:prec {} {})", symbol(pair.before), symbol(pair.after));
+            out = fmt::format_to(out, " (:prec {} {})", symbol(pair.get_before().index()), symbol(pair.get_after().index()));
         out = fmt::format_to(out, ")");
     }
     return fmt::format_to(out, "{})", urd::new_line());
@@ -233,9 +233,9 @@ fmt::format_context::iterator fmt::formatter<ri::ProgramView>::format(const ri::
 }
 
 template<tyr::TaskKind Kind>
-fmt::format_context::iterator
-fmt::formatter<rp::ProgramProofVertexLabel<rk::IcpFamilyTag, Kind>>::format(const rp::ProgramProofVertexLabel<rk::IcpFamilyTag, Kind>& value,
-                                                                            fmt::format_context& context) const
+fmt::format_context::iterator fmt::formatter<urd::data<rp::ProgramProofVertexLabel<rk::IcpFamilyTag, Kind>>>::format(
+    const urd::data<rp::ProgramProofVertexLabel<rk::IcpFamilyTag, Kind>>& value,
+    fmt::format_context& context) const
 {
     return fmt::format_to(context.out(),
                           "state={} initial={} goal={} alive={} unsolvable={}",
@@ -251,5 +251,5 @@ template struct fmt::formatter<std::pair<urd::index_view<ri::XEffect, ri::Reposi
 template struct fmt::formatter<ri::RuleView<ri::LoadTag<rk::dl::ConceptTag>>>;
 template struct fmt::formatter<ri::RuleView<ri::LoadTag<rk::dl::RoleTag>>>;
 template struct fmt::formatter<ri::RuleView<ri::CruleTag>>;
-template struct fmt::formatter<rp::ProgramProofVertexLabel<rk::IcpFamilyTag, tyr::GroundTag>>;
-template struct fmt::formatter<rp::ProgramProofVertexLabel<rk::IcpFamilyTag, tyr::LiftedTag>>;
+template struct fmt::formatter<urd::data<rp::ProgramProofVertexLabel<rk::IcpFamilyTag, tyr::GroundTag>>>;
+template struct fmt::formatter<urd::data<rp::ProgramProofVertexLabel<rk::IcpFamilyTag, tyr::LiftedTag>>>;

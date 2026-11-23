@@ -1,5 +1,6 @@
-#include "pyrunir/conversions.hpp"
+#include "pyrunir/kr/dl/conversions.hpp"
 #include "pyrunir/kr/ps/ext/bindings.hpp"
+#include "pyrunir/kr/ps/ext/conversions.hpp"
 #include "pyrunir/module.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
@@ -121,7 +122,6 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 {
     using namespace nb::literals;
     using StateView = ProgramStateView<Kind>;
-    using VertexLabel = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
     using Graph = ProgramProofGraph<ExtFamilyTag, Kind>;
     using Results = ProgramProofResults<Kind>;
     using Options = ProgramSearchOptions<Kind>;
@@ -158,19 +158,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     urd::python::bind_view<StateView>(m);
     urd::python::bind_builder<ProgramState<Kind>, ExecutionRepository<ExtFamilyTag, Kind>>(m);
 
-    auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
-                            .def_ro("program_state", &VertexLabel::program_state)
-                            .def_prop_ro(
-                                "state",
-                                [](const VertexLabel& self) { return planning_state(self.program_state); },
-                                nb::keep_alive<0, 1>())
-                            .def_ro("is_initial", &VertexLabel::is_initial)
-                            .def_ro("is_goal", &VertexLabel::is_goal)
-                            .def_ro("is_alive", &VertexLabel::is_alive)
-                            .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
-    ygg::add_print(vertex_label);
-    urd::python::add_comparison(vertex_label);
-    urd::python::add_hash(vertex_label);
+    urd::python::bind_data<ProgramProofVertexLabel<ExtFamilyTag, Kind>>(m);
 
     {
         auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
@@ -272,14 +260,7 @@ void bind_program_executor(nb::module_& m)
         .def_ro("choice_depth", &ProgramSearchStatistics::choice_depth)
         .def_ro("choice_width", &ProgramSearchStatistics::choice_width);
 
-    auto edge_label = nb::class_<ProgramProofEdgeLabel<ExtFamilyTag>>(m, "ProgramProofEdgeLabel")
-                          .def_ro("action", &ProgramProofEdgeLabel<ExtFamilyTag>::action)
-                          .def_ro("rule", &ProgramProofEdgeLabel<ExtFamilyTag>::rule);
-    ygg::add_print(edge_label);
-    urd::python::add_comparison(edge_label);
-    urd::python::add_hash(edge_label);
-    m.attr("GroundProgramProofEdgeLabel") = edge_label;
-    m.attr("LiftedProgramProofEdgeLabel") = edge_label;
+    urd::python::bind_data<ProgramProofEdgeLabel<ExtFamilyTag>>(m);
 
     urd::python::bind_index<ModuleState>(m);
     urd::python::bind_data<ModuleState>(m);

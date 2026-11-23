@@ -3,10 +3,12 @@
 #include "bindings.hpp"
 #include "pyrunir/module.hpp"
 #include "runir/kr/database/semantics/incremental/distance.hpp"
+#include "runir/kr/database/semantics/plan_construction.hpp"
 
 #include <nanobind/stl/pair.h>
 #include <span>
 #include <stdexcept>
+#include <urd/python/bindings.hpp>
 #include <utility>
 
 namespace runir::kr::database
@@ -22,12 +24,17 @@ void bind_inputs(nb::class_<incremental::DistanceEvaluator>& evaluator, nb::modu
     using Change = std::pair<Input, Input>;
     m.def(
         "distance",
-        [](const Input& sources, const Input& edges, const Input& targets, const DistancePlan& plan, ScratchRelation& out, DistanceWorkspace& workspace)
+        [](const Input& sources,
+           const Input& edges,
+           const Input& targets,
+           const urd::data<DistancePlan>& plan,
+           ScratchRelation& out,
+           DistanceWorkspace& workspace)
         {
-            require_columns(sources.columns(), plan.source_columns());
-            require_columns(edges.columns(), plan.edge_columns());
-            require_columns(targets.columns(), plan.target_columns());
-            require_columns(out.view().columns(), plan.output_columns());
+            require_columns(sources.columns(), plan.source_columns);
+            require_columns(edges.columns(), plan.edge_columns);
+            require_columns(targets.columns(), plan.target_columns);
+            require_columns(out.view().columns(), plan.output_columns);
             if (!workspace.matches(plan))
                 throw std::invalid_argument("Distance: workspace vertex size does not match the plan.");
             distance(sources, edges, targets, plan, out, workspace);
@@ -52,17 +59,19 @@ void bind_inputs(nb::class_<incremental::DistanceEvaluator>& evaluator, nb::modu
 
 void bind_distance(nb::module_& m)
 {
-    nb::class_<DistancePlan>(m, "DistancePlan", "Validated schemas for directed, unweighted distances between endpoint tuples.")
-        .def(nb::init<ColumnIndices, ColumnIndices, ColumnIndices, Column>(),
-             nb::arg("source_columns"),
-             nb::arg("edge_columns"),
-             nb::arg("target_columns"),
-             nb::arg("distance_column"))
-        .def("arity", &DistancePlan::arity)
-        .def("output_columns", &DistancePlan::output_columns);
+    urd::python::bind_data<DistancePlan>(m);
+    m.def(
+        "make_distance_plan",
+        [](ColumnIndices source_columns, ColumnIndices edge_columns, ColumnIndices target_columns, Column distance_column)
+        { return make_distance_plan(source_columns, edge_columns, target_columns, distance_column); },
+        nb::arg("source_columns"),
+        nb::arg("edge_columns"),
+        nb::arg("target_columns"),
+        nb::arg("distance_column"));
+    m.def("arity", [](const urd::data<DistancePlan>& plan) { return arity(plan); }, nb::arg("plan"));
 
     nb::class_<DistanceWorkspace>(m, "DistanceWorkspace", "Scratch storage of distance for one plan's vertex size; reuse one, never concurrently.")
-        .def(nb::init<const DistancePlan&>(), nb::arg("plan"))
+        .def(nb::init<const urd::data<DistancePlan>&>(), nb::arg("plan"))
         .def("memory_usage", &DistanceWorkspace::memory_usage);
 
     nb::class_<incremental::Delta>(m, "RelationDelta", "Read-only added and removed rows from the last evaluator update. The next update replaces them.")
@@ -76,7 +85,12 @@ void bind_distance(nb::module_& m)
         nb::class_<incremental::DistanceEvaluator>(m,
                                                    "DistanceEvaluator",
                                                    "Maintains distances and exact output deltas. Input relations are borrowed only during each call.");
-    evaluator.def(nb::init<ygg::FreeScratchRelations&, DistancePlan>(), nb::arg("scratch"), nb::arg("plan"), nb::keep_alive<1, 2>())
+    evaluator
+        .def(nb::init<ygg::FreeScratchRelations&, const urd::data<DistancePlan>&>(),
+             nb::arg("scratch"),
+             nb::arg("plan"),
+             nb::keep_alive<1, 2>(),
+             nb::keep_alive<1, 3>())
         .def(
             "get_result",
             [](const incremental::DistanceEvaluator& self) { return self.get_result(); },

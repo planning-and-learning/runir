@@ -54,6 +54,8 @@ max-line-length = 120
 testpaths = ["python/tests"]
 
 [tool.scikit-build]
+# A persistent build directory per wheel tag: a reinstall rebuilds only what changed.
+build-dir = "build/wheel/{wheel_tag}"
 build.targets = ["pyrunir_wheel"]
 cmake.build-type = "Release"
 install.components = ["pyrunir"]

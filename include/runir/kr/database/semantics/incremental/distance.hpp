@@ -63,7 +63,7 @@ class DistanceEvaluator
         static constexpr auto memory_members() noexcept { return urd::Members<&SourceState::distances, &SourceState::supports> {}; }
     };
 
-    DistancePlan m_plan;
+    const urd::data<DistancePlan>* m_plan;  ///< Borrowed (a pointer: the evaluator is assignable): the plan outlives it.
     database::detail::DistanceGraph m_graph;
     urd::Store<urd::map<VertexSet::handle_type, VertexSet::handle_type>, urd::multi, urd::retains> m_reverse;
     urd::Store<urd::sequence<SourceState>> m_sources;
@@ -116,8 +116,10 @@ class DistanceEvaluator
     void apply(const S& sources, const E& edges, const T& targets);
 
 public:
-    /// Its relations are drawn from `scratch`, which must outlive it.
-    DistanceEvaluator(ygg::FreeScratchRelations& scratch, DistancePlan plan);
+    /// Its relations are drawn from `scratch`, and its plan is borrowed; both must outlive it.
+    DistanceEvaluator(ygg::FreeScratchRelations& scratch, const urd::data<DistancePlan>& plan);
+    /// A temporary plan would not outlive the evaluator.
+    DistanceEvaluator(ygg::FreeScratchRelations& scratch, urd::data<DistancePlan>&& plan) = delete;
 
     /// Replace all inputs, retaining buffers, and clear the last output delta.
     template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>
@@ -155,9 +157,9 @@ inline auto DistanceEvaluator::add_source(VertexSet::handle_type root) -> Source
 template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>
 void DistanceEvaluator::initialize(const S& sources, const E& edges, const T& targets)
 {
-    assert(std::ranges::equal(sources.columns(), m_plan.source_columns()));
-    assert(std::ranges::equal(edges.columns(), m_plan.edge_columns()));
-    assert(std::ranges::equal(targets.columns(), m_plan.target_columns()));
+    assert(std::ranges::equal(sources.columns(), m_plan->source_columns));
+    assert(std::ranges::equal(edges.columns(), m_plan->edge_columns));
+    assert(std::ranges::equal(targets.columns(), m_plan->target_columns));
     detail::require_unaliased(sources, *m_result, m_delta);
     detail::require_unaliased(edges, *m_result, m_delta);
     detail::require_unaliased(targets, *m_result, m_delta);
@@ -205,9 +207,9 @@ template<RelationChange S, RelationChange E, RelationChange T>
 void DistanceEvaluator::update(const S& sources, const E& edges, const T& targets)
 {
     detail::require_initialized(m_initialized);
-    detail::require_change(sources, m_plan.source_columns(), *m_result, m_delta);
-    detail::require_change(edges, m_plan.edge_columns(), *m_result, m_delta);
-    detail::require_change(targets, m_plan.target_columns(), *m_result, m_delta);
+    detail::require_change(sources, m_plan->source_columns, *m_result, m_delta);
+    detail::require_change(edges, m_plan->edge_columns, *m_result, m_delta);
+    detail::require_change(targets, m_plan->target_columns, *m_result, m_delta);
     require_actual(sources, edges, targets);
     apply(sources, edges, targets);
 }
@@ -221,8 +223,8 @@ void DistanceEvaluator::require_actual(const S& sources, const E& edges, const T
     const auto contains_edge = [&](const auto& row)
     {
         const auto values = vertex_values(row, m_values);
-        const auto from = m_graph.vertices.find(values.first(m_plan.tuple_size()));
-        const auto to = m_graph.vertices.find(values.subspan(m_plan.tuple_size()));
+        const auto from = m_graph.vertices.find(values.first(tuple_size(*m_plan)));
+        const auto to = m_graph.vertices.find(values.subspan(tuple_size(*m_plan)));
         return !from.is_none() && !to.is_none() && m_graph.contains_edge(from, to);
     };
     const auto require_members = [&](const auto& rows, auto is_member, bool removing)
@@ -272,8 +274,8 @@ void DistanceEvaluator::apply(const S& sources, const E& edges, const T& targets
     for (size_t i = 0; i < edges_removed.get_rows().size(); ++i)
     {
         const auto row = vertex_values(edges_removed.row(i), m_values);
-        const auto from = require_vertex(row.first(m_plan.tuple_size()));
-        const auto to = require_vertex(row.subspan(m_plan.tuple_size()));
+        const auto from = require_vertex(row.first(tuple_size(*m_plan)));
+        const auto to = require_vertex(row.subspan(tuple_size(*m_plan)));
         assert(m_graph.contains_edge(from, to));
         m_edges_removed.emplace_back(from, to);
     }
@@ -365,12 +367,15 @@ class SourceMinDistance
     void count(ygg::FreeRelationBuilderView rows, bool add);
 
 public:
-    /// Its relations are drawn from `scratch`, which must outlive it.
-    SourceMinDistance(ygg::FreeScratchRelations& scratch, DistancePlan plan) :
-        m_position(plan.output_columns().size() - 1),
-        m_evaluator(scratch, std::move(plan))
+    /// Its relations are drawn from `scratch`, and its plan is borrowed; both must outlive it.
+    SourceMinDistance(ygg::FreeScratchRelations& scratch, const urd::data<DistancePlan>& plan) :
+        m_position(plan.output_columns.size() - 1),
+        m_evaluator(scratch, plan)
     {
     }
+
+    /// A temporary plan would not outlive it.
+    SourceMinDistance(ygg::FreeScratchRelations& scratch, urd::data<DistancePlan>&& plan) = delete;
 
     /// Replace all inputs, retaining buffers.
     template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>

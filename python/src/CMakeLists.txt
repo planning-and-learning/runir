@@ -15,28 +15,18 @@ file(
     "pyrunir/kr/*.cpp"
 )
 
-file(
-    GLOB_RECURSE PYRUNIR_SERIALIZATION_SOURCES
-    CONFIGURE_DEPENDS
-    "pyrunir/serialization/*.cpp"
-)
 
 nanobind_add_module(
     _pyrunir
     NB_SUPPRESS_WARNINGS
     module.cpp
     pyrunir/module.cpp
-    pyrunir/conversions_control.cpp
-    pyrunir/conversions_dl.cpp
-    pyrunir/conversions_grammar.cpp
-    pyrunir/conversions_ps.cpp
-    pyrunir/conversions_ps_ext.cpp
     pyrunir/datasets/config.cpp
     pyrunir/datasets/equivalence_graph.cpp
     pyrunir/datasets/module.cpp
+    pyrunir/datasets/serialization.cpp
     pyrunir/datasets/state_graph.cpp
     pyrunir/datasets/task_class.cpp
-    ${PYRUNIR_SERIALIZATION_SOURCES}
     ${PYRUNIR_KR_SOURCES}
     BACKEND_MODULE nanobind_backend
 )
@@ -52,8 +42,9 @@ endif()
 # that they do not take every parallel slot at the same time.
 set(RUNIR_PYTHON_COMPILE_JOBS "" CACHE STRING "Most pyrunir translation units compiled at once (Ninja); empty: no limit.")
 brokkr_limit_compile_jobs(_pyrunir JOBS "${RUNIR_PYTHON_COMPILE_JOBS}")
-# Batched merged below the heaviest TU; kr/dl/semantics, kr/ps/ext, kr/ps/ext/dl, kr/ps/icp and serialization/kr/{dl,ps}
-# exceed it merged, their sources sharing too little.
+# Batched merged below the heaviest TU; kr/dl/semantics, kr/ps/ext, kr/ps/ext/dl and kr/ps/icp exceed it merged, their
+# sources sharing too little, and so do the serialization hooks and conversions of each directory (serialization*.cpp,
+# conversions.cpp: compiled alone).
 brokkr_unity_directories(
     _pyrunir
     ENABLED ${RUNIR_UNITY_BUILD}
@@ -67,9 +58,9 @@ brokkr_unity_directories(
         pyrunir/kr/ps/icp/dl
         pyrunir/kr/uns
         pyrunir/kr/uns/dl
-        pyrunir/serialization
-        pyrunir/serialization/kr
 )
+file(GLOB_RECURSE PYRUNIR_SERIALIZATION_SOURCES CONFIGURE_DEPENDS "pyrunir/kr/*serialization*.cpp" "pyrunir/kr/*conversions.cpp")
+set_source_files_properties(${PYRUNIR_SERIALIZATION_SOURCES} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 # The grammars' bindings share much but exceed the heaviest translation unit merged whole: batched by at most 3 sources.
 brokkr_unity_directories(_pyrunir ENABLED ${RUNIR_UNITY_BUILD} BATCH_SIZE 3 DIRECTORIES pyrunir/kr/dl/cnf_grammar pyrunir/kr/dl/grammar)
 target_include_directories(_pyrunir PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -137,7 +128,6 @@ brokkr_install_python_files(
         pyrunir/kr/ps/base/dl/__init__.py
         pyrunir/kr/uns/__init__.py
         pyrunir/kr/uns/dl/__init__.py
-        pyrunir/serialization/__init__.py
 )
 
 brokkr_install_provider_env(

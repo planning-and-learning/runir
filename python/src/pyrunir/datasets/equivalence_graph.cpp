@@ -90,34 +90,11 @@ void bind_equivalence_graph(nb::module_& m)
         .def_rw("state_graph_options", &EquivalenceGraphGenerationOptions::state_graph_options)
         .def_rw("policy_mode", &EquivalenceGraphGenerationOptions::policy_mode);
 
-    auto vertex_label = nb::class_<EquivalenceVertexLabel>(m, "EquivalenceVertexLabel")  //
-                            .def(nb::init<>())
-                            .def_rw("state_graph_index", &EquivalenceVertexLabel::state_graph_index)
-                            .def_rw("state_vertex_index", &EquivalenceVertexLabel::state_vertex_index);
-    ygg::add_print(vertex_label);
-    urd::python::add_comparison(vertex_label);
-    urd::python::add_hash(vertex_label);
+    urd::python::bind_data<EquivalenceVertexLabel>(m);
 
-    auto annotated_vertex_label = nb::class_<AnnotatedEquivalenceVertexLabel>(m, "AnnotatedEquivalenceVertexLabel")  //
-                                      .def(nb::init<>())
-                                      .def_rw("state_graph_index", &AnnotatedEquivalenceVertexLabel::state_graph_index)
-                                      .def_rw("state_vertex_index", &AnnotatedEquivalenceVertexLabel::state_vertex_index)
-                                      .def_rw("goal_distance", &AnnotatedEquivalenceVertexLabel::goal_distance)
-                                      .def_rw("is_initial", &AnnotatedEquivalenceVertexLabel::is_initial)
-                                      .def_rw("is_goal", &AnnotatedEquivalenceVertexLabel::is_goal)
-                                      .def_rw("is_alive", &AnnotatedEquivalenceVertexLabel::is_alive)
-                                      .def_rw("is_unsolvable", &AnnotatedEquivalenceVertexLabel::is_unsolvable);
-    ygg::add_print(annotated_vertex_label);
-    urd::python::add_comparison(annotated_vertex_label);
-    urd::python::add_hash(annotated_vertex_label);
+    urd::python::bind_data<AnnotatedEquivalenceVertexLabel>(m);
 
-    auto edge_label = nb::class_<EquivalenceEdgeLabel>(m, "EquivalenceEdgeLabel")  //
-                          .def(nb::init<>())
-                          .def_rw("state_graph_index", &EquivalenceEdgeLabel::state_graph_index)
-                          .def_rw("state_edge_index", &EquivalenceEdgeLabel::state_edge_index);
-    ygg::add_print(edge_label);
-    urd::python::add_comparison(edge_label);
-    urd::python::add_hash(edge_label);
+    urd::python::bind_data<EquivalenceEdgeLabel>(m);
 
     {
         auto graph = nb::class_<EquivalenceGraph>(m, "EquivalenceGraph");

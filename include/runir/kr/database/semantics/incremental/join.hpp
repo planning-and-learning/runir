@@ -75,7 +75,7 @@ void erase_rows(const V& input, ygg::FreeScratchRelation& rows, std::span<const 
 /// No repository publication is required.
 class JoinEvaluator
 {
-    JoinPlan m_plan;
+    const urd::data<JoinPlan>* m_plan;  ///< Borrowed (a pointer: no reference member): the plan outlives the evaluator.
     urd::handle<ygg::FreeScratchRelation> m_left_operand;
     urd::handle<ygg::FreeScratchRelation> m_right_operand;
     detail::RowsByKey m_left_index;
@@ -94,8 +94,10 @@ class JoinEvaluator
     friend struct detail::NodeRules<QueryJoinTag>;
 
 public:
-    /// Its relations are drawn from `scratch`, which must outlive it.
-    JoinEvaluator(ygg::FreeScratchRelations& scratch, JoinPlan plan);
+    /// Its relations are drawn from `scratch`, and its plan is borrowed; both must outlive it.
+    JoinEvaluator(ygg::FreeScratchRelations& scratch, const urd::data<JoinPlan>& plan);
+    /// A temporary plan would not outlive the evaluator.
+    JoinEvaluator(ygg::FreeScratchRelations& scratch, urd::data<JoinPlan>&& plan) = delete;
 
     /// Replace the baseline, retaining buffers, and clear the last output delta.
     template<ygg::RelationViewConcept<ygg::Schema> L, ygg::RelationViewConcept<ygg::Schema> R>
@@ -121,14 +123,14 @@ void JoinEvaluator::join(const L& left_operand, const R& right_operand, bool bui
 {
     const auto& build = build_left ? *m_left_operand : *m_right_operand;
     const auto row_at = [&build](const auto& /*operand*/, ygg::FreeScratchRelation::Slot slot) -> const auto& { return build.at(slot).values; };
-    database::detail::join_rows(left_operand, right_operand, m_plan, build_left, build_left ? m_left_index : m_right_index, row_at, output, workspace);
+    database::detail::join_rows(left_operand, right_operand, *m_plan, build_left, build_left ? m_left_index : m_right_index, row_at, output, workspace);
 }
 
 template<ygg::RelationViewConcept<ygg::Schema> L, ygg::RelationViewConcept<ygg::Schema> R>
 void JoinEvaluator::initialize(const L& left_operand, const R& right_operand, Workspace& workspace)
 {
-    assert(std::ranges::equal(left_operand.columns(), m_plan.left_columns()));
-    assert(std::ranges::equal(right_operand.columns(), m_plan.right_columns()));
+    assert(std::ranges::equal(left_operand.columns(), m_plan->left_columns));
+    assert(std::ranges::equal(right_operand.columns(), m_plan->right_columns));
     detail::require_unaliased(left_operand, *m_result, m_delta);
     detail::require_unaliased(right_operand, *m_result, m_delta);
     m_initialized = false;
@@ -138,8 +140,8 @@ void JoinEvaluator::initialize(const L& left_operand, const R& right_operand, Wo
     m_right_index.clear();
     m_result->clear();
     m_delta.clear();
-    detail::insert_rows(left_operand, *m_left_operand, m_plan.left_keys(), m_left_index);
-    detail::insert_rows(right_operand, *m_right_operand, m_plan.right_keys(), m_right_index);
+    detail::insert_rows(left_operand, *m_left_operand, m_plan->left_keys, m_left_index);
+    detail::insert_rows(right_operand, *m_right_operand, m_plan->right_keys, m_right_index);
     // Both indexes are ready, so probe the smaller input.
     const auto left = m_left_operand->view();
     const auto right = m_right_operand->view();
@@ -151,8 +153,8 @@ template<RelationChange L, RelationChange R>
 void JoinEvaluator::update(const L& left_operand, const R& right_operand, Workspace& workspace)
 {
     detail::require_initialized(m_initialized);
-    detail::require_change(left_operand, m_plan.left_columns(), *m_result, m_delta);
-    detail::require_change(right_operand, m_plan.right_columns(), *m_result, m_delta);
+    detail::require_change(left_operand, m_plan->left_columns, *m_result, m_delta);
+    detail::require_change(right_operand, m_plan->right_columns, *m_result, m_delta);
     apply(left_operand, right_operand, workspace);
 }
 
@@ -169,13 +171,13 @@ void JoinEvaluator::apply(const L& left_operand, const R& right_operand, Workspa
     const auto current_left = m_left_operand->view();
     const auto current_right = m_right_operand->view();
     join(left_removed, current_right, false, *m_delta.removed, workspace);
-    detail::erase_rows(left_removed, *m_left_operand, m_plan.left_keys(), m_left_index);
+    detail::erase_rows(left_removed, *m_left_operand, m_plan->left_keys, m_left_index);
     join(current_left, right_removed, true, *m_delta.removed, workspace);
-    detail::erase_rows(right_removed, *m_right_operand, m_plan.right_keys(), m_right_index);
+    detail::erase_rows(right_removed, *m_right_operand, m_plan->right_keys, m_right_index);
     join(left_added, current_right, false, *m_delta.added, workspace);
-    detail::insert_rows(left_added, *m_left_operand, m_plan.left_keys(), m_left_index);
+    detail::insert_rows(left_added, *m_left_operand, m_plan->left_keys, m_left_index);
     join(current_left, right_added, true, *m_delta.added, workspace);
-    detail::insert_rows(right_added, *m_right_operand, m_plan.right_keys(), m_right_index);
+    detail::insert_rows(right_added, *m_right_operand, m_plan->right_keys, m_right_index);
 
     detail::apply_delta(m_delta, *m_result);
     m_initialized = true;

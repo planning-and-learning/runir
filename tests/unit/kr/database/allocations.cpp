@@ -108,17 +108,17 @@ struct Evaluation
     std::vector<urd::data<ygg::ColumnLayout>> joined_columns = cols({ ColumnIndex(1), ColumnIndex(2), ColumnIndex(3) });
     std::vector<urd::data<ygg::ColumnLayout>> renamed_columns = cols({ ColumnIndex(4), ColumnIndex(5), ColumnIndex(6) });
     std::vector<urd::data<ygg::ColumnLayout>> key_columns = cols({ ColumnIndex(1) });
-    kr::database::JoinPlan joining { left_operand.columns(), right_operand.columns() };
-    kr::database::ProjectionPlan projecting { joined_columns, std::array { ColumnIndex(3) } };
-    kr::database::ProjectionPlan projecting_renamed { renamed_columns, std::array { ColumnIndex(6) } };
-    kr::database::ProjectionPlan projecting_left_keys { left_operand.columns(), std::array { ColumnIndex(1) } };
-    kr::database::ProjectionPlan projecting_right_keys { right_operand.columns(), std::array { ColumnIndex(1) } };
-    kr::database::ProjectionPlan testing_existence { joined_columns, std::array<ColumnIndex, 0> {} };
-    kr::database::SetPlan keys { key_columns, key_columns };
-    Relation joined { joining.output_columns() };
-    Relation selected { joining.output_columns() };
-    Relation projected { projecting.output_columns() };
-    Relation renamed_projection { projecting_renamed.output_columns() };
+    urd::data<kr::database::JoinPlan> joining = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
+    urd::data<kr::database::ProjectionPlan> projecting = kr::database::make_projection_plan(joined_columns, std::array { ColumnIndex(3) });
+    urd::data<kr::database::ProjectionPlan> projecting_renamed = kr::database::make_projection_plan(renamed_columns, std::array { ColumnIndex(6) });
+    urd::data<kr::database::ProjectionPlan> projecting_left_keys = kr::database::make_projection_plan(left_operand.columns(), std::array { ColumnIndex(1) });
+    urd::data<kr::database::ProjectionPlan> projecting_right_keys = kr::database::make_projection_plan(right_operand.columns(), std::array { ColumnIndex(1) });
+    urd::data<kr::database::ProjectionPlan> testing_existence = kr::database::make_projection_plan(joined_columns, std::array<ColumnIndex, 0> {});
+    urd::data<kr::database::SetPlan> keys = kr::database::make_set_plan(key_columns, key_columns);
+    Relation joined { joining.output_columns };
+    Relation selected { joining.output_columns };
+    Relation projected { projecting.output_columns };
+    Relation renamed_projection { projecting_renamed.output_columns };
     Relation left_keys { key_columns };
     Relation right_keys { key_columns };
     Relation either_keys { key_columns };
@@ -170,17 +170,17 @@ struct PooledEvaluation
     ygg::FreeRelationRepository builders;
     kr::database::Workspace workspace;
     std::vector<urd::data<ygg::ColumnLayout>> key_columns = cols({ ColumnIndex(1) });
-    kr::database::JoinPlan joining { left_operand.columns(), right_operand.columns() };
-    kr::database::ProjectionPlan projecting_left_keys { left_operand.columns(), std::array { ColumnIndex(1) } };
-    kr::database::ProjectionPlan projecting_right_keys { right_operand.columns(), std::array { ColumnIndex(1) } };
-    kr::database::ProjectionPlan testing_existence { joining.output_columns(), std::array<ColumnIndex, 0> {} };
-    kr::database::SetPlan keys { key_columns, key_columns };
+    urd::data<kr::database::JoinPlan> joining = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
+    urd::data<kr::database::ProjectionPlan> projecting_left_keys = kr::database::make_projection_plan(left_operand.columns(), std::array { ColumnIndex(1) });
+    urd::data<kr::database::ProjectionPlan> projecting_right_keys = kr::database::make_projection_plan(right_operand.columns(), std::array { ColumnIndex(1) });
+    urd::data<kr::database::ProjectionPlan> testing_existence = kr::database::make_projection_plan(joining.output_columns, std::array<ColumnIndex, 0> {});
+    urd::data<kr::database::SetPlan> keys = kr::database::make_set_plan(key_columns, key_columns);
 
     bool evaluate(size_t left_size, size_t right_size, ygg::uint_t offset)
     {
         fill(left_operand, left_size, offset);
         fill(right_operand, right_size, offset + 10000);
-        auto joined = std::optional<Relation>(std::in_place, joining.output_columns());
+        auto joined = std::optional<Relation>(std::in_place, joining.output_columns);
         auto left_keys = std::optional<Relation>(std::in_place, key_columns);
         auto right_keys = std::optional<Relation>(std::in_place, key_columns);
         auto either = std::optional<Relation>(std::in_place, key_columns);
@@ -211,12 +211,12 @@ struct PreparedPooledEvaluation
     static constexpr ColumnIndex right_column = ColumnIndex(800000001);
     Relation left_operand { cols({ left_column, key_column }) };
     Relation right_operand { cols({ key_column, right_column }) };
-    kr::database::JoinPlan joining { left_operand.columns(), right_operand.columns() };
-    kr::database::ProjectionPlan projecting { joining.output_columns(), std::array { right_column, left_column } };
-    kr::database::ProjectionPlan projecting_left_keys { left_operand.columns(), std::array { key_column } };
-    kr::database::ProjectionPlan projecting_right_keys { right_operand.columns(), std::array { key_column } };
-    kr::database::ProjectionPlan testing_existence { joining.output_columns(), std::array<ColumnIndex, 0> {} };
-    kr::database::SetPlan keys { projecting_left_keys.output_columns(), projecting_right_keys.output_columns() };
+    urd::data<kr::database::JoinPlan> joining = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
+    urd::data<kr::database::ProjectionPlan> projecting = kr::database::make_projection_plan(joining.output_columns, std::array { right_column, left_column });
+    urd::data<kr::database::ProjectionPlan> projecting_left_keys = kr::database::make_projection_plan(left_operand.columns(), std::array { key_column });
+    urd::data<kr::database::ProjectionPlan> projecting_right_keys = kr::database::make_projection_plan(right_operand.columns(), std::array { key_column });
+    urd::data<kr::database::ProjectionPlan> testing_existence = kr::database::make_projection_plan(joining.output_columns, std::array<ColumnIndex, 0> {});
+    urd::data<kr::database::SetPlan> keys = kr::database::make_set_plan(projecting_left_keys.output_columns, projecting_right_keys.output_columns);
     std::vector<urd::data<ygg::ColumnLayout>> alternate_join_columns = cols({ ColumnIndex(7), ColumnIndex(8), ColumnIndex(9) });
     ygg::FreeRelationRepository builders;
     kr::database::Workspace workspace;
@@ -246,14 +246,14 @@ struct PreparedPooledEvaluation
                 valid &= borrowed.get_rows().size() == 1;
                 valid &= std::ranges::equal(borrowed.columns(), alternate_join_columns);
             }
-            auto joined = std::optional<Relation>(std::in_place, joining.output_columns());
+            auto joined = std::optional<Relation>(std::in_place, joining.output_columns);
             valid &= joined->empty();
-            valid &= std::ranges::equal(joined->columns(), joining.output_columns());
-            auto projected = std::optional<Relation>(std::in_place, projecting.output_columns());
-            auto left_keys = std::optional<Relation>(std::in_place, projecting_left_keys.output_columns());
-            auto right_keys = std::optional<Relation>(std::in_place, projecting_right_keys.output_columns());
-            auto either = std::optional<Relation>(std::in_place, projecting_left_keys.output_columns());
-            auto exists = std::optional<Relation>(std::in_place, testing_existence.output_columns());
+            valid &= std::ranges::equal(joined->columns(), joining.output_columns);
+            auto projected = std::optional<Relation>(std::in_place, projecting.output_columns);
+            auto left_keys = std::optional<Relation>(std::in_place, projecting_left_keys.output_columns);
+            auto right_keys = std::optional<Relation>(std::in_place, projecting_right_keys.output_columns);
+            auto either = std::optional<Relation>(std::in_place, projecting_left_keys.output_columns);
+            auto exists = std::optional<Relation>(std::in_place, testing_existence.output_columns);
             kr::database::join(borrow(left_operand), borrow(right_operand), joining, *joined, workspace);
             kr::database::project(borrow(*joined), projecting, *projected, workspace);
             kr::database::project(borrow(left_operand), projecting_left_keys, *left_keys, workspace);
@@ -559,15 +559,15 @@ struct IncrementalEvaluation
     static constexpr size_t rows = 128;
     static constexpr size_t changed_rows = 32;
     static constexpr size_t fanout = 8;
-    kr::database::incremental::JoinEvaluator joining { scratch(),
-                                                       kr::database::JoinPlan(cols({ ColumnIndex(1), ColumnIndex(2) }),
-                                                                              cols({ ColumnIndex(1), ColumnIndex(3) })) };
+    const urd::data<kr::database::JoinPlan> joining_plan =
+        kr::database::make_join_plan(cols({ ColumnIndex(1), ColumnIndex(2) }), cols({ ColumnIndex(1), ColumnIndex(3) }));
+    kr::database::incremental::JoinEvaluator joining { scratch(), joining_plan };
     const Relation unchanged { cols({ ColumnIndex(1), ColumnIndex(3) }) };
     // Every output has eight join witnesses. Replacing a source row exercises
     // both support counts and mutable result storage without retaining history.
-    kr::database::incremental::ProjectionEvaluator projecting { scratch(),
-                                                                kr::database::ProjectionPlan(cols({ ColumnIndex(1), ColumnIndex(2), ColumnIndex(3) }),
-                                                                                             std::array { ColumnIndex(2) }) };
+    const urd::data<kr::database::ProjectionPlan> projecting_plan =
+        kr::database::make_projection_plan(cols({ ColumnIndex(1), ColumnIndex(2), ColumnIndex(3) }), std::array { ColumnIndex(2) });
+    kr::database::incremental::ProjectionEvaluator projecting { scratch(), projecting_plan };
     Change delta { cols({ ColumnIndex(1), ColumnIndex(2) }) };
     std::array<ygg::uint_t, rows> values {};
     kr::database::Workspace workspace;
@@ -662,9 +662,10 @@ struct ChangingJoinEvaluation
     // key disappearance; moved last rows must remain reachable after erasure.
     static constexpr size_t changed_rows = 17;
 
-    kr::database::incremental::JoinEvaluator joining { scratch(),
-                                                       kr::database::JoinPlan(cols({ ColumnIndex(1), ColumnIndex(2) }),
-                                                                              cols({ ColumnIndex(1), ColumnIndex(3) })) };
+    const urd::data<kr::database::JoinPlan> joining_plan =
+        kr::database::make_join_plan(cols({ ColumnIndex(1), ColumnIndex(2) }), cols({ ColumnIndex(1), ColumnIndex(3) }));
+
+    kr::database::incremental::JoinEvaluator joining { scratch(), joining_plan };
     Change left_delta { cols({ ColumnIndex(1), ColumnIndex(2) }) };
     Change right_delta { cols({ ColumnIndex(1), ColumnIndex(3) }) };
     std::array<std::array<ygg::uint_t, 2>, rows> values {};
@@ -757,9 +758,9 @@ TEST(YggdrasilTests, DatabaseWarmedMixedWidthTuplesAndOperationsRetainStorage)
                                                                    { ColumnIndex(3), ygg::type_id<bool> } };
     const std::vector<urd::data<ygg::ColumnLayout>> right_columns { { ColumnIndex(2), ygg::type_id<double> }, { ColumnIndex(4), ygg::type_id<ygg::uint_t> } };
     Relation left_operand(left_columns), right_operand(right_columns);
-    const kr::database::JoinPlan joining(left_operand.columns(), right_operand.columns());
-    const kr::database::ProjectionPlan projecting(joining.output_columns(), std::array { ColumnIndex(2), ColumnIndex(3) });
-    Relation joined(joining.output_columns()), projected(projecting.output_columns());
+    const auto joining = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
+    const auto projecting = kr::database::make_projection_plan(joining.output_columns, std::array { ColumnIndex(2), ColumnIndex(3) });
+    Relation joined(joining.output_columns), projected(projecting.output_columns);
     kr::database::Workspace workspace;
     const auto cycle = [&](ygg::uint_t generation)
     {
@@ -797,9 +798,9 @@ TEST(YggdrasilTests, DatabaseWarmedDistanceFullEvaluationRetainsStorage)
         edges.insert(cells(vertex, (vertex + 1) % vertices));
         targets.insert(cells(vertex));
     }
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::DistanceWorkspace workspace(plan);
-    Relation output(plan.output_columns());
+    Relation output(plan.output_columns);
     const auto cycle = [&]
     {
         kr::database::distance(borrow(sources), borrow(edges), borrow(targets), plan, output, workspace);
@@ -827,7 +828,7 @@ TEST(YggdrasilTests, DatabaseWarmedDistanceSourceChurnReusesFiniteUniverseStorag
         edges.insert(cells(vertex, (vertex + 1) % vertices));
         targets.insert(cells(vertex));
     }
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     urd::Store<urd::sequence<Change>> changes;
@@ -877,7 +878,7 @@ TEST(YggdrasilTests, DatabaseWarmedDistanceEdgeRepairAndUndoRetainStorage)
         edges.insert(cells(vertex, (vertex + 1) % vertices));
         targets.insert(cells(vertex));
     }
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     Change change(edges.columns());
@@ -926,7 +927,7 @@ TEST(YggdrasilTests, DatabaseWarmedDistanceDenseLocalHeapChurnRetainsStorage)
     }
     for (ygg::uint_t child = first_child; child < first_child + width; ++child)
         targets.insert(cells(child));
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     Change change(edges.columns());

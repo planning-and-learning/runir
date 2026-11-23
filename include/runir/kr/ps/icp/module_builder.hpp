@@ -4,6 +4,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/icp/module_data.hpp"
 #include "runir/kr/ps/icp/module_view.hpp"
+#include "runir/kr/ps/icp/reset_pair_builder.hpp"
 
 #include <optional>
 #include <urd/elements/builder.hpp>
@@ -31,7 +32,7 @@ struct builder<runir::kr::ps::icp::Module, C>
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>, C> entry_memory_state;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>>, C> memory_states;
     urd::built_t<urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>>, C> memory_transitions;
-    urd::built_t<urd::flat_vector<runir::kr::ps::icp::ResetPair>, C> reset_pairs;
+    urd::built_t<urd::flat_vector<urd::data<runir::kr::ps::icp::ResetPair>>, C> reset_pairs;
 
     static constexpr auto fields() noexcept
     {

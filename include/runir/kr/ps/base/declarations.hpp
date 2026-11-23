@@ -7,6 +7,7 @@
 
 #include <boost/mp11.hpp>
 #include <memory>
+#include <string_view>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::base
@@ -30,6 +31,17 @@ using RepositoryPtr = std::shared_ptr<Repository>;
 using SketchView = urd::index_view<runir::kr::ps::base::Sketch, Repository>;
 using RuleView = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>;
 
+/// The labels of its proof graphs' vertices and edges (records: data<...>, the graph's elements).
+template<tyr::TaskKind Kind>
+struct SketchProofVertexLabel
+{
+    static constexpr std::string_view name = urd::joined_name<"SketchProofVertexLabel", Kind::name>;
+};
+
+struct SketchProofEdgeLabel
+{
+    static constexpr std::string_view name = "SketchProofEdgeLabel";
+};
 }  // namespace runir::kr::ps::base
 
 template<>

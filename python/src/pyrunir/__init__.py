@@ -18,7 +18,6 @@ _import_module("pyvefr")
 from pyrunir import (
     datasets as datasets,
     kr as kr,
-    serialization as serialization,
 )
 
 

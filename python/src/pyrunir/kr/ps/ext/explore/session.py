@@ -695,7 +695,7 @@ class Session:
             ref=ref,
             memory=str(module_state.get_memory_state().get_name()),
             registers=registers,
-            atoms=tuple(atom_text(atom) for atom in label.state.fluent_atoms()),
+            atoms=tuple(atom_text(atom) for atom in program_state.get_state().unpack().fluent_atoms()),
             features=features,
             goal=label.is_goal,
         )
@@ -733,7 +733,9 @@ class Session:
         module_state = (
             self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state.get_module_state()
         )
-        state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).state
+        state = (
+            self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state.get_state().unpack()
+        )
         options = gbfs_lazy.lifted.Options()
         options.start_node = search.successor_generator.get_node(search.state_repository, state.pack().index())
         options.search_budget = SearchBudget(

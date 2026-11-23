@@ -88,7 +88,7 @@ struct QueryProjectionEvaluator : runir::kr::database::incremental::ProjectionEv
 {
     QueryEvaluationIndex argument;
 
-    QueryProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex argument_, const runir::kr::database::ProjectionPlan& plan) :
+    QueryProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex argument_, const urd::data<runir::kr::database::ProjectionPlan>& plan) :
         runir::kr::database::incremental::ProjectionEvaluator(scratch, plan),
         argument(argument_)
     {
@@ -108,7 +108,10 @@ struct QueryJoinEvaluator : runir::kr::database::incremental::JoinEvaluator
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QueryJoinEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, const runir::kr::database::JoinPlan& plan) :
+    QueryJoinEvaluator(ygg::FreeScratchRelations& scratch,
+                       QueryEvaluationIndex lhs_,
+                       QueryEvaluationIndex rhs_,
+                       const urd::data<runir::kr::database::JoinPlan>& plan) :
         runir::kr::database::incremental::JoinEvaluator(scratch, plan),
         lhs(lhs_),
         rhs(rhs_)
@@ -130,7 +133,7 @@ struct QueryGenericJoinEvaluator : runir::kr::database::incremental::GenericJoin
 
     QueryGenericJoinEvaluator(ygg::FreeScratchRelations& scratch,
                               urd::Store<urd::sequence<QueryEvaluationIndex>> args_,
-                              const runir::kr::database::GenericJoinPlan& plan) :
+                              const urd::data<runir::kr::database::GenericJoinPlan>& plan) :
         runir::kr::database::incremental::GenericJoinEvaluator(scratch, plan),
         args(std::move(args_))
     {
@@ -329,13 +332,13 @@ struct QuerySelectionEvaluator : QueryValue
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
             {
                 const auto& plan = expression.get_plan();
-                if (ygg::value_of(row, plan.left_position()) != ygg::value_of(row, plan.right_position()))
+                if (ygg::value_of(row, plan.left_position) != ygg::value_of(row, plan.right_position))
                     continue;
             }
             else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
             {
                 const auto& plan = expression.get_plan();
-                if (ygg::value_of(row, plan.position()) != plan.value())
+                if (ygg::value_of(row, plan.position) != plan.value)
                     continue;
             }
             emit(row);

@@ -19,7 +19,6 @@ from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
 from pyrunir.kr.dl.semantics import DenotationConcept, GroundStateEvaluationContext, LiftedStateEvaluationContext
 from pyrunir.kr.ps import ProofStatus, icp
-from pyrunir.serialization import register_table, serialize, table
 
 PROGRAM = """(:program (:entry main)
   (:module (:symbol main) (:arguments) (:registers (:concept selected))
@@ -228,19 +227,18 @@ def check_history_tables(
 ) -> None:
     """Check that the initial and loaded program states serialize with distinct histories."""
     dictionaries = Dictionaries()
-    register_table(dictionaries, state_type, "states", "s", fields=("histories",))
-    register_table(dictionaries, history_type, "histories", "h")
-    register_table(
-        dictionaries,
+    dictionaries.register_table(state_type, "states", "s", fields=("histories",))
+    dictionaries.register_table(history_type, "histories", "h")
+    dictionaries.register_table(
         DenotationConcept,
         "concepts",
         "c",
         project=lambda value: {"values": [obj.get_name() for obj in value.views()]},
     )
-    assert serialize(dictionaries, initial) == "s0"
-    assert serialize(dictionaries, loaded) == "s1"
-    assert table(dictionaries, state_type) == [{"histories": "h0"}, {"histories": "h1"}]
-    history_rows = table(dictionaries, history_type)
+    assert dictionaries.serialize(initial) == "s0"
+    assert dictionaries.serialize(loaded) == "s1"
+    assert dictionaries.table(state_type) == [{"histories": "h0"}, {"histories": "h1"}]
+    history_rows = dictionaries.table(history_type)
     assert isinstance(history_rows, list)
     rows: list[object] = [*history_rows]
     assert len(rows) == 2
@@ -323,11 +321,11 @@ def test_serialization_fields_and_program_projection() -> None:
     assert "effects" in icp.RuleLoadConcept.Fields.__members__
     assert "xeffects" in icp.RuleCrule.Fields.__members__
     dictionaries = Dictionaries()
-    register_table(
-        dictionaries, icp.Program, "programs", "p", project=lambda value: {"entry_mod": str(value.get_entry_mod())}
+    dictionaries.register_table(
+        icp.Program, "programs", "p", project=lambda value: {"entry_mod": str(value.get_entry_mod())}
     )
-    assert serialize(dictionaries, program) == "p0"
-    assert table(dictionaries, icp.Program) == [{"entry_mod": str(program.get_entry_mod())}]
+    assert dictionaries.serialize(program) == "p0"
+    assert dictionaries.table(icp.Program) == [{"entry_mod": str(program.get_entry_mod())}]
     pick = next(
         variant.get_variant()
         for transition in program.get_entry_mod().get_memory_transitions()
@@ -337,14 +335,13 @@ def test_serialization_fields_and_program_projection() -> None:
     assert isinstance(pick, icp.RuleCrule)
     (condition,) = pick.get_xconditions()
     dictionaries = Dictionaries()
-    register_table(dictionaries, icp.XCondition, "conditions", "x")
-    register_table(dictionaries, icp.dl.FeatureIcpConcept, "features", "f", fields=())
-    assert serialize(dictionaries, condition) == "x0"
-    assert table(dictionaries, icp.XCondition) == [
+    dictionaries.register_table(icp.XCondition, "conditions", "x")
+    dictionaries.register_table(icp.dl.FeatureIcpConcept, "features", "f", fields=())
+    assert dictionaries.serialize(condition) == "x0"
+    assert dictionaries.table(icp.XCondition) == [
         {
             "operation": "belongs",
-            "argument_position": 0,
-            "slot": None,
-            "concept": "f0",
+            "object": 0,
+            "feature": "f0",
         }
     ]

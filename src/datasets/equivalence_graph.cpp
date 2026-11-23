@@ -52,15 +52,15 @@ namespace
 {
 
 /// The representatives by equivalence vertex: a representative's vertex is its position.
-using RepresentativeSet = urd::Store<urd::set<EquivalenceVertexLabel>, urd::positional>;
+using RepresentativeSet = urd::Store<urd::set<urd::data<EquivalenceVertexLabel>>, urd::positional>;
 using EquivalenceEdgeSet = urd::Store<urd::set<std::pair<VertexIndex, VertexIndex>>>;
-using StateEdge = std::tuple<VertexIndex, VertexIndex, StateGraphEdgeLabel>;
-using EquivalenceEdge = std::tuple<VertexIndex, VertexIndex, EquivalenceEdgeLabel>;
+using StateEdge = std::tuple<VertexIndex, VertexIndex, urd::data<StateGraphEdgeLabel>>;
+using EquivalenceEdge = std::tuple<VertexIndex, VertexIndex, urd::data<EquivalenceEdgeLabel>>;
 
 /// The equivalence graph as it is found, frozen once every task is searched.
 struct EquivalenceParts
 {
-    urd::Store<urd::sequence<EquivalenceVertexLabel, VertexIndex>> vertices;
+    urd::Store<urd::sequence<urd::data<EquivalenceVertexLabel>, VertexIndex>> vertices;
     urd::Store<urd::sequence<EquivalenceEdge>> edges;
 };
 
@@ -241,7 +241,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
 
     const auto get_or_create_equivalence_vertex = [&](StateGraphVertexRef representative)
     {
-        const auto label = EquivalenceVertexLabel { representative.state_graph_index, representative.state_vertex_index };
+        const auto label = urd::data<EquivalenceVertexLabel> { representative.state_graph_index, representative.state_vertex_index };
         const auto [it, inserted] = representatives.insert(label);
         const auto vertex = static_cast<VertexIndex>(representatives.position(it));
         if (inserted)
@@ -252,7 +252,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
         return vertex;
     };
 
-    auto state_vertices = urd::Store<urd::sequence<StateGraphVertexLabel<Kind>, VertexIndex>> {};
+    auto state_vertices = urd::Store<urd::sequence<urd::data<StateGraphVertexLabel<Kind>>, VertexIndex>> {};
     auto state_graph_edges = urd::Store<urd::sequence<StateEdge>> {};
     auto state_edges = urd::Store<urd::set<detail::StateGraphEdgeKey>> {};
     auto state_to_equivalence = VertexIndexList {};
@@ -264,7 +264,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
             throw std::logic_error("Equivalence graph construction left a hole in the state vertex indices.");
         auto state = tyr::planning::materialize_state(concrete_state->second.unpack(), *context.state_repository, *context.axiom_evaluator).pack();
         assert(state_vertices.size() == vertex);
-        state_vertices.push_back(StateGraphVertexLabel<Kind> { std::move(state) });
+        state_vertices.push_back(urd::data<StateGraphVertexLabel<Kind>> { std::move(state) });
         state_to_equivalence.push_back(get_or_create_equivalence_vertex(get_assignment(concrete_state->second).representative));
     }
 
@@ -287,16 +287,16 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
             const auto state_edge = static_cast<EdgeIndex>(state_graph_edges.size());
             state_graph_edges.emplace_back(source_assignment.concrete->state_vertex_index,
                                            target.state_vertex_index,
-                                           StateGraphEdgeLabel { transition.action, transition.cost });
+                                           urd::data<StateGraphEdgeLabel> { transition.action, transition.cost });
             const auto equivalence_source = state_to_equivalence[source_assignment.concrete->state_vertex_index];
             const auto equivalence_target = get_or_create_equivalence_vertex(target_assignment.representative);
             if (equivalence_edges.emplace(equivalence_source, equivalence_target).second)
-                equivalence.edges.emplace_back(equivalence_source, equivalence_target, EquivalenceEdgeLabel { state_graph_index, state_edge });
+                equivalence.edges.emplace_back(equivalence_source, equivalence_target, urd::data<EquivalenceEdgeLabel> { state_graph_index, state_edge });
         }
     }
 
     return std::make_unique<StateGraph<Kind>>(
-        urd::graph_data<StateEdge, StateGraphVertexLabel<Kind>> { state_vertices.size(), state_graph_edges, {}, state_vertices });
+        urd::graph_data<StateEdge, urd::data<StateGraphVertexLabel<Kind>>> { state_vertices.size(), state_graph_edges, {}, state_vertices });
 }
 
 template<tyr::TaskKind Kind>
@@ -344,9 +344,11 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, Policy& p
         state_graph_results.push_back(StateGraphGenerationResult<Kind> { std::move(state_graph), result.status });
     }
 
-    return { std::move(state_graph_results),
-             std::make_unique<EquivalenceGraph>(
-                 urd::graph_data<EquivalenceEdge, EquivalenceVertexLabel> { equivalence.vertices.size(), equivalence.edges, {}, equivalence.vertices }) };
+    return {
+        std::move(state_graph_results),
+        std::make_unique<EquivalenceGraph>(
+            urd::graph_data<EquivalenceEdge, urd::data<EquivalenceVertexLabel>> { equivalence.vertices.size(), equivalence.edges, {}, equivalence.vertices })
+    };
 }
 
 template<tyr::TaskKind Kind>

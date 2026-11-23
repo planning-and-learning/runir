@@ -31,6 +31,8 @@ void bind_module_definitions(nb::module_& m)
 
     auto icp = m.def_submodule("icp");
     runir::kr::ps::icp::bind_module_definitions(icp);
+
+    bind_execution_serialization();
 }
 
 }  // namespace runir::kr::ps

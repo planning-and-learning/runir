@@ -6,6 +6,7 @@
 #include "runir/kr/dl/register_view.hpp"
 
 #include <cstddef>
+#include <type_traits>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/elements/view.hpp>

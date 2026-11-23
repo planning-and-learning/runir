@@ -37,10 +37,10 @@ std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& trans
 }
 
 std::optional<EdgeAbstraction>
-abstract_edges(dl::detail::QueryTranslator& translator, runir::kr::database::QueryView<> edges, const runir::kr::database::DistancePlan& plan)
+abstract_edges(dl::detail::QueryTranslator& translator, runir::kr::database::QueryView<> edges, const urd::data<runir::kr::database::DistancePlan>& plan)
 {
-    const auto columns = plan.edge_columns();
-    return abstract_edges(translator, edges, columns.first(plan.arity()), columns.subspan(plan.arity()));
+    const auto columns = std::span<const urd::data<ygg::ColumnLayout>>(plan.edge_columns);
+    return abstract_edges(translator, edges, columns.first(arity(plan)), columns.subspan(arity(plan)));
 }
 
 }  // namespace runir::kr::dl::semantics::heuristics

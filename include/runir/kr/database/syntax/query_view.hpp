@@ -101,9 +101,9 @@ public:
         requires(!std::same_as<Tag, void>)
     {
         if constexpr (std::same_as<Tag, runir::kr::database::QuerySemijoinTag> || std::same_as<Tag, runir::kr::database::QueryAntijoinTag>)
-            return get_plan().left_columns();
+            return get_plan().left_columns;
         else if constexpr (boost::mp11::mp_contains<runir::kr::database::QueryPlannedTags, Tag>::value)
-            return get_plan().output_columns();
+            return get_plan().output_columns;
         else
             return get_columns();
     }

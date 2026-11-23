@@ -47,23 +47,6 @@ std::string explain(const QueryPlan& plan)
 fmt::format_context::iterator fmt::formatter<runir::kr::database::QueryPlan>::format(const runir::kr::database::QueryPlan& plan, fmt::format_context& ctx) const
 { return runir::kr::database::format_query_plan(ctx.out(), plan); }
 
-template<typename Plan>
-    requires boost::mp11::mp_contains<boost::mp11::mp_list<runir::kr::database::ProjectionPlan,
-                                                           runir::kr::database::JoinPlan,
-                                                           runir::kr::database::SetPlan,
-                                                           runir::kr::database::SelectEqualPlan,
-                                                           runir::kr::database::SelectValuePlan,
-                                                           runir::kr::database::DistancePlan,
-                                                           runir::kr::database::GenericJoinPlan>,
-                                      Plan>::value
-fmt::format_context::iterator fmt::formatter<Plan>::format(const Plan& plan, fmt::format_context& ctx) const
-{ return fmt::format_to(ctx.out(), "[{}]", fmt::join(plan.output_columns(), ", ")); }
-
-template struct fmt::formatter<runir::kr::database::ProjectionPlan>;
-template struct fmt::formatter<runir::kr::database::JoinPlan>;
-template struct fmt::formatter<runir::kr::database::SetPlan>;
-template struct fmt::formatter<runir::kr::database::SelectEqualPlan>;
-template struct fmt::formatter<runir::kr::database::SelectValuePlan>;
-template struct fmt::formatter<runir::kr::database::DistancePlan>;
-template struct fmt::formatter<runir::kr::database::GenericJoinPlan>;
+fmt::format_context::iterator fmt::formatter<runir::kr::database::ColumnSlice>::format(runir::kr::database::ColumnSlice slice, fmt::format_context& ctx) const
+{ return fmt::format_to(ctx.out(), "{}", slice.value); }
 #endif

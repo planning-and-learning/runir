@@ -8,7 +8,6 @@ from pyyggdrasil.serialization import Dictionaries
 from pyrunir.kr import DomainContext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.dl import parse_module
-from pyrunir.serialization import register_table, serialize, table
 
 
 @pytest.mark.parametrize(
@@ -56,19 +55,18 @@ def test_backtrack_rule_construct_format_and_serialize(
 
     assert list(ext.RuleBacktrack.Fields.__members__) == ["source", "conditions"]
     dictionaries = Dictionaries()
-    register_table(dictionaries, ext.RuleExt, "variants", "v")
-    register_table(dictionaries, ext.RuleBacktrack, "backtrack", "r")
-    register_table(dictionaries, ext.MemoryStateExt, "memory", "m")
-    register_table(
-        dictionaries,
+    dictionaries.register_table(ext.RuleExt, "variants", "v")
+    dictionaries.register_table(ext.RuleBacktrack, "backtrack", "r")
+    dictionaries.register_table(ext.MemoryStateExt, "memory", "m")
+    dictionaries.register_table(
         ext.dl.ConcreteConditionExtBooleanPositive,
         "conditions",
         "c",
         project=lambda condition: {"text": str(condition)},
     )
-    assert serialize(dictionaries, variant) == "v0"
-    assert table(dictionaries, ext.RuleExt) == [{"symbol": "reject", "variant": "r0"}]
-    assert table(dictionaries, ext.RuleBacktrack) == [{"source": "m0", "conditions": ["c0"] if conditions else []}]
-    assert table(dictionaries, ext.dl.ConcreteConditionExtBooleanPositive) == (
+    assert dictionaries.serialize(variant) == "v0"
+    assert dictionaries.table(ext.RuleExt) == [{"symbol": "reject", "variant": "r0"}]
+    assert dictionaries.table(ext.RuleBacktrack) == [{"source": "m0", "conditions": ["c0"] if conditions else []}]
+    assert dictionaries.table(ext.dl.ConcreteConditionExtBooleanPositive) == (
         [{"text": "(positive bad)"}] if conditions else []
     )

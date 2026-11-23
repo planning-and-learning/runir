@@ -60,7 +60,7 @@ struct ProgramStep
     runir::kr::TaskContextPtr<Kind> task_context;
     ProgramOutcome status;
     Target target;
-    std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
+    std::optional<urd::data<datasets::StateGraphEdgeLabel>> state_transition = std::nullopt;
     std::optional<RuleView<Family>> rule = std::nullopt;
     /// The planning successor, packed; none where the storage only borrows its successors (PackableSuccessor).
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;

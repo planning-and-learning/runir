@@ -16,7 +16,7 @@ from pytyr.planning.ground import PackedPlan as GroundPackedPlan, Task as Ground
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
 
-from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext, StateGraphEdgeLabel
+from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext, StateGraphEdgeLabelData
 from pyrunir.kr import (
     ArityMismatchError,
     DomainContext,
@@ -443,8 +443,8 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     assert proof.graph.target(edge) in proof.graph.vertices()
     assert edge in list(proof.graph.out_edges(proof.graph.source(edge)))
     edge_label = proof.graph.edge_value(edge)
-    assert ext.ProgramProofEdgeLabel is ext.GroundProgramProofEdgeLabel
-    assert isinstance(edge_label, ext.ProgramProofEdgeLabel)
+    assert ext.ProgramProofEdgeLabelExtData is ext.ProgramProofEdgeLabelExtData
+    assert isinstance(edge_label, ext.ProgramProofEdgeLabelExtData)
     if edge_label.action is not None:
         assert isinstance(edge_label.action, RowActionLifted)
     vertex_label = proof.graph.vertex_value(vertex)
@@ -550,7 +550,7 @@ _SUCCESSOR_CALLBACK_PROGRAM = """(:program (:entry main)
           (:sketch (:conditions) (:effects (decreases Free))))))))"""
 
 
-def _transition(step: ExecutionStep) -> StateGraphEdgeLabel:
+def _transition(step: ExecutionStep) -> StateGraphEdgeLabelData:
     transition = step.state_transition
     assert transition is not None
     return transition
@@ -760,7 +760,7 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode:
     result = ext.find_lifted_solution(task_context, program, options)
     vertex = next(iter(result.graph.vertices()))
     label = result.graph.vertex_value(vertex)
-    assert isinstance(label, ext.LiftedProgramProofVertexLabel)
+    assert isinstance(label, ext.ProgramProofVertexLabelExtLiftedData)
 
     del result, expander, initial, program, repository, dl_repository, task_context, search_context, lifted_task
     gc.collect()

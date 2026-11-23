@@ -36,7 +36,6 @@ from pyrunir.kr import ArityMismatchError, DomainContext, GroundTaskContext, Lif
 from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
-from pyrunir.serialization import register_table, serialize, table
 
 Successor: TypeAlias = ground.LabeledNode | lifted.LabeledNode
 T = TypeVar("T")
@@ -251,10 +250,9 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
     assert module_data.query_features == [feature.index()]
 
     dictionaries = Dictionaries()
-    register_table(dictionaries, ext.RuleExt, "rules", "r")
-    register_table(dictionaries, ext.RuleAction, "actions", "a", fields=("action_name", "query_feature"))
-    register_table(
-        dictionaries,
+    dictionaries.register_table(ext.RuleExt, "rules", "r")
+    dictionaries.register_table(ext.RuleAction, "actions", "a", fields=("action_name", "query_feature"))
+    dictionaries.register_table(
         dl.FeatureExtQuery,
         "queries",
         "q",
@@ -263,9 +261,9 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
             "expression": str(value.get_variant().get_feature()),
         },
     )
-    assert serialize(dictionaries, variant) == "r0"
-    assert table(dictionaries, ext.RuleAction) == [{"action_name": "move", "query_feature": "q0"}]
-    assert table(dictionaries, dl.FeatureExtQuery) == [{"symbol": "selected", "expression": QUERY}]
+    assert dictionaries.serialize(variant) == "r0"
+    assert dictionaries.table(ext.RuleAction) == [{"action_name": "move", "query_feature": "q0"}]
+    assert dictionaries.table(dl.FeatureExtQuery) == [{"symbol": "selected", "expression": QUERY}]
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

@@ -19,6 +19,7 @@
 #define RUNIR_DATASETS_STATE_GRAPH_HPP_
 
 #include "runir/datasets/config.hpp"
+#include "runir/datasets/declarations.hpp"
 #include "runir/datasets/graph_types.hpp"
 #include "runir/datasets/task_class.hpp"
 
@@ -26,48 +27,62 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <string_view>
 #include <tuple>
+#include <type_traits>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/repository.hpp>
 #include <tyr/planning/algorithms/declarations.hpp>
+#include <urd/elements/concepts.hpp>
 #include <urd/repr/graphs/csr_graph.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/row_view.hpp>
 
-namespace runir::datasets
+namespace urd
 {
-
 template<tyr::TaskKind Kind>
-struct StateGraphVertexLabel : urd::compared_by_identity<StateGraphVertexLabel<Kind>>
+struct data<runir::datasets::StateGraphVertexLabel<Kind>>
 {
     tyr::planning::PackedStateView<Kind> state;
 
-    explicit StateGraphVertexLabel(tyr::planning::PackedStateView<Kind> state_) noexcept : state(std::move(state_)) {}
+    data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphVertexLabel::state> {}; }
+    data(tyr::planning::PackedStateView<Kind> state_) noexcept : state(state_) {}
 
-    static constexpr auto identifying_members() noexcept { return urd::Members<&StateGraphVertexLabel::state> {}; }
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"state", &data::state>> {}; }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::state> {}; }
 };
 
 template<tyr::TaskKind Kind>
-struct AnnotatedStateGraphVertexLabel : urd::compared_by_identity<AnnotatedStateGraphVertexLabel<Kind>>
+struct data<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>
 {
     tyr::planning::PackedStateView<Kind> state;
-    ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
-    bool is_initial = false;
-    bool is_goal = false;
-    bool is_alive = false;
-    bool is_unsolvable = false;
+    ygg::float_t goal_distance {};
+    bool is_initial {};
+    bool is_goal {};
+    bool is_alive {};
+    bool is_unsolvable {};
 
-    AnnotatedStateGraphVertexLabel(tyr::planning::PackedStateView<Kind> state_,
-                                   ygg::float_t goal_distance_,
-                                   bool is_initial_,
-                                   bool is_goal_,
-                                   bool is_alive_,
-                                   bool is_unsolvable_) noexcept :
-        state(std::move(state_)),
+    data() = default;
+
+    data(tyr::planning::PackedStateView<Kind> state_,
+         ygg::float_t goal_distance_,
+         bool is_initial_,
+         bool is_goal_,
+         bool is_alive_,
+         bool is_unsolvable_) noexcept :
+        state(state_),
         goal_distance(goal_distance_),
         is_initial(is_initial_),
         is_goal(is_goal_),
@@ -76,51 +91,64 @@ struct AnnotatedStateGraphVertexLabel : urd::compared_by_identity<AnnotatedState
     {
     }
 
-    static constexpr auto cista_members() noexcept
+    static constexpr bool copyable() noexcept
     {
-        return urd::Members<&AnnotatedStateGraphVertexLabel::state,
-                            &AnnotatedStateGraphVertexLabel::goal_distance,
-                            &AnnotatedStateGraphVertexLabel::is_initial,
-                            &AnnotatedStateGraphVertexLabel::is_goal,
-                            &AnnotatedStateGraphVertexLabel::is_alive,
-                            &AnnotatedStateGraphVertexLabel::is_unsolvable> {};
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
     }
 
-    static constexpr auto identifying_members() noexcept
+    static constexpr auto fields() noexcept
     {
-        return urd::Members<&AnnotatedStateGraphVertexLabel::state,
-                            &AnnotatedStateGraphVertexLabel::goal_distance,
-                            &AnnotatedStateGraphVertexLabel::is_initial,
-                            &AnnotatedStateGraphVertexLabel::is_goal,
-                            &AnnotatedStateGraphVertexLabel::is_alive,
-                            &AnnotatedStateGraphVertexLabel::is_unsolvable> {};
+        return urd::Fields<urd::field<"state", &data::state>,
+                           urd::field<"goal_distance", &data::goal_distance>,
+                           urd::field<"is_initial", &data::is_initial>,
+                           urd::field<"is_goal", &data::is_goal>,
+                           urd::field<"is_alive", &data::is_alive>,
+                           urd::field<"is_unsolvable", &data::is_unsolvable>> {};
     }
+
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
+    static constexpr auto cista_members() noexcept
+    { return urd::Members<&data::state, &data::goal_distance, &data::is_initial, &data::is_goal, &data::is_alive, &data::is_unsolvable> {}; }
 };
 
-struct StateGraphEdgeLabel : urd::compared_by_identity<StateGraphEdgeLabel>
+template<>
+struct data<runir::datasets::StateGraphEdgeLabel>
 {
     tyr::formalism::ActionRowView action;
-    ygg::float_t cost = 0;
+    ygg::float_t cost {};
 
-    StateGraphEdgeLabel() = delete;
+    data() = default;
 
-    StateGraphEdgeLabel(tyr::formalism::ActionRowView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
+    data(tyr::formalism::ActionRowView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action, &StateGraphEdgeLabel::cost> {}; }
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    [[nodiscard]] auto action_index() const noexcept { return action.index(); }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"action", &data::action>, urd::field<"cost", &data::cost>> {}; }
 
-    static constexpr auto identifying_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action_index, &StateGraphEdgeLabel::cost> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::action, &data::cost> {}; }
 };
+}  // namespace urd
+
+namespace runir::datasets
+{
 
 /// A task's reachable states and their transitions: a frozen graph that keeps its in-edges (goal distances search it
 /// backwards), each state labelled by its state, each edge by its action and cost.
 template<tyr::TaskKind Kind>
-using StateGraph = urd::Store<urd::graph<VertexIndex, StateGraphEdgeLabel, StateGraphVertexLabel<Kind>>, urd::frozen, urd::bidirectional>;
+using StateGraph = urd::Store<urd::graph<VertexIndex, urd::data<StateGraphEdgeLabel>, urd::data<StateGraphVertexLabel<Kind>>>, urd::frozen, urd::bidirectional>;
 
 /// A state graph whose states know their goal distance and whether they are initial, goal, alive or unsolvable.
 template<tyr::TaskKind Kind>
-using AnnotatedStateGraph = urd::Store<urd::graph<VertexIndex, StateGraphEdgeLabel, AnnotatedStateGraphVertexLabel<Kind>>, urd::frozen, urd::bidirectional>;
+using AnnotatedStateGraph =
+    urd::Store<urd::graph<VertexIndex, urd::data<StateGraphEdgeLabel>, urd::data<AnnotatedStateGraphVertexLabel<Kind>>>, urd::frozen, urd::bidirectional>;
 // The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
 static_assert(urd::bidirectional_graph<StateGraph<tyr::GroundTag>> && urd::edge_list_graph<StateGraph<tyr::GroundTag>>);
 static_assert(urd::bidirectional_graph<AnnotatedStateGraph<tyr::LiftedTag>> && urd::edge_list_graph<AnnotatedStateGraph<tyr::LiftedTag>>);

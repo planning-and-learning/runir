@@ -57,20 +57,27 @@ class MinDistance
 {
 public:
     /// Edges given by a query over inputs. `edges` has the plan's edge columns; `static_slots` marks its inputs that
-    /// never change after the first bind(). Its relations are drawn from `scratch`, which must outlive it.
+    /// never change after the first bind(). Its relations are drawn from `scratch`, and its plan is borrowed; both must outlive it.
     MinDistance(ygg::FreeScratchRelations& scratch,
                 QueryView<> edges,
-                const DistancePlan& plan,
+                const urd::data<DistancePlan>& plan,
                 const urd::Store<urd::set<size_t>, urd::dense>& static_slots = {}) :
         MinDistance(incremental::bound::QueryEvaluator(scratch, database::detail::checked_edges(edges, plan), static_slots), plan)
     {
     }
 
     /// Edges given as a relation with the plan's edge columns, input 0 of bind().
-    MinDistance(ygg::FreeScratchRelations& scratch, const DistancePlan& plan, bool static_edges = false) :
+    MinDistance(ygg::FreeScratchRelations& scratch, const urd::data<DistancePlan>& plan, bool static_edges = false) :
         MinDistance(database::detail::relation_edges<incremental::bound::QueryEvaluator>(scratch, plan, static_edges), plan)
     {
     }
+
+    /// A temporary plan would not outlive it.
+    MinDistance(ygg::FreeScratchRelations& scratch,
+                QueryView<> edges,
+                urd::data<DistancePlan>&& plan,
+                const urd::Store<urd::set<size_t>, urd::dense>& static_slots = {}) = delete;
+    MinDistance(ygg::FreeScratchRelations& scratch, urd::data<DistancePlan>&& plan, bool static_edges = false) = delete;
 
     [[nodiscard]] size_t input_count() const noexcept { return m_edges.evaluator().input_count(); }
 
@@ -128,7 +135,7 @@ public:
     template<ygg::RelationViewConcept<ygg::Schema> T>
     void set_targets(const T& targets)
     {
-        assert(std::ranges::equal(targets.columns(), m_plan.target_columns()));
+        assert(std::ranges::equal(targets.columns(), m_plan->target_columns));
         if (m_targets_set && m_targets.same(targets))
             return;
         m_targets.assign(targets);
@@ -143,7 +150,7 @@ public:
     {
         if (!m_edges.evaluator().bound() || !m_targets_set)
             throw std::invalid_argument("Min distance: inputs or targets are not set.");
-        assert(std::ranges::equal(sources.columns(), m_plan.source_columns()));
+        assert(std::ranges::equal(sources.columns(), m_plan->source_columns));
         auto edges = m_edges.with_key({});
         if (m_reset_pending)
             reset(heuristic);
@@ -176,9 +183,9 @@ public:
 private:
     using Edges = database::detail::EdgeQuery<incremental::bound::QueryEvaluator>;
 
-    MinDistance(incremental::bound::QueryEvaluator edges, const DistancePlan& plan) :
-        m_plan(plan),
-        m_edges(std::move(edges), plan.edge_columns(), 0, plan.arity()),
+    MinDistance(incremental::bound::QueryEvaluator edges, const urd::data<DistancePlan>& plan) :
+        m_plan(&plan),
+        m_edges(std::move(edges), plan.edge_columns, 0, arity(plan)),
         m_tree(),
         m_targets(),
         m_added(),
@@ -186,7 +193,7 @@ private:
     {
     }
 
-    DistancePlan m_plan;
+    const urd::data<DistancePlan>* m_plan;  ///< Borrowed (a pointer: no reference member): the plan outlives it.
     Edges m_edges;
     SearchTree m_tree;
     BackwardFrontier m_backward;

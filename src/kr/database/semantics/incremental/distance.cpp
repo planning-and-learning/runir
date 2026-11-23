@@ -13,11 +13,11 @@
 
 namespace runir::kr::database::incremental
 {
-DistanceEvaluator::DistanceEvaluator(ygg::FreeScratchRelations& scratch, DistancePlan plan) :
-    m_plan(std::move(plan)),
-    m_graph(m_plan.tuple_size()),
-    m_result(scratch.draw(m_plan.output_columns())),
-    m_delta(scratch, m_plan.output_columns())
+DistanceEvaluator::DistanceEvaluator(ygg::FreeScratchRelations& scratch, const urd::data<DistancePlan>& plan) :
+    m_plan(&plan),
+    m_graph(tuple_size(*m_plan)),
+    m_result(scratch.draw(m_plan->output_columns)),
+    m_delta(scratch, m_plan->output_columns)
 {
 }
 }

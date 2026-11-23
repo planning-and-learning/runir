@@ -44,7 +44,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
                     Mutate mutate)
 {
     const auto k = sources.columns().size();
-    const auto plan = runir::kr::database::DistancePlan(sources.columns(), columns_of(edges), targets.columns(), Column(99));
+    const auto plan = runir::kr::database::make_distance_plan(sources.columns(), columns_of(edges), targets.columns(), Column(99));
     auto blind = runir::kr::database::MinDistance(scratch(), edges, plan, static_slots);
     auto guided = runir::kr::database::MinDistance<HalfDistance>(scratch(), edges, plan, static_slots);
     auto evaluator = runir::kr::database::QueryEvaluator(scratch(), runir::kr::database::compile_plan({ edges }));
@@ -55,7 +55,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
     auto heuristic = HalfDistance {};
     heuristic.columns = sources.columns();
     auto workspace = runir::kr::database::DistanceWorkspace(plan);
-    auto result = Relation(plan.output_columns());
+    auto result = Relation(plan.output_columns);
     auto checked = static_cast<size_t>(0);
     for (size_t step = 0; step < steps; ++step)
     {
@@ -222,7 +222,7 @@ TEST_P(DatabaseMinDistance, RelationEdgesUnderChanges)
     auto edges = Relation(runir::tests::ops::cols({ x, y }));
     auto sources = Relation(runir::tests::ops::cols({ x }));
     auto targets = Relation(runir::tests::ops::cols({ y }));
-    const auto plan = runir::kr::database::DistancePlan(sources.columns(), edges.columns(), targets.columns(), Column(99));
+    const auto plan = runir::kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), Column(99));
     auto blind = runir::kr::database::MinDistance(scratch(), plan);
     auto guided = runir::kr::database::MinDistance<HalfDistance>(scratch(), plan);
     auto complete = Relation(runir::tests::ops::cols({ x, y }));
@@ -232,7 +232,7 @@ TEST_P(DatabaseMinDistance, RelationEdgesUnderChanges)
     auto heuristic = HalfDistance {};
     heuristic.columns = sources.columns();
     auto workspace = runir::kr::database::DistanceWorkspace(plan);
-    auto result = Relation(plan.output_columns());
+    auto result = Relation(plan.output_columns);
     auto random = std::mt19937(GetParam());
     const auto vertex = [&] { return static_cast<ygg::uint_t>(random() % n); };
     for (size_t step = 0; step < 300; ++step)

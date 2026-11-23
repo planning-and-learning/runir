@@ -1,6 +1,7 @@
 #ifndef RUNIR_TESTS_SUPPORT_RECORD_COPY_HPP_
 #define RUNIR_TESTS_SUPPORT_RECORD_COPY_HPP_
 
+#include <urd/elements/clone.hpp>
 #include <urd/elements/concepts.hpp>
 #include <urd/elements/data.hpp>
 
@@ -13,7 +14,7 @@ template<typename T>
 urd::data<T> copy_fields(const urd::data<T>& source)
 {
     auto result = urd::data<T>();
-    urd::for_each_field<urd::data<T>>([&]<typename F>() { result.*F::member = source.*F::member; });
+    urd::for_each_field<urd::data<T>>([&]<typename F>() { result.*F::member = urd::clone(source.*F::member); });
     return result;
 }
 

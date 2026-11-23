@@ -19,7 +19,7 @@ namespace runir::kr::database::incremental
 /// Invalid changes preserve state; mutation failures require initialize().
 class GenericJoinEvaluator
 {
-    GenericJoinPlan m_plan;
+    const urd::data<GenericJoinPlan>* m_plan;  ///< Borrowed (a pointer: no reference member): the plan outlives the evaluator.
     GenericJoinWorkspace m_workspace;
     database::detail::GenericJoinTrie m_changed;
     urd::handle<ygg::FreeScratchRelation> m_result;
@@ -37,7 +37,7 @@ class GenericJoinEvaluator
         {
             if (changed.get_rows().empty())
                 return;
-            const auto keys = m_plan.input_keys(input);
+            const auto& keys = m_plan->input_keys[input];
             auto& current = m_workspace.trie(input);
             m_changed.clear();
             for (const auto& held : changed.get_rows())
@@ -53,12 +53,12 @@ class GenericJoinEvaluator
                                          current.insert(values, keys);
                                  });
         };
-        for (size_t input = 0; input < m_plan.input_count(); ++input)
+        for (size_t input = 0; input < m_plan->input_columns.size(); ++input)
         {
             const auto& [added, removed] = changes[input];
             apply_input(input, removed, true);
         }
-        for (size_t input = 0; input < m_plan.input_count(); ++input)
+        for (size_t input = 0; input < m_plan->input_columns.size(); ++input)
         {
             const auto& [added, removed] = changes[input];
             apply_input(input, added, false);
@@ -70,27 +70,30 @@ class GenericJoinEvaluator
     friend struct detail::NodeRules<QueryGenericJoinTag>;
 
 public:
-    /// Its relations are drawn from `scratch`, which must outlive it.
-    GenericJoinEvaluator(ygg::FreeScratchRelations& scratch, GenericJoinPlan plan) :
-        m_plan(std::move(plan)),
-        m_workspace(m_plan),
-        m_result(scratch.draw(m_plan.output_columns())),
-        m_delta(scratch, m_plan.output_columns())
+    /// Its relations are drawn from `scratch`, and its plan is borrowed; both must outlive it.
+    GenericJoinEvaluator(ygg::FreeScratchRelations& scratch, const urd::data<GenericJoinPlan>& plan) :
+        m_plan(&plan),
+        m_workspace(*m_plan),
+        m_result(scratch.draw(m_plan->output_columns)),
+        m_delta(scratch, m_plan->output_columns)
     {
     }
+
+    /// A temporary plan would not outlive the evaluator.
+    GenericJoinEvaluator(ygg::FreeScratchRelations& scratch, urd::data<GenericJoinPlan>&& plan) = delete;
 
     template<RelationViewRange R>
     void initialize(const R& inputs)
     {
-        if (std::ranges::size(inputs) != m_plan.input_count())
+        if (std::ranges::size(inputs) != m_plan->input_columns.size())
             throw std::invalid_argument("Incremental generic join: wrong input count.");
-        for (size_t input = 0; input < m_plan.input_count(); ++input)
+        for (size_t input = 0; input < m_plan->input_columns.size(); ++input)
         {
-            assert(std::ranges::equal(inputs[input].columns(), m_plan.input_columns(input)));
+            assert(std::ranges::equal(inputs[input].columns(), m_plan->input_columns[input]));
             detail::require_unaliased(inputs[input], *m_result, m_delta);
         }
         m_initialized = false;
-        generic_join(inputs, m_plan, *m_result, m_workspace);
+        generic_join(inputs, *m_plan, *m_result, m_workspace);
         m_changed.clear();
         m_delta.clear();
         m_initialized = true;
@@ -103,13 +106,13 @@ public:
     void update(const R& changes)
     {
         detail::require_initialized(m_initialized);
-        if (std::ranges::size(changes) != m_plan.input_count())
+        if (std::ranges::size(changes) != m_plan->input_columns.size())
             throw std::invalid_argument("Incremental generic join: wrong input count.");
-        for (size_t input = 0; input < m_plan.input_count(); ++input)
+        for (size_t input = 0; input < m_plan->input_columns.size(); ++input)
         {
-            detail::require_change(changes[input], m_plan.input_columns(input), *m_result, m_delta);
+            detail::require_change(changes[input], m_plan->input_columns[input], *m_result, m_delta);
             const auto& [added, removed] = changes[input];
-            const auto keys = m_plan.input_keys(input);
+            const auto& keys = m_plan->input_keys[input];
             const auto& current = m_workspace.trie(input);
             const auto require_actual = [&](const auto& changed, bool removing)
             {

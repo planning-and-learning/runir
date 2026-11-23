@@ -34,8 +34,8 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
                        const urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
                        std::optional<ProgramStateView<Kind>> initial)
 {
-    using VertexLabel = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
-    using Edge = std::tuple<VertexIndex, VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
+    using VertexLabel = urd::data<ProgramProofVertexLabel<ExtFamilyTag, Kind>>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<ProgramProofEdgeLabel<ExtFamilyTag>>>;
 
     auto graph_indices = urd::Store<urd::map<urd::index<ProgramState<Kind>>, VertexIndex>, urd::dense> {};
     graph_indices.reserve(nodes.size());
@@ -64,7 +64,7 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
     {
         const auto source = add_vertex(predecessor.source);
         const auto target = add_vertex(predecessor.target);
-        auto label = ProgramProofEdgeLabel<ExtFamilyTag> {};
+        auto label = urd::data<ProgramProofEdgeLabel<ExtFamilyTag>> {};
         if (predecessor.action)
             label.action = *predecessor.action;
         if (predecessor.rule)
@@ -87,8 +87,8 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
     for (auto current = witness; current; current = current->parent)
         path.push_back(current);
     std::ranges::reverse(path);
-    using Vertex = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
-    using Edge = std::tuple<VertexIndex, VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
+    using Vertex = urd::data<ProgramProofVertexLabel<ExtFamilyTag, Kind>>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<ProgramProofEdgeLabel<ExtFamilyTag>>>;
     auto vertices = urd::Store<urd::sequence<Vertex>> {};
     auto edges = urd::Store<urd::sequence<Edge>> {};
     vertices.reserve(path.size());
@@ -105,7 +105,7 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
             result.open_states.push_back(index);
         if (i)
         {
-            auto label = ProgramProofEdgeLabel<ExtFamilyTag> {};
+            auto label = urd::data<ProgramProofEdgeLabel<ExtFamilyTag>> {};
             if (entry.transition)
                 label.action = entry.transition->action;
             if (entry.rule)

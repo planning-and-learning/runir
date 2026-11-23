@@ -22,28 +22,15 @@ template<tyr::TaskKind Kind>
 void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
 {
     using namespace nb::literals;
-    using VertexLabel = StateGraphVertexLabel<Kind>;
-    using AnnotatedVertexLabel = AnnotatedStateGraphVertexLabel<Kind>;
+    using VertexLabel = urd::data<StateGraphVertexLabel<Kind>>;
+    using AnnotatedVertexLabel = urd::data<AnnotatedStateGraphVertexLabel<Kind>>;
     using Graph = StateGraph<Kind>;
     using AnnotatedGraph = AnnotatedStateGraph<Kind>;
     using Result = StateGraphGenerationResult<Kind>;
 
-    auto vertex_label = nb::class_<VertexLabel>(m, (std::string(class_prefix) + "StateGraphVertexLabel").c_str())  //
-                            .def_ro("state", &VertexLabel::state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
-    ygg::add_print(vertex_label);
-    urd::python::add_comparison(vertex_label);
-    urd::python::add_hash(vertex_label);
+    urd::python::bind_data<StateGraphVertexLabel<Kind>>(m);
 
-    auto annotated_vertex_label = nb::class_<AnnotatedVertexLabel>(m, (std::string(class_prefix) + "AnnotatedStateGraphVertexLabel").c_str())  //
-                                      .def_ro("state", &AnnotatedVertexLabel::state, nb::rv_policy::copy, nb::keep_alive<0, 1>())
-                                      .def_ro("goal_distance", &AnnotatedVertexLabel::goal_distance)
-                                      .def_ro("is_initial", &AnnotatedVertexLabel::is_initial)
-                                      .def_ro("is_goal", &AnnotatedVertexLabel::is_goal)
-                                      .def_ro("is_alive", &AnnotatedVertexLabel::is_alive)
-                                      .def_ro("is_unsolvable", &AnnotatedVertexLabel::is_unsolvable);
-    ygg::add_print(annotated_vertex_label);
-    urd::python::add_comparison(annotated_vertex_label);
-    urd::python::add_hash(annotated_vertex_label);
+    urd::python::bind_data<AnnotatedStateGraphVertexLabel<Kind>>(m);
 
     {
         auto graph = nb::class_<Graph>(m, (std::string(class_prefix) + "StateGraph").c_str());
@@ -92,12 +79,7 @@ void bind_state_graph(nb::module_& m)
         .def_rw("max_num_states", &StateGraphGenerationOptions::max_num_states)
         .def_rw("max_time", &StateGraphGenerationOptions::max_time);
 
-    auto edge_label = nb::class_<StateGraphEdgeLabel>(m, "StateGraphEdgeLabel")  //
-                          .def_ro("action", &StateGraphEdgeLabel::action)
-                          .def_ro("cost", &StateGraphEdgeLabel::cost);
-    ygg::add_print(edge_label);
-    urd::python::add_comparison(edge_label);
-    urd::python::add_hash(edge_label);
+    urd::python::bind_data<StateGraphEdgeLabel>(m);
 
     bind_state_graph_for_kind<tyr::GroundTag>(m, "Ground", "ground");
     bind_state_graph_for_kind<tyr::LiftedTag>(m, "Lifted", "lifted");

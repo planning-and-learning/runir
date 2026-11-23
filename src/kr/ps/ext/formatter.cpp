@@ -214,9 +214,9 @@ fmt::format_context::iterator fmt::formatter<re::ProgramView>::format(const re::
 }
 
 template<tyr::TaskKind Kind>
-fmt::format_context::iterator
-fmt::formatter<rp::ProgramProofVertexLabel<rk::ExtFamilyTag, Kind>>::format(const rp::ProgramProofVertexLabel<rk::ExtFamilyTag, Kind>& value,
-                                                                            fmt::format_context& context) const
+fmt::format_context::iterator fmt::formatter<urd::data<rp::ProgramProofVertexLabel<rk::ExtFamilyTag, Kind>>>::format(
+    const urd::data<rp::ProgramProofVertexLabel<rk::ExtFamilyTag, Kind>>& value,
+    fmt::format_context& context) const
 {
     const auto state = value.program_state;
     return fmt::format_to(context.out(),
@@ -258,7 +258,7 @@ template struct fmt::formatter<re::RuleView<re::DoTag>>;
 template struct fmt::formatter<re::RuleView<re::CallTag>>;
 template struct fmt::formatter<re::RuleView<re::ActionTag>>;
 template struct fmt::formatter<re::RuleView<re::BacktrackTag>>;
-template struct fmt::formatter<rp::ProgramProofVertexLabel<rk::ExtFamilyTag, tyr::GroundTag>>;
-template struct fmt::formatter<rp::ProgramProofVertexLabel<rk::ExtFamilyTag, tyr::LiftedTag>>;
+template struct fmt::formatter<urd::data<rp::ProgramProofVertexLabel<rk::ExtFamilyTag, tyr::GroundTag>>>;
+template struct fmt::formatter<urd::data<rp::ProgramProofVertexLabel<rk::ExtFamilyTag, tyr::LiftedTag>>>;
 template struct fmt::formatter<re::ProgramProofResults<tyr::GroundTag>>;
 template struct fmt::formatter<re::ProgramProofResults<tyr::LiftedTag>>;

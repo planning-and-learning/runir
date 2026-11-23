@@ -33,7 +33,7 @@ namespace runir::kr::database::incremental
 /// until initialize().
 class ProjectionEvaluator
 {
-    ProjectionPlan m_plan;
+    const urd::data<ProjectionPlan>* m_plan;  ///< Borrowed (a pointer: no reference member): the plan outlives the evaluator.
     urd::handle<ygg::FreeScratchRelation> m_result;
     using Slot = ygg::FreeScratchRelation::Slot;
     /// The supporting input rows of each result row, by the slot of its record in the result's records (a dense index,
@@ -49,7 +49,7 @@ class ProjectionEvaluator
     {
         auto& row = workspace.row;
         row.clear();
-        database::detail::copy_fields(row, input, m_plan.positions());
+        database::detail::copy_fields(row, input, m_plan->positions);
         return row;
     }
 
@@ -62,8 +62,10 @@ class ProjectionEvaluator
     friend struct detail::NodeRules<QueryProjectTag>;
 
 public:
-    /// Its relations are drawn from `scratch`, which must outlive it.
-    ProjectionEvaluator(ygg::FreeScratchRelations& scratch, ProjectionPlan plan);
+    /// Its relations are drawn from `scratch`, and its plan is borrowed; both must outlive it.
+    ProjectionEvaluator(ygg::FreeScratchRelations& scratch, const urd::data<ProjectionPlan>& plan);
+    /// A temporary plan would not outlive the evaluator.
+    ProjectionEvaluator(ygg::FreeScratchRelations& scratch, urd::data<ProjectionPlan>&& plan) = delete;
 
     /// Replace the baseline, retaining buffers, and clear the last output delta.
     template<ygg::RelationViewConcept<ygg::Schema> V>
@@ -86,7 +88,7 @@ public:
 template<ygg::RelationViewConcept<ygg::Schema> V>
 void ProjectionEvaluator::initialize(const V& input, Workspace& workspace)
 {
-    assert(std::ranges::equal(input.columns(), m_plan.input_columns()));
+    assert(std::ranges::equal(input.columns(), m_plan->input_columns));
     detail::require_unaliased(input, *m_result, m_delta);
     m_initialized = false;
     m_result->clear();
@@ -102,7 +104,7 @@ template<RelationChange C>
 void ProjectionEvaluator::update(const C& change, Workspace& workspace)
 {
     detail::require_initialized(m_initialized);
-    detail::require_change(change, m_plan.input_columns(), *m_result, m_delta);
+    detail::require_change(change, m_plan->input_columns, *m_result, m_delta);
     apply(change, workspace);
 }
 

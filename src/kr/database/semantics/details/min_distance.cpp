@@ -21,9 +21,9 @@ urd::Store<urd::sequence<size_t>> column_range(size_t first, size_t last)
 
 namespace runir::kr::database::detail
 {
-QueryView<> checked_edges(QueryView<> edges, const DistancePlan& plan)
+QueryView<> checked_edges(QueryView<> edges, const urd::data<DistancePlan>& plan)
 {
-    if (!std::ranges::equal(columns_of(edges), plan.edge_columns()))
+    if (!std::ranges::equal(columns_of(edges), plan.edge_columns))
         throw std::invalid_argument("Relational operation: input schema does not match prepared plan.");
     return edges;
 }

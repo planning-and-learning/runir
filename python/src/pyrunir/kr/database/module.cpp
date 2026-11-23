@@ -3,13 +3,16 @@
 #include "bindings.hpp"
 #include "pyrunir/module.hpp"
 #include "runir/kr/database/semantics/operations.hpp"
-#include "runir/kr/database/semantics/plans.hpp"
+#include "runir/kr/database/semantics/plan_construction.hpp"
+#include "runir/kr/database/syntax/formatter.hpp"
 #include "yggdrasil/formalism/scratch_relation.hpp"
 
 #include <initializer_list>
 #include <nanobind/stl/vector.h>
 #include <span>
+#include <urd/python/bindings.hpp>
 #include <vector>
+#include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::database
 {
@@ -23,31 +26,34 @@ void bind_plans(nb::module_& m)
     nb::class_<Workspace>(m, "Workspace", "Scratch storage of the relational operations; reuse one, never concurrently.")
         .def(nb::init<>())
         .def("memory_usage", &Workspace::memory_usage);
-    nb::class_<ProjectionPlan>(m, "ProjectionPlan", "Keeps the input's columns of these labels, in this order.")
-        .def(nb::init<ColumnIndices, urd::Store<urd::sequence<Column>>>(), nb::arg("input"), nb::arg("labels"))
-        .def("input_columns", &ProjectionPlan::input_columns)
-        .def("output_columns", &ProjectionPlan::output_columns);
-    nb::class_<JoinPlan>(m, "JoinPlan", "Natural join (also semijoin, antijoin) of inputs with these columns.")
-        .def(nb::init<ColumnIndices, ColumnIndices>(), nb::arg("left"), nb::arg("right"))
-        .def("left_columns", &JoinPlan::left_columns)
-        .def("right_columns", &JoinPlan::right_columns)
-        .def("output_columns", &JoinPlan::output_columns);
-    nb::class_<SetPlan>(m, "SetPlan", "Union and difference of inputs with the same columns in the same order.")
-        .def(nb::init<ColumnIndices, ColumnIndices>(), nb::arg("left"), nb::arg("right"))
-        .def("output_columns", &SetPlan::output_columns);
-    nb::class_<SelectEqualPlan>(m, "SelectEqualPlan", "The rows whose two columns (of one type) hold equal values.")
-        .def(nb::init<ColumnIndices, Column, Column>(), nb::arg("input"), nb::arg("left"), nb::arg("right"))
-        .def("output_columns", &SelectEqualPlan::output_columns);
-    nb::class_<SelectValuePlan>(m, "SelectValuePlan", "The rows whose column holds a value of the column's type.")
-        .def(
-            "__init__",
-            [](SelectValuePlan* self, ColumnIndices input, Column column, ygg::TypeId type, nb::handle value)
-            { new (self) SelectValuePlan(input, column, type, ygg::encode(ygg::cast_value(value, type))); },
-            nb::arg("input"),
-            nb::arg("column"),
-            nb::arg("type"),
-            nb::arg("value"))
-        .def("output_columns", &SelectValuePlan::output_columns);
+    // The plans: records (bind_data), each made from its inputs' columns by its make_* function.
+    ygg::bind_unsigned_integer<ColumnSlice>(m, "ColumnSlice");
+    urd::python::bind_data<ProjectionPlan>(m);
+    urd::python::bind_data<JoinPlan>(m);
+    urd::python::bind_data<SetPlan>(m);
+    urd::python::bind_data<SelectEqualPlan>(m);
+    urd::python::bind_data<SelectValuePlan>(m);
+    m.def(
+        "make_projection_plan",
+        [](ColumnIndices input, urd::Store<urd::sequence<Column>> labels) { return make_projection_plan(input, labels); },
+        nb::arg("input"),
+        nb::arg("labels"));
+    m.def("make_join_plan", [](ColumnIndices left, ColumnIndices right) { return make_join_plan(left, right); }, nb::arg("left"), nb::arg("right"));
+    m.def("make_set_plan", [](ColumnIndices left, ColumnIndices right) { return make_set_plan(left, right); }, nb::arg("left"), nb::arg("right"));
+    m.def(
+        "make_select_equal_plan",
+        [](ColumnIndices input, Column left, Column right) { return make_select_equal_plan(input, left, right); },
+        nb::arg("input"),
+        nb::arg("left"),
+        nb::arg("right"));
+    m.def(
+        "make_select_value_plan",
+        [](ColumnIndices input, Column column, ygg::TypeId type, nb::handle value)
+        { return make_select_value_plan(input, column, type, ygg::encode(ygg::cast_value(value, type))); },
+        nb::arg("input"),
+        nb::arg("column"),
+        nb::arg("type"),
+        nb::arg("value"));
 }
 
 /// The operations of one input relation type.
@@ -56,10 +62,10 @@ void bind_unary(nb::module_& m)
 {
     m.def(
         "project",
-        [](const V& input, const ProjectionPlan& plan, ScratchRelation& out, Workspace& workspace)
+        [](const V& input, const urd::data<ProjectionPlan>& plan, ScratchRelation& out, Workspace& workspace)
         {
-            require_columns(input.columns(), plan.input_columns());
-            require_columns(out.view().columns(), plan.output_columns());
+            require_columns(input.columns(), plan.input_columns);
+            require_columns(out.view().columns(), plan.output_columns);
             project(input, plan, out, workspace);
         },
         nb::arg("input"),
@@ -68,10 +74,10 @@ void bind_unary(nb::module_& m)
         nb::arg("workspace"));
     m.def(
         "select_equal_columns",
-        [](const V& input, const SelectEqualPlan& plan, ScratchRelation& out)
+        [](const V& input, const urd::data<SelectEqualPlan>& plan, ScratchRelation& out)
         {
-            require_columns(input.columns(), plan.output_columns());
-            require_columns(out.view().columns(), plan.output_columns());
+            require_columns(input.columns(), plan.output_columns);
+            require_columns(out.view().columns(), plan.output_columns);
             select_equal_columns(input, plan, out);
         },
         nb::arg("input"),
@@ -79,10 +85,10 @@ void bind_unary(nb::module_& m)
         nb::arg("out"));
     m.def(
         "select_equal_value",
-        [](const V& input, const SelectValuePlan& plan, ScratchRelation& out)
+        [](const V& input, const urd::data<SelectValuePlan>& plan, ScratchRelation& out)
         {
-            require_columns(input.columns(), plan.output_columns());
-            require_columns(out.view().columns(), plan.output_columns());
+            require_columns(input.columns(), plan.output_columns);
+            require_columns(out.view().columns(), plan.output_columns);
             select_equal_value(input, plan, out);
         },
         nb::arg("input"),
@@ -107,11 +113,12 @@ void bind_binary(nb::module_& m)
     {
         m.def(
             name,
-            [operation, output_is_left](const L& left_operand, const R& right_operand, const JoinPlan& plan, ScratchRelation& out, Workspace& workspace)
+            [operation,
+             output_is_left](const L& left_operand, const R& right_operand, const urd::data<JoinPlan>& plan, ScratchRelation& out, Workspace& workspace)
             {
-                require_columns(left_operand.columns(), plan.left_columns());
-                require_columns(right_operand.columns(), plan.right_columns());
-                require_columns(out.view().columns(), output_is_left ? plan.left_columns() : plan.output_columns());
+                require_columns(left_operand.columns(), plan.left_columns);
+                require_columns(right_operand.columns(), plan.right_columns);
+                require_columns(out.view().columns(), output_is_left ? plan.left_columns : plan.output_columns);
                 operation(left_operand, right_operand, plan, out, workspace);
             },
             nb::arg("left_operand"),
@@ -127,10 +134,10 @@ void bind_binary(nb::module_& m)
     {
         m.def(
             name,
-            [operation](const L& left_operand, const R& right_operand, const SetPlan& plan, ScratchRelation& out)
+            [operation](const L& left_operand, const R& right_operand, const urd::data<SetPlan>& plan, ScratchRelation& out)
             {
                 for (const auto columns : { left_operand.columns(), right_operand.columns(), out.view().columns() })
-                    require_columns(columns, plan.output_columns());
+                    require_columns(columns, plan.output_columns);
                 operation(left_operand, right_operand, plan, out);
             },
             nb::arg("left_operand"),

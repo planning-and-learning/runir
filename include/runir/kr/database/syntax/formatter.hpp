@@ -10,7 +10,6 @@
 #include "yggdrasil/formalism/formatter.hpp"
 #include "yggdrasil/formatting/formatter.hpp"
 
-#include <boost/mp11.hpp>
 #include <fmt/ranges.h>
 #include <iterator>
 #include <ranges>
@@ -37,19 +36,11 @@ struct formatter<runir::kr::database::QueryPlan, char> : runir::detail::without_
     fmt::format_context::iterator format(const runir::kr::database::QueryPlan& plan, fmt::format_context& ctx) const;
 };
 
-/// An operation's plan, as the columns it produces: how a query's record writes it.
-template<typename Plan>
-    requires boost::mp11::mp_contains<boost::mp11::mp_list<runir::kr::database::ProjectionPlan,
-                                                           runir::kr::database::JoinPlan,
-                                                           runir::kr::database::SetPlan,
-                                                           runir::kr::database::SelectEqualPlan,
-                                                           runir::kr::database::SelectValuePlan,
-                                                           runir::kr::database::DistancePlan,
-                                                           runir::kr::database::GenericJoinPlan>,
-                                      Plan>::value
-struct formatter<Plan, char> : runir::detail::without_format_spec
+/// A field's column position: its number.
+template<>
+struct formatter<runir::kr::database::ColumnSlice, char> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const Plan& plan, fmt::format_context& ctx) const;
+    fmt::format_context::iterator format(runir::kr::database::ColumnSlice slice, fmt::format_context& ctx) const;
 };
 }  // namespace fmt
 #endif

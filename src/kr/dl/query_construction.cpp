@@ -65,10 +65,10 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
     const auto sources = columns(data.sources);
     const auto edges = columns(data.edges);
     const auto targets = columns(data.targets);
-    data.plan = runir::kr::database::DistancePlan({ sources.data(), sources.size() },
-                                                  { edges.data(), edges.size() },
-                                                  { targets.data(), targets.size() },
-                                                  distance_column);
+    data.plan = runir::kr::database::make_distance_plan({ sources.data(), sources.size() },
+                                                        { edges.data(), edges.size() },
+                                                        { targets.data(), targets.size() },
+                                                        distance_column);
 }
 
 void prepare(urd::data<DatalogProgram>& data, const ConstructorRepository& repository)

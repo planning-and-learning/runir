@@ -24,7 +24,7 @@ struct ProjectionEvaluator
     runir::kr::database::incremental::ProjectionEvaluator operation;
     DenotationState<Category> value;
 
-    ProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex child_, const runir::kr::database::ProjectionPlan& plan) :
+    ProjectionEvaluator(ygg::FreeScratchRelations& scratch, QueryEvaluationIndex child_, const urd::data<runir::kr::database::ProjectionPlan>& plan) :
         child(child_),
         operation(scratch, plan)
     {

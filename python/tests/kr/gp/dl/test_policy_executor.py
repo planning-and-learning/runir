@@ -25,7 +25,7 @@ from pyrunir.kr.ps.base import (
     LiftedSketchSearchOptions,
     Repository as SketchRepository,
     RuleBase,
-    SketchProofEdgeLabel,
+    SketchProofEdgeLabelData,
     SketchSearchStatistics,
     SuccessorExpander,
     find_ground_solution,
@@ -258,7 +258,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
         assert proof_result.graph.target(edge) in proof_result.graph.vertices()
         assert edge in list(proof_result.graph.out_edges(proof_result.graph.source(edge)))
         edge_label = proof_result.graph.edge_value(edge)
-        assert isinstance(edge_label, SketchProofEdgeLabel)
+        assert isinstance(edge_label, SketchProofEdgeLabelData)
         assert isinstance(edge_label.action, RowActionLifted)
 
     search_options = GroundSketchSearchOptions()

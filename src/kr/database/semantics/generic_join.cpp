@@ -14,16 +14,17 @@
 
 namespace runir::kr::database
 {
-GenericJoinPlan::GenericJoinPlan(std::span<const urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>>> inputs,
-                                 std::span<const urd::index<ygg::Column>> variable_order,
-                                 std::span<const urd::index<ygg::Column>> output_order) :
-    m_inputs(inputs.size()),
-    m_order(variable_order.begin(), variable_order.end()),
-    m_keys(inputs.size()),
-    m_occurrences(variable_order.size())
+urd::data<GenericJoinPlan> make_generic_join_plan(std::span<const urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>>> inputs,
+                                                  std::span<const urd::index<ygg::Column>> variable_order,
+                                                  std::span<const urd::index<ygg::Column>> output_order)
 {
+    auto plan = urd::data<GenericJoinPlan> {};
+    plan.input_columns.resize(inputs.size());
+    plan.variable_order.set(variable_order.begin(), variable_order.end());
+    plan.input_keys.resize(inputs.size());
+    plan.variable_inputs.resize(variable_order.size());
     for (size_t i = 0; i < inputs.size(); ++i)
-        m_inputs[i].set(inputs[i].begin(), inputs[i].end());
+        plan.input_columns[i].set(inputs[i].begin(), inputs[i].end());
     urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>> combined;
     for (const auto& input : inputs)
     {
@@ -51,26 +52,27 @@ GenericJoinPlan::GenericJoinPlan(std::span<const urd::Store<urd::sequence<urd::d
     urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>> output;
     for (const auto label : output_order)
         output.push_back(*std::ranges::find(combined, label, &urd::data<ygg::ColumnLayout>::label));
-    m_output.set(output.begin(), output.end());
+    plan.output_columns.set(output.begin(), output.end());
     for (size_t depth = 0; depth < variable_order.size(); ++depth)
     {
         const auto label = variable_order[depth];
-        m_output_positions.push_back(
-            ColumnSlice { static_cast<size_t>(std::ranges::find(output, label, &urd::data<ygg::ColumnLayout>::label) - output.begin()) });
+        plan.output_positions.push_back(
+            ColumnSlice(ygg::to_uint_t(static_cast<size_t>(std::ranges::find(output, label, &urd::data<ygg::ColumnLayout>::label) - output.begin()))));
         for (size_t input = 0; input < inputs.size(); ++input)
         {
             const auto found = std::ranges::find(inputs[input], label, &urd::data<ygg::ColumnLayout>::label);
             if (found != inputs[input].end())
             {
-                m_keys[input].push_back(ColumnSlice { static_cast<size_t>(found - inputs[input].begin()) });
-                m_occurrences[depth].push_back(input);
+                plan.input_keys[input].push_back(ColumnSlice(ygg::to_uint_t(static_cast<size_t>(found - inputs[input].begin()))));
+                plan.variable_inputs[depth].push_back(input);
             }
         }
     }
+    return plan;
 }
 
-bool GenericJoinPlan::matches(const GenericJoinPlan& other) const
-{ return m_inputs == other.m_inputs && m_order == other.m_order && m_output == other.m_output; }
+bool matches(const urd::data<GenericJoinPlan>& plan, const urd::data<GenericJoinPlan>& other)
+{ return plan.input_columns == other.input_columns && plan.variable_order == other.variable_order && plan.output_columns == other.output_columns; }
 
 namespace detail
 {
@@ -83,16 +85,16 @@ namespace runir::kr::database
 void GenericJoinWorkspace::enumerate(size_t depth, ygg::FreeScratchRelation& out)
 {
     detail::count_generic_join_work(&detail::GenericJoinWork::prefixes);
-    if (depth == m_plan.variable_order().size())
+    if (depth == m_plan.variable_order.size())
     {
         out.insert(std::span<const ygg::Value>(m_row));
         return;
     }
-    const auto count = m_plan.input_count();
+    const auto count = m_plan.input_columns.size();
     const auto cursors = std::span(m_cursors);
     const auto current = cursors.subspan(depth * count, count);
     const auto next = cursors.subspan((depth + 1) * count, count);
-    const auto inputs = m_plan.variable_inputs(depth);
+    const auto& inputs = m_plan.variable_inputs[depth];
     const auto source = *std::ranges::min_element(inputs, {}, [&](size_t input) { return current[input]->children.size(); });
     for (const auto& [key, child] : current[source]->children)
     {
@@ -112,8 +114,7 @@ void GenericJoinWorkspace::enumerate(size_t depth, ygg::FreeScratchRelation& out
         }
         if (present)
         {
-            const auto output = m_plan.output_position(depth);
-            m_row[output.position] = key;
+            m_row[m_plan.output_positions[depth].value] = key;
             enumerate(depth + 1, out);
         }
     }

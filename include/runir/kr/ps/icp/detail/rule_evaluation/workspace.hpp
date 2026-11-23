@@ -56,7 +56,8 @@ public:
         for (std::size_t i = 0; i < features.size(); ++i)
             slots.emplace(static_cast<ygg::uint_t>(features[static_cast<std::ptrdiff_t>(i)].index().value), i);
         for (const auto& pair : module.get_reset_pairs())
-            m_reset_predecessors.at(slots.at(static_cast<ygg::uint_t>(pair.after.value))).push_back(slots.at(static_cast<ygg::uint_t>(pair.before.value)));
+            m_reset_predecessors.at(slots.at(static_cast<ygg::uint_t>(pair.get_after().index().value)))
+                .push_back(slots.at(static_cast<ygg::uint_t>(pair.get_before().index().value)));
     }
 
     [[nodiscard]] const auto& get_task_context() const noexcept { return m_task; }

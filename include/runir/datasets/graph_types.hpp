@@ -5,10 +5,14 @@
 // inside, whose edges keep the numbers they were given. The algorithms on them are vefr's.
 
 #include <cstddef>
+#include <ranges>
+#include <type_traits>
 #include <urd/elements/requirements.hpp>
 #include <urd/graphs.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
+#include <utility>
+#include <vector>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir
@@ -31,5 +35,28 @@ template<typename G>
 concept labeled_graph = urd::graph_like<G> && !urd::unit<vertex_label_t<G>>;
 
 }  // namespace runir
+
+namespace ygg::serialization
+{
+/// A runir graph is serialized as its vertices' labels by vertex, its edges as (source, target) by edge number, and the
+/// edges' labels (pyyggdrasil.serialization). It is declared here, beside the concept, because a graph is a urd Store:
+/// its namespace is urd's, so the archive's namespace finds it.
+template<typename Archive, ::runir::labeled_graph G>
+void describe_fields(Archive& ar, std::type_identity<G> /*type*/)
+{
+    ar.field("vertices",
+             [](const G& value) { return value.vertices() | std::views::transform([&value](auto v) -> decltype(auto) { return value.vertex_value(v); }); });
+    ar.field("edges",
+             [](const G& value)
+             {
+                 auto result = std::vector<std::pair<::runir::VertexIndex, ::runir::VertexIndex>>();
+                 for (const auto e : value.edges())
+                     result.emplace_back(value.source(e), value.target(e));
+                 return result;
+             });
+    ar.field("edge_properties",
+             [](const G& value) { return value.edges() | std::views::transform([&value](std::size_t e) -> decltype(auto) { return value.edge_value(e); }); });
+}
+}  // namespace ygg::serialization
 
 #endif

@@ -51,11 +51,11 @@ concept SchemaRecord = requires(const D& data) { data.schema; };
 template<typename D>
 concept PlannedRecord = requires(const D& data) { data.plan; };
 template<typename D>
-concept KeyedPlanRecord = requires(const D& data) { data.plan.left_keys(); };
+concept KeyedPlanRecord = requires(const D& data) { data.plan.left_keys; };
 template<typename D>
-concept TwoSidedPlanRecord = requires(const D& data) { data.plan.left_position(); };
+concept TwoSidedPlanRecord = requires(const D& data) { data.plan.left_position; };
 template<typename D>
-concept OneSidedPlanRecord = requires(const D& data) { data.plan.position(); };
+concept OneSidedPlanRecord = requires(const D& data) { data.plan.position; };
 /// A distance: the numerical with an edges operand, which keeps a plan.
 template<typename V>
 concept DistanceView = requires(const V& view) { view.get_edges(); };
@@ -412,11 +412,11 @@ void check_distance_queries()
                     auto children = context.child_context();
                     const auto relation = [&](auto argument, auto columns)
                     { return std::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns, children); }, argument); };
-                    const auto sources = relation(concrete.get_sources(), plan.source_columns());
-                    const auto edges = relation(concrete.get_edges(), plan.edge_columns());
-                    const auto targets = relation(concrete.get_targets(), plan.target_columns());
+                    const auto sources = relation(concrete.get_sources(), plan.source_columns);
+                    const auto edges = relation(concrete.get_edges(), plan.edge_columns);
+                    const auto targets = relation(concrete.get_targets(), plan.target_columns);
                     auto scratch = ygg::FreeScratchRelations();
-                    auto distances = scratch.draw(plan.output_columns());
+                    auto distances = scratch.draw(plan.output_columns);
                     auto workspace = runir::kr::database::DistanceWorkspace(plan);
                     return runir::kr::database::min_distance(sources, edges, targets, plan, *distances, workspace);
                 }
@@ -583,22 +583,22 @@ void check_cached_queries()
                                  }
                                  if constexpr (PlannedRecord<std::remove_cvref_t<decltype(data)>>)
                                  {
-                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.output_columns(), concrete.get_schema()));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.output_columns, concrete.get_schema()));
                                  }
                                  if constexpr (KeyedPlanRecord<std::remove_cvref_t<decltype(data)>>)
                                  {
-                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.left_keys(), data.plan.left_keys()));
-                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.right_keys(), data.plan.right_keys()));
-                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.right_payload(), data.plan.right_payload()));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.left_keys, data.plan.left_keys));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.right_keys, data.plan.right_keys));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.right_payload, data.plan.right_payload));
                                  }
                                  if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(decoded)>>)
                                  {
-                                     EXPECT_EQ(decoded.plan.left_position(), 1);
-                                     EXPECT_EQ(decoded.plan.right_position(), 0);
+                                     EXPECT_EQ(decoded.plan.left_position, 1);
+                                     EXPECT_EQ(decoded.plan.right_position, 0);
                                  }
                                  if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(decoded)>>)
                                  {
-                                     EXPECT_EQ(decoded.plan.position(), 1);
+                                     EXPECT_EQ(decoded.plan.position, 1);
                                  }
                              });
 
@@ -622,16 +622,16 @@ void check_cached_queries()
         }
         if constexpr (PlannedRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_TRUE(std::ranges::equal(stale.plan.output_columns(), concrete.get_schema()));
+            EXPECT_TRUE(std::ranges::equal(stale.plan.output_columns, concrete.get_schema()));
         }
         if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_EQ(stale.plan.left_position(), 1);
-            EXPECT_EQ(stale.plan.right_position(), 0);
+            EXPECT_EQ(stale.plan.left_position, 1);
+            EXPECT_EQ(stale.plan.right_position, 0);
         }
         if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_EQ(stale.plan.position(), 1);
+            EXPECT_EQ(stale.plan.position, 1);
         }
         urd::clear_fields(stale);
         if constexpr (SchemaRecord<std::remove_cvref_t<decltype(stale)>>)
@@ -640,16 +640,16 @@ void check_cached_queries()
         }
         if constexpr (PlannedRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_TRUE(stale.plan.output_columns().empty());
+            EXPECT_TRUE(stale.plan.output_columns.empty());
         }
         if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_EQ(stale.plan.left_position(), 0);
-            EXPECT_EQ(stale.plan.right_position(), 0);
+            EXPECT_EQ(stale.plan.left_position, 0);
+            EXPECT_EQ(stale.plan.right_position, 0);
         }
         if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_EQ(stale.plan.position(), 0);
+            EXPECT_EQ(stale.plan.position, 0);
         }
 
         query_data.variant = concrete.index();
@@ -667,9 +667,9 @@ void check_cached_queries()
                          [&](const auto& decoded)
                          {
                              auto relations = ygg::FreeScratchRelations();
-                             auto left_operand = relations.draw(decoded.plan.left_columns());
-                             auto right_operand = relations.draw(decoded.plan.right_columns());
-                             auto result = relations.draw(decoded.plan.output_columns());
+                             auto left_operand = relations.draw(decoded.plan.left_columns);
+                             auto right_operand = relations.draw(decoded.plan.right_columns);
+                             auto result = relations.draw(decoded.plan.output_columns);
                              left_operand->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(10)),
                                                                               ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
                              left_operand->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(30)),
@@ -681,20 +681,20 @@ void check_cached_queries()
                              EXPECT_TRUE(result->view().contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(10)),
                                                                                              ygg::encode_value<ygg::uint_t>(ygg::uint_t(20)) }));
                          });
-    const auto slice_position = [](const runir::kr::database::ColumnSlice& slice) { return slice.position; };
+    const auto slice_position = [](const runir::kr::database::ColumnSlice& slice) { return slice.value; };
     const auto check_projection_plan = [&](auto& data, auto positions)
     {
         const auto concrete = repo.insert(data).first;
         check_relocated_data(*repo[concrete.index()],
                              [&](const auto& decoded)
                              {
-                                 EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions, {}, slice_position));
+                                 EXPECT_TRUE(std::ranges::equal(decoded.plan.positions, positions, {}, slice_position));
                                  auto relations = ygg::FreeScratchRelations();
-                                 auto input = relations.draw(decoded.plan.input_columns());
-                                 auto result = relations.draw(decoded.plan.output_columns());
+                                 auto input = relations.draw(decoded.plan.input_columns);
+                                 auto result = relations.draw(decoded.plan.output_columns);
                                  urd::Store<urd::sequence<ObjectIndex>> row;
-                                 row.reserve(decoded.plan.input_columns().size());
-                                 for (size_t i = 0; i < decoded.plan.input_columns().size(); ++i)
+                                 row.reserve(decoded.plan.input_columns.size());
+                                 for (size_t i = 0; i < decoded.plan.input_columns.size(); ++i)
                                      row.emplace_back(10 + i);
                                  urd::Store<urd::sequence<ygg::Value>> bytes;
                                  input->insert(kr::dl::encode_object_row(row, bytes));
@@ -711,11 +711,11 @@ void check_cached_queries()
         const auto [same, stale_created] = repo.insert(stale);
         EXPECT_FALSE(stale_created);
         EXPECT_EQ(same.index(), concrete.index());
-        EXPECT_TRUE(std::ranges::equal(stale.plan.positions(), positions, {}, slice_position));
+        EXPECT_TRUE(std::ranges::equal(stale.plan.positions, positions, {}, slice_position));
         urd::clear_fields(stale);
-        EXPECT_TRUE(stale.plan.input_columns().empty());
-        EXPECT_TRUE(stale.plan.output_columns().empty());
-        EXPECT_TRUE(stale.plan.positions().empty());
+        EXPECT_TRUE(stale.plan.input_columns.empty());
+        EXPECT_TRUE(stale.plan.output_columns.empty());
+        EXPECT_TRUE(stale.plan.positions.empty());
     };
     auto project_data = urd::data<kr::dl::Query<kr::dl::QueryProjectTag>>();
     project_data.operand = joined.index();
@@ -1348,11 +1348,11 @@ ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> num
                 auto children = context.child_context();
                 const auto relation = [&](auto argument, auto columns)
                 { return std::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns, children); }, argument); };
-                const auto sources = relation(concrete.get_sources(), plan.source_columns());
-                const auto edges = relation(concrete.get_edges(), plan.edge_columns());
-                const auto targets = relation(concrete.get_targets(), plan.target_columns());
+                const auto sources = relation(concrete.get_sources(), plan.source_columns);
+                const auto edges = relation(concrete.get_edges(), plan.edge_columns);
+                const auto targets = relation(concrete.get_targets(), plan.target_columns);
                 auto scratch = ygg::FreeScratchRelations();
-                auto distances = scratch.draw(plan.output_columns());
+                auto distances = scratch.draw(plan.output_columns);
                 auto workspace = runir::kr::database::DistanceWorkspace(plan);
                 return runir::kr::database::min_distance(sources, edges, targets, plan, *distances, workspace);
             }

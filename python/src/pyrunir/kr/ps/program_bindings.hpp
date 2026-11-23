@@ -1,7 +1,10 @@
 #ifndef PYRUNIR_KR_PS_PROGRAM_BINDINGS_HPP_
 #define PYRUNIR_KR_PS_PROGRAM_BINDINGS_HPP_
 
-#include "pyrunir/conversions.hpp"
+#include "pyrunir/kr/dl/conversions.hpp"
+#include "pyrunir/kr/ps/base/conversions.hpp"
+#include "pyrunir/kr/ps/ext/conversions.hpp"
+#include "pyrunir/kr/ps/icp/conversions.hpp"
 #include "pyrunir/module.hpp"
 
 #include <memory>

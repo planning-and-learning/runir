@@ -20,7 +20,7 @@ namespace
 datasets::StateGraph<tyr::GroundTag> single_state_graph(tyr::planning::PackedStateView<tyr::GroundTag> state)
 {
     using Graph = datasets::StateGraph<tyr::GroundTag>;
-    using Edge = std::tuple<VertexIndex, VertexIndex, datasets::StateGraphEdgeLabel>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<datasets::StateGraphEdgeLabel>>;
     using Label = vertex_label_t<Graph>;
     const auto vertices = std::vector<Label> { Label { state } };
     return Graph(urd::graph_data<Edge, Label> { 1, {}, {}, vertices });

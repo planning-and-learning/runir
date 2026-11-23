@@ -5,6 +5,7 @@
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/icp/declarations.hpp"
 #include "runir/kr/ps/icp/object_reference.hpp"
+#include "runir/kr/ps/icp/reset_pair_data.hpp"
 #include "runir/kr/ps/icp/rule_data.hpp"
 
 #include <cista/containers/vector.h>
@@ -33,7 +34,7 @@ struct data<runir::kr::ps::icp::Module>
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> entry_memory_state;
     urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>> memory_states;
     urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>> memory_transitions;
-    urd::flat_vector<runir::kr::ps::icp::ResetPair> reset_pairs;
+    urd::flat_vector<urd::data<runir::kr::ps::icp::ResetPair>> reset_pairs;
 
     data() = default;
 
@@ -49,7 +50,7 @@ struct data<runir::kr::ps::icp::Module>
          urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> entry_memory_state_,
          urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>> memory_states_,
          urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>> memory_transitions_,
-         urd::flat_vector<runir::kr::ps::icp::ResetPair> reset_pairs_) :
+         urd::flat_vector<urd::data<runir::kr::ps::icp::ResetPair>> reset_pairs_) :
         index(),
         symbol(symbol_),
         concept_registers(std::move(concept_registers_)),

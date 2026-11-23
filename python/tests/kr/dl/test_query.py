@@ -17,7 +17,6 @@ from pyrunir.kr.ps.base import Sketch
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
-from pyrunir.serialization import register_table, serialize, table
 
 
 def _row_values(rows: formalism.RelationSchema) -> list[int]:
@@ -174,24 +173,24 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     data.variant = atom.index()
     assert data.variant == atom.index()
     assert [column.get_name() for column in atom.get_columns()] == ["ball", "room"]
-    assert list(semantics.QueryProject.Fields.__members__) == ["operand", "columns"]
+    assert list(semantics.QueryProject.Fields.__members__) == ["operand", "columns", "plan"]
     assert list(semantics.QueryColumn.Fields.__members__) == ["name"]
 
     dictionaries = Dictionaries()
-    register_table(dictionaries, semantics.Query, "queries", "q")
-    register_table(dictionaries, semantics.QueryProject, "projects", "p")
-    register_table(dictionaries, semantics.QueryColumn, "columns", "c")
-    register_table(
-        dictionaries,
+    dictionaries.register_table(semantics.Query, "queries", "q")
+    # Its operand and columns: not the plan the repository derives from them (a table selects its fields).
+    dictionaries.register_table(semantics.QueryProject, "projects", "p", fields=("operand", "columns"))
+    dictionaries.register_table(semantics.QueryColumn, "columns", "c")
+    dictionaries.register_table(
         semantics.QueryAtomicStateFluent,
         "atoms",
         "a",
         project=lambda value: {"predicate": value.get_predicate().get_name()},
     )
-    assert serialize(dictionaries, query) == "q0"
-    assert table(dictionaries, semantics.QueryProject) == [{"columns": ["c0"], "operand": "q1"}]
-    assert table(dictionaries, semantics.QueryColumn) == [{"name": "ball"}]
-    assert table(dictionaries, semantics.QueryAtomicStateFluent) == [{"predicate": "at"}]
+    assert dictionaries.serialize(query) == "q0"
+    assert dictionaries.table(semantics.QueryProject) == [{"columns": ["c0"], "operand": "q1"}]
+    assert dictionaries.table(semantics.QueryColumn) == [{"name": "ball"}]
+    assert dictionaries.table(semantics.QueryAtomicStateFluent) == [{"predicate": "at"}]
 
 
 _NAMED_QUERY_PROGRAM = """(:program (:entry root)
@@ -245,7 +244,7 @@ def test_query_program_round_trip_preserves_named_references(gripper_planning_do
     join = query.get_variant()
     assert isinstance(join, semantics.QueryJoin)
     assert [column.get_name() for column in join.get_columns()] == ["ball", "room"]
-    assert list(semantics.QueryJoin.Fields.__members__) == ["left_operand", "right_operand"]
+    assert list(semantics.QueryJoin.Fields.__members__) == ["left_operand", "right_operand", "columns", "plan"]
 
 
 @pytest.mark.parametrize(

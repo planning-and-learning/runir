@@ -6,7 +6,7 @@
 #ifndef RUNIR_KR_DATABASE_SEMANTICS_JOIN_INDEX_HPP_
 #define RUNIR_KR_DATABASE_SEMANTICS_JOIN_INDEX_HPP_
 
-#include "runir/kr/database/semantics/plans.hpp"
+#include "runir/kr/database/semantics/plan_data.hpp"
 #include "runir/kr/database/semantics/relation_view.hpp"
 
 #include <cstddef>
@@ -35,14 +35,14 @@ ygg::Value field_value(const R& values, size_t position) noexcept
 template<typename R>
 ygg::hash_t join_key_hash(const R& row, std::span<const ColumnSlice> keys) noexcept
 {
-    return urd::hash_range(keys | std::views::transform([&](const ColumnSlice& key) { return field_value(row, key.position); }));
+    return urd::hash_range(keys | std::views::transform([&](const ColumnSlice& key) { return field_value(row, key.value); }));
 }
 
 template<typename L, typename R>
 bool join_keys_equal(const L& left, std::span<const ColumnSlice> left_keys, const R& right, std::span<const ColumnSlice> right_keys) noexcept
 {
     for (size_t i = 0; i < left_keys.size(); ++i)
-        if (field_value(left, left_keys[i].position) != field_value(right, right_keys[i].position))
+        if (field_value(left, left_keys[i].value) != field_value(right, right_keys[i].value))
             return false;
     return true;
 }

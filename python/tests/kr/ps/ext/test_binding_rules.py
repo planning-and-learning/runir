@@ -11,7 +11,6 @@ from pyyggdrasil.serialization import Dictionaries
 from pyrunir.kr import DomainContext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.dl import parse_module
-from pyrunir.serialization import register_table, serialize, table
 
 BindingRule: TypeAlias = ext.RuleLoadConcept | ext.RuleLoadRole | ext.RuleChooseConcept | ext.RuleChooseRole
 BindingRuleData: TypeAlias = (
@@ -114,19 +113,18 @@ def test_binding_rules_parse_construct_and_serialize(
         "effects",
     ] + (["order"] if kind == "choose" else [])
     dictionaries = Dictionaries()
-    register_table(dictionaries, ext.RuleExt, "variants", "v")
-    register_table(dictionaries, rule_type, "bindings", "r", fields=("source", "target", "effects"))
-    register_table(dictionaries, ext.MemoryStateExt, "memory", "m")
-    register_table(
-        dictionaries,
+    dictionaries.register_table(ext.RuleExt, "variants", "v")
+    dictionaries.register_table(rule_type, "bindings", "r", fields=("source", "target", "effects"))
+    dictionaries.register_table(ext.MemoryStateExt, "memory", "m")
+    dictionaries.register_table(
         ext.dl.ConcreteEffectExtNumericalIncreases,
         "effects",
         "e",
         project=lambda effect: {"text": str(effect)},
     )
-    assert serialize(dictionaries, variant) == "v0"
-    assert table(dictionaries, ext.RuleExt) == [{"symbol": "bind", "variant": "r0"}]
-    assert table(dictionaries, rule_type) == [
+    assert dictionaries.serialize(variant) == "v0"
+    assert dictionaries.table(ext.RuleExt) == [{"symbol": "bind", "variant": "r0"}]
+    assert dictionaries.table(rule_type) == [
         {
             "source": "m0",
             "target": "m1",
@@ -134,7 +132,7 @@ def test_binding_rules_parse_construct_and_serialize(
         }
     ]
     effects_table = [{"text": str(effect)} for effect in rule.get_effects()]
-    assert table(dictionaries, ext.dl.ConcreteEffectExtNumericalIncreases) == effects_table
+    assert dictionaries.table(ext.dl.ConcreteEffectExtNumericalIncreases) == effects_table
 
 
 @pytest.mark.parametrize(("category", "expression"), [("concept", "c_top"), ("role", "r_universal")])
@@ -172,25 +170,23 @@ def test_choose_order_data_and_serialization(
     assert _interns_to(repository, rule, None, values)
     assert not _interns_to(repository, rule, None, list(reversed(values[:2])))
     dictionaries = Dictionaries()
-    register_table(
-        dictionaries,
+    dictionaries.register_table(
         ext.dl.FeatureExtBoolean,
         "booleans",
         "b",
         project=lambda f: {"symbol": f.get_variant().get_symbol()},
     )
-    register_table(
-        dictionaries,
+    dictionaries.register_table(
         ext.dl.FeatureExtNumerical,
         "numericals",
         "n",
         project=lambda f: {"symbol": f.get_variant().get_symbol()},
     )
-    register_table(dictionaries, ext.OrderTerm, "ordering", "o")
-    register_table(dictionaries, type(rule), "rules", "r", fields=("order",))
-    assert serialize(dictionaries, rule) == "r0"
-    assert table(dictionaries, type(rule)) == [{"order": ["o0", "o1", "o0"]}]
-    assert table(dictionaries, ext.OrderTerm) == [
-        {"direction": "max", "variant": "b0"},
-        {"direction": "min", "variant": "n0"},
+    dictionaries.register_table(ext.OrderTerm, "ordering", "o")
+    dictionaries.register_table(type(rule), "rules", "r", fields=("order",))
+    assert dictionaries.serialize(rule) == "r0"
+    assert dictionaries.table(type(rule)) == [{"order": ["o0", "o1", "o0"]}]
+    assert dictionaries.table(ext.OrderTerm) == [
+        {"direction": "max", "feature": "b0"},
+        {"direction": "min", "feature": "n0"},
     ]

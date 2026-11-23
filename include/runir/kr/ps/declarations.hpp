@@ -7,6 +7,7 @@
 
 #include <concepts>
 #include <memory>
+#include <string_view>
 #include <tyr/planning/state_view_concepts.hpp>
 #include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
@@ -125,6 +126,18 @@ using ExecutionRepositoryPtr = std::shared_ptr<ExecutionRepository<Family, Kind>
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
 using ProgramStateView = urd::index_view<typename FamilyTypes<Family>::template ProgramState<Kind>, ExecutionRepository<Family, Kind>>;
 
+/// The labels of its proof graphs' vertices and edges (records: data<...>, the graph's elements).
+template<runir::kr::ps::ProgramFamilyTag Family, tyr::TaskKind Kind>
+struct ProgramProofVertexLabel
+{
+    static constexpr std::string_view name = urd::joined_name<"ProgramProofVertexLabel", Family::name, Kind::name>;
+};
+
+template<runir::kr::ps::ProgramFamilyTag Family>
+struct ProgramProofEdgeLabel
+{
+    static constexpr std::string_view name = urd::joined_name<"ProgramProofEdgeLabel", Family::name>;
+};
 }  // namespace runir::kr::ps
 
 #endif

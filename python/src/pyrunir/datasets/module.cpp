@@ -11,6 +11,8 @@ void bind_module_definitions(nb::module_& m)
     bind_task_class(m);
     bind_state_graph(m);
     bind_equivalence_graph(m);
+
+    bind_serialization();
 }
 
 }  // namespace runir::datasets

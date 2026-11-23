@@ -308,41 +308,43 @@ def test_operations_take_plans_outputs_and_workspaces() -> None:
     left_operand, right_operand = left_builder.view(), intern(repository, right_builder)[0]
     workspace = database.Workspace()
 
-    join = database.JoinPlan(left_operand.columns(), right_operand.columns())
-    joined = database.ScratchRelation(join.output_columns())
+    join = database.make_join_plan(left_operand.columns(), right_operand.columns())
+    joined = database.ScratchRelation(join.output_columns)
     database.join(left_operand, right_operand, join, joined, workspace)
     assert tuples(joined.view()) == [(1, 2, 5)]
-    semi = database.ScratchRelation(join.left_columns())
+    semi = database.ScratchRelation(join.left_columns)
     database.semijoin(left_operand, right_operand, join, semi, workspace)
     assert tuples(semi.view()) == [(1, 2)]
     database.antijoin(left_operand, right_operand, join, semi, workspace)
     assert tuples(semi.view()) == [(3, 4)]
 
-    projection = database.ProjectionPlan(left_operand.columns(), columns(1))
-    projected = database.ScratchRelation(projection.output_columns())
+    projection = database.make_projection_plan(left_operand.columns(), columns(1))
+    projected = database.ScratchRelation(projection.output_columns)
     database.project(left_operand, projection, projected, workspace)
     assert sorted(tuples(projected.view())) == [(2,), (4,)]
 
     other = database.ScratchRelation(layouts(0, 1))
     insert(other, [3, 4])
     insert(other, [7, 7])
-    sets = database.SetPlan(left_operand.columns(), other.columns())
-    union = database.ScratchRelation(sets.output_columns())
+    sets = database.make_set_plan(left_operand.columns(), other.columns())
+    union = database.ScratchRelation(sets.output_columns)
     database.union(left_operand, other.view(), sets, union)
     assert union.size() == 3
     database.difference(left_operand, other.view(), sets, union)
     assert tuples(union.view()) == [(1, 2)]
 
     equal = database.ScratchRelation(other.columns())
-    database.select_equal_columns(other.view(), database.SelectEqualPlan(other.columns(), *columns(0, 1)), equal)
+    database.select_equal_columns(other.view(), database.make_select_equal_plan(other.columns(), *columns(0, 1)), equal)
     assert tuples(equal.view()) == [(7, 7)]
-    value = database.SelectValuePlan(other.columns(), formalism.ColumnIndex(0), formalism.ColumnType.UINT32, 3)
+    value = database.make_select_value_plan(other.columns(), formalism.ColumnIndex(0), formalism.ColumnType.UINT32, 3)
     database.select_equal_value(other.view(), value, equal)
     assert tuples(equal.view()) == [(3, 4)]
 
     with pytest.raises(ValueError, match="Relational operation: input schemas must have the same column order"):
-        database.SetPlan(left_operand.columns(), right_operand.columns())
+        database.make_set_plan(left_operand.columns(), right_operand.columns())
     with pytest.raises(ValueError, match="output aliases an input"):
-        database.select_equal_columns(equal.view(), database.SelectEqualPlan(equal.columns(), *columns(0, 1)), equal)
+        database.select_equal_columns(
+            equal.view(), database.make_select_equal_plan(equal.columns(), *columns(0, 1)), equal
+        )
     with pytest.raises(ValueError, match="columns do not match the plan"):
         database.join(left_operand, right_operand, join, database.ScratchRelation(), workspace)

@@ -285,14 +285,14 @@ void projection(benchmark::State& state)
 {
     // Witness replacements change payloads while preserving projected keys.
     Trace trace(static_cast<size_t>(state.range(0)), static_cast<size_t>(state.range(1)), static_cast<size_t>(state.range(2)), !ReplaceWitnesses);
-    const kr::database::ProjectionPlan plan(trace.initial.columns(), std::array { ColumnIndex(1) });
+    const auto plan = kr::database::make_projection_plan(trace.initial.columns(), std::array { ColumnIndex(1) });
     kr::database::Workspace workspace;
     auto evaluation = [&]
     {
         if constexpr (Incremental)
             return kr::database::incremental::ProjectionEvaluator(scratch(), plan);
         else
-            return Relation(plan.output_columns());
+            return Relation(plan.output_columns);
     }();
     if constexpr (Incremental)
         evaluation.initialize(borrow(trace.initial), workspace);
@@ -311,8 +311,8 @@ void projection(benchmark::State& state)
             return borrow(evaluation);
     };
     // Validate every transition outside timing, not just the restored root.
-    Relation reference(plan.output_columns());
-    Relation previous(plan.output_columns());
+    Relation reference(plan.output_columns);
+    Relation previous(plan.output_columns);
     kr::database::Workspace reference_workspace;
     kr::database::project(borrow(trace.initial), plan, previous, reference_workspace);
     size_t output_delta_rows = 0;
@@ -348,7 +348,7 @@ void fixed_input_join(benchmark::State& state)
     for (size_t key = 0; key < rows; ++key)
         for (size_t match = 0; match < fanout; ++match)
             fixed->insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(key)), ygg::encode_value(static_cast<ygg::uint_t>(match)) });
-    const kr::database::JoinPlan plan(trace.initial.columns(), fixed->columns());
+    const auto plan = kr::database::make_join_plan(trace.initial.columns(), fixed->columns());
     const Relation unchanged(fixed->columns());
     kr::database::Workspace workspace;
     auto evaluation = [&]
@@ -356,7 +356,7 @@ void fixed_input_join(benchmark::State& state)
         if constexpr (Incremental)
             return kr::database::incremental::JoinEvaluator(scratch(), plan);
         else
-            return Relation(plan.output_columns());
+            return Relation(plan.output_columns);
     }();
     if constexpr (Incremental)
         evaluation.initialize(borrow(trace.initial), borrow(*fixed), workspace);
@@ -374,8 +374,8 @@ void fixed_input_join(benchmark::State& state)
         else
             return borrow(evaluation);
     };
-    Relation reference(plan.output_columns());
-    Relation previous(plan.output_columns());
+    Relation reference(plan.output_columns);
+    Relation previous(plan.output_columns);
     kr::database::Workspace reference_workspace;
     kr::database::join(borrow(trace.initial), borrow(*fixed), plan, previous, reference_workspace);
     size_t output_delta_rows = 0;
@@ -409,14 +409,14 @@ template<bool Incremental, bool Latency>
 void changing_join(benchmark::State& state)
 {
     JoinTrace trace(static_cast<size_t>(state.range(0)), static_cast<size_t>(state.range(1)), static_cast<size_t>(state.range(2)));
-    const kr::database::JoinPlan plan(trace.left.initial.columns(), trace.right.initial.columns());
+    const auto plan = kr::database::make_join_plan(trace.left.initial.columns(), trace.right.initial.columns());
     kr::database::Workspace workspace;
     auto evaluation = [&]
     {
         if constexpr (Incremental)
             return kr::database::incremental::JoinEvaluator(scratch(), plan);
         else
-            return Relation(plan.output_columns());
+            return Relation(plan.output_columns);
     }();
     if constexpr (Incremental)
         evaluation.initialize(borrow(trace.left.initial), borrow(trace.right.initial), workspace);
@@ -438,8 +438,8 @@ void changing_join(benchmark::State& state)
         else
             return borrow(evaluation);
     };
-    Relation reference(plan.output_columns());
-    Relation previous(plan.output_columns());
+    Relation reference(plan.output_columns);
+    Relation previous(plan.output_columns);
     kr::database::Workspace reference_workspace;
     kr::database::join(borrow(trace.left.initial), borrow(trace.right.initial), plan, previous, reference_workspace);
     size_t output_delta_rows = 0;

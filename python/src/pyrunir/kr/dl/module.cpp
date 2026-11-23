@@ -23,6 +23,14 @@ void bind_module_definitions(nb::module_& m)
 
     auto cnf_module = m.def_submodule("cnf_grammar");
     bind_cnf_grammar_module_definitions(cnf_module);
+
+    bind_concept_serialization();
+    bind_role_serialization();
+    bind_boolean_serialization();
+    bind_numerical_serialization();
+    bind_constructor_serialization();
+    bind_query_serialization();
+    bind_denotation_serialization();
 }
 
 }  // namespace runir::kr::dl

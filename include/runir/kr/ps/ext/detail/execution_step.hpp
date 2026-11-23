@@ -58,7 +58,7 @@ auto planning_step(Storage& storage,
     auto step = applied<Kind, Storage>(std::move(target), rule, task_context);
     if constexpr (PackableSuccessor<tyr::planning::LabeledNode<Kind, PS>>)
         step.planning_successor = successor.pack();
-    step.state_transition = datasets::StateGraphEdgeLabel { successor.label, static_cast<ygg::float_t>(1) };
+    step.state_transition = urd::data<datasets::StateGraphEdgeLabel> { successor.label, static_cast<ygg::float_t>(1) };
     return step;
 }
 

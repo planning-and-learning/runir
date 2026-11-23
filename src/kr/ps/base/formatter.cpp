@@ -109,8 +109,8 @@ fmt::format_context::iterator fmt::formatter<rb::SketchProofResults<Kind>>::form
 }
 
 template<tyr::TaskKind Kind>
-fmt::format_context::iterator fmt::formatter<rb::SketchProofVertexLabel<Kind>>::format(const rb::SketchProofVertexLabel<Kind>& value,
-                                                                                       fmt::format_context& context) const
+fmt::format_context::iterator fmt::formatter<urd::data<rb::SketchProofVertexLabel<Kind>>>::format(const urd::data<rb::SketchProofVertexLabel<Kind>>& value,
+                                                                                                  fmt::format_context& context) const
 {
     return fmt::format_to(context.out(),
                           "state={} initial={} goal={} alive={} unsolvable={}",
@@ -121,7 +121,8 @@ fmt::format_context::iterator fmt::formatter<rb::SketchProofVertexLabel<Kind>>::
                           value.is_unsolvable);
 }
 
-fmt::format_context::iterator fmt::formatter<rb::SketchProofEdgeLabel>::format(const rb::SketchProofEdgeLabel& value, fmt::format_context& context) const
+fmt::format_context::iterator fmt::formatter<urd::data<rb::SketchProofEdgeLabel>>::format(const urd::data<rb::SketchProofEdgeLabel>& value,
+                                                                                          fmt::format_context& context) const
 { return fmt::format_to(context.out(), "rule={} action={}", value.rule.get_symbol(), value.action); }
 
 template struct fmt::formatter<urd::index_view<rp::Rule<rk::BaseFamilyTag>, rb::Repository>>;
@@ -130,5 +131,5 @@ template struct fmt::formatter<urd::index_view<rb::Sketch, rb::Repository>>;
 template struct fmt::formatter<urd::index_view<rb::Sketch, rp::ext::Repository>>;
 template struct fmt::formatter<rb::SketchProofResults<tyr::GroundTag>>;
 template struct fmt::formatter<rb::SketchProofResults<tyr::LiftedTag>>;
-template struct fmt::formatter<rb::SketchProofVertexLabel<tyr::GroundTag>>;
-template struct fmt::formatter<rb::SketchProofVertexLabel<tyr::LiftedTag>>;
+template struct fmt::formatter<urd::data<rb::SketchProofVertexLabel<tyr::GroundTag>>>;
+template struct fmt::formatter<urd::data<rb::SketchProofVertexLabel<tyr::LiftedTag>>>;

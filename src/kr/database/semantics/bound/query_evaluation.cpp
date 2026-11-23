@@ -42,7 +42,7 @@ size_t QueryEvaluator::index_id(size_t slot, std::span<const std::pair<size_t, u
     auto& entry = m_indexes.emplace_back();
     entry.slot = slot;
     for (const auto position : positions)
-        entry.keys.push_back(ColumnSlice { position });
+        entry.keys.push_back(ColumnSlice(ygg::to_uint_t(position)));
     entry.positions = std::move(positions);
     return m_indexes.size() - 1;
 }
@@ -57,7 +57,7 @@ void QueryEvaluator::resolve(ConjunctivePlan& plan)
         auto& lookup = m_lookups.emplace_back();
         lookup.index = index_id(step.slot, step.key);
         for (const auto& [c, var] : step.key)
-            lookup.probe.push_back(ColumnSlice { var });  // the variable's place in the frame
+            lookup.probe.push_back(ColumnSlice(ygg::to_uint_t(var)));  // the variable's place in the frame
         step.index = m_lookups.size() - 1;
     }
     for (auto& plans : plan.negation_plans)

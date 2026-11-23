@@ -133,8 +133,8 @@ fmt::format_context::iterator fmt::formatter<rp::ProofStatus>::format(rp::ProofS
 { return fmt::format_to(context.out(), "{}", rp::to_string(value)); }
 
 template<rp::ProgramFamilyTag Family>
-fmt::format_context::iterator fmt::formatter<rp::ProgramProofEdgeLabel<Family>>::format(const rp::ProgramProofEdgeLabel<Family>& value,
-                                                                                        fmt::format_context& context) const
+fmt::format_context::iterator fmt::formatter<urd::data<rp::ProgramProofEdgeLabel<Family>>>::format(const urd::data<rp::ProgramProofEdgeLabel<Family>>& value,
+                                                                                                   fmt::format_context& context) const
 {
     if (value.rule)
         return fmt::format_to(context.out(), "rule={}", value.rule->get_symbol());
@@ -212,5 +212,5 @@ template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::IcpFamilyT
 template struct fmt::formatter<urd::index_view<rp::ConcreteEffect<rk::IcpFamilyTag, rk::dl::NumericalTag, rp::dl::Unchanged>, rp::icp::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::Feature<rk::UnsFamilyTag, rk::dl::BooleanTag>, runir::kr::uns::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::ConcreteFeature<rk::UnsFamilyTag, rk::dl::BooleanTag>, runir::kr::uns::Repository>>;
-template struct fmt::formatter<rp::ProgramProofEdgeLabel<rk::ExtFamilyTag>>;
-template struct fmt::formatter<rp::ProgramProofEdgeLabel<rk::IcpFamilyTag>>;
+template struct fmt::formatter<urd::data<rp::ProgramProofEdgeLabel<rk::ExtFamilyTag>>>;
+template struct fmt::formatter<urd::data<rp::ProgramProofEdgeLabel<rk::IcpFamilyTag>>>;

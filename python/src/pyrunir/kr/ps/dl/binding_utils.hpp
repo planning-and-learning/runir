@@ -1,8 +1,11 @@
 #ifndef PYRUNIR_KR_PS_DL_BINDING_UTILS_HPP_
 #define PYRUNIR_KR_PS_DL_BINDING_UTILS_HPP_
 
-#include "pyrunir/conversions.hpp"
+#include "pyrunir/kr/dl/conversions.hpp"
+#include "pyrunir/kr/ps/base/conversions.hpp"
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
+#include "pyrunir/kr/ps/ext/conversions.hpp"
+#include "pyrunir/kr/ps/icp/conversions.hpp"
 #include "pyrunir/module.hpp"
 
 #include <nanobind/stl/variant.h>

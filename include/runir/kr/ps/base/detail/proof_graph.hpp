@@ -23,8 +23,8 @@ void build_proof_graph(SketchProofResults<Kind>& result,
                        std::span<const Predecessor<Kind>> predecessors,
                        std::optional<tyr::planning::PackedStateView<Kind>> initial)
 {
-    using VertexLabel = SketchProofVertexLabel<Kind>;
-    using Edge = std::tuple<VertexIndex, VertexIndex, SketchProofEdgeLabel>;
+    using VertexLabel = urd::data<SketchProofVertexLabel<Kind>>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<SketchProofEdgeLabel>>;
 
     auto graph_indices = urd::Store<urd::map<urd::index<tyr::planning::State<Kind>>, VertexIndex>, urd::dense> {};
     graph_indices.reserve(nodes.size());
@@ -54,7 +54,7 @@ void build_proof_graph(SketchProofResults<Kind>& result,
     {
         const auto source = add_vertex(predecessor.source);
         const auto target = add_vertex(predecessor.target);
-        edges.emplace_back(source, target, SketchProofEdgeLabel(predecessor.action, predecessor.rule));
+        edges.emplace_back(source, target, urd::data<SketchProofEdgeLabel>(predecessor.action, predecessor.rule));
     }
     result.graph =
         std::make_shared<SketchProofGraph<Kind>>(urd::graph_data<Edge, vertex_label_t<SketchProofGraph<Kind>>> { vertices.size(), edges, {}, vertices });

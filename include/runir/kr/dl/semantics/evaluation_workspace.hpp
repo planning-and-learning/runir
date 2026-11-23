@@ -93,7 +93,7 @@ public:
     EvaluationWorkspace() = default;
 
     // ponytail: linear scan over distinct plans; key by query index if features carry many generic joins.
-    auto& get_generic_join_workspace(const runir::kr::database::GenericJoinPlan& plan)
+    auto& get_generic_join_workspace(const urd::data<runir::kr::database::GenericJoinPlan>& plan)
     {
         for (auto& workspace : m_generic_join_workspaces)
             if (workspace.matches(plan))

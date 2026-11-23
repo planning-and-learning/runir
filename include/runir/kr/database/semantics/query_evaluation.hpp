@@ -23,11 +23,11 @@ namespace detail
 /// Whether a selection accepts a row, by its values (a stored row's, or contiguous).
 template<ygg::RowValues R>
 bool query_accepts(QueryView<QuerySelectEqualTag> selection, const R& row)
-{ return field_value(row, selection.get_plan().left_position()) == field_value(row, selection.get_plan().right_position()); }
+{ return field_value(row, selection.get_plan().left_position) == field_value(row, selection.get_plan().right_position); }
 
 template<ygg::RowValues R>
 bool query_accepts(QueryView<QuerySelectValueTag> selection, const R& row)
-{ return field_value(row, selection.get_plan().position()) == selection.get_plan().value(); }
+{ return field_value(row, selection.get_plan().position) == selection.get_plan().value; }
 
 /// Validates each input binding of the plan; inputs must not alias the evaluator's storage.
 template<RelationViewRange R, typename IsInternal>

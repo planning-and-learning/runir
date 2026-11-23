@@ -248,9 +248,9 @@ void generic_join_full(benchmark::State& state)
     for (const auto& value : trace.initial)
         schemas.emplace_back(value.columns().begin(), value.columns().end());
     const std::array order { Column(0), Column(1), Column(2) };
-    const kr::database::GenericJoinPlan plan(schemas, order, order);
+    const auto plan = kr::database::make_generic_join_plan(schemas, order, order);
     kr::database::GenericJoinWorkspace workspace(plan);
-    Relation output(plan.output_columns());
+    Relation output(plan.output_columns);
     kr::database::generic_join(input, plan, output, workspace);
     kr::database::QueryEvaluator reference(scratch(), kr::database::compile_plan({ trace.root }));
     reference.evaluate(input);
@@ -264,7 +264,7 @@ void generic_join_full(benchmark::State& state)
         if constexpr (Cold)
         {
             kr::database::GenericJoinWorkspace temporary_workspace(plan);
-            Relation temporary_output(plan.output_columns());
+            Relation temporary_output(plan.output_columns);
             kr::database::generic_join(input, plan, temporary_output, temporary_workspace);
             benchmark::DoNotOptimize(std::addressof(temporary_output));
         }

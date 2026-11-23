@@ -92,7 +92,7 @@ ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, Evaluat
     };
     const auto make_path = [&](StorageStoredState<ExecutionStorage> state,
                                PathPtr parent,
-                               std::optional<datasets::StateGraphEdgeLabel> transition,
+                               std::optional<urd::data<datasets::StateGraphEdgeLabel>> transition,
                                std::optional<RuleVariantView> rule,
                                std::size_t choice_width)
     {

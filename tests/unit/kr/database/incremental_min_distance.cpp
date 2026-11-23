@@ -48,7 +48,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
                     Mutate mutate)
 {
     const auto k = sources.columns().size();
-    const auto plan = runir::kr::database::DistancePlan(sources.columns(), columns_of(edges), targets.columns(), Column(99));
+    const auto plan = runir::kr::database::make_distance_plan(sources.columns(), columns_of(edges), targets.columns(), Column(99));
     auto blind = runir::kr::database::incremental::MinDistance(scratch(), edges, plan, static_slots);
     auto guided = runir::kr::database::incremental::MinDistance<HalfDistance>(scratch(), edges, plan, static_slots);
     // Fed the exact changes of its inputs (update()) instead of diffing them (bind()).
@@ -70,7 +70,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
     auto heuristic = HalfDistance {};
     heuristic.columns = sources.columns();
     auto workspace = runir::kr::database::DistanceWorkspace(plan);
-    auto result = Relation(plan.output_columns());
+    auto result = Relation(plan.output_columns);
     auto checked = static_cast<size_t>(0);
     for (size_t step = 0; step < steps; ++step)
     {
@@ -270,7 +270,7 @@ TEST_P(DatabaseIncrementalMinDistance, RelationEdgesUnderChanges)
     auto edges = Relation(runir::tests::ops::cols({ x, y }));
     auto sources = Relation(runir::tests::ops::cols({ x }));
     auto targets = Relation(runir::tests::ops::cols({ y }));
-    const auto plan = runir::kr::database::DistancePlan(sources.columns(), edges.columns(), targets.columns(), Column(99));
+    const auto plan = runir::kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), Column(99));
     auto blind = runir::kr::database::incremental::MinDistance(scratch(), plan);
     auto guided = runir::kr::database::incremental::MinDistance<HalfDistance>(scratch(), plan);
     auto complete = Relation(runir::tests::ops::cols({ x, y }));
@@ -280,7 +280,7 @@ TEST_P(DatabaseIncrementalMinDistance, RelationEdgesUnderChanges)
     auto heuristic = HalfDistance {};
     heuristic.columns = sources.columns();
     auto workspace = runir::kr::database::DistanceWorkspace(plan);
-    auto result = Relation(plan.output_columns());
+    auto result = Relation(plan.output_columns);
     auto random = std::mt19937(GetParam());
     const auto vertex = [&] { return static_cast<ygg::uint_t>(random() % n); };
     for (size_t step = 0; step < 300; ++step)
@@ -373,7 +373,8 @@ struct TwoSlotEdges
         runir::tests::qb::union_(repository, runir::tests::qb::input(repository, 0, { x, y }), runir::tests::qb::input(repository, 1, { x, y }));
     Relation sources = Relation(runir::tests::ops::cols({ x }));
     Relation targets = Relation(runir::tests::ops::cols({ y }));
-    runir::kr::database::DistancePlan plan = runir::kr::database::DistancePlan(sources.columns(), columns_of(edges), targets.columns(), Column(99));
+    urd::data<runir::kr::database::DistancePlan> plan =
+        runir::kr::database::make_distance_plan(sources.columns(), columns_of(edges), targets.columns(), Column(99));
     urd::Store<urd::sequence<Relation>> inputs;
 
     TwoSlotEdges()

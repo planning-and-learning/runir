@@ -1,6 +1,6 @@
 #include "../query_bindings.hpp"
 #include "bindings.hpp"
-#include "pyrunir/conversions.hpp"
+#include "pyrunir/kr/dl/conversions.hpp"
 #include "pyrunir/module.hpp"
 
 #include <runir/kr/database/syntax/formatter.hpp>

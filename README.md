@@ -102,8 +102,8 @@ pytest python/tests
 
 ## Python Serialization
 
-`pyrunir.serialization` exposes the native serializers with caller-selected
-dictionary tables shared with Tyr. See the [serialization output reference](https://planning-and-learning.github.io/runir/serialization/index.html).
+`pyyggdrasil.serialization.Dictionaries` serializes runir's native types, as it does Tyr's, into caller-selected
+dictionary tables shared between the libraries. See the [serialization output reference](https://planning-and-learning.github.io/runir/serialization/index.html).
 
 ## Template and include rules
 

@@ -21,7 +21,7 @@ from pyrunir.datasets import (
     EquivalencePolicyMode,
     GroundTaskSearchContext,
     LiftedTaskSearchContext,
-    StateGraphEdgeLabel,
+    StateGraphEdgeLabelData,
     StateGraphGenerationOptions,
     generate_ground_equivalence_graph,
     generate_ground_state_graph,
@@ -103,7 +103,7 @@ def test_ground_state_graph_labels_own_packed_states_and_action_bindings(gripper
     graph = generate_ground_state_graph(context, _state_graph_options())
     edge_label = graph.edge_value(graph.edges()[0])
 
-    assert isinstance(edge_label, StateGraphEdgeLabel)
+    assert isinstance(edge_label, StateGraphEdgeLabelData)
     assert isinstance(edge_label.action, RowActionLifted)
     states = [graph.vertex_value(vertex).state for vertex in graph.vertices()]
     for state in states:
@@ -127,7 +127,7 @@ def test_lifted_state_graph_labels_own_packed_states_and_action_bindings(gripper
     graph = generate_lifted_state_graph(context, _state_graph_options())
     edge_label = graph.edge_value(graph.edges()[0])
 
-    assert isinstance(edge_label, StateGraphEdgeLabel)
+    assert isinstance(edge_label, StateGraphEdgeLabelData)
     assert isinstance(edge_label.action, RowActionLifted)
     states = [graph.vertex_value(vertex).state for vertex in graph.vertices()]
     for state in states:

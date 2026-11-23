@@ -5,6 +5,7 @@
 #ifndef RUNIR_KR_DATABASE_SYNTAX_QUERY_CONSTRUCTION_HPP_
 #define RUNIR_KR_DATABASE_SYNTAX_QUERY_CONSTRUCTION_HPP_
 
+#include "runir/kr/database/semantics/plan_construction.hpp"
 #include "runir/kr/database/syntax/query_builder.hpp"
 #include "runir/kr/database/syntax/query_repository.hpp"
 #include "yggdrasil/formalism/builder.hpp"
@@ -37,12 +38,12 @@ void derive(urd::data<Query<Tag>>& /*data*/, const QueryRepository& /*repository
 template<typename Tag>
     requires boost::mp11::mp_contains<QueryJoinTags, Tag>::value
 void derive(urd::data<Query<Tag>>& data, const QueryRepository& repository)
-{ data.plan = JoinPlan(child_columns(data.left_operand, repository), child_columns(data.right_operand, repository)); }
+{ data.plan = make_join_plan(child_columns(data.left_operand, repository), child_columns(data.right_operand, repository)); }
 
 template<typename Tag>
     requires boost::mp11::mp_contains<QuerySetTags, Tag>::value
 void derive(urd::data<Query<Tag>>& data, const QueryRepository& repository)
-{ data.plan = SetPlan(child_columns(data.left_operand, repository), child_columns(data.right_operand, repository)); }
+{ data.plan = make_set_plan(child_columns(data.left_operand, repository), child_columns(data.right_operand, repository)); }
 
 void derive(urd::data<Query<QueryProjectTag>>& data, const QueryRepository& repository);
 

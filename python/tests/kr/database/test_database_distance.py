@@ -65,10 +65,10 @@ def distance(
     source: formalism.RelationSchemaBuilderBorrowed,
     edges: formalism.RelationSchemaBuilderBorrowed,
     target: formalism.RelationSchemaBuilderBorrowed,
-    plan: database.DistancePlan,
+    plan: database.DistancePlanData,
 ) -> database.ScratchRelation:
     """The distances of borrowed inputs into a fresh relation of the plan's output columns."""
-    result = database.ScratchRelation(plan.output_columns())
+    result = database.ScratchRelation(plan.output_columns)
     database.distance(source, edges, target, plan, result, database.DistanceWorkspace(plan))
     return result
 
@@ -77,16 +77,16 @@ def distance_of_interned(
     source: formalism.RelationSchema,
     edges: formalism.RelationSchema,
     target: formalism.RelationSchema,
-    plan: database.DistancePlan,
+    plan: database.DistancePlanData,
 ) -> database.ScratchRelation:
     """As distance(), of interned inputs."""
-    result = database.ScratchRelation(plan.output_columns())
+    result = database.ScratchRelation(plan.output_columns)
     database.distance(source, edges, target, plan, result, database.DistanceWorkspace(plan))
     return result
 
 
-def plan_for(source: Readable, edges: Readable, target: Readable) -> database.DistancePlan:
-    return database.DistancePlan(source.columns(), edges.columns(), target.columns(), formalism.ColumnIndex(99))
+def plan_for(source: Readable, edges: Readable, target: Readable) -> database.DistancePlanData:
+    return database.make_distance_plan(source.columns(), edges.columns(), target.columns(), formalism.ColumnIndex(99))
 
 
 @pytest.mark.parametrize("interned_mask", range(8))
@@ -97,8 +97,8 @@ def test_distance_mixed_inputs_and_independent_output(interned_mask: int) -> Non
     edges = relation([20, 21, 22, 23], [a + b, b + c, c + c], types * 2)
     target = relation([30, 31], [a, c, d], types)
     plan = plan_for(source, edges, target)
-    assert plan.arity() == 2
-    assert labels(plan.output_columns()) == columns(20, 21, 22, 23, 99)
+    assert database.arity(plan) == 2
+    assert labels(plan.output_columns) == columns(20, 21, 22, 23, 99)
     repository = formalism.RelationRepository()
     interned = [intern(repository, value)[0] for value in (source, edges, target)]
     # Interned inputs are accepted without copying only when all are interned; otherwise they are copied out.
@@ -253,7 +253,7 @@ def test_evaluator_borrowed_results_are_read_only_and_retain_owners(leaf: str) -
     retained: Any  # each leaf is a different borrowed type
     match leaf:
         case "plan_columns":
-            retained = plan.output_columns()
+            retained = plan.output_columns
         case "result":
             retained = result
         case "delta":
@@ -298,7 +298,7 @@ def test_borrowed_relations_can_feed_another_distance_evaluation() -> None:
     borrowed = evaluator.get_result()
     next_edges = relation([40, 41, 42, 43, 44, 45])
     next_target = relation([50, 51, 52], [(0, 1, 1)])
-    plan = database.DistancePlan(
+    plan = database.make_distance_plan(
         borrowed.columns(), next_edges.columns(), next_target.columns(), formalism.ColumnIndex(100)
     )
     edges_view, target_view = change(next_edges, next_target)
@@ -317,7 +317,7 @@ def test_distance_rejects_invalid_schema_and_input_types() -> None:
     with pytest.raises(ValueError, match="Distance: vertex field types must agree by position"):
         plan_for(source, relation([20, 21], types=[formalism.ColumnType.INT32] * 2), target)
     with pytest.raises(ValueError, match="Columns: duplicate column label"):
-        database.DistancePlan(source.columns(), edges.columns(), target.columns(), formalism.ColumnIndex(20))
+        database.make_distance_plan(source.columns(), edges.columns(), target.columns(), formalism.ColumnIndex(20))
     with pytest.raises(ValueError, match="Relational operation: columns do not match the plan"):
         distance(*borrow(relation([11]), edges, target), plan)
     with pytest.raises(ValueError, match="Relational operation: columns do not match the plan"):

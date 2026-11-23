@@ -6,14 +6,15 @@
 #ifndef RUNIR_KR_DATABASE_SEMANTICS_GENERIC_JOIN_HPP_
 #define RUNIR_KR_DATABASE_SEMANTICS_GENERIC_JOIN_HPP_
 
-#include "runir/kr/database/semantics/generic_join_plan.hpp"
 #include "runir/kr/database/semantics/operations.hpp"
+#include "runir/kr/database/semantics/plan_construction.hpp"
 
 #include <cassert>
 #include <cista/containers/vector.h>
 #include <memory>
 #include <span>
 #include <tuple>
+#include <urd/elements/clone.hpp>
 #include <urd/memory.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -71,7 +72,7 @@ struct GenericJoinTrie
         const auto* node = this;
         for (const auto key : keys)
         {
-            node = node->find(field_value(row, key.position));
+            node = node->find(field_value(row, key.value));
             if (!node)
                 return false;
         }
@@ -88,7 +89,7 @@ struct GenericJoinTrie
             rows = 1;
             return inserted;
         }
-        const auto value = field_value(row, keys.front().position);
+        const auto value = field_value(row, keys.front().value);
         auto found = children.find(value);
         if (found == children.end())
             found = children.emplace(value, std::make_unique<GenericJoinTrie>()).first;
@@ -108,7 +109,7 @@ struct GenericJoinTrie
             rows = 0;
             return erased;
         }
-        const auto found = children.find(field_value(row, keys.front().position));
+        const auto found = children.find(field_value(row, keys.front().value));
         if (found == children.end() || !found->second->erase(row, keys.subspan(1)))
             return false;
         --rows;
@@ -143,7 +144,9 @@ class GenericJoinEvaluator;
 /// sources need only remain valid during the call. Moving preserves usability.
 class GenericJoinWorkspace
 {
-    GenericJoinPlan m_plan;
+    /// A clone of its plan: a workspace is cached by the plans it matches (matches()), so it can outlive the plan it was
+    /// made for.
+    urd::data<GenericJoinPlan> m_plan;
     urd::Store<urd::sequence<detail::GenericJoinTrie>> m_tries;
     urd::Store<urd::sequence<const detail::GenericJoinTrie*>> m_cursors;
     std::vector<ygg::Value> m_row;  ///< An output row's values, set column by column.
@@ -181,25 +184,25 @@ class GenericJoinWorkspace
     friend class incremental::GenericJoinEvaluator;
 
 public:
-    explicit GenericJoinWorkspace(const GenericJoinPlan& plan) :
-        m_plan(plan),
-        m_tries(plan.input_count()),
-        m_cursors((plan.variable_order().size() + 1) * plan.input_count())
+    explicit GenericJoinWorkspace(const urd::data<GenericJoinPlan>& plan) :
+        m_plan(urd::clone(plan)),
+        m_tries(plan.input_columns.size()),
+        m_cursors((static_cast<std::size_t>(plan.variable_order.size()) + 1) * plan.input_columns.size())
     {
     }
 
-    [[nodiscard]] bool matches(const GenericJoinPlan& plan) const { return m_plan.matches(plan); }
+    [[nodiscard]] bool matches(const urd::data<GenericJoinPlan>& plan) const { return runir::kr::database::matches(m_plan, plan); }
 
     /// Indexes the inputs, which match the plan, and appends their join to out.
     template<RelationViewRange R>
     void append_join(const R& inputs, ygg::FreeScratchRelation& out)
     {
-        for (size_t input = 0; input < m_plan.input_count(); ++input)
+        for (size_t input = 0; input < m_plan.input_columns.size(); ++input)
         {
             auto& trie = m_tries[input];
             trie.clear();
             for (const auto& held : inputs[input].get_rows())
-                ygg::with_values(held, [&](const auto& values) { trie.insert(values, m_plan.input_keys(input)); });
+                ygg::with_values(held, [&](const auto& values) { trie.insert(values, m_plan.input_keys[input]); });
         }
         append(out);
     }
@@ -213,13 +216,13 @@ public:
 /// Output replaces its rows; an output aliasing an input throws before mutation. The inputs, the output and the
 /// workspace are the plan's (asserted in debug builds).
 template<RelationViewRange R>
-void generic_join(const R& inputs, const GenericJoinPlan& plan, ygg::FreeScratchRelation& out, GenericJoinWorkspace& workspace)
+void generic_join(const R& inputs, const urd::data<GenericJoinPlan>& plan, ygg::FreeScratchRelation& out, GenericJoinWorkspace& workspace)
 {
-    assert(std::ranges::size(inputs) == plan.input_count() && workspace.matches(plan));
-    assert(std::ranges::equal(out.view().columns(), plan.output_columns()));
-    for (size_t input = 0; input < plan.input_count(); ++input)
+    assert(std::ranges::size(inputs) == plan.input_columns.size() && workspace.matches(plan));
+    assert(std::ranges::equal(out.view().columns(), plan.output_columns));
+    for (size_t input = 0; input < plan.input_columns.size(); ++input)
     {
-        assert(std::ranges::equal(inputs[input].columns(), plan.input_columns(input)));
+        assert(std::ranges::equal(inputs[input].columns(), plan.input_columns[input]));
         if (reads(inputs[input], out))
             throw std::invalid_argument("Generic join: output aliases an input.");
     }

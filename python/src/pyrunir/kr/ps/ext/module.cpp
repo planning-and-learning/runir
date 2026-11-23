@@ -29,6 +29,8 @@ void bind_module_definitions(nb::module_& m)
 
     auto dl = m.def_submodule("dl");
     runir::kr::ps::ext::dl::bind_module_definitions(dl, repository);
+
+    bind_serialization();
 }
 
 }  // namespace runir::kr::ps::ext

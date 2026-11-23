@@ -99,36 +99,39 @@ std::span<const ygg::Value> make_distance_row(const DistanceGraph& graph,
 
 namespace runir::kr::database
 {
-DistancePlan::DistancePlan(std::span<const urd::data<ygg::ColumnLayout>> sources,
-                           std::span<const urd::data<ygg::ColumnLayout>> edges,
-                           std::span<const urd::data<ygg::ColumnLayout>> targets,
-                           urd::index<ygg::Column> distance_column)
+urd::data<DistancePlan> make_distance_plan(std::span<const urd::data<ygg::ColumnLayout>> sources,
+                                           std::span<const urd::data<ygg::ColumnLayout>> edges,
+                                           std::span<const urd::data<ygg::ColumnLayout>> targets,
+                                           urd::index<ygg::Column> distance_column)
 {
     for (const auto columns : { sources, edges, targets })
         ygg::validate_columns(columns);
-    m_sources.set(sources.begin(), sources.end());
-    m_edges.set(edges.begin(), edges.end());
-    m_targets.set(targets.begin(), targets.end());
-    m_output.set(edges.begin(), edges.end());
-    const auto k = arity();
-    if (m_targets.size() != k || m_edges.size() % 2 != 0 || m_edges.size() / 2 != k)
+    auto plan = urd::data<DistancePlan> {};
+    plan.source_columns.set(sources.begin(), sources.end());
+    plan.edge_columns.set(edges.begin(), edges.end());
+    plan.target_columns.set(targets.begin(), targets.end());
+    plan.output_columns.set(edges.begin(), edges.end());
+    const auto k = arity(plan);
+    if (plan.target_columns.size() != k || plan.edge_columns.size() % 2 != 0 || plan.edge_columns.size() / 2 != k)
         throw std::invalid_argument("Distance: input arities must be k, 2k, k.");
     for (size_t i = 0; i < k; ++i)
-        if (m_sources[i].type != m_targets[i].type || m_sources[i].type != m_edges[i].type || m_sources[i].type != m_edges[k + i].type)
+        if (plan.source_columns[i].type != plan.target_columns[i].type || plan.source_columns[i].type != plan.edge_columns[i].type
+            || plan.source_columns[i].type != plan.edge_columns[k + i].type)
             throw std::invalid_argument("Distance: vertex field types must agree by position.");
-    m_output.push_back(urd::data<ygg::ColumnLayout> { distance_column, ygg::type_id<ygg::uint_t> });
-    ygg::validate_columns(output_columns());
+    plan.output_columns.push_back(urd::data<ygg::ColumnLayout> { distance_column, ygg::type_id<ygg::uint_t> });
+    ygg::validate_columns(plan.output_columns);
+    return plan;
 }
 }
 
 namespace runir::kr::database
 {
-DistanceWorkspace::DistanceWorkspace(const DistancePlan& plan) : m_graph(plan.tuple_size()) {}
+DistanceWorkspace::DistanceWorkspace(const urd::data<DistancePlan>& plan) : m_graph(tuple_size(plan)) {}
 }
 
 namespace runir::kr::database
 {
-bool DistanceWorkspace::matches(const DistancePlan& plan) const noexcept { return m_graph.tuple_size == plan.tuple_size(); }
+bool DistanceWorkspace::matches(const urd::data<DistancePlan>& plan) const noexcept { return m_graph.tuple_size == tuple_size(plan); }
 }
 
 namespace runir::kr::database

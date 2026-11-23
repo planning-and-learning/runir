@@ -54,9 +54,9 @@ std::vector<urd::data<ygg::ColumnLayout>> columns(size_t arity, ygg::uint_t firs
 
 /// The distances of the sources and targets over `edges`, fully evaluated.
 RelationBuilder
-full_distance(const RelationBuilder& sources, const RelationBuilder& edges, const RelationBuilder& targets, const kr::database::DistancePlan& plan)
+full_distance(const RelationBuilder& sources, const RelationBuilder& edges, const RelationBuilder& targets, const urd::data<kr::database::DistancePlan>& plan)
 {
-    RelationBuilder out(plan.output_columns());
+    RelationBuilder out(plan.output_columns);
     kr::database::DistanceWorkspace workspace(plan);
     kr::database::distance(borrow(sources), borrow(edges), borrow(targets), plan, out, workspace);
     return out;
@@ -226,14 +226,14 @@ void distance_changes(benchmark::State& state)
     const auto source_count = static_cast<ygg::uint_t>(state.range(2));
     const auto changed = static_cast<ygg::uint_t>(state.range(3));
     Trace trace(arity, vertices, source_count, changed, Kind);
-    const kr::database::DistancePlan plan(trace.sources.columns(), trace.edges.columns(), trace.targets.columns(), ColumnIndex(5000));
+    const auto plan = kr::database::make_distance_plan(trace.sources.columns(), trace.edges.columns(), trace.targets.columns(), ColumnIndex(5000));
     kr::database::DistanceWorkspace workspace(plan);
     auto evaluation = [&]
     {
         if constexpr (Incremental)
             return kr::database::incremental::DistanceEvaluator(scratch(), plan);
         else
-            return RelationBuilder(plan.output_columns());
+            return RelationBuilder(plan.output_columns);
     }();
     if constexpr (Incremental)
         evaluation.initialize(borrow(trace.sources), borrow(trace.edges), borrow(trace.targets));
@@ -316,14 +316,14 @@ template<bool Incremental>
 void distance_initialize_warm(benchmark::State& state)
 {
     Trace trace(static_cast<size_t>(state.range(0)), static_cast<ygg::uint_t>(state.range(1)), static_cast<ygg::uint_t>(state.range(2)), 0);
-    const kr::database::DistancePlan plan(trace.sources.columns(), trace.edges.columns(), trace.targets.columns(), ColumnIndex(5000));
+    const auto plan = kr::database::make_distance_plan(trace.sources.columns(), trace.edges.columns(), trace.targets.columns(), ColumnIndex(5000));
     kr::database::DistanceWorkspace workspace(plan);
     auto evaluation = [&]
     {
         if constexpr (Incremental)
             return kr::database::incremental::DistanceEvaluator(scratch(), plan);
         else
-            return RelationBuilder(plan.output_columns());
+            return RelationBuilder(plan.output_columns);
     }();
     const auto initialize = [&]
     {

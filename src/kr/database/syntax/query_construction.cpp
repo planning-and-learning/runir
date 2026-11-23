@@ -5,7 +5,6 @@
 
 #include "runir/kr/database/syntax/query_construction.hpp"
 
-
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -22,7 +21,7 @@ std::span<const urd::data<ygg::ColumnLayout>> child_columns(urd::index<Query<>> 
 namespace runir::kr::database::detail
 {
 void derive(urd::data<Query<QueryProjectTag>>& data, const QueryRepository& repository)
-{ data.plan = ProjectionPlan(child_columns(data.operand, repository), { data.labels.data(), data.labels.size() }); }
+{ data.plan = make_projection_plan(child_columns(data.operand, repository), { data.labels.data(), data.labels.size() }); }
 }
 
 namespace runir::kr::database::detail
@@ -42,13 +41,13 @@ void derive(urd::data<Query<QueryRenameTag>>& data, const QueryRepository& repos
 namespace runir::kr::database::detail
 {
 void derive(urd::data<Query<QuerySelectEqualTag>>& data, const QueryRepository& repository)
-{ data.plan = SelectEqualPlan(child_columns(data.operand, repository), data.left_column, data.right_column); }
+{ data.plan = make_select_equal_plan(child_columns(data.operand, repository), data.left_column, data.right_column); }
 }
 
 namespace runir::kr::database::detail
 {
 void derive(urd::data<Query<QuerySelectValueTag>>& data, const QueryRepository& repository)
-{ data.plan = SelectValuePlan(child_columns(data.operand, repository), data.column, data.constant_type, data.constant); }
+{ data.plan = make_select_value_plan(child_columns(data.operand, repository), data.column, data.constant_type, data.constant); }
 }
 
 namespace runir::kr::database::detail
@@ -66,7 +65,8 @@ void derive(urd::data<Query<QueryGenericJoinTag>>& data, const QueryRepository& 
             for (const auto& column : schema)
                 if (std::ranges::find(data.output_order, column.label) == data.output_order.end())
                     data.output_order.push_back(column.label);
-    data.plan = GenericJoinPlan(schemas, { data.variable_order.data(), data.variable_order.size() }, { data.output_order.data(), data.output_order.size() });
+    data.plan =
+        make_generic_join_plan(schemas, { data.variable_order.data(), data.variable_order.size() }, { data.output_order.data(), data.output_order.size() });
 }
 }
 

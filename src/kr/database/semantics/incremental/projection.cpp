@@ -39,10 +39,10 @@ void ProjectionEvaluator::remove(std::span<const ygg::Value> row)
 
 namespace runir::kr::database::incremental
 {
-ProjectionEvaluator::ProjectionEvaluator(ygg::FreeScratchRelations& scratch, ProjectionPlan plan) :
-    m_plan(std::move(plan)),
-    m_result(scratch.draw(m_plan.output_columns())),
-    m_delta(scratch, m_plan.output_columns())
+ProjectionEvaluator::ProjectionEvaluator(ygg::FreeScratchRelations& scratch, const urd::data<ProjectionPlan>& plan) :
+    m_plan(&plan),
+    m_result(scratch.draw(m_plan->output_columns)),
+    m_delta(scratch, m_plan->output_columns)
 {
 }
 }

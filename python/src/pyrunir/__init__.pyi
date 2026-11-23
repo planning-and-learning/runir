@@ -3,7 +3,6 @@ from pathlib import Path
 from . import (
     datasets as datasets,
     kr as kr,
-    serialization as serialization,
 )
 
 __version__: str

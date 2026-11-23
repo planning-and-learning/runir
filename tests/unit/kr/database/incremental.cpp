@@ -112,10 +112,10 @@ TEST(YggdrasilTests, DatabaseIncrementalProjectionTracksSupportAcrossCompactionA
     input.insert(cells(1, 11, 7));
     input.insert(cells(2, 10, 8));
     input.insert(cells(3, 10, 9));
-    const kr::database::ProjectionPlan plan(input.columns(), std::array { ColumnIndex(11), large });
+    const auto plan = kr::database::make_projection_plan(input.columns(), std::array { ColumnIndex(11), large });
     kr::database::incremental::ProjectionEvaluator evaluator(scratch(), plan);
     kr::database::Workspace workspace;
-    Relation reference(plan.output_columns());
+    Relation reference(plan.output_columns);
     evaluator.initialize(borrow(input), workspace);
     kr::database::project(borrow(input), plan, reference, workspace);
     EXPECT_EQ(rows<ygg::uint_t>(evaluator.get_result()), rows<ygg::uint_t>(borrow(reference)));
@@ -189,10 +189,10 @@ TEST(YggdrasilTests, DatabaseIncrementalProjectionConsolidatesMixedChangesAndUnd
     input.insert(cells(4, 40));
     input.insert(cells(5, 50));
     const auto initial = rows<ygg::uint_t>(borrow(input));
-    const kr::database::ProjectionPlan plan(input.columns(), std::array { ColumnIndex(1) });
+    const auto plan = kr::database::make_projection_plan(input.columns(), std::array { ColumnIndex(1) });
     kr::database::incremental::ProjectionEvaluator evaluator(scratch(), plan);
     kr::database::Workspace workspace;
-    Relation reference(plan.output_columns());
+    Relation reference(plan.output_columns);
     evaluator.initialize(borrow(input), workspace);
     kr::database::project(borrow(input), plan, reference, workspace);
     Change delta(input.columns());
@@ -238,7 +238,8 @@ TEST(YggdrasilTests, DatabaseIncrementalProjectionDoesNotHideRemovalUnderflowWit
 {
     Relation input { runir::tests::ops::cols({ ColumnIndex(1), ColumnIndex(2) }) };
     input.insert(cells(7, 10));
-    kr::database::incremental::ProjectionEvaluator evaluator(scratch(), kr::database::ProjectionPlan(input.columns(), std::array { ColumnIndex(1) }));
+    const auto evaluator_plan = kr::database::make_projection_plan(input.columns(), std::array { ColumnIndex(1) });
+    kr::database::incremental::ProjectionEvaluator evaluator(scratch(), evaluator_plan);
     kr::database::Workspace workspace;
     evaluator.initialize(borrow(input), workspace);
     Change invalid(input.columns());
@@ -265,7 +266,7 @@ TEST(YggdrasilTests, DatabaseIncrementalProjectionDoesNotHideRemovalUnderflowWit
 TEST(YggdrasilTests, DatabaseIncrementalProjectionHandlesEmptyAndNullaryRelations)
 {
     Relation input { runir::tests::ops::cols({ ColumnIndex(4) }) };
-    const kr::database::ProjectionPlan plan(input.columns(), {});
+    const auto plan = kr::database::make_projection_plan(input.columns(), {});
     kr::database::incremental::ProjectionEvaluator evaluator(scratch(), plan);
     kr::database::Workspace workspace;
     Relation reference;
@@ -299,7 +300,8 @@ TEST(YggdrasilTests, DatabaseIncrementalProjectionHandlesEmptyAndNullaryRelation
 
     Relation nullary;
     Change nullary_delta({});
-    kr::database::incremental::ProjectionEvaluator identity(scratch(), kr::database::ProjectionPlan({}, {}));
+    const auto identity_plan = kr::database::make_projection_plan({}, {});
+    kr::database::incremental::ProjectionEvaluator identity(scratch(), identity_plan);
     identity.initialize(borrow(nullary), workspace);
     nullary_delta.added.insert(cells());
     identity.update(nullary_delta.change(), workspace);
@@ -321,7 +323,7 @@ TEST(YggdrasilTests, DatabaseIncrementalJoinUpdatesEitherSideIndependently)
     right_operand.insert(cells(3, 21, 2));
     right_operand.insert(cells(3, 22, 8));
     right_operand.insert(cells(9, 23, 2));
-    const kr::database::JoinPlan plan(left_operand.columns(), right_operand.columns());
+    const auto plan = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
     ygg::FreeRelationRepository repository;
     kr::database::Workspace workspace;
     for (const bool change_left : { false, true })
@@ -329,7 +331,7 @@ TEST(YggdrasilTests, DatabaseIncrementalJoinUpdatesEitherSideIndependently)
         auto& dynamic = change_left ? left_operand : right_operand;
         Relation unchanged(change_left ? right_operand.columns() : left_operand.columns());
         kr::database::incremental::JoinEvaluator evaluator(scratch(), plan);
-        Relation reference(plan.output_columns());
+        Relation reference(plan.output_columns);
         evaluator.initialize(left_operand.view(), right_operand.view(), workspace);
         kr::database::join(borrow(left_operand), borrow(right_operand), plan, reference, workspace);
         EXPECT_EQ(rows<ygg::uint_t>(evaluator.get_result()), rows<ygg::uint_t>(borrow(reference)));
@@ -369,11 +371,11 @@ TEST(YggdrasilTests, DatabaseIncrementalJoinAcceptsInternedWideInputs)
     immutable.insert(std::array { ygg::encode_value(ygg::Value { 30 }), ygg::encode_value(ygg::Value { 300 }) });
     ygg::FreeRelationRepository repository;
     const auto view = runir::tests::ops::intern(repository, immutable).first;
-    const kr::database::JoinPlan plan(dynamic.columns(), immutable.columns());
+    const auto plan = kr::database::make_join_plan(dynamic.columns(), immutable.columns());
     kr::database::incremental::JoinEvaluator evaluator(scratch(), plan);
     Relation unchanged(immutable.columns());
     kr::database::Workspace workspace;
-    Relation reference(plan.output_columns());
+    Relation reference(plan.output_columns);
     evaluator.initialize(borrow(dynamic), view, workspace);
     kr::database::join(borrow(dynamic), borrow(immutable), plan, reference, workspace);
     EXPECT_EQ(rows<ygg::Value>(evaluator.get_result()), rows<ygg::Value>(borrow(reference)));
@@ -395,7 +397,8 @@ TEST(YggdrasilTests, DatabaseIncrementalProjectionValidationPrecedesMutation)
     Relation empty(input.columns());
     Relation overlap(input.columns());
     overlap.insert(cells(1));
-    kr::database::incremental::ProjectionEvaluator evaluator(scratch(), kr::database::ProjectionPlan(input.columns(), std::array { ColumnIndex(1) }));
+    const auto evaluator_plan = kr::database::make_projection_plan(input.columns(), std::array { ColumnIndex(1) });
+    kr::database::incremental::ProjectionEvaluator evaluator(scratch(), evaluator_plan);
     kr::database::Workspace workspace;
     EXPECT_THROW(evaluator.update(std::pair { borrow(empty), borrow(empty) }, workspace), std::logic_error);
     evaluator.initialize(borrow(input), workspace);
@@ -430,16 +433,16 @@ TEST(YggdrasilTests, DatabaseIncrementalJoinUpdatesBothInputsAndRestoresBranches
     right_operand.insert(cells(300, 9, 30));
     const auto initial_left = rows<ygg::uint_t>(borrow(left_operand));
     const auto initial_right = rows<ygg::uint_t>(borrow(right_operand));
-    const kr::database::JoinPlan plan(left_operand.columns(), right_operand.columns());
-    const kr::database::ProjectionPlan projection_plan(plan.output_columns(), std::array { ColumnIndex(11) });
+    const auto plan = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
+    const auto projection_plan = kr::database::make_projection_plan(plan.output_columns, std::array { ColumnIndex(11) });
     kr::database::incremental::JoinEvaluator evaluator(scratch(), plan);
     kr::database::incremental::ProjectionEvaluator projected(scratch(), projection_plan);
     kr::database::Workspace workspace;
     ygg::FreeRelationRepository repository;
     evaluator.initialize(left_operand.view(), right_operand.view(), workspace);
     projected.initialize(evaluator.get_result(), workspace);
-    Relation reference(plan.output_columns());
-    Relation reference_projection(projection_plan.output_columns());
+    Relation reference(plan.output_columns);
+    Relation reference_projection(projection_plan.output_columns);
     kr::database::join(borrow(left_operand), borrow(right_operand), plan, reference, workspace);
     kr::database::project(borrow(reference), projection_plan, reference_projection, workspace);
     EXPECT_EQ(rows<ygg::uint_t>(evaluator.get_result()), rows<ygg::uint_t>(borrow(reference)));
@@ -507,10 +510,10 @@ TEST(YggdrasilTests, DatabaseIncrementalJoinMaintainsWideIndexesAcrossRowCompact
         left_operand.insert(std::array { ygg::encode_value(ygg::Value { i }), ygg::encode_value(ygg::Value { i % 3 }) });
         right_operand.insert(std::array { ygg::encode_value(ygg::Value { i % 3 }), ygg::encode_value(ygg::Value { i }) });
     }
-    const kr::database::JoinPlan plan(left_operand.columns(), right_operand.columns());
+    const auto plan = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
     kr::database::incremental::JoinEvaluator evaluator(scratch(), plan);
     kr::database::Workspace workspace;
-    Relation reference(plan.output_columns());
+    Relation reference(plan.output_columns);
     evaluator.initialize(borrow(left_operand), borrow(right_operand), workspace);
     kr::database::join(borrow(left_operand), borrow(right_operand), plan, reference, workspace);
     EXPECT_EQ(rows<ygg::Value>(evaluator.get_result()), rows<ygg::Value>(borrow(reference)));
@@ -550,9 +553,9 @@ TEST(YggdrasilTests, DatabaseIncrementalJoinHandlesCartesianAndNullaryChangesOnB
             left_operand.initialize(runir::tests::ops::cols({ ColumnIndex(1) }));
         if (!(nullary_sides & 2))
             right_operand.initialize(runir::tests::ops::cols({ ColumnIndex(2) }));
-        const kr::database::JoinPlan plan(left_operand.columns(), right_operand.columns());
+        const auto plan = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
         kr::database::incremental::JoinEvaluator evaluator(scratch(), plan);
-        Relation reference(plan.output_columns());
+        Relation reference(plan.output_columns);
         evaluator.initialize(borrow(left_operand), borrow(right_operand), workspace);
         EXPECT_TRUE(evaluator.get_result().get_rows().empty());
         Change left_delta(left_operand.columns());
@@ -611,7 +614,8 @@ TEST(YggdrasilTests, DatabaseIncrementalJoinValidatesAllInputsBeforeMutation)
     Relation empty(input.columns());
     Relation addition(input.columns());
     addition.insert(cells(2));
-    kr::database::incremental::JoinEvaluator evaluator(scratch(), kr::database::JoinPlan(input.columns(), input.columns()));
+    const auto evaluator_plan = kr::database::make_join_plan(input.columns(), input.columns());
+    kr::database::incremental::JoinEvaluator evaluator(scratch(), evaluator_plan);
     kr::database::Workspace workspace;
     EXPECT_THROW(evaluator.update(std::pair { borrow(empty), borrow(empty) }, std::pair { borrow(empty), borrow(empty) }, workspace), std::logic_error);
     evaluator.initialize(borrow(input), borrow(input), workspace);
@@ -640,7 +644,8 @@ TEST(YggdrasilTests, DatabaseIncrementalJoinRequiresReinitializationAfterMutatio
     addition.insert(cells(2));
     Relation absent(input.columns());
     absent.insert(cells(99));
-    kr::database::incremental::JoinEvaluator evaluator(scratch(), kr::database::JoinPlan(input.columns(), input.columns()));
+    const auto evaluator_plan = kr::database::make_join_plan(input.columns(), input.columns());
+    kr::database::incremental::JoinEvaluator evaluator(scratch(), evaluator_plan);
     kr::database::Workspace workspace;
     for (const bool invalid_removal : { true, false })
     {
@@ -676,7 +681,9 @@ TEST(YggdrasilTests, DatabaseIncrementalEvaluatorsShareAccessAndAliasingContract
     right_operand.insert(cells(1, 2));
     kr::database::Workspace workspace;
 
-    kr::database::incremental::JoinEvaluator join_evaluator(scratch(), kr::database::JoinPlan(left_operand.columns(), right_operand.columns()));
+    const auto join_evaluator_plan = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
+
+    kr::database::incremental::JoinEvaluator join_evaluator(scratch(), join_evaluator_plan);
     EXPECT_THROW(static_cast<void>(join_evaluator.get_result()), std::logic_error);
     EXPECT_THROW(static_cast<void>(join_evaluator.get_delta()), std::logic_error);
     join_evaluator.initialize(borrow(left_operand), borrow(right_operand), workspace);
@@ -686,9 +693,8 @@ TEST(YggdrasilTests, DatabaseIncrementalEvaluatorsShareAccessAndAliasingContract
     join_evaluator.update(std::pair { borrow(none), borrow(none) }, std::pair { borrow(none), borrow(none) }, workspace);
     EXPECT_EQ(rows<ygg::uint_t>(join_evaluator.get_result()), (std::set<urd::Store<urd::sequence<ygg::uint_t>>> { { 1, 2 } }));
 
-    kr::database::incremental::ProjectionEvaluator projection(
-        scratch(),
-        kr::database::ProjectionPlan(left_operand.columns(), std::array { ColumnIndex(0), ColumnIndex(1) }));
+    const auto projection_plan = kr::database::make_projection_plan(left_operand.columns(), std::array { ColumnIndex(0), ColumnIndex(1) });
+    kr::database::incremental::ProjectionEvaluator projection(scratch(), projection_plan);
     EXPECT_THROW(static_cast<void>(projection.get_result()), std::logic_error);
     projection.initialize(borrow(left_operand), workspace);
     EXPECT_THROW(projection.update(std::pair { projection.get_delta().added->view(), borrow(none) }, workspace), std::invalid_argument);

@@ -11,6 +11,7 @@
 #include <concepts>
 #include <cstdint>
 #include <memory>
+#include <string_view>
 #include <tyr/planning/declarations.hpp>
 #include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
@@ -38,6 +39,13 @@ struct XEffect
     static constexpr auto name = "XEffect";
 };
 
+/// A pair of concept features whose second is reset when its first changes (a module's reset-spo): a value held in its
+/// module, its features children.
+struct ResetPair
+{
+    static constexpr auto name = "ResetPair";
+};
+
 enum class ConditionOperation : std::uint8_t
 {
     BELONGS,
@@ -49,6 +57,12 @@ enum class EffectOperation : std::uint8_t
     ENTER,
     EXIT
 };
+
+/// A condition operation's name: belongs or not-belongs.
+constexpr std::string_view to_string(ConditionOperation operation) noexcept { return operation == ConditionOperation::BELONGS ? "belongs" : "not-belongs"; }
+
+/// An effect operation's name: enter or exit.
+constexpr std::string_view to_string(EffectOperation operation) noexcept { return operation == EffectOperation::ENTER ? "enter" : "exit"; }
 
 template<runir::kr::dl::CategoryTag CategoryT>
 struct LoadTag
@@ -95,6 +109,7 @@ using MemoryStateView = urd::index_view<MemoryState<IcpFamilyTag>, Repository>;
 using ModuleSymbolView = urd::index_view<ModuleSymbol<IcpFamilyTag>, Repository>;
 using ModuleView = urd::index_view<Module, Repository>;
 using ProgramView = urd::index_view<Program, Repository>;
+using ResetPairView = urd::borrowed_view<ResetPair, Repository>;
 using RuleVariantView = urd::index_view<ps::Rule<IcpFamilyTag>, Repository>;
 
 template<RuleKind Kind>

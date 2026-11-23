@@ -1,6 +1,7 @@
 #include "bindings.hpp"
-#include "pyrunir/conversions.hpp"
+#include "pyrunir/kr/dl/conversions.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
+#include "pyrunir/kr/ps/ext/conversions.hpp"
 #include "pyrunir/module.hpp"
 
 #include <runir/kr/database/syntax/query_repository.hpp>

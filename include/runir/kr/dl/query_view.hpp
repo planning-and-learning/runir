@@ -3,9 +3,11 @@
 
 #include "runir/kr/dl/query_data.hpp"
 
+#include <concepts>
 #include <cstddef>
 #include <ranges>
 #include <runir/kr/database/datalog/repository.hpp>
+#include <type_traits>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/elements/flat.hpp>
@@ -130,8 +132,8 @@ public:
     [[nodiscard]] std::span<const urd::data<ygg::ColumnLayout>> get_schema() const noexcept
         requires(!std::same_as<Tag, void>)
     {
-        if constexpr (requires { self().template member<&urd::record_of<V>::plan>().output_columns(); })
-            return self().template member<&urd::record_of<V>::plan>().output_columns();
+        if constexpr (requires { self().template member<&urd::record_of<V>::plan>().output_columns; })
+            return self().template member<&urd::record_of<V>::plan>().output_columns;
         else
             return { self().template member<&urd::record_of<V>::schema>().data(), self().template member<&urd::record_of<V>::schema>().size() };
     }

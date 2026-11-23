@@ -35,9 +35,9 @@ QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorReposi
 /// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
 template<typename Distance>
 DistanceFeature<Distance>
-make_distance_feature(ygg::FreeScratchRelations& scratch, const runir::kr::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
+make_distance_feature(ygg::FreeScratchRelations& scratch, const urd::data<runir::kr::database::DistancePlan>& plan, ConstructorView<RoleTag> edges)
 {
-    const auto columns = plan.edge_columns();
+    const auto& columns = plan.edge_columns;
     return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.get_is_static() } },
              Distance(scratch, plan, edges.get_is_static()),
              std::nullopt };
@@ -45,7 +45,7 @@ make_distance_feature(ygg::FreeScratchRelations& scratch, const runir::kr::datab
 
 /// Translates a feature's query edges and builds its min-distance evaluator.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(ygg::FreeScratchRelations& scratch, const runir::kr::database::DistancePlan& plan, QueryView<> edges)
+DistanceFeature<Distance> make_distance_feature(ygg::FreeScratchRelations& scratch, const urd::data<runir::kr::database::DistancePlan>& plan, QueryView<> edges)
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
@@ -53,7 +53,7 @@ DistanceFeature<Distance> make_distance_feature(ygg::FreeScratchRelations& scrat
     for (size_t slot = 0; slot < translator.get_slots().size(); ++slot)
         if (translator.get_slots()[slot].is_static)
             static_slots.insert(slot);
-    auto abstraction = plan.arity() > 1 ? heuristics::abstract_edges(translator, query, plan) : std::nullopt;
+    auto abstraction = arity(plan) > 1 ? heuristics::abstract_edges(translator, query, plan) : std::nullopt;
     return { translator.get_slots(), Distance(scratch, query, plan, static_slots), std::move(abstraction) };
 }
 
@@ -62,7 +62,7 @@ DistanceFeature<Distance> make_distance_feature(ygg::FreeScratchRelations& scrat
 template<typename Distance, runir::kr::database::SlotRelations SlotRows>
 heuristics::ProjectionHeuristic make_heuristic(ygg::FreeScratchRelations& scratch,
                                                const DistanceFeature<Distance>& feature,
-                                               const runir::kr::database::DistancePlan& plan,
+                                               const urd::data<runir::kr::database::DistancePlan>& plan,
                                                ygg::uint_t num_objects,
                                                const SlotRows& slot_rows)
 {
@@ -80,8 +80,8 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
     auto children = context.child_context();
     const auto relation = [&](auto argument, auto columns)
     { return std::visit([&](auto child) { return evaluate_relation<Kind>(child, columns, children); }, argument); };
-    const auto sources = relation(constructor.get_sources(), plan.source_columns());
-    const auto targets = relation(constructor.get_targets(), plan.target_columns());
+    const auto sources = relation(constructor.get_sources(), plan.source_columns);
+    const auto targets = relation(constructor.get_targets(), plan.target_columns);
     return std::visit(
         [&]<typename Edges>(Edges edges) -> ygg::uint_t
         {

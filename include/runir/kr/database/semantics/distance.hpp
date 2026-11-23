@@ -6,8 +6,8 @@
 #ifndef RUNIR_KR_DATABASE_SEMANTICS_DISTANCE_HPP_
 #define RUNIR_KR_DATABASE_SEMANTICS_DISTANCE_HPP_
 
-#include "runir/kr/database/semantics/distance_plan.hpp"
 #include "runir/kr/database/semantics/operations.hpp"
+#include "runir/kr/database/semantics/plan_construction.hpp"
 #include "runir/kr/database/semantics/search/concepts.hpp"
 #include "yggdrasil/core/config.hpp"
 
@@ -82,13 +82,13 @@ class DistanceWorkspace
     urd::Store<urd::sequence<ygg::Value>> m_row;
 
 public:
-    explicit DistanceWorkspace(const DistancePlan& plan);
+    explicit DistanceWorkspace(const urd::data<DistancePlan>& plan);
 
     /// Whether the workspace serves the plan's vertex size.
-    [[nodiscard]] bool matches(const DistancePlan& plan) const noexcept;
+    [[nodiscard]] bool matches(const urd::data<DistancePlan>& plan) const noexcept;
     /// Appends the distances of the inputs, which match the plan, to out.
     template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>
-    void append_distances(const S& sources, const E& edges, const T& targets, const DistancePlan& plan, ygg::FreeScratchRelation& out);
+    void append_distances(const S& sources, const E& edges, const T& targets, const urd::data<DistancePlan>& plan, ygg::FreeScratchRelation& out);
     [[nodiscard]] size_t memory_usage() const;
 
     /// The members it owns memory through (urd::memory_of).
@@ -106,13 +106,22 @@ public:
 /// Includes zero-length paths; unreachable pairs are absent. An output aliasing an input throws before clearing it.
 /// Evaluation failures may leave partial output. Inputs must not borrow the workspace's buffers.
 template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>
-void distance(const S& sources, const E& edges, const T& targets, const DistancePlan& plan, ygg::FreeScratchRelation& out, DistanceWorkspace& workspace);
+void distance(const S& sources,
+              const E& edges,
+              const T& targets,
+              const urd::data<DistancePlan>& plan,
+              ygg::FreeScratchRelation& out,
+              DistanceWorkspace& workspace);
 
 /// The smallest distance between any source and target, from distance() into result.
 /// uint_t's maximum if no target is reachable.
 template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>
-ygg::uint_t
-min_distance(const S& sources, const E& edges, const T& targets, const DistancePlan& plan, ygg::FreeScratchRelation& result, DistanceWorkspace& workspace);
+ygg::uint_t min_distance(const S& sources,
+                         const E& edges,
+                         const T& targets,
+                         const urd::data<DistancePlan>& plan,
+                         ygg::FreeScratchRelation& result,
+                         DistanceWorkspace& workspace);
 
 }  // namespace runir::kr::database
 
@@ -141,7 +150,11 @@ std::span<const ygg::Value> make_distance_row(const DistanceGraph& graph,
 }  // namespace detail
 
 template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>
-void DistanceWorkspace::append_distances(const S& sources, const E& edges, const T& targets, const DistancePlan& /*plan*/, ygg::FreeScratchRelation& out)
+void DistanceWorkspace::append_distances(const S& sources,
+                                         const E& edges,
+                                         const T& targets,
+                                         const urd::data<DistancePlan>& /*plan*/,
+                                         ygg::FreeScratchRelation& out)
 {
     m_graph.clear();
     m_targets.clear();
@@ -171,19 +184,28 @@ void DistanceWorkspace::append_distances(const S& sources, const E& edges, const
 }
 
 template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>
-void distance(const S& sources, const E& edges, const T& targets, const DistancePlan& plan, ygg::FreeScratchRelation& out, DistanceWorkspace& workspace)
+void distance(const S& sources,
+              const E& edges,
+              const T& targets,
+              const urd::data<DistancePlan>& plan,
+              ygg::FreeScratchRelation& out,
+              DistanceWorkspace& workspace)
 {
     detail::prepare_output(out, sources, edges, targets);
-    assert(std::ranges::equal(sources.columns(), plan.source_columns()));
-    assert(std::ranges::equal(edges.columns(), plan.edge_columns()));
-    assert(std::ranges::equal(targets.columns(), plan.target_columns()));
-    assert(workspace.matches(plan) && std::ranges::equal(out.view().columns(), plan.output_columns()));
+    assert(std::ranges::equal(sources.columns(), plan.source_columns));
+    assert(std::ranges::equal(edges.columns(), plan.edge_columns));
+    assert(std::ranges::equal(targets.columns(), plan.target_columns));
+    assert(workspace.matches(plan) && std::ranges::equal(out.view().columns(), plan.output_columns));
     workspace.append_distances(sources, edges, targets, plan, out);
 }
 
 template<ygg::RelationViewConcept<ygg::Schema> S, ygg::RelationViewConcept<ygg::Schema> E, ygg::RelationViewConcept<ygg::Schema> T>
-ygg::uint_t
-min_distance(const S& sources, const E& edges, const T& targets, const DistancePlan& plan, ygg::FreeScratchRelation& result, DistanceWorkspace& workspace)
+ygg::uint_t min_distance(const S& sources,
+                         const E& edges,
+                         const T& targets,
+                         const urd::data<DistancePlan>& plan,
+                         ygg::FreeScratchRelation& result,
+                         DistanceWorkspace& workspace)
 {
     distance(sources, edges, targets, plan, result, workspace);
     const auto view = result.view();

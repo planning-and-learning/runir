@@ -4,8 +4,8 @@ Integration notes
 Python serialization
 --------------------
 
-``pytyr.serialization`` and ``pyrunir.serialization`` provide structured native representations using a shared
-dictionary registry. Callers select the entity types to deduplicate and assign table names and reference prefixes.
+``pyyggdrasil.serialization.Dictionaries`` provides structured native representations of every library's types, in one
+shared registry. Callers select the entity types to deduplicate and assign table names and reference prefixes.
 
 Search, execution, and validation use the native APIs directly. Downstream applications combine the representations and
 choose how to render and save them. Output documentation lives under each repository's ``docs/serialization/``

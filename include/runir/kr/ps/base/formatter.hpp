@@ -43,16 +43,16 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : runir::de
 
 /// A proof graph's vertex: state=... initial=... goal=... alive=... unsolvable=...
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::base::SketchProofVertexLabel<Kind>> : runir::detail::without_format_spec
+struct fmt::formatter<urd::data<runir::kr::ps::base::SketchProofVertexLabel<Kind>>> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::kr::ps::base::SketchProofVertexLabel<Kind>& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::kr::ps::base::SketchProofVertexLabel<Kind>>& value, fmt::format_context& context) const;
 };
 
 /// A proof graph's edge: rule=symbol action=...
 template<>
-struct fmt::formatter<runir::kr::ps::base::SketchProofEdgeLabel> : runir::detail::without_format_spec
+struct fmt::formatter<urd::data<runir::kr::ps::base::SketchProofEdgeLabel>> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::kr::ps::base::SketchProofEdgeLabel& value, fmt::format_context& context) const;
+    fmt::format_context::iterator format(const urd::data<runir::kr::ps::base::SketchProofEdgeLabel>& value, fmt::format_context& context) const;
 };
 
 #endif

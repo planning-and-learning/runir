@@ -56,9 +56,9 @@ struct fmt::formatter<runir::kr::ps::ext::ProgramView> : runir::detail::without_
 
 /// A proof graph's vertex: state=... module=... initial=... goal=... alive=... unsolvable=...
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>> : runir::detail::without_format_spec
+struct fmt::formatter<urd::data<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>>> : runir::detail::without_format_spec
 {
-    fmt::format_context::iterator format(const runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>& value,
+    fmt::format_context::iterator format(const urd::data<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>>& value,
                                          fmt::format_context& context) const;
 };
 

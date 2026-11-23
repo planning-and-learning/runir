@@ -17,6 +17,43 @@
 
 namespace runir::kr::database
 {
+/// The prepared operations (urd::data<Plan>, values: no Store holds them), each built from its inputs' columns by its
+/// make_ function.
+struct ProjectionPlan
+{
+    static constexpr std::string_view name = "ProjectionPlan";
+};
+
+struct JoinPlan
+{
+    static constexpr std::string_view name = "JoinPlan";
+};
+
+struct SetPlan
+{
+    static constexpr std::string_view name = "SetPlan";
+};
+
+struct SelectEqualPlan
+{
+    static constexpr std::string_view name = "SelectEqualPlan";
+};
+
+struct SelectValuePlan
+{
+    static constexpr std::string_view name = "SelectValuePlan";
+};
+
+struct GenericJoinPlan
+{
+    static constexpr std::string_view name = "GenericJoinPlan";
+};
+
+struct DistancePlan
+{
+    static constexpr std::string_view name = "DistancePlan";
+};
+
 /// The query operations. Each tag's name is its type's (urd::name: Query<QueryJoinTag> is QueryJoin); its operation,
 /// the word a query plan is written with.
 struct QueryInputTag

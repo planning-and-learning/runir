@@ -49,9 +49,9 @@ struct RoleEdgeDistanceEvaluator
     DenotationState<NumericalTag> value;
 
     RoleEdgeDistanceEvaluator(NumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
-        sources(prepare_argument(expression.get_sources(), expression.get_plan().source_columns(), graph, dependencies)),
-        edges(prepare_argument(expression.get_edges(), expression.get_plan().edge_columns(), graph, dependencies)),
-        targets(prepare_argument(expression.get_targets(), expression.get_plan().target_columns(), graph, dependencies)),
+        sources(prepare_argument(expression.get_sources(), expression.get_plan().source_columns, graph, dependencies)),
+        edges(prepare_argument(expression.get_edges(), expression.get_plan().edge_columns, graph, dependencies)),
+        targets(prepare_argument(expression.get_targets(), expression.get_plan().target_columns, graph, dependencies)),
         operation(graph.scratch(), expression.get_plan())
     {
     }
@@ -95,8 +95,8 @@ struct QueryEdgeDistanceEvaluator
                                urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
         expression(expression_),
         edges(edges_),
-        sources(prepare_argument(expression_.get_sources(), expression_.get_plan().source_columns(), graph, dependencies)),
-        targets(prepare_argument(expression_.get_targets(), expression_.get_plan().target_columns(), graph, dependencies)),
+        sources(prepare_argument(expression_.get_sources(), expression_.get_plan().source_columns, graph, dependencies)),
+        targets(prepare_argument(expression_.get_targets(), expression_.get_plan().target_columns, graph, dependencies)),
         feature(semantics::detail::make_distance_feature<Distance>(graph.scratch(), expression_.get_plan(), edges_))
     {
         for (const auto& slot : feature.slots)

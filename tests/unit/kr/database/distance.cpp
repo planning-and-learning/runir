@@ -120,13 +120,13 @@ TEST(YggdrasilTests, DatabaseDistanceIncludesZeroPathsAndKeepsInputTupleLabelsPo
     fill(sources, Vertices { 0, 5, 8 });
     fill(edges, Edges { { 0, 1 }, { 0, 2 }, { 1, 3 }, { 2, 3 }, { 3, 4 }, { 4, 1 }, { 3, 3 }, { 6, 7 } });
     fill(targets, Vertices { 0, 3, 4, 5, 7, 8 });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(500));
-    EXPECT_EQ(plan.arity(), 1);
-    EXPECT_EQ(plan.tuple_size(), 1);
-    ASSERT_EQ(plan.output_columns().size(), 3);
-    EXPECT_EQ(plan.output_columns()[0].label, ColumnIndex(1));
-    EXPECT_EQ(plan.output_columns()[1].label, ColumnIndex(2));
-    EXPECT_EQ(plan.output_columns()[2].label, ColumnIndex(500));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(500));
+    EXPECT_EQ(arity(plan), 1);
+    EXPECT_EQ(tuple_size(plan), 1);
+    ASSERT_EQ(plan.output_columns.size(), 3);
+    EXPECT_EQ(plan.output_columns[0].label, ColumnIndex(1));
+    EXPECT_EQ(plan.output_columns[1].label, ColumnIndex(2));
+    EXPECT_EQ(plan.output_columns[2].label, ColumnIndex(500));
     const Results expected { { 0, 0, 0 }, { 0, 3, 2 }, { 0, 4, 3 }, { 5, 5, 0 }, { 8, 8, 0 } };
     auto result = runir::tests::ops::distances(borrow(sources), borrow(edges), borrow(targets), plan);
     EXPECT_EQ(rows(borrow(result)), expected);
@@ -151,7 +151,7 @@ TEST(YggdrasilTests, DatabaseDistanceAcceptsInternedViewsWithoutRetainingInputOw
     fill(sources, Vertices { 1 });
     fill(edges, Edges { { 1, 2 }, { 2, 3 } });
     fill(targets, Vertices { 3 });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     ygg::FreeRelationRepository repository;
     const auto source_view = runir::tests::ops::intern(repository, sources).first;
     const auto edge_view = runir::tests::ops::intern(repository, edges).first;
@@ -178,12 +178,12 @@ TEST(YggdrasilTests, DatabaseDistancePlansValidateSchemasAndOutputsMustNotAlias)
         targets(runir::tests::ops::cols({ ColumnIndex(20) }));
     fill(sources, Vertices { 1 });
     fill(targets, Vertices { 1 });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
-    EXPECT_THROW((kr::database::DistancePlan(sources.columns(), sources.columns(), targets.columns(), ColumnIndex(3))), std::invalid_argument);
-    EXPECT_THROW((kr::database::DistancePlan(sources.columns(), edges.columns(), edges.columns(), ColumnIndex(3))), std::invalid_argument);
-    EXPECT_THROW((kr::database::DistancePlan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(2))), std::invalid_argument);
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    EXPECT_THROW((kr::database::make_distance_plan(sources.columns(), sources.columns(), targets.columns(), ColumnIndex(3))), std::invalid_argument);
+    EXPECT_THROW((kr::database::make_distance_plan(sources.columns(), edges.columns(), edges.columns(), ColumnIndex(3))), std::invalid_argument);
+    EXPECT_THROW((kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(2))), std::invalid_argument);
     const std::vector<urd::data<ygg::ColumnLayout>> wrong_type { { ColumnIndex(20), ygg::type_id<double> } };
-    EXPECT_THROW((kr::database::DistancePlan(sources.columns(), edges.columns(), wrong_type, ColumnIndex(3))), std::invalid_argument);
+    EXPECT_THROW((kr::database::make_distance_plan(sources.columns(), edges.columns(), wrong_type, ColumnIndex(3))), std::invalid_argument);
 
     kr::database::DistanceWorkspace workspace(plan);
     auto output = runir::tests::ops::distances(borrow(sources), borrow(edges), borrow(targets), plan);
@@ -213,7 +213,7 @@ TEST(YggdrasilTests, DatabaseDistanceRejectsChangesThatAreNotActualSetChanges)
     fill(sources, Vertices { 1 });
     fill(edges, Edges { { 1, 2 } });
     fill(targets, Vertices { 2 });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     Change ds(sources.columns()), de(edges.columns()), dt(targets.columns());
     for (size_t input = 0; input < 3; ++input)
@@ -246,7 +246,7 @@ TEST(YggdrasilTests, DatabaseDistanceRepairsAlternateShortestPathsAndDisconnects
     fill(sources, Vertices { 0 });
     fill(edges, Edges { { 0, 1 }, { 0, 2 }, { 1, 3 }, { 2, 3 }, { 3, 4 }, { 4, 1 } });
     fill(targets, Vertices { 3, 4 });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     Change ds(sources.columns()), de(edges.columns()), dt(targets.columns());
@@ -282,7 +282,7 @@ TEST(YggdrasilTests, DatabaseDistanceMixedReplacementLeavesAnUnchangedChainUnpro
         edge_set.emplace(vertex, vertex + 1);
     fill(edges, edge_set);
     fill(targets, Vertices { last });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     const Results expected { { 0, last, last - 1 } };
@@ -321,7 +321,7 @@ TEST(YggdrasilTests, DatabaseDistanceEqualSupportsDoNotRescanDenseUnchangedNeigh
     }
     fill(edges, edge_set);
     fill(targets, target_set);
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     const auto before = reference(Vertices { 0 }, edge_set, target_set, 5 + neighbors);
@@ -351,7 +351,7 @@ TEST(YggdrasilTests, DatabaseDistanceRepairsUnreachableCyclesSelfLoopsAndEdgesIn
     fill(sources, source_set);
     fill(edges, edge_set);
     fill(targets, target_set);
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     Change ds(sources.columns()), de(edges.columns()), dt(targets.columns());
@@ -402,9 +402,9 @@ TEST(YggdrasilTests, DatabaseDistanceMixedTupleTypesShareCanonicalVertices)
                               ygg::encode_value(false) });
     targets.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(7)), ygg::encode_value(+0.0), ygg::encode_value(true) });
     targets.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(8)), ygg::encode_value(1.5), ygg::encode_value(false) });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(99));
-    EXPECT_EQ(plan.arity(), 3);
-    EXPECT_EQ(plan.tuple_size(), 3);
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(99));
+    EXPECT_EQ(arity(plan), 3);
+    EXPECT_EQ(tuple_size(plan), 3);
     auto result = runir::tests::ops::distances(borrow(sources), borrow(edges), borrow(targets), plan);
     ASSERT_EQ(result.size(), 2);
     EXPECT_TRUE(result.contains(std::array { ygg::encode_value(ygg::uint_t(7)),
@@ -448,9 +448,9 @@ TEST(YggdrasilTests, DatabaseDistanceNullaryTuplesUseTheSingleEmptyVertex)
 {
     RelationBuilder sources, edges, targets;
     targets.insert(std::array<ygg::Value, 0> {});
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
-    EXPECT_EQ(plan.arity(), 0);
-    EXPECT_EQ(plan.tuple_size(), 0);
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    EXPECT_EQ(arity(plan), 0);
+    EXPECT_EQ(tuple_size(plan), 0);
     auto output = runir::tests::ops::distances(borrow(sources), borrow(edges), borrow(targets), plan);
     EXPECT_TRUE(output.empty());
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
@@ -478,7 +478,7 @@ TEST(YggdrasilTests, DatabaseDistanceGrowsTheSharedDictionaryAndResetsToASmaller
         targets(runir::tests::ops::cols({ ColumnIndex(20) }));
     fill(sources, Vertices { 1 });
     fill(targets, Vertices { 1 });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     const Results initial { { 1, 1, 0 } };
@@ -525,7 +525,7 @@ TEST(YggdrasilTests, DatabaseDistanceMovesRetainedRepairStorageAndResetsAfterwar
     fill(sources, Vertices { 0 });
     fill(edges, Edges { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 } });
     fill(targets, Vertices { 3, 4 });
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
     evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
     Change ds(sources.columns()), de(edges.columns()), dt(targets.columns());
@@ -583,9 +583,9 @@ TEST(YggdrasilTests, DatabaseDistanceRandomBatchesAndUndoMatchIndependentPairwis
         fill(sources, source_set);
         fill(edges, edge_set);
         fill(targets, target_set);
-        const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+        const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
         kr::database::DistanceWorkspace workspace(plan);
-        RelationBuilder full(plan.output_columns());
+        RelationBuilder full(plan.output_columns);
         kr::database::incremental::DistanceEvaluator evaluator(scratch(), plan);
         evaluator.initialize(borrow(sources), borrow(edges), borrow(targets));
         Change ds(sources.columns()), de(edges.columns()), dt(targets.columns());
@@ -642,9 +642,9 @@ TEST(YggdrasilTests, DatabaseMinDistanceAggregatesTheDistanceColumnFullAndIncrem
 
     RelationBuilder sources(runir::tests::ops::cols({ ColumnIndex(10) })), edges(runir::tests::ops::cols({ ColumnIndex(1), ColumnIndex(2) })),
         targets(runir::tests::ops::cols({ ColumnIndex(20) }));
-    const kr::database::DistancePlan plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
+    const auto plan = kr::database::make_distance_plan(sources.columns(), edges.columns(), targets.columns(), ColumnIndex(3));
     kr::database::DistanceWorkspace workspace(plan);
-    RelationBuilder result(plan.output_columns());
+    RelationBuilder result(plan.output_columns);
     kr::database::incremental::SourceMinDistance evaluator(scratch(), plan);
     Change ds(sources.columns()), de(edges.columns()), dt(targets.columns());
 

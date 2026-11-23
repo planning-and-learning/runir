@@ -5,6 +5,7 @@
 #include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/icp/module_data.hpp"
+#include "runir/kr/ps/icp/reset_pair_view.hpp"
 #include "runir/kr/ps/memory_state_view.hpp"
 #include "runir/kr/ps/module_symbol_view.hpp"
 #include "runir/kr/ps/rule_variant_view.hpp"
@@ -53,7 +54,7 @@ public:
 
     [[nodiscard]] auto get_memory_transitions() const noexcept { return self().template member<&urd::record_of<V>::memory_transitions>(); }
 
-    [[nodiscard]] const auto& get_reset_pairs() const noexcept { return self().template member<&urd::record_of<V>::reset_pairs>(); }
+    [[nodiscard]] auto get_reset_pairs() const noexcept { return self().template member<&urd::record_of<V>::reset_pairs>(); }
 
     // user: one getter templated on the tag over the fields it chooses (next to the record), besides the plain getters.
     template<runir::kr::dl::CategoryTag Category>

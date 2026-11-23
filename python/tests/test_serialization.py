@@ -7,21 +7,18 @@ import sys
 from typing import TypeGuard
 
 import pytest
-import pytyr.serialization as tyr_serialization
 from ext_execution_utils import collect_steps, initial_node
 from fixture_utils import read_fixture
 from pytyr import formalism
 from pytyr.planning import ground
 from pyyggdrasil.serialization import Dictionaries
 
-import pyrunir.serialization as runir_serialization
-from pyrunir.datasets import GroundTaskSearchContext, StateGraphEdgeLabel
+from pyrunir.datasets import GroundTaskSearchContext, StateGraphEdgeLabelData
 from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import base, ext
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
-from pyrunir.serialization import register_table, serialize, table
 
 
 def _is_row(value: object) -> TypeGuard[dict[str, object]]:
@@ -43,11 +40,11 @@ def rows(value: object) -> list[dict[str, object]]:
 def test_fields_describe_native_layouts_without_instances() -> None:
     assert list(base.RuleBase.Fields.__members__) == ["symbol", "conditions", "effects"]
     assert list(ext.RuleExt.Fields.__members__) == ["symbol", "variant"]
-    assert list(base.SketchProofEdgeLabel.Fields.__members__) == ["action", "rule"]
-    assert list(ext.ProgramProofEdgeLabel.Fields.__members__) == ["action", "rule"]
-    assert list(StateGraphEdgeLabel.Fields.__members__) == ["action", "cost"]
+    assert list(base.SketchProofEdgeLabelData.Fields.__members__) == ["action", "rule"]
+    assert list(ext.ProgramProofEdgeLabelExtData.Fields.__members__) == ["action", "rule"]
+    assert list(StateGraphEdgeLabelData.Fields.__members__) == ["action", "cost"]
     assert list(semantics.BooleanSemanticNonempty.Fields.__members__) == ["operand"]
-    assert list(formalism.RowPredicateFluent.Fields.__members__) == ["relation", "objects"]
+    assert list(formalism.RowPredicateFluent.Fields.__members__) == ["relation", "values"]
     assert list(ext.ModuleState.Fields.__members__) == ["mod", "memory_state", "registers", "arguments"]
     assert list(ext.CallStack.Fields.__members__) == ["module_state", "caller"]
     for program_state in (ext.ProgramStateGround, ext.ProgramStateLifted):
@@ -61,9 +58,8 @@ def test_runir_preserves_tyr_field_enum_identity() -> None:
             "-c",
             """
 from pytyr import formalism
-import pytyr.serialization
 fields = formalism.RowActionLifted.Fields
-import pyrunir.serialization
+import pyrunir
 assert formalism.RowActionLifted.Fields is fields
 """,
         ],
@@ -75,24 +71,21 @@ assert formalism.RowActionLifted.Fields is fields
 def test_matching_field_enums_are_accepted_by_their_library(native_type: str) -> None:
     dictionaries = Dictionaries()
     if native_type == "Rule":
-        runir_serialization.register_table(
-            dictionaries, base.RuleBase, "selected", "s", fields=[base.RuleBase.Fields.symbol]
-        )
-        assert runir_serialization.table(dictionaries, base.RuleBase) == []
+        dictionaries.register_table(base.RuleBase, "selected", "s", fields=[base.RuleBase.Fields.symbol])
+        assert dictionaries.table(base.RuleBase) == []
     elif native_type == "RowActionLifted":
-        tyr_serialization.register_table(
-            dictionaries, formalism.RowActionLifted, "selected", "s", fields=[formalism.RowActionLifted.Fields.objects]
+        dictionaries.register_table(
+            formalism.RowActionLifted, "selected", "s", fields=[formalism.RowActionLifted.Fields.values]
         )
-        assert tyr_serialization.table(dictionaries, formalism.RowActionLifted) == []
+        assert dictionaries.table(formalism.RowActionLifted) == []
     else:
-        tyr_serialization.register_table(
-            dictionaries,
+        dictionaries.register_table(
             formalism.RowPredicateFluent,
             "selected",
             "s",
             fields=[formalism.RowPredicateFluent.Fields.relation],
         )
-        assert tyr_serialization.table(dictionaries, formalism.RowPredicateFluent) == []
+        assert dictionaries.table(formalism.RowPredicateFluent) == []
 
 
 @pytest.mark.parametrize(("operand", "operand_tag"), [("c_top", "ConceptTag"), ("r_universal", "RoleTag")])
@@ -107,30 +100,29 @@ def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(
     )
     (feature,) = policy.get_boolean_features()
     dictionaries = Dictionaries()
-    register_table(dictionaries, semantics.BooleanSemanticNonempty, "nonempty", "b")
+    dictionaries.register_table(semantics.BooleanSemanticNonempty, "nonempty", "b")
     expression = feature.get_variant().get_feature()
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Constructor.*BooleanTag"):
-        serialize(dictionaries, expression)
+        dictionaries.serialize(expression)
 
     dictionaries = Dictionaries()
-    register_table(dictionaries, semantics.ConstructorBoolean, "booleans", "x")
-    register_table(dictionaries, semantics.BooleanSemanticNonempty, "nonempty", "b")
+    dictionaries.register_table(semantics.ConstructorBoolean, "booleans", "x")
+    dictionaries.register_table(semantics.BooleanSemanticNonempty, "nonempty", "b")
     # The message names the operand's own kind, the one that is unregistered.
     with pytest.raises(ValueError, match=rf"^Unregistered serialization type: .*Constructor<[^>]*{operand_tag}>"):
-        serialize(dictionaries, expression)
+        dictionaries.serialize(expression)
 
     dictionaries = Dictionaries()
-    register_table(dictionaries, semantics.ConstructorBoolean, "booleans", "x")
-    register_table(
-        dictionaries,
+    dictionaries.register_table(semantics.ConstructorBoolean, "booleans", "x")
+    dictionaries.register_table(
         semantics.BooleanSemanticNonempty,
         "nonempty",
         "b",
         project=lambda nonempty: {"operand": str(nonempty.get_operand())},
     )
-    assert serialize(dictionaries, expression) == "x0"
-    assert table(dictionaries, semantics.ConstructorBoolean) == [{"variant": "b0"}]
-    assert table(dictionaries, semantics.BooleanSemanticNonempty) == [{"operand": f"({operand})"}]
+    assert dictionaries.serialize(expression) == "x0"
+    assert dictionaries.table(semantics.ConstructorBoolean) == [{"variant": "b0", "is_static": True}]
+    assert dictionaries.table(semantics.BooleanSemanticNonempty) == [{"operand": f"({operand})"}]
 
 
 def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: formalism.PlanningDomain) -> None:
@@ -143,18 +135,17 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: form
     (rule,) = policy.get_rules()
     feature = policy.get_numerical_features()[0].get_variant()
     dictionaries = Dictionaries()
-    register_table(dictionaries, base.RuleBase, "rules", "r")
+    dictionaries.register_table(base.RuleBase, "rules", "r")
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Sketch"):
-        serialize(dictionaries, policy)
+        dictionaries.serialize(policy)
 
     dictionaries = Dictionaries()
-    register_table(dictionaries, base.RuleBase, "rules", "r")
+    dictionaries.register_table(base.RuleBase, "rules", "r")
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Condition"):
-        serialize(dictionaries, rule)
+        dictionaries.serialize(rule)
 
     dictionaries = Dictionaries()
-    register_table(
-        dictionaries,
+    dictionaries.register_table(
         base.RuleBase,
         "rules",
         "r",
@@ -164,25 +155,24 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: form
             "effects": [str(effect) for effect in value.get_effects()],
         },
     )
-    register_table(
-        dictionaries,
+    dictionaries.register_table(
         base.dl.ConcreteFeatureBaseNumerical,
         "features",
         "f",
         project=lambda value: {"symbol": value.get_symbol(), "feature": str(value.get_feature())},
     )
-    assert serialize(dictionaries, rule) == "r0"
-    assert list(rows(table(dictionaries, base.RuleBase))[0]) == list(base.RuleBase.Fields.__members__)
-    assert table(dictionaries, base.RuleBase) == [
+    assert dictionaries.serialize(rule) == "r0"
+    assert list(rows(dictionaries.table(base.RuleBase))[0]) == list(base.RuleBase.Fields.__members__)
+    assert dictionaries.table(base.RuleBase) == [
         {
             "symbol": rule.get_symbol(),
             "conditions": [str(condition) for condition in rule.get_conditions()],
             "effects": [str(effect) for effect in rule.get_effects()],
         }
     ]
-    assert table(dictionaries, base.dl.ConcreteFeatureBaseNumerical) == []
-    assert serialize(dictionaries, feature) == "f0"
-    assert table(dictionaries, base.dl.ConcreteFeatureBaseNumerical) == [
+    assert dictionaries.table(base.dl.ConcreteFeatureBaseNumerical) == []
+    assert dictionaries.serialize(feature) == "f0"
+    assert dictionaries.table(base.dl.ConcreteFeatureBaseNumerical) == [
         {
             "symbol": feature.get_symbol(),
             "feature": str(feature.get_feature()),
@@ -190,15 +180,14 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: form
     ]
 
     selected = Dictionaries()
-    register_table(
-        selected,
+    selected.register_table(
         base.RuleBase,
         "rules",
         "r",
         fields=[base.RuleBase.Fields.symbol],
     )
-    assert serialize(selected, rule) == "r0"
-    (row,) = rows(table(selected, base.RuleBase))
+    assert selected.serialize(rule) == "r0"
+    (row,) = rows(selected.table(base.RuleBase))
     assert row == {"symbol": rule.get_symbol()}
 
 
@@ -218,22 +207,21 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     initial = expander.initial_state(planning_state)
     (step,) = collect_steps(expander, initial)
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ProgramState.*GroundTag"):
-        serialize(Dictionaries(), initial)
+        Dictionaries().serialize(initial)
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*PlanningDomain"):
-        tyr_serialization.serialize(Dictionaries(), domain)
+        Dictionaries().serialize(domain)
 
     dictionaries = Dictionaries()
-    tyr_serialization.register_table(dictionaries, ground.StateBuilderShared, "states", "s")
-    tyr_serialization.register_table(dictionaries, formalism.AtomGroundFluent, "atoms", "a", fields=())
-    register_table(dictionaries, ext.ProgramStateGround, "program_states", "e")
-    register_table(dictionaries, ext.ModuleState, "module_states", "z")
-    register_table(dictionaries, ext.CallStack, "call_stacks", "c")
-    register_table(dictionaries, ext.Module, "modules", "m", fields=())
-    register_table(dictionaries, ext.MemoryStateExt, "memory_states", "q", fields=())
-    register_table(dictionaries, semantics.RegisterValues, "registers", "r")
-    register_table(dictionaries, semantics.CallArguments, "arguments", "b")
-    register_table(
-        dictionaries,
+    dictionaries.register_table(ground.StateBuilderShared, "states", "s")
+    dictionaries.register_table(formalism.AtomGroundFluent, "atoms", "a", fields=())
+    dictionaries.register_table(ext.ProgramStateGround, "program_states", "e")
+    dictionaries.register_table(ext.ModuleState, "module_states", "z")
+    dictionaries.register_table(ext.CallStack, "call_stacks", "c")
+    dictionaries.register_table(ext.Module, "modules", "m", fields=())
+    dictionaries.register_table(ext.MemoryStateExt, "memory_states", "q", fields=())
+    dictionaries.register_table(semantics.RegisterValues, "registers", "r")
+    dictionaries.register_table(semantics.CallArguments, "arguments", "b")
+    dictionaries.register_table(
         ext.Program,
         "programs",
         "p",
@@ -243,16 +231,16 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         },
     )
 
-    assert serialize(dictionaries, initial) == "e0"
-    assert tyr_serialization.serialize(dictionaries, initial.get_state().unpack()) == "s0"
-    assert serialize(dictionaries, step.target) == "e1"
-    assert serialize(dictionaries, initial) == "e0"
-    first, second = rows(table(dictionaries, ext.ProgramStateGround))
+    assert dictionaries.serialize(initial) == "e0"
+    assert dictionaries.serialize(initial.get_state().unpack()) == "s0"
+    assert dictionaries.serialize(step.target) == "e1"
+    assert dictionaries.serialize(initial) == "e0"
+    first, second = rows(dictionaries.table(ext.ProgramStateGround))
     assert first == {"state": "s0", "module_state": "z0", "call_stack": None}
     assert second == {"state": "s0", "module_state": "z1", "call_stack": "c0"}
     assert initial.get_call_stack() is None
-    assert serialize(dictionaries, initial.get_module_state()) == "z0"
-    module_states = rows(table(dictionaries, ext.ModuleState))
+    assert dictionaries.serialize(initial.get_module_state()) == "z0"
+    module_states = rows(dictionaries.table(ext.ModuleState))
     assert module_states[0] == {
         "mod": "m0",
         "memory_state": "q0",
@@ -261,14 +249,14 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     }
     call_stack = step.target.get_call_stack()
     assert call_stack is not None
-    assert table(dictionaries, ext.CallStack) == [
+    assert dictionaries.table(ext.CallStack) == [
         {
-            "module_state": serialize(dictionaries, call_stack.get_module_state()),
+            "module_state": dictionaries.serialize(call_stack.get_module_state()),
             "caller": None,
         }
     ]
-    assert table(dictionaries, semantics.RegisterValues) == [{"concept_values": [], "role_values": []}]
-    assert table(dictionaries, semantics.CallArguments) == [
+    assert dictionaries.table(semantics.RegisterValues) == [{"concept_values": [], "role_values": []}]
+    assert dictionaries.table(semantics.CallArguments) == [
         {
             "concept_arguments": [],
             "role_arguments": [],
@@ -276,41 +264,40 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
             "numerical_arguments": [],
         }
     ]
-    (state,) = rows(tyr_serialization.table(dictionaries, ground.StateBuilderShared))
-    assert set(state) == {"fluent_ground_atoms", "derived_ground_atoms", "fluent_ground_function_term_values"}
-    assert state["fluent_ground_atoms"] == [
-        f"a{index}" for index in range(len(rows(tyr_serialization.table(dictionaries, formalism.AtomGroundFluent))))
+    (state,) = rows(dictionaries.table(ground.StateBuilderShared))
+    assert set(state) == {"fluent_atoms", "derived_atoms", "fluent_fterm_values"}
+    assert state["fluent_atoms"] == [
+        f"a{index}" for index in range(len(rows(dictionaries.table(formalism.AtomGroundFluent))))
     ]
     assert dictionaries.tables()["program_states"]["rows"] == [first, second]
 
     # A program state does not name its program (an input to the search): it is serialized on its own.
-    assert serialize(dictionaries, program) == "p0"
-    assert rows(table(dictionaries, ext.Program))[0]["modules"] == [str(module) for module in program.get_modules()]
+    assert dictionaries.serialize(program) == "p0"
+    assert rows(dictionaries.table(ext.Program))[0]["modules"] == [str(module) for module in program.get_modules()]
     snapshot = dictionaries.tables()
     assert json.loads(json.dumps(snapshot)) == snapshot
-    assert serialize(dictionaries, initial) == "e0"
+    assert dictionaries.serialize(initial) == "e0"
     assert dictionaries.tables() == snapshot
 
     selected = Dictionaries()
-    tyr_serialization.register_table(selected, ground.StateBuilderShared, "states", "s")
-    register_table(
-        selected,
+    selected.register_table(ground.StateBuilderShared, "states", "s")
+    selected.register_table(
         ext.ProgramStateGround,
         "program_states",
         "e",
         fields=("call_stack", "module_state"),
     )
-    register_table(selected, ext.ModuleState, "module_states", "z", fields=())
-    register_table(selected, ext.CallStack, "call_stacks", "c", fields=())
-    register_table(selected, ext.Program, "programs", "p")
-    assert serialize(selected, initial) == "e0"
-    (program_state,) = rows(table(selected, ext.ProgramStateGround))
+    selected.register_table(ext.ModuleState, "module_states", "z", fields=())
+    selected.register_table(ext.CallStack, "call_stacks", "c", fields=())
+    selected.register_table(ext.Program, "programs", "p")
+    assert selected.serialize(initial) == "e0"
+    (program_state,) = rows(selected.table(ext.ProgramStateGround))
     assert program_state == {"module_state": "z0", "call_stack": None}
     assert list(program_state) == ["module_state", "call_stack"]
-    assert tyr_serialization.table(selected, ground.StateBuilderShared) == []
-    assert table(selected, ext.ModuleState) == [{}]
-    assert table(selected, ext.CallStack) == []
-    assert table(selected, ext.Program) == []
+    assert selected.table(ground.StateBuilderShared) == []
+    assert selected.table(ext.ModuleState) == [{}]
+    assert selected.table(ext.CallStack) == []
+    assert selected.table(ext.Program) == []
 
     def project(value: ext.ProgramStateGround) -> dict[str, object]:
         return {
@@ -319,34 +306,32 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         }
 
     projected = Dictionaries()
-    tyr_serialization.register_table(projected, ground.StateBuilderShared, "states", "s", fields=())
-    register_table(projected, ext.ProgramStateGround, "program_states", "e", project=project)
-    assert serialize(projected, initial) == "e0"
-    assert table(projected, ext.ProgramStateGround) == [
+    projected.register_table(ground.StateBuilderShared, "states", "s", fields=())
+    projected.register_table(ext.ProgramStateGround, "program_states", "e", project=project)
+    assert projected.serialize(initial) == "e0"
+    assert projected.table(ext.ProgramStateGround) == [
         {
             "planning_state": "s0",
             "has_caller": False,
         }
     ]
-    assert tyr_serialization.serialize(projected, initial.get_state().unpack()) == "s0"
-    assert tyr_serialization.table(projected, ground.StateBuilderShared) == [{}]
+    assert projected.serialize(initial.get_state().unpack()) == "s0"
+    assert projected.table(ground.StateBuilderShared) == [{}]
 
     reverse = Dictionaries()
-    tyr_serialization.register_table(
-        reverse,
+    reverse.register_table(
         ground.StateBuilderShared,
         "states",
         "s",
         project=lambda _state: {"program_state": initial},
     )
-    register_table(
-        reverse,
+    reverse.register_table(
         ext.ProgramStateGround,
         "program_states",
         "e",
         project=lambda value: {"state": value.get_state().unpack()},
     )
-    assert tyr_serialization.serialize(reverse, initial.get_state().unpack()) == "s0"
-    assert tyr_serialization.table(reverse, ground.StateBuilderShared) == [{"program_state": "e0"}]
-    assert table(reverse, ext.ProgramStateGround) == [{"state": "s0"}]
-    assert serialize(reverse, initial) == "e0"
+    assert reverse.serialize(initial.get_state().unpack()) == "s0"
+    assert reverse.table(ground.StateBuilderShared) == [{"program_state": "e0"}]
+    assert reverse.table(ext.ProgramStateGround) == [{"state": "s0"}]
+    assert reverse.serialize(initial) == "e0"

@@ -217,7 +217,7 @@ std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& trans
                                               std::span<const urd::data<ygg::ColumnLayout>> from,
                                               std::span<const urd::data<ygg::ColumnLayout>> to);
 std::optional<EdgeAbstraction>
-abstract_edges(dl::detail::QueryTranslator& translator, runir::kr::database::QueryView<> edges, const runir::kr::database::DistancePlan& plan);
+abstract_edges(dl::detail::QueryTranslator& translator, runir::kr::database::QueryView<> edges, const urd::data<runir::kr::database::DistancePlan>& plan);
 
 /// The pattern database heuristic of an abstraction; `slot_rows(slot)` returns a static slot's rows. The columns of
 /// u[i] and v[i] are found in each abstract edge query by label.
@@ -252,17 +252,17 @@ ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch
 template<runir::kr::database::SlotRelations SlotRows>
 ProjectionHeuristic make_projection_heuristic(ygg::FreeScratchRelations& scratch,
                                               const EdgeAbstraction& abstraction,
-                                              const runir::kr::database::DistancePlan& plan,
+                                              const urd::data<runir::kr::database::DistancePlan>& plan,
                                               ygg::uint_t num_objects,
                                               const SlotRows& slot_rows)
 {
-    const auto columns = plan.edge_columns();
+    const auto columns = std::span<const urd::data<ygg::ColumnLayout>>(plan.edge_columns);
     return make_projection_heuristic(scratch,
                                      abstraction,
-                                     columns.first(plan.arity()),
-                                     columns.subspan(plan.arity()),
-                                     plan.source_columns(),
-                                     plan.target_columns(),
+                                     columns.first(arity(plan)),
+                                     columns.subspan(arity(plan)),
+                                     plan.source_columns,
+                                     plan.target_columns,
                                      num_objects,
                                      slot_rows);
 }

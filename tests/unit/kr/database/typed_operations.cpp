@@ -43,7 +43,7 @@ void expect_delta(const kr::database::incremental::Delta& actual, const Relation
 {
     RelationBuilder added(after.columns());
     RelationBuilder removed(before.columns());
-    const kr::database::SetPlan plan(after.columns(), before.columns());
+    const auto plan = kr::database::make_set_plan(after.columns(), before.columns());
     kr::database::difference(borrow(after), borrow(before), plan, added);
     kr::database::difference(borrow(before), borrow(after), plan, removed);
     const auto [actual_added, actual_removed] = actual.change();
@@ -62,12 +62,12 @@ TEST(YggdrasilTests, DatabaseTypedProjectionConsolidatesWitnessesAndUndoesMixedC
     input.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(2)), ygg::encode_value(1.5), ygg::encode_value(true) });
     input.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(3)), ygg::encode_value(2.5), ygg::encode_value(false) });
 
-    const kr::database::ProjectionPlan plan(columns, std::array { ColumnIndex(3), ColumnIndex(2) });
+    const auto plan = kr::database::make_projection_plan(columns, std::array { ColumnIndex(3), ColumnIndex(2) });
     const ygg::FreeRelationRepository repository;
     kr::database::incremental::ProjectionEvaluator evaluator(scratch(), plan);
     kr::database::Workspace workspace;
     evaluator.initialize(borrow(input), workspace);
-    RelationBuilder initial(plan.output_columns());
+    RelationBuilder initial(plan.output_columns);
     kr::database::project(borrow(input), plan, initial, workspace);
     expect_same_rows(evaluator.get_result(), borrow(initial));
     ASSERT_EQ(initial.size(), 2);
@@ -80,7 +80,7 @@ TEST(YggdrasilTests, DatabaseTypedProjectionConsolidatesWitnessesAndUndoesMixedC
     changes.added.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(5)), ygg::encode_value(3.5), ygg::encode_value(false) });
     evaluator.update(changes.change(), workspace);
     apply_changes(input, changes);
-    RelationBuilder updated(plan.output_columns());
+    RelationBuilder updated(plan.output_columns);
     kr::database::project(borrow(input), plan, updated, workspace);
     expect_same_rows(evaluator.get_result(), borrow(updated));
     expect_delta(evaluator.get_delta(), initial, updated);
@@ -110,12 +110,12 @@ TEST(YggdrasilTests, DatabaseTypedJoinUpdatesBothInputsAndRepairsCompactedIndexe
     right_operand.insert(std::array { ygg::encode_value(true), ygg::encode_value(static_cast<ygg::uint_t>(1)), ygg::encode_value(10.0) });
     right_operand.insert(std::array { ygg::encode_value(false), ygg::encode_value(static_cast<ygg::uint_t>(2)), ygg::encode_value(20.0) });
     right_operand.insert(std::array { ygg::encode_value(true), ygg::encode_value(static_cast<ygg::uint_t>(3)), ygg::encode_value(30.0) });
-    const kr::database::JoinPlan plan(left_columns, right_columns);
+    const auto plan = kr::database::make_join_plan(left_columns, right_columns);
     const ygg::FreeRelationRepository repository;
     kr::database::incremental::JoinEvaluator evaluator(scratch(), plan);
     kr::database::Workspace workspace;
     evaluator.initialize(borrow(left_operand), borrow(right_operand), workspace);
-    RelationBuilder initial(plan.output_columns());
+    RelationBuilder initial(plan.output_columns);
     kr::database::join(borrow(left_operand), borrow(right_operand), plan, initial, workspace);
     expect_same_rows(evaluator.get_result(), borrow(initial));
     ASSERT_EQ(initial.size(), 3);
@@ -131,7 +131,7 @@ TEST(YggdrasilTests, DatabaseTypedJoinUpdatesBothInputsAndRepairsCompactedIndexe
     evaluator.update(left_changes.change(), right_changes.change(), workspace);
     apply_changes(left_operand, left_changes);
     apply_changes(right_operand, right_changes);
-    RelationBuilder updated(plan.output_columns());
+    RelationBuilder updated(plan.output_columns);
     kr::database::join(borrow(left_operand), borrow(right_operand), plan, updated, workspace);
     expect_same_rows(evaluator.get_result(), borrow(updated));
     expect_delta(evaluator.get_delta(), initial, updated);
@@ -165,12 +165,12 @@ TEST(YggdrasilTests, DatabaseTypedConstantSelectionUsesCanonicalFloatEquality)
     RelationBuilder result(columns);
     const ygg::FreeRelationRepository repository;
     kr::database::select_equal_value(borrow(input),
-                                     kr::database::SelectValuePlan(columns, ColumnIndex(1), ygg::type_id<double>, ygg::encode_value(-0.0)),
+                                     kr::database::make_select_value_plan(columns, ColumnIndex(1), ygg::type_id<double>, ygg::encode_value(-0.0)),
                                      result);
     ASSERT_EQ(result.size(), 1);
     EXPECT_TRUE(result.contains(std::array { ygg::encode_value(0.0), ygg::encode_value(ygg::uint_t(1)) }));
     kr::database::select_equal_value(borrow(input),
-                                     kr::database::SelectValuePlan(columns, ColumnIndex(1), ygg::type_id<double>, ygg::encode_value(second_nan)),
+                                     kr::database::make_select_value_plan(columns, ColumnIndex(1), ygg::type_id<double>, ygg::encode_value(second_nan)),
                                      result);
     ASSERT_EQ(result.size(), 1);
     EXPECT_TRUE(result.contains(std::array { ygg::encode_value(first_nan), ygg::encode_value(ygg::uint_t(2)) }));
@@ -191,14 +191,15 @@ TEST(YggdrasilTests, DatabaseTypedSchemaErrorsPreserveOperatorAndIncrementalResu
     const auto input_view = borrow(input);
     const auto wrong_view = borrow(wrong);
     // Plans of incompatible column types are refused when built; the output is untouched.
-    EXPECT_THROW((kr::database::JoinPlan(input_view.columns(), wrong_view.columns())), std::invalid_argument);
-    EXPECT_THROW((kr::database::SetPlan(input_view.columns(), wrong_view.columns())), std::invalid_argument);
-    EXPECT_THROW((kr::database::SelectEqualPlan(input_view.columns(), ColumnIndex(1), ColumnIndex(2))), std::invalid_argument);
-    EXPECT_THROW((kr::database::SelectValuePlan(input_view.columns(), ColumnIndex(1), ygg::type_id<double>, ygg::encode_value(1.0))), std::invalid_argument);
+    EXPECT_THROW((kr::database::make_join_plan(input_view.columns(), wrong_view.columns())), std::invalid_argument);
+    EXPECT_THROW((kr::database::make_set_plan(input_view.columns(), wrong_view.columns())), std::invalid_argument);
+    EXPECT_THROW((kr::database::make_select_equal_plan(input_view.columns(), ColumnIndex(1), ColumnIndex(2))), std::invalid_argument);
+    EXPECT_THROW((kr::database::make_select_value_plan(input_view.columns(), ColumnIndex(1), ygg::type_id<double>, ygg::encode_value(1.0))),
+                 std::invalid_argument);
     ASSERT_EQ(output.size(), 1);
     EXPECT_TRUE(output.contains(std::array { ygg::encode_value(ygg::uint_t(99)), ygg::encode_value(9.5) }));
 
-    const kr::database::ProjectionPlan plan(columns, std::array { ColumnIndex(1) });
+    const auto plan = kr::database::make_projection_plan(columns, std::array { ColumnIndex(1) });
     kr::database::incremental::ProjectionEvaluator evaluator(scratch(), plan);
     evaluator.initialize(input_view, workspace);
     EXPECT_TRUE(evaluator.get_result().contains(std::array { ygg::encode_value(ygg::uint_t(1)) }));

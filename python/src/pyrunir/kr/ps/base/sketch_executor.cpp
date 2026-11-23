@@ -27,17 +27,9 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
 {
     using Graph = SketchProofGraph<Kind>;
     using Results = SketchProofResults<Kind>;
-    using VertexLabel = SketchProofVertexLabel<Kind>;
+    using VertexLabel = urd::data<SketchProofVertexLabel<Kind>>;
 
-    auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "SketchProofVertexLabel").c_str())
-                            .def_ro("state", &VertexLabel::state, nb::rv_policy::copy, nb::keep_alive<0, 1>())
-                            .def_ro("is_initial", &VertexLabel::is_initial)
-                            .def_ro("is_goal", &VertexLabel::is_goal)
-                            .def_ro("is_alive", &VertexLabel::is_alive)
-                            .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
-    ygg::add_print(vertex_label);
-    urd::python::add_comparison(vertex_label);
-    urd::python::add_hash(vertex_label);
+    urd::python::bind_data<SketchProofVertexLabel<Kind>>(m);
 
     {
         auto graph = nb::class_<Graph>(m, (std::string(prefix) + "SketchProofGraph").c_str());
@@ -79,11 +71,7 @@ void bind_sketch_executor(nb::module_& m)
         .def_ro("num_expanded", &SketchSearchStatistics::num_expanded)
         .def_ro("num_generated", &SketchSearchStatistics::num_generated);
 
-    auto edge_label =
-        nb::class_<SketchProofEdgeLabel>(m, "SketchProofEdgeLabel").def_ro("action", &SketchProofEdgeLabel::action).def_ro("rule", &SketchProofEdgeLabel::rule);
-    ygg::add_print(edge_label);
-    urd::python::add_comparison(edge_label);
-    urd::python::add_hash(edge_label);
+    urd::python::bind_data<SketchProofEdgeLabel>(m);
 
     bind_sketch_proof_types<tyr::GroundTag>(m, "Ground");
     bind_sketch_proof_types<tyr::LiftedTag>(m, "Lifted");

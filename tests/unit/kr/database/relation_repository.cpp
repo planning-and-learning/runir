@@ -118,7 +118,7 @@ static_assert(std::same_as<decltype(std::declval<const ColumnsIndexView&>().inde
 
 template<typename T, typename L, typename R>
 concept CanJoinRelations =
-    requires(const L& left_operand, const R& right_operand, const kr::database::JoinPlan& plan, Relation& out, kr::database::Workspace& workspace) {
+    requires(const L& left_operand, const R& right_operand, const urd::data<kr::database::JoinPlan>& plan, Relation& out, kr::database::Workspace& workspace) {
         kr::database::join(left_operand, right_operand, plan, out, workspace);
     };
 
@@ -199,8 +199,8 @@ TEST(YggdrasilTests, DatabaseColumnsInternOrderedSchemasThroughDataAndIndexViews
     RelationBuilder rows(expected);
     rows.insert(cells(10, 20));
     const auto relation = runir::tests::ops::intern(repository, rows).first;
-    const kr::database::JoinPlan joining(relation.columns(), relation.columns());
-    const kr::database::ProjectionPlan projecting(relation.columns(), std::array { ColumnIndex(3), ColumnIndex(8) });
+    const auto joining = kr::database::make_join_plan(relation.columns(), relation.columns());
+    const auto projecting = kr::database::make_projection_plan(relation.columns(), std::array { ColumnIndex(3), ColumnIndex(8) });
     auto output = std::optional<Relation>(std::in_place, relation.columns());
     kr::database::Workspace workspace;
     kr::database::join(relation, relation, joining, *output, workspace);
@@ -299,7 +299,7 @@ TEST(YggdrasilTests, DatabaseRelationRepositorySharesRowsAcrossOverlappingRelati
     EXPECT_FALSE(second.contains(cells(10, 11)));
 
     RelationBuilder difference_builder { runir::tests::ops::cols({ ColumnIndex(1), ColumnIndex(2) }) };
-    kr::database::difference(second, first, kr::database::SetPlan(second.columns(), first.columns()), difference_builder);
+    kr::database::difference(second, first, kr::database::make_set_plan(second.columns(), first.columns()), difference_builder);
     expect_rows(difference_builder, { { 30, 31 } });
 }
 
@@ -338,17 +338,17 @@ TEST(YggdrasilTests, DatabaseRelationViewsMixBuildersDataAndInternedIndicesInOpe
 
     kr::database::Workspace workspace;
     RelationBuilder joined { runir::tests::ops::cols({ ColumnIndex(1), ColumnIndex(2), ColumnIndex(3) }) };
-    const kr::database::JoinPlan joining(left_operand.columns(), right_operand.columns());
+    const auto joining = kr::database::make_join_plan(left_operand.columns(), right_operand.columns());
     kr::database::join(left_builder_view, right_index_view, joining, joined, workspace);
     expect_rows(joined, { { 4, 40, 400 } });
 
     RelationBuilder projected { runir::tests::ops::cols({ ColumnIndex(3) }) };
-    kr::database::project(right_index_view, kr::database::ProjectionPlan(right_operand.columns(), std::array { ColumnIndex(3) }), projected, workspace);
+    kr::database::project(right_index_view, kr::database::make_projection_plan(right_operand.columns(), std::array { ColumnIndex(3) }), projected, workspace);
     expect_rows(projected, { { 400 }, { 600 } });
     RelationBuilder selected { runir::tests::ops::cols({ ColumnIndex(1), ColumnIndex(3) }) };
     kr::database::select(right_index_view, [](const auto& row) { return ygg::decode_value<ygg::uint_t>(value_of(row, 0)) == 4; }, selected);
     expect_rows(selected, { { 4, 400 } });
-    const kr::database::SetPlan sets(right_operand.columns(), right_operand.columns());
+    const auto sets = kr::database::make_set_plan(right_operand.columns(), right_operand.columns());
     kr::database::union_(right_index_view, right_index_view, sets, selected);
     expect_rows(selected, { { 4, 400 }, { 6, 600 } });
     kr::database::difference(right_index_view, right_index_view, sets, selected);
@@ -364,7 +364,7 @@ TEST(YggdrasilTests, DatabaseRelationViewsMixBuildersDataAndInternedIndicesInOpe
         [](const auto& row) { return row.index(); },
         [](const auto& row) { return row.index(); }));
     RelationBuilder renamed_projection { runir::tests::ops::cols({ ColumnIndex(30) }) };
-    const kr::database::ProjectionPlan to_30(labels, std::array { ColumnIndex(30) });
+    const auto to_30 = kr::database::make_projection_plan(labels, std::array { ColumnIndex(30) });
     kr::database::project(renamed, to_30, renamed_projection, workspace);
     expect_rows(renamed_projection, { { 400 }, { 600 } });
 
@@ -406,7 +406,7 @@ TEST(YggdrasilTests, DatabaseInternedRowsOutliveBuilderReuseAndRenamesShareStora
     RelationBuilder probe { runir::tests::ops::cols({ ColumnIndex(4), ColumnIndex(6) }) };
     probe.insert(cells(7, 700));
     RelationBuilder joined { runir::tests::ops::cols({ ColumnIndex(4), ColumnIndex(5), ColumnIndex(6) }) };
-    kr::database::JoinPlan plan(renamed.columns(), probe.columns());
+    auto plan = kr::database::make_join_plan(renamed.columns(), probe.columns());
     kr::database::Workspace workspace;
     kr::database::join(renamed, probe.view(), plan, joined, workspace);
     expect_rows(joined, { { 7, 70, 700 } });
