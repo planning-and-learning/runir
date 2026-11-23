@@ -59,11 +59,17 @@ struct RoleLayout
 template<ConceptOrRoleTag Category>
 using Layout = std::conditional_t<std::same_as<Category, ConceptTag>, ConceptLayout, RoleLayout>;
 
-/// The objects whose bits are set (a concept's bits, or a role's row): a borrowed range, holding only the bits.
-inline auto object_indices(urd::bitset_span<const ygg::uint_t> bits) noexcept
+/// The object a set bit names: its position.
+struct ObjectOfBit
 {
-    return urd::transform(urd::set_bit_indices(bits), [](std::size_t bit) { return urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit)); });
-}
+    [[nodiscard]] urd::index<tyr::formalism::Object> operator()(std::size_t bit) const noexcept
+    { return urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit)); }
+};
+
+/// The objects whose bits are set (a concept's bits, or a role's row): a borrowed range, holding only the bits.
+using ObjectIndices = urd::transformed_range<urd::set_bit_indices_view<ygg::uint_t>, ObjectOfBit>;
+
+inline ObjectIndices object_indices(urd::bitset_span<const ygg::uint_t> bits) noexcept { return urd::transform(urd::set_bit_indices(bits), ObjectOfBit {}); }
 
 /// The (source, target) pairs whose bits are set in a role's bits, a row of whole blocks per source.
 inline auto object_pair_indices(urd::bitset_span<const ygg::uint_t> bits, ygg::uint_t num_objects) noexcept

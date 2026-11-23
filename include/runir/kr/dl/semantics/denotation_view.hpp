@@ -131,9 +131,8 @@ public:
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return get_values().bits().elements(); }
 
-    // Its return type is spelled out, so that taking the address of `indices` in another category does not deduce it.
-    [[nodiscard]] auto indices(urd::index<tyr::formalism::Object> source) const
-        -> decltype(runir::kr::dl::semantics::detail::object_indices(std::declval<urd::bitset_span<const ygg::uint_t>>()))
+    /// The targets of `source` (a role's row): only a role denotation has rows.
+    [[nodiscard]] runir::kr::dl::semantics::detail::ObjectIndices indices(urd::index<tyr::formalism::Object> source) const
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     { return runir::kr::dl::semantics::detail::object_indices(value(source)); }
 
