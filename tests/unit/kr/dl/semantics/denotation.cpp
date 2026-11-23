@@ -70,7 +70,7 @@ using Concept = Denotation<kr::dl::ConceptTag>;
 using ConceptView = kr::dl::semantics::DenotationView<kr::dl::ConceptTag>;
 static_assert(requires(urd::data<Concept>& data, urd::builder<Concept, kr::dl::semantics::DenotationRepository>& builder, const ConceptView& view) {
     data.num_objects;
-    data.blocks;
+    data.values;
     builder.get();
     view.value();
 });
@@ -81,7 +81,7 @@ static_assert(requires(urd::data<Role>& data,
                        const RoleView& view,
                        urd::index<tyr::formalism::Object> object) {
     data.num_objects;
-    data.blocks;
+    data.values;
     builder.get(object);
     builder.storage_bits();
     view.value(object);

@@ -39,7 +39,6 @@ namespace runir::kr::dl::cnf_grammar
 
 using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, boost::mp11::mp_push_front<ConstructorRepositoryTypes, ConstructorRepository>>;
 
-using runir::kr::dl::detail::get_repository;
 using ygg::formalism::checkout;
 
 }

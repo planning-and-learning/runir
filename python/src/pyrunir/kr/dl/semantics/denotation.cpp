@@ -35,10 +35,6 @@ void bind_denotation_view(nb::module_& m)
 
 void bind_semantics_denotation(nb::module_& m)
 {
-    urd::python::bind_index<semantics::DenotationBlocks>(m);
-    urd::python::bind_data<semantics::DenotationBlocks>(m);
-    urd::python::bind_builder<semantics::DenotationBlocks, semantics::DenotationRepository>(m);
-    urd::python::bind_view<urd::index_view<semantics::DenotationBlocks, semantics::DenotationRepository>>(m);
     urd::python::bind_index<semantics::Denotation<BooleanTag>>(m);
     urd::python::bind_data<semantics::Denotation<BooleanTag>>(m);
     urd::python::bind_index<semantics::Denotation<NumericalTag>>(m);

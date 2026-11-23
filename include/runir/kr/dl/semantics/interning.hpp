@@ -11,15 +11,16 @@ namespace runir::kr::dl::semantics
 {
 
 /// `destination` holding `source` (a denotation or a builder's view of one): a concept's or role's words copied into
-/// its own, drawn from `storage`.
+/// its own (its buffer kept; `storage` holds no words of it).
 template<CategoryTag Category, typename Source>
     requires DenotationViewConcept<Source, Category>
-DenotationBuilder<Category>& assign(DenotationBuilder<Category>& destination, Source source, RecordStorage& storage)
+DenotationBuilder<Category>& assign(DenotationBuilder<Category>& destination, Source source, RecordStorage& /*storage*/)
 {
     if constexpr (ConceptOrRoleTag<Category>)
     {
-        destination.num_objects = source.get_num_objects();
-        detail::own_copied_words(destination.blocks, source.get_blocks(), storage);
+        const auto bits = source.get_values().bits();
+        destination.num_objects = bits.num_objects();
+        destination.values.assign(bits);
     }
     else
         destination.value = source.get_value();

@@ -53,14 +53,6 @@ public:
     using NestsBase::get_ptr;
 };
 
-template<FamilyTag Family, typename RepositoryTypes>
-inline const BasicRepository<Family, RepositoryTypes>& get_repository(const BasicRepository<Family, RepositoryTypes>& repository URD_LIFETIMEBOUND) noexcept
-{ return repository; }
-
-template<FamilyTag Family, typename RepositoryTypes>
-inline BasicRepository<Family, RepositoryTypes>& get_repository(BasicRepository<Family, RepositoryTypes>& repository) noexcept
-{ return repository; }
-
 }  // namespace runir::kr::ps
 
 #endif

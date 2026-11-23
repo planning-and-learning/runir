@@ -162,7 +162,7 @@ inline kr::database::QueryBuilder& builder()
 
 inline kr::database::QueryView<> require(const kr::database::QueryRepository& repository, kr::database::QueryView<> query)
 {
-    if (&get_repository(query.context()) != &repository)
+    if (&query.context() != &repository)
         throw std::invalid_argument("Query: operand belongs to another repository.");
     return query;
 }

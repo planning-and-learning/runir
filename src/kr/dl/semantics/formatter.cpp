@@ -148,6 +148,11 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<ds::Denotation<Cate
         static_assert(false, "unhandled DL denotation category");
 }
 
+template<dl::ConceptOrRoleTag Category>
+fmt::format_context::iterator fmt::formatter<ds::DenotationWords<Category>>::format(const ds::DenotationWords<Category>& value,
+                                                                                  fmt::format_context& context) const
+{ return fmt::format_to(context.out(), "[{}]", fmt::join(value.words, ", ")); }
+
 // Query<> and each query constructor tag (dl::QueryConstructorTags).
 template struct fmt::formatter<urd::index_view<dl::Query<>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Query<dl::AtomicStateTag<tyr::formalism::StaticTag>>, dl::ConstructorRepository>>;
@@ -187,6 +192,8 @@ template struct fmt::formatter<urd::index_view<dl::Constructor<dl::RoleTag>, dl:
 template struct fmt::formatter<urd::index_view<dl::Constructor<dl::BooleanTag>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<dl::Constructor<dl::NumericalTag>, dl::ConstructorRepository>>;
 template struct fmt::formatter<urd::index_view<ds::Denotation<dl::ConceptTag>, ds::DenotationRepository>>;
+template struct fmt::formatter<ds::DenotationWords<dl::ConceptTag>>;
+template struct fmt::formatter<ds::DenotationWords<dl::RoleTag>>;
 template struct fmt::formatter<urd::index_view<ds::Denotation<dl::RoleTag>, ds::DenotationRepository>>;
 template struct fmt::formatter<urd::index_view<ds::Denotation<dl::BooleanTag>, ds::DenotationRepository>>;
 template struct fmt::formatter<urd::index_view<ds::Denotation<dl::NumericalTag>, ds::DenotationRepository>>;

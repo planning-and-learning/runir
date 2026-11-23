@@ -306,7 +306,7 @@ void check_incremental_evaluation()
         const auto retained_view = initial.get_result();
         const ygg::uint_t* blocks = nullptr;
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
-            blocks = retained_view.get_blocks().data();
+            blocks = retained_view.storage_bits().data();
         expect_no_delta(initial);
         expect_unpublished();
         compare_full(initial, initial_context);
@@ -320,7 +320,7 @@ void check_incremental_evaluation()
             // get_delta() and changed() throw unless the root was updated from the delta.
             if constexpr (kr::dl::ConceptOrRoleTag<Category>)
             {
-                EXPECT_EQ(state.get_result().get_blocks().data(), blocks);
+                EXPECT_EQ(state.get_result().storage_bits().data(), blocks);
                 EXPECT_EQ(elements<Category>(retained_view), snapshot(state.get_result()));
                 EXPECT_TRUE(std::ranges::is_permutation(state.get_delta().added, difference(snapshot(state.get_result()), before)));
                 EXPECT_TRUE(std::ranges::is_permutation(state.get_delta().removed, difference(before, snapshot(state.get_result()))));
@@ -359,7 +359,8 @@ void check_incremental_evaluation()
         auto final_state = evaluator.initialize(final_context);
         expect_no_delta(final_state);
         expect_unpublished();
-        EXPECT_EQ(storage.get_denotation_repository(true).template size<kr::dl::semantics::DenotationBlocks>(), 0);
+        EXPECT_EQ(storage.get_denotation_repository(true).template size<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(), 0);
+        EXPECT_EQ(storage.get_denotation_repository(true).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
         EXPECT_EQ(storage.get_caches().template size<Category>(true), 0);
         compare_full(final_state, final_context);
 
@@ -641,8 +642,8 @@ void check_incremental_evaluation()
     compare_graph(initial, initial_context);
     const auto source_view = initial.evaluate(source_id);
     const auto edge_view = initial.evaluate(edge_id);
-    const auto* source_blocks = source_view.get_blocks().data();
-    const auto* edge_blocks = edge_view.get_blocks().data();
+    const auto* source_blocks = source_view.storage_bits().data();
+    const auto* edge_blocks = edge_view.storage_bits().data();
     // The previous state's query rows and scalars, read from its handle before entering the next state.
     auto before_query = query_rows(initial.evaluate(query_id));
     auto before_scalars = scalar_values(initial);
@@ -655,8 +656,8 @@ void check_incremental_evaluation()
         auto state = evaluation.enter(context, delta, workspace);
         demand_all(state);
         expect_unpublished();
-        EXPECT_EQ(source_view.get_blocks().data(), source_blocks);
-        EXPECT_EQ(edge_view.get_blocks().data(), edge_blocks);
+        EXPECT_EQ(source_view.storage_bits().data(), source_blocks);
+        EXPECT_EQ(edge_view.storage_bits().data(), edge_blocks);
         const auto after_source = elements<kr::dl::ConceptTag>(source_view);
         const auto after_edge = elements<kr::dl::RoleTag>(edge_view);
         EXPECT_TRUE(std::ranges::is_permutation(state.delta(source_id).added, difference(after_source, before_source)));

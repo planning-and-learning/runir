@@ -62,15 +62,6 @@ public:
     using NestsBase::get_ptr;
 };
 
-template<typename RepositoryTypes>
-inline const BasicConstructorRepository<RepositoryTypes>&
-get_repository(const BasicConstructorRepository<RepositoryTypes>& repository URD_LIFETIMEBOUND) noexcept
-{ return repository; }
-
-template<typename RepositoryTypes>
-inline BasicConstructorRepository<RepositoryTypes>& get_repository(BasicConstructorRepository<RepositoryTypes>& repository) noexcept
-{ return repository; }
-
 }  // namespace runir::kr::dl::detail
 
 #endif

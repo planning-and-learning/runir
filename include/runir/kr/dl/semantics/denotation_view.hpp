@@ -61,29 +61,6 @@ using DenotationElementView = typename DenotationElementType<Category>::Type;
 template<runir::kr::dl::CategoryTag Category>
 using DenotationElementViewList = urd::Store<urd::sequence<DenotationElementView<Category>>, urd::contiguous>;
 
-namespace detail
-{
-using DenotationBits = urd::bitset_span<const ygg::uint_t>;
-
-/// The objects whose bits are set (a concept's bits, or a role's row): a borrowed range, holding only the bits.
-inline auto object_indices(DenotationBits bits) noexcept
-{
-    return urd::transform(urd::set_bit_indices(bits), [](std::size_t bit) { return urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit)); });
-}
-
-/// The (source, target) pairs whose bits are set in a role's bits, a row of whole blocks per source.
-inline auto object_pair_indices(DenotationBits bits, ygg::uint_t num_objects) noexcept
-{
-    return urd::transform(urd::set_bit_indices(bits),
-                          static_cast<std::size_t>(DenotationBits::num_blocks(num_objects) * DenotationBits::Digits),
-                          [](std::size_t row_bits, std::size_t bit)
-                          {
-                              return std::pair(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit / row_bits)),
-                                               urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit % row_bits)));
-                          });
-}
-}  // namespace detail
-
 }  // namespace runir::kr::dl::semantics
 
 namespace urd
@@ -103,10 +80,11 @@ public:
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return self().template member<&urd::record_of<V>::num_objects>(); }
 
-    /// Its bitset's words, read from its interned blocks.
-    auto get_blocks() const
+    /// What it denotes, its words read in place (a stored record's, or a builder's), iterated as the views of its
+    /// objects (a concept's) or of its pairs of objects (a role's).
+    auto get_values() const
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return runir::kr::dl::semantics::detail::words(self().template member<&urd::record_of<V>::blocks>()); }
+    { return self().template member<&urd::record_of<V>::values>(); }
 
     // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
 
@@ -116,9 +94,8 @@ public:
         using Layout = runir::kr::dl::semantics::detail::ConceptLayout;
         using Bitset = urd::bitset_span<const ygg::uint_t>;
 
-        const auto vector = get_blocks();
-        assert(vector.size() == Layout::num_blocks(get_num_objects()));
-        return Bitset(vector.data(), Layout::num_bits(get_num_objects()));
+        const auto bits = get_values().bits();
+        return Bitset(bits.words().data(), Layout::num_bits(bits.num_objects()));
     }
 
     auto value(urd::index<::tyr::formalism::Object> object) const
@@ -127,10 +104,9 @@ public:
         using Layout = runir::kr::dl::semantics::detail::RoleLayout;
         using Bitset = urd::bitset_span<const ygg::uint_t>;
 
-        const auto vector = get_blocks();
-        assert(vector.size() == Layout::num_blocks(get_num_objects()));
-        assert(ygg::uint_t(object.value) < get_num_objects());
-        return Bitset(vector.data() + Layout::row_block_offset(object, get_num_objects()), get_num_objects());
+        const auto bits = get_values().bits();
+        assert(ygg::uint_t(object.value) < bits.num_objects());
+        return Bitset(bits.words().data() + Layout::row_block_offset(object, bits.num_objects()), bits.num_objects());
     }
 
     /// Whether `object` is in a concept's denotation.
@@ -146,23 +122,14 @@ public:
     /// Includes zero padding: trailing concept bits or padding after each role row.
     auto storage_bits() const
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        using Bitset = urd::bitset_span<const ygg::uint_t>;
-        const auto vector = get_blocks();
-        return Bitset(vector.data(), vector.size() * Bitset::Digits);
-    }
+    { return get_values().bits().storage_bits(); }
 
     /// Typed indices borrowing only the bits, independently of the view and range wrappers.
     // One function, not an overload per category: functions() takes its address, which deduces the return type of every
     // overload, and AppleClang does not mangle requires-clauses, so a concept and a role overload would share a symbol.
     auto indices() const
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return runir::kr::dl::semantics::detail::object_indices(storage_bits());
-        else
-            return runir::kr::dl::semantics::detail::object_pair_indices(storage_bits(), get_num_objects());
-    }
+    { return get_values().bits().elements(); }
 
     // Its return type is spelled out, so that taking the address of `indices` in another category does not deduce it.
     [[nodiscard]] auto indices(urd::index<tyr::formalism::Object> source) const
@@ -230,23 +197,6 @@ concept DenotationViewConcept =
     CategoryTag<Category>
     && (std::same_as<std::remove_cvref_t<V>, DenotationView<Category>> || std::same_as<std::remove_cvref_t<V>, DenotationBuilderView<Category>>);
 
-/// A denotation is serialized by what it denotes, not by its packed blocks: a Boolean or numerical one by its value, a
-/// concept or role one by its elements (pyyggdrasil.serialization).
-template<typename Archive, CategoryTag Category, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::index_view<Denotation<Category>, C>> /*type*/)
-{
-    if constexpr (BooleanOrNumericalTag<Category>)
-        ar.field("value", [](const auto& value) -> decltype(auto) { return (value.get_value()); });
-    else
-        ar.field("values",
-                 [](const auto& value)
-                 {
-                     auto elements = DenotationElementViewList<Category> {};
-                     for (auto element : value.views())
-                         elements.push_back(element);
-                     return elements;
-                 });
-}
 }  // namespace runir::kr::dl::semantics
 
 #endif

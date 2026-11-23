@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #ifndef RUNIR_DATASETS_OBJECT_GRAPH_REPOSITORY_HPP_
 #define RUNIR_DATASETS_OBJECT_GRAPH_REPOSITORY_HPP_
 
@@ -97,10 +96,6 @@ public:
 };
 
 using ColorView = urd::index_view<Color, ColorRepository>;
-
-inline const ColorRepository& get_repository(const ColorRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
-
-inline ColorRepository& get_repository(ColorRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 
 }  // namespace runir::datasets
 

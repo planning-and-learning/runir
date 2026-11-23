@@ -69,7 +69,7 @@ struct Words
 /// A builder's own words (initialize gave them).
 template<typename B>
 const auto& own_words(const B& builder)
-{ return (*std::get<urd::built_child<runir::kr::dl::semantics::DenotationBlocks, runir::kr::dl::semantics::DenotationRepository>>(builder.blocks)).words; }
+{ return builder.values.words; }
 
 }  // namespace runir::tests
 

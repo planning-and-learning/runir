@@ -81,4 +81,11 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::semantics::Denotation<Categ
            fmt::format_context& context) const;
 };
 
+/// A concept's or role's values as its record holds them: its words ([5, 0]).
+template<runir::kr::dl::ConceptOrRoleTag Category>
+struct fmt::formatter<runir::kr::dl::semantics::DenotationWords<Category>> : runir::detail::without_format_spec
+{
+    fmt::format_context::iterator format(const runir::kr::dl::semantics::DenotationWords<Category>& value, fmt::format_context& context) const;
+};
+
 #endif

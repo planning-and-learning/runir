@@ -67,10 +67,6 @@ public:
     using NestsBase::get_ptr;
 };
 
-template<ProgramFamilyTag Family, tyr::TaskKind Kind>
-inline const ExecutionRepository<Family, Kind>& get_repository(const ExecutionRepository<Family, Kind>& context URD_LIFETIMEBOUND) noexcept
-{ return context; }
-
 }  // namespace runir::kr::ps
 
 #endif

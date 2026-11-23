@@ -30,27 +30,21 @@ struct CallArguments
     static constexpr auto name = "CallArguments";
 };
 
-/// The words of a concept's or role's denotation, a bitset: a record of their own, which the denotation refers to by
-/// key (equal bitsets are interned once).
-struct DenotationBlocks
-{
-    static constexpr auto name = "DenotationBlocks";
-};
-
 template<CategoryTag Category>
 struct Denotation
 {
     static constexpr std::string_view name = urd::joined_name<"Denotation", Category::name>;
 };
 
+/// A concept's or role's values as its record holds them: its words (denotation_storage.hpp).
+template<ConceptOrRoleTag Category>
+struct DenotationWords;
+
 using DenotationTypes = boost::mp11::mp_list<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
-using DenotationRecordTypes = boost::mp11::mp_append<DenotationTypes, boost::mp11::mp_list<RegisterValues, CallArguments, DenotationBlocks>>;
+using DenotationRecordTypes = boost::mp11::mp_append<DenotationTypes, boost::mp11::mp_list<RegisterValues, CallArguments>>;
 
 class Builder;
 class DenotationRepository;
-/// The repository owning what is viewed through a DenotationRepository: itself (denotation_repository.hpp). Declared
-/// with the class, so that a view's constraints find it whenever they are first checked.
-const DenotationRepository& get_repository(const DenotationRepository& repository) noexcept;
 class EvaluationWorkspace;
 
 class DenotationCaches;

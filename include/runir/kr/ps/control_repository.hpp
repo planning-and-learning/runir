@@ -65,10 +65,6 @@ public:
     using NestsBase::get_ptr;
 };
 
-template<ProgramFamilyTag Family>
-inline const ControlRepository<Family>& get_repository(const ControlRepository<Family>& context URD_LIFETIMEBOUND) noexcept
-{ return context; }
-
 }  // namespace runir::kr::ps
 
 #endif

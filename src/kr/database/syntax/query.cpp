@@ -19,7 +19,7 @@ QueryView<> clone_query(QueryView<> source, std::span<const QueryView<>> childre
         throw std::invalid_argument("Query clone: wrong child count.");
     for (size_t i = 0; i < children.size(); ++i)
     {
-        if (&get_repository(children[i].context()) != &destination)
+        if (&children[i].context() != &destination)
             throw std::invalid_argument("Query clone: children must belong to the destination.");
         if (!std::ranges::equal(columns_of(children[i]), columns_of(original[i])))
             throw std::invalid_argument("Query clone: a child's columns differ from the original's.");
@@ -42,12 +42,12 @@ urd::Store<urd::sequence<QueryView<>>> reachable(std::span<const QueryView<>> ro
 {
     if (roots.empty())
         return {};
-    const auto& repository = get_repository(roots.front().context());
+    const auto& repository = roots.front().context();
     urd::Store<urd::set<urd::index<Query<>>>, urd::dense> seen;
     urd::Store<urd::sequence<QueryView<>>> pending;
     for (const auto root : roots)
     {
-        if (&get_repository(root.context()) != &repository || root.index().value >= repository.size())
+        if (&root.context() != &repository || root.index().value >= repository.size())
             throw std::invalid_argument("Query: roots must belong to one repository.");
         pending.push_back(root);
     }
