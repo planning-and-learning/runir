@@ -19,7 +19,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::ext::Module>
 {
-    urd::index<runir::kr::ps::ext::Module> index;
+    urd::key<runir::kr::ps::ext::Module> index;
     urd::index<runir::kr::ps::ModuleSymbol<runir::kr::ExtFamilyTag>> symbol;
     urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>> concept_arguments;
     urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>> role_arguments;
@@ -142,6 +142,8 @@ struct data<runir::kr::ps::ext::Module>
                             &data::memory_transitions,
                             &data::datalog> {};
     }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Module> key() const noexcept { return urd::key<runir::kr::ps::ext::Module>(index); }
 };
 
 }  // namespace urd

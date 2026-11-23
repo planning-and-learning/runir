@@ -20,7 +20,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
 {
-    urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> index;
+    urd::key<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> index;
     urd::flat_string symbol;
     runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag> conditions;
     runir::kr::ps::EffectList<runir::kr::BaseFamilyTag> effects;
@@ -49,6 +49,9 @@ struct data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::conditions, &data::effects> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::conditions, &data::effects> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(index); }
 };
 
 }  // namespace urd

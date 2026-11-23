@@ -17,7 +17,7 @@ namespace urd
 template<typename F, typename C>
 struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>, C>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>> index;
     urd::built_t<typename F::Argument, C> operand;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &builder::operand>> {}; }
@@ -29,7 +29,7 @@ struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>, C>
 template<typename F, typename C>
 struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>, C>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &builder::operand>> {}; }
@@ -41,7 +41,7 @@ struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>, C>
 template<typename F, typename C>
 struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>, C>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>> index;
     urd::built_t<typename F::Vertex, C> sources;
     urd::built_t<typename F::Edge, C> edges;
     urd::built_t<typename F::Vertex, C> targets;
@@ -56,7 +56,7 @@ struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>, C>
 {
-    urd::index<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>> index;
+    urd::key<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>> index;
     urd::built_t<runir::kr::dl::SemanticFamily::Vertex, C> sources;
     urd::built_t<runir::kr::dl::SemanticFamily::Edge, C> edges;
     urd::built_t<runir::kr::dl::SemanticFamily::Vertex, C> targets;
@@ -77,7 +77,7 @@ struct builder<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr
 template<typename F, typename C>
 struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>, C>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> index;
     urd::built_t<urd::index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>, C> argument;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"argument", &builder::argument>> {}; }
@@ -89,7 +89,7 @@ struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr:
 template<typename F, typename C>
 struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>, C>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>> index;
     urd::built_t<ygg::uint_t, C> value = 0;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"value", &builder::value>> {}; }
@@ -101,7 +101,7 @@ struct builder<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>,
 template<typename F, runir::kr::dl::NumericalBinaryTag Tag, typename C>
 struct builder<runir::kr::dl::Numerical<F, Tag>, C>
 {
-    urd::index<runir::kr::dl::Numerical<F, Tag>> index;
+    urd::key<runir::kr::dl::Numerical<F, Tag>> index;
     urd::built_t<runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag>, C> left_operand;
     urd::built_t<runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag>, C> right_operand;
 

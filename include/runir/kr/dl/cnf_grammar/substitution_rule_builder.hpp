@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct builder<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>
 {
-    urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>> index;
+    urd::key<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>> index;
     urd::built_t<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>>, C> lhs;
     urd::built_t<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>>, C> rhs;
 

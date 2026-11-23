@@ -7,8 +7,8 @@
 #include <concepts>
 #include <ranges>
 #include <runir/kr/database/datalog/view.hpp>
-#include <runir/kr/database/semantics/distance.hpp>
-#include <runir/kr/database/semantics/generic_join.hpp>
+#include <runir/kr/database/semantics/distance_plan.hpp>
+#include <runir/kr/database/semantics/generic_join_plan.hpp>
 #include <runir/kr/database/semantics/plans.hpp>
 #include <span>
 #include <stdexcept>

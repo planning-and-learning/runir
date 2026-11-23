@@ -20,6 +20,7 @@
 #include <span>
 #include <stdexcept>
 #include <urd/config.hpp>
+#include <urd/repr/maps/postings.hpp>
 #include <urd/repr/pools/pools.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>

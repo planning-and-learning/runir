@@ -18,7 +18,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::base::Sketch, C>
 {
-    urd::index<runir::kr::ps::base::Sketch> index;
+    urd::key<runir::kr::ps::base::Sketch> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, C> boolean_features;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, C> numerical_features;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>>, C> rules;

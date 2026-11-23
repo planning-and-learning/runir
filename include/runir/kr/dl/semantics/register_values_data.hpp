@@ -25,7 +25,7 @@ namespace urd
 template<>
 struct data<runir::kr::dl::semantics::RegisterValues>
 {
-    urd::index<runir::kr::dl::semantics::RegisterValues> index;
+    urd::key<runir::kr::dl::semantics::RegisterValues> index;
     urd::flat_vector<urd::flat_optional<urd::index<tyr::formalism::Object>>> concept_values;
     urd::flat_vector<urd::flat_optional<urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>> role_values;
 
@@ -51,6 +51,8 @@ struct data<runir::kr::dl::semantics::RegisterValues>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::concept_values, &data::role_values> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concept_values, &data::role_values> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::semantics::RegisterValues> key() const noexcept { return urd::key<runir::kr::dl::semantics::RegisterValues>(index); }
 };
 
 }  // namespace urd

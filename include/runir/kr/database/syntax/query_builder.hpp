@@ -34,7 +34,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::database::Query<>, C>
 {
-    urd::index<runir::kr::database::Query<>> index;
+    urd::key<runir::kr::database::Query<>> index;
     urd::built_t<urd::index_variant<boost::mp11::mp_transform<runir::kr::database::Query, runir::kr::database::QueryConstructorTags>>, C> variant;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"variant", &builder::variant>> {}; }
@@ -46,7 +46,7 @@ struct builder<runir::kr::database::Query<>, C>
 template<typename C>
 struct builder<runir::kr::database::Query<runir::kr::database::QueryInputTag>, C>
 {
-    urd::index<runir::kr::database::Query<runir::kr::database::QueryInputTag>> index;
+    urd::key<runir::kr::database::Query<runir::kr::database::QueryInputTag>> index;
     urd::built_t<size_t, C> input_slot = 0;
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> columns;
 
@@ -59,7 +59,7 @@ struct builder<runir::kr::database::Query<runir::kr::database::QueryInputTag>, C
 template<typename C>
 struct builder<runir::kr::database::Query<runir::kr::database::QueryEmptyTag>, C>
 {
-    urd::index<runir::kr::database::Query<runir::kr::database::QueryEmptyTag>> index;
+    urd::key<runir::kr::database::Query<runir::kr::database::QueryEmptyTag>> index;
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> columns;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"columns", &builder::columns>> {}; }
@@ -72,7 +72,7 @@ template<typename Tag, typename C>
     requires boost::mp11::mp_contains<runir::kr::database::QueryJoinTags, Tag>::value
 struct builder<runir::kr::database::Query<Tag>, C>
 {
-    urd::index<runir::kr::database::Query<Tag>> index;
+    urd::key<runir::kr::database::Query<Tag>> index;
     urd::built_t<urd::index<runir::kr::database::Query<>>, C> left_operand;
     urd::built_t<urd::index<runir::kr::database::Query<>>, C> right_operand;
     urd::built_t<runir::kr::database::JoinPlan, C> plan;
@@ -92,7 +92,7 @@ template<typename Tag, typename C>
     requires boost::mp11::mp_contains<runir::kr::database::QuerySetTags, Tag>::value
 struct builder<runir::kr::database::Query<Tag>, C>
 {
-    urd::index<runir::kr::database::Query<Tag>> index;
+    urd::key<runir::kr::database::Query<Tag>> index;
     urd::built_t<urd::index<runir::kr::database::Query<>>, C> left_operand;
     urd::built_t<urd::index<runir::kr::database::Query<>>, C> right_operand;
     urd::built_t<runir::kr::database::SetPlan, C> plan;
@@ -111,7 +111,7 @@ struct builder<runir::kr::database::Query<Tag>, C>
 template<typename C>
 struct builder<runir::kr::database::Query<runir::kr::database::QueryProjectTag>, C>
 {
-    urd::index<runir::kr::database::Query<runir::kr::database::QueryProjectTag>> index;
+    urd::key<runir::kr::database::Query<runir::kr::database::QueryProjectTag>> index;
     urd::built_t<urd::index<runir::kr::database::Query<>>, C> operand;
     urd::built_t<urd::flat_vector<urd::index<ygg::Column>>, C> labels;
     urd::built_t<runir::kr::database::ProjectionPlan, C> plan;
@@ -126,7 +126,7 @@ struct builder<runir::kr::database::Query<runir::kr::database::QueryProjectTag>,
 template<typename C>
 struct builder<runir::kr::database::Query<runir::kr::database::QueryRenameTag>, C>
 {
-    urd::index<runir::kr::database::Query<runir::kr::database::QueryRenameTag>> index;
+    urd::key<runir::kr::database::Query<runir::kr::database::QueryRenameTag>> index;
     urd::built_t<urd::index<runir::kr::database::Query<>>, C> operand;
     urd::built_t<urd::flat_vector<urd::index<ygg::Column>>, C> labels;
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> columns;
@@ -141,7 +141,7 @@ struct builder<runir::kr::database::Query<runir::kr::database::QueryRenameTag>, 
 template<typename C>
 struct builder<runir::kr::database::Query<runir::kr::database::QuerySelectEqualTag>, C>
 {
-    urd::index<runir::kr::database::Query<runir::kr::database::QuerySelectEqualTag>> index;
+    urd::key<runir::kr::database::Query<runir::kr::database::QuerySelectEqualTag>> index;
     urd::built_t<urd::index<runir::kr::database::Query<>>, C> operand;
     urd::built_t<urd::index<ygg::Column>, C> left_column;
     urd::built_t<urd::index<ygg::Column>, C> right_column;
@@ -162,7 +162,7 @@ struct builder<runir::kr::database::Query<runir::kr::database::QuerySelectEqualT
 template<typename C>
 struct builder<runir::kr::database::Query<runir::kr::database::QuerySelectValueTag>, C>
 {
-    urd::index<runir::kr::database::Query<runir::kr::database::QuerySelectValueTag>> index;
+    urd::key<runir::kr::database::Query<runir::kr::database::QuerySelectValueTag>> index;
     urd::built_t<urd::index<runir::kr::database::Query<>>, C> operand;
     urd::built_t<urd::index<ygg::Column>, C> column;
     urd::built_t<ygg::Value, C> constant = 0;
@@ -186,7 +186,7 @@ struct builder<runir::kr::database::Query<runir::kr::database::QuerySelectValueT
 template<typename C>
 struct builder<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>, C>
 {
-    urd::index<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>> index;
+    urd::key<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::database::Query<>>>, C> inputs;
     urd::built_t<urd::flat_vector<urd::index<ygg::Column>>, C> variable_order;
     urd::built_t<urd::flat_vector<urd::index<ygg::Column>>, C> output_order;

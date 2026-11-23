@@ -18,7 +18,7 @@ namespace urd
 template<>
 struct data<runir::kr::dl::semantics::DenotationBlocks>
 {
-    urd::index<runir::kr::dl::semantics::DenotationBlocks> index;
+    urd::key<runir::kr::dl::semantics::DenotationBlocks> index;
     urd::flat_vector<ygg::uint_t> words;
 
     data() = default;
@@ -36,12 +36,15 @@ struct data<runir::kr::dl::semantics::DenotationBlocks>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::words> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::semantics::DenotationBlocks> key() const noexcept
+    { return urd::key<runir::kr::dl::semantics::DenotationBlocks>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 {
-    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>> index;
     bool value = false;
 
     data() = default;
@@ -59,12 +62,15 @@ struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
 {
-    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> index;
     ygg::uint_t value = 0;
 
     data() = default;
@@ -82,12 +88,15 @@ struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 {
-    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
     ygg::uint_t num_objects = 0;
     urd::index<runir::kr::dl::semantics::DenotationBlocks> blocks;
 
@@ -106,12 +115,15 @@ struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::num_objects, &data::blocks> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::num_objects, &data::blocks> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 {
-    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
     ygg::uint_t num_objects = 0;
     urd::index<runir::kr::dl::semantics::DenotationBlocks> blocks;
 
@@ -130,6 +142,9 @@ struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::num_objects, &data::blocks> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::num_objects, &data::blocks> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>(index); }
 };
 
 }

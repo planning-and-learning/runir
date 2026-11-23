@@ -18,7 +18,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::uns::ClassifierLiteral, C>
 {
-    urd::index<runir::kr::uns::ClassifierLiteral> index;
+    urd::key<runir::kr::uns::ClassifierLiteral> index;
     urd::built_t<runir::kr::uns::ClassifierLiteralVariant, C> feature;
     urd::built_t<bool, C> polarity = true;
 
@@ -31,7 +31,7 @@ struct builder<runir::kr::uns::ClassifierLiteral, C>
 template<typename C>
 struct builder<runir::kr::uns::ClassifierClause, C>
 {
-    urd::index<runir::kr::uns::ClassifierClause> index;
+    urd::key<runir::kr::uns::ClassifierClause> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::uns::ClassifierLiteral>>, C> literals;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"literals", &builder::literals>> {}; }
@@ -43,7 +43,7 @@ struct builder<runir::kr::uns::ClassifierClause, C>
 template<typename C>
 struct builder<runir::kr::uns::Classifier, C>
 {
-    urd::index<runir::kr::uns::Classifier> index;
+    urd::key<runir::kr::uns::Classifier> index;
     urd::built_t<urd::flat_string, C> symbol;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>, C> features;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::uns::ClassifierClause>>, C> clauses;

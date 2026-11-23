@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct builder<runir::kr::dl::grammar::DerivationRule<Category>, C>
 {
-    urd::index<runir::kr::dl::grammar::DerivationRule<Category>> index;
+    urd::key<runir::kr::dl::grammar::DerivationRule<Category>> index;
     urd::built_t<urd::index<runir::kr::dl::grammar::NonTerminal<Category>>, C> lhs;
     urd::built_t<urd::flat_vector<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>>, C> rhs;
 

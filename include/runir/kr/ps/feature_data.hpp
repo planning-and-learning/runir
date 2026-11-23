@@ -25,7 +25,7 @@ namespace urd
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct data<runir::kr::ps::Feature<Family, FeatureTag>>
 {
-    urd::index<runir::kr::ps::Feature<Family, FeatureTag>> index;
+    urd::key<runir::kr::ps::Feature<Family, FeatureTag>> index;
     runir::kr::ps::FeatureVariant<Family, FeatureTag> variant;
 
     data() = default;
@@ -43,6 +43,9 @@ struct data<runir::kr::ps::Feature<Family, FeatureTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::Feature<Family, FeatureTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::Feature<Family, FeatureTag>>(index); }
 };
 
 }  // namespace urd

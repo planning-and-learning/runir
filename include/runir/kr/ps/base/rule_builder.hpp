@@ -18,7 +18,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>
 {
-    urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> index;
+    urd::key<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> index;
     urd::built_t<urd::flat_string, C> symbol;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag>, C> conditions;
     urd::built_t<runir::kr::ps::EffectList<runir::kr::BaseFamilyTag>, C> effects;

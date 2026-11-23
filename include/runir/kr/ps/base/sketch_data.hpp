@@ -18,7 +18,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::base::Sketch>
 {
-    urd::index<runir::kr::ps::base::Sketch> index;
+    urd::key<runir::kr::ps::base::Sketch> index;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features;
     urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>> rules;
@@ -51,6 +51,8 @@ struct data<runir::kr::ps::base::Sketch>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::boolean_features, &data::numerical_features, &data::rules> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::boolean_features, &data::numerical_features, &data::rules> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::base::Sketch> key() const noexcept { return urd::key<runir::kr::ps::base::Sketch>(index); }
 };
 
 }  // namespace urd

@@ -24,7 +24,7 @@ template<runir::kr::ps::icp::BindingRuleKind Kind>
     requires std::is_same_v<Kind, runir::kr::ps::icp::LoadTag<runir::kr::ps::icp::RuleCategoryFor<Kind>>>
 struct data<runir::kr::ps::icp::Rule<Kind>>
 {
-    urd::index<runir::kr::ps::icp::Rule<Kind>> index;
+    urd::key<runir::kr::ps::icp::Rule<Kind>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
@@ -71,12 +71,14 @@ struct data<runir::kr::ps::icp::Rule<Kind>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::icp::Rule<Kind>> key() const noexcept { return urd::key<runir::kr::ps::icp::Rule<Kind>>(index); }
 };
 
 template<>
 struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
 {
-    urd::index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>> index;
+    urd::key<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
@@ -140,6 +142,9 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
                             &data::xconditions,
                             &data::xeffects> {};
     }
+
+    [[nodiscard]] urd::key<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>(index); }
 };
 
 }  // namespace urd

@@ -19,7 +19,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::dl::semantics::CallArguments, C>
 {
-    urd::index<runir::kr::dl::semantics::CallArguments> index;
+    urd::key<runir::kr::dl::semantics::CallArguments> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>>,
                  ::runir::kr::dl::semantics::DenotationRepository>
         concept_arguments;

@@ -14,7 +14,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category>
 struct data<runir::kr::dl::cnf_grammar::DerivationRule<Category>>
 {
-    urd::index<runir::kr::dl::cnf_grammar::DerivationRule<Category>> index;
+    urd::key<runir::kr::dl::cnf_grammar::DerivationRule<Category>> index;
     urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs;
     runir::kr::dl::cnf_grammar::Constructor<Category> rhs;
 
@@ -38,6 +38,9 @@ struct data<runir::kr::dl::cnf_grammar::DerivationRule<Category>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::lhs, &data::rhs> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::rhs> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::cnf_grammar::DerivationRule<Category>> key() const noexcept
+    { return urd::key<runir::kr::dl::cnf_grammar::DerivationRule<Category>>(index); }
 };
 
 }

@@ -21,7 +21,7 @@ template<runir::kr::FamilyTag Family,
          typename C>
 struct builder<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>, C>
 {
-    urd::index<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>> index;
+    urd::key<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>> index;
     urd::built_t<urd::index<runir::kr::ps::Feature<Family, FeatureTag>>, C> feature;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"feature", &builder::feature>> {}; }

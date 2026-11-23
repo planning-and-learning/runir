@@ -15,7 +15,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::icp::XCondition>
 {
-    urd::index<runir::kr::ps::icp::XCondition> index;
+    urd::key<runir::kr::ps::icp::XCondition> index;
     runir::kr::ps::icp::ConditionOperation operation {};
     urd::flat_variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object;
     urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature;
@@ -44,6 +44,8 @@ struct data<runir::kr::ps::icp::XCondition>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operation, &data::object, &data::feature> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operation, &data::object, &data::feature> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::icp::XCondition> key() const noexcept { return urd::key<runir::kr::ps::icp::XCondition>(index); }
 };
 
 }  // namespace urd

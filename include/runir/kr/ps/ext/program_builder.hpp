@@ -18,7 +18,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::ext::Program, C>
 {
-    urd::index<runir::kr::ps::ext::Program> index;
+    urd::key<runir::kr::ps::ext::Program> index;
     urd::built_t<urd::index<runir::kr::ps::ext::Module>, C> entry_mod;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::ps::ext::Module>>, C> modules;
 

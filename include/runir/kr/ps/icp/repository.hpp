@@ -31,6 +31,7 @@
 
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::kr::ps::icp
 {
@@ -39,7 +40,10 @@ using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, boost::mp1
 
 using ygg::formalism::checkout;
 
-
 }
+
+// Its symbols' reads, finds and inserts instantiated once, where the library instantiates the repository (brokkr's
+// include rule I7): a file that reads records through it completes none of its stores.
+YGG_FORMALISM_SYMBOL_CONTEXT(extern, runir::kr::ps::icp::Repository, 30)
 
 #endif

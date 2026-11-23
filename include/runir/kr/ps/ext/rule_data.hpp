@@ -27,7 +27,7 @@ template<runir::kr::ps::ext::BindingRuleKind Kind>
     requires std::is_same_v<Kind, runir::kr::ps::ext::LoadTag<runir::kr::ps::ext::RuleCategoryFor<Kind>>>
 struct data<runir::kr::ps::ext::Rule<Kind>>
 {
-    urd::index<runir::kr::ps::ext::Rule<Kind>> index;
+    urd::key<runir::kr::ps::ext::Rule<Kind>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
@@ -74,13 +74,15 @@ struct data<runir::kr::ps::ext::Rule<Kind>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Rule<Kind>> key() const noexcept { return urd::key<runir::kr::ps::ext::Rule<Kind>>(index); }
 };
 
 template<runir::kr::ps::ext::BindingRuleKind Kind>
     requires std::is_same_v<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::ps::ext::RuleCategoryFor<Kind>>>
 struct data<runir::kr::ps::ext::Rule<Kind>>
 {
-    urd::index<runir::kr::ps::ext::Rule<Kind>> index;
+    urd::key<runir::kr::ps::ext::Rule<Kind>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
@@ -132,12 +134,14 @@ struct data<runir::kr::ps::ext::Rule<Kind>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects, &data::order> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Rule<Kind>> key() const noexcept { return urd::key<runir::kr::ps::ext::Rule<Kind>>(index); }
 };
 
 template<>
 struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
@@ -174,12 +178,15 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
@@ -225,12 +232,15 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::arguments> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
@@ -276,12 +286,15 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::query_feature> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
@@ -323,12 +336,15 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::callee, &data::arguments> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
 
@@ -352,6 +368,9 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::source, &data::conditions> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>(index); }
 };
 
 }  // namespace urd

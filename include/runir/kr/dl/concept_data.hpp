@@ -14,7 +14,7 @@ namespace urd
 template<typename F, runir::kr::dl::NullaryConceptTag Tag>
 struct data<runir::kr::dl::Concept<F, Tag>>
 {
-    urd::index<runir::kr::dl::Concept<F, Tag>> index;
+    urd::key<runir::kr::dl::Concept<F, Tag>> index;
 
     data() = default;
     data(const data& other) = delete;
@@ -28,13 +28,15 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Concept<F, Tag>>(index); }
 };
 
 template<typename F, typename Tag>
     requires runir::kr::dl::is_atomic_state_tag_v<Tag>
 struct data<runir::kr::dl::Concept<F, Tag>>
 {
-    urd::index<runir::kr::dl::Concept<F, Tag>> index;
+    urd::key<runir::kr::dl::Concept<F, Tag>> index;
     urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate;
 
     data() = default;
@@ -52,13 +54,15 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Concept<F, Tag>>(index); }
 };
 
 template<typename F, typename Tag>
     requires runir::kr::dl::is_atomic_goal_tag_v<Tag>
 struct data<runir::kr::dl::Concept<F, Tag>>
 {
-    urd::index<runir::kr::dl::Concept<F, Tag>> index;
+    urd::key<runir::kr::dl::Concept<F, Tag>> index;
     urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate;
     bool polarity = false;
 
@@ -82,12 +86,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::polarity> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Concept<F, Tag>>(index); }
 };
 
 template<typename F, runir::kr::dl::ConceptBinaryTag Tag>
 struct data<runir::kr::dl::Concept<F, Tag>>
 {
-    urd::index<runir::kr::dl::Concept<F, Tag>> index;
+    urd::key<runir::kr::dl::Concept<F, Tag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> left_operand;
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> right_operand;
 
@@ -112,12 +118,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Concept<F, Tag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>>
 {
-    urd::index<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>> index;
+    urd::key<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> operand;
 
     data() = default;
@@ -135,12 +143,15 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>>(index); }
 };
 
 template<typename F, runir::kr::dl::QuantificationTag Tag>
 struct data<runir::kr::dl::Concept<F, Tag>>
 {
-    urd::index<runir::kr::dl::Concept<F, Tag>> index;
+    urd::key<runir::kr::dl::Concept<F, Tag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role;
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier;
 
@@ -164,12 +175,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::role, &data::qualifier> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Concept<F, Tag>>(index); }
 };
 
 template<typename F, runir::kr::dl::NumberRestrictionTag Tag>
 struct data<runir::kr::dl::Concept<F, Tag>>
 {
-    urd::index<runir::kr::dl::Concept<F, Tag>> index;
+    urd::key<runir::kr::dl::Concept<F, Tag>> index;
     ygg::uint_t n = 0;
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role;
 
@@ -188,12 +201,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::n, &data::role> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Concept<F, Tag>>(index); }
 };
 
 template<typename F, runir::kr::dl::QualifiedNumberRestrictionTag Tag>
 struct data<runir::kr::dl::Concept<F, Tag>>
 {
-    urd::index<runir::kr::dl::Concept<F, Tag>> index;
+    urd::key<runir::kr::dl::Concept<F, Tag>> index;
     ygg::uint_t n = 0;
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role;
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier;
@@ -220,12 +235,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::n, &data::role, &data::qualifier> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Concept<F, Tag>>(index); }
 };
 
 template<typename F, runir::kr::dl::RoleComparisonTag Tag>
 struct data<runir::kr::dl::Concept<F, Tag>>
 {
-    urd::index<runir::kr::dl::Concept<F, Tag>> index;
+    urd::key<runir::kr::dl::Concept<F, Tag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> left_operand;
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> right_operand;
 
@@ -250,12 +267,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Concept<F, Tag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>>
 {
-    urd::index<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>> index;
+    urd::key<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role;
     urd::flat_vector<urd::index<tyr::formalism::Object>> objects;
 
@@ -279,12 +298,15 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::role, &data::objects> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>>
 {
-    urd::index<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>> index;
+    urd::key<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>> index;
     urd::flat_vector<urd::index<tyr::formalism::Object>> objects;
 
     data() = default;
@@ -302,12 +324,15 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::objects> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>>
 {
-    urd::index<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>> index;
+    urd::key<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>> index;
     urd::index<tyr::formalism::Object> object;
 
     data() = default;
@@ -325,12 +350,15 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::object> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>>
 {
-    urd::index<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>> index;
+    urd::key<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>> index;
     urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> slot;
 
     data() = default;
@@ -348,12 +376,15 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::slot> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>
 {
-    urd::index<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> index;
+    urd::key<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> index;
     urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> argument;
 
     data() = default;
@@ -371,6 +402,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::argument> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> key() const noexcept
+    { return urd::key<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(index); }
 };
 
 }  // namespace urd

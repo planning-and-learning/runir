@@ -15,7 +15,7 @@ namespace urd
 template<runir::kr::ps::ProgramFamilyTag Family>
 struct data<runir::kr::ps::MemoryState<Family>>
 {
-    urd::index<runir::kr::ps::MemoryState<Family>> index;
+    urd::key<runir::kr::ps::MemoryState<Family>> index;
     urd::flat_string name;
 
     data() = default;
@@ -33,6 +33,8 @@ struct data<runir::kr::ps::MemoryState<Family>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::name> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::MemoryState<Family>> key() const noexcept { return urd::key<runir::kr::ps::MemoryState<Family>>(index); }
 };
 
 }  // namespace urd

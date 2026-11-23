@@ -26,11 +26,13 @@
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/indexed.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/row_view.hpp>
+#include <yggdrasil/formalism/symbol_context_impl.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::datasets

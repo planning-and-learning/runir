@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag, typename C>
 struct builder<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, C>
 {
-    urd::index<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>> index;
+    urd::key<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>> index;
     urd::built_t<urd::index<runir::kr::ps::Feature<Family, FeatureTag>>, C> feature;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"feature", &builder::feature>> {}; }

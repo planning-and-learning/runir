@@ -1,6 +1,7 @@
 #ifndef PYRUNIR_KR_PS_DL_BINDING_UTILS_HPP_
 #define PYRUNIR_KR_PS_DL_BINDING_UTILS_HPP_
 
+#include "pyrunir/conversions.hpp"
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 #include "pyrunir/module.hpp"
 

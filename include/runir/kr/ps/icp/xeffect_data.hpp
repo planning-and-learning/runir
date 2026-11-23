@@ -15,7 +15,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::icp::XEffect>
 {
-    urd::index<runir::kr::ps::icp::XEffect> index;
+    urd::key<runir::kr::ps::icp::XEffect> index;
     runir::kr::ps::icp::EffectOperation operation {};
     urd::flat_variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object;
     urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature;
@@ -44,6 +44,8 @@ struct data<runir::kr::ps::icp::XEffect>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operation, &data::object, &data::feature> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operation, &data::object, &data::feature> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::icp::XEffect> key() const noexcept { return urd::key<runir::kr::ps::icp::XEffect>(index); }
 };
 
 }  // namespace urd

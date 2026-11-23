@@ -17,7 +17,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::database::datalog::Relation, C>
 {
-    urd::index<runir::kr::database::datalog::Relation> index;
+    urd::key<runir::kr::database::datalog::Relation> index;
     urd::built_t<size_t, C> id = 0;
     urd::built_t<size_t, C> arity = 0;
     urd::built_t<bool, C> input = false;
@@ -42,7 +42,7 @@ struct builder<runir::kr::database::datalog::Relation, C>
 template<typename C>
 struct builder<runir::kr::database::datalog::Atom, C>
 {
-    urd::index<runir::kr::database::datalog::Atom> index;
+    urd::key<runir::kr::database::datalog::Atom> index;
     urd::built_t<urd::index<runir::kr::database::datalog::Relation>, C> relation;
     urd::built_t<urd::flat_vector<runir::kr::database::datalog::Term>, C> terms;
 
@@ -55,7 +55,7 @@ struct builder<runir::kr::database::datalog::Atom, C>
 template<typename C>
 struct builder<runir::kr::database::datalog::Aggregate, C>
 {
-    urd::index<runir::kr::database::datalog::Aggregate> index;
+    urd::key<runir::kr::database::datalog::Aggregate> index;
     urd::built_t<runir::kr::database::datalog::AggregateFunction, C> function = runir::kr::database::datalog::AggregateFunction::COUNT;
     urd::built_t<ygg::uint_t, C> result = 0;
     urd::built_t<ygg::uint_t, C> value = 0;
@@ -82,7 +82,7 @@ struct builder<runir::kr::database::datalog::Aggregate, C>
 template<typename C>
 struct builder<runir::kr::database::datalog::Rule, C>
 {
-    urd::index<runir::kr::database::datalog::Rule> index;
+    urd::key<runir::kr::database::datalog::Rule> index;
     urd::built_t<urd::index<runir::kr::database::datalog::Atom>, C> head;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::database::datalog::Atom>>, C> atoms;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::database::datalog::Atom>>, C> negated;
@@ -107,7 +107,7 @@ struct builder<runir::kr::database::datalog::Rule, C>
 template<typename C>
 struct builder<runir::kr::database::datalog::Program, C>
 {
-    urd::index<runir::kr::database::datalog::Program> index;
+    urd::key<runir::kr::database::datalog::Program> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::database::datalog::Rule>>, C> rules;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"rules", &builder::rules>> {}; }

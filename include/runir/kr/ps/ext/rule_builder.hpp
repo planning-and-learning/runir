@@ -20,7 +20,7 @@ template<runir::kr::ps::ext::BindingRuleKind Kind, typename C>
     requires std::is_same_v<Kind, runir::kr::ps::ext::LoadTag<runir::kr::ps::ext::RuleCategoryFor<Kind>>>
 struct builder<runir::kr::ps::ext::Rule<Kind>, C>
 {
-    urd::index<runir::kr::ps::ext::Rule<Kind>> index;
+    urd::key<runir::kr::ps::ext::Rule<Kind>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> source;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> target;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag>, C> conditions;
@@ -46,7 +46,7 @@ template<runir::kr::ps::ext::BindingRuleKind Kind, typename C>
     requires std::is_same_v<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::ps::ext::RuleCategoryFor<Kind>>>
 struct builder<runir::kr::ps::ext::Rule<Kind>, C>
 {
-    urd::index<runir::kr::ps::ext::Rule<Kind>> index;
+    urd::key<runir::kr::ps::ext::Rule<Kind>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> source;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> target;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag>, C> conditions;
@@ -73,7 +73,7 @@ struct builder<runir::kr::ps::ext::Rule<Kind>, C>
 template<typename C>
 struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>, C>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> source;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> target;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag>, C> conditions;
@@ -94,7 +94,7 @@ struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>, C>
 template<typename C>
 struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>, C>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> source;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> target;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag>, C> conditions;
@@ -119,7 +119,7 @@ struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>, C>
 template<typename C>
 struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>, C>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> source;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> target;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag>, C> conditions;
@@ -144,7 +144,7 @@ struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>, C>
 template<typename C>
 struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>, C>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> source;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> target;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag>, C> conditions;
@@ -167,7 +167,7 @@ struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>, C>
 template<typename C>
 struct builder<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>, C>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>> index;
+    urd::key<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, C> source;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag>, C> conditions;
 

@@ -17,7 +17,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::dl::semantics::DenotationBlocks, C>
 {
-    urd::index<runir::kr::dl::semantics::DenotationBlocks> index;
+    urd::key<runir::kr::dl::semantics::DenotationBlocks> index;
     urd::built_t<urd::flat_vector<ygg::uint_t>, C> words;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"words", &builder::words>> {}; }

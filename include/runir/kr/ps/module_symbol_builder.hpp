@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::ps::ProgramFamilyTag Family, typename C>
 struct builder<runir::kr::ps::ModuleSymbol<Family>, C>
 {
-    urd::index<runir::kr::ps::ModuleSymbol<Family>> index;
+    urd::key<runir::kr::ps::ModuleSymbol<Family>> index;
     urd::built_t<urd::flat_string, C> name;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"name", &builder::name>> {}; }

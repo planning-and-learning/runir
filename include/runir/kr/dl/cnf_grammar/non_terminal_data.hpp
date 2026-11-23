@@ -15,7 +15,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category>
 struct data<runir::kr::dl::cnf_grammar::NonTerminal<Category>>
 {
-    urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
+    urd::key<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
     urd::flat_string name;
 
     data() = default;
@@ -33,6 +33,9 @@ struct data<runir::kr::dl::cnf_grammar::NonTerminal<Category>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::name> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::cnf_grammar::NonTerminal<Category>> key() const noexcept
+    { return urd::key<runir::kr::dl::cnf_grammar::NonTerminal<Category>>(index); }
 };
 
 }

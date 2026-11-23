@@ -22,7 +22,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::icp::Histories>
 {
-    urd::index<runir::kr::ps::icp::Histories> index;
+    urd::key<runir::kr::ps::icp::Histories> index;
     urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>> concepts;
 
     data() = default;
@@ -40,12 +40,14 @@ struct data<runir::kr::ps::icp::Histories>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::concepts> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concepts> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::icp::Histories> key() const noexcept { return urd::key<runir::kr::ps::icp::Histories>(index); }
 };
 
 template<tyr::TaskKind Kind>
 struct data<runir::kr::ps::icp::ProgramState<Kind>>
 {
-    urd::index<runir::kr::ps::icp::ProgramState<Kind>> index;
+    urd::key<runir::kr::ps::icp::ProgramState<Kind>> index;
     urd::index<runir::kr::ps::icp::Program> program;
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
@@ -89,6 +91,8 @@ struct data<runir::kr::ps::icp::ProgramState<Kind>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::icp::ProgramState<Kind>> key() const noexcept { return urd::key<runir::kr::ps::icp::ProgramState<Kind>>(index); }
 };
 
 }  // namespace urd

@@ -21,7 +21,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::icp::Module>
 {
-    urd::index<runir::kr::ps::icp::Module> index;
+    urd::key<runir::kr::ps::icp::Module> index;
     urd::index<runir::kr::ps::ModuleSymbol<runir::kr::IcpFamilyTag>> symbol;
     urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> concept_registers;
     urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>> role_registers;
@@ -120,6 +120,8 @@ struct data<runir::kr::ps::icp::Module>
                             &data::memory_transitions,
                             &data::reset_pairs> {};
     }
+
+    [[nodiscard]] urd::key<runir::kr::ps::icp::Module> key() const noexcept { return urd::key<runir::kr::ps::icp::Module>(index); }
 };
 
 }  // namespace urd

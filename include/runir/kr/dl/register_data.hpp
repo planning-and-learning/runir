@@ -15,7 +15,7 @@ namespace urd
 template<runir::kr::dl::ConceptOrRoleTag Category>
 struct data<runir::kr::dl::Register<Category>>
 {
-    urd::index<runir::kr::dl::Register<Category>> index;
+    urd::key<runir::kr::dl::Register<Category>> index;
     urd::flat_string name;
     runir::kr::dl::RegisterIdentifier<Category> identifier;
 
@@ -34,6 +34,8 @@ struct data<runir::kr::dl::Register<Category>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name, &data::identifier> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Register<Category>> key() const noexcept { return urd::key<runir::kr::dl::Register<Category>>(index); }
 };
 
 }  // namespace urd

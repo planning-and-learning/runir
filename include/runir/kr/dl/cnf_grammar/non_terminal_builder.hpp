@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct builder<runir::kr::dl::cnf_grammar::NonTerminal<Category>, C>
 {
-    urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
+    urd::key<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
     urd::built_t<urd::flat_string, C> name;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"name", &builder::name>> {}; }

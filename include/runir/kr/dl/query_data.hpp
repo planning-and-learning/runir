@@ -34,7 +34,7 @@ namespace urd
 template<>
 struct data<runir::kr::dl::QueryColumn>
 {
-    urd::index<runir::kr::dl::QueryColumn> index;
+    urd::key<runir::kr::dl::QueryColumn> index;
     urd::flat_string name {};
 
     data() = default;
@@ -52,6 +52,8 @@ struct data<runir::kr::dl::QueryColumn>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::name> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::QueryColumn> key() const noexcept { return urd::key<runir::kr::dl::QueryColumn>(index); }
 };
 
 // A query's derived fields (its schema, or its columns and plan, and a query's is_static) are computed from its other
@@ -59,7 +61,7 @@ struct data<runir::kr::dl::QueryColumn>
 template<>
 struct data<runir::kr::dl::Query<void>>
 {
-    urd::index<runir::kr::dl::Query<>> index;
+    urd::key<runir::kr::dl::Query<>> index;
     runir::kr::dl::QueryVariant variant;
     bool is_static = false;
 
@@ -78,12 +80,14 @@ struct data<runir::kr::dl::Query<void>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant, &data::is_static> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<>> key() const noexcept { return urd::key<runir::kr::dl::Query<>>(index); }
 };
 
 template<typename T>
 struct data<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
     urd::index<tyr::formalism::Predicate<T>> predicate {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
@@ -112,12 +116,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>(index); }
 };
 
 template<typename T>
 struct data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>> index;
     urd::index<tyr::formalism::Predicate<T>> predicate {};
     bool polarity {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
@@ -154,12 +161,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::polarity, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::polarity, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> index;
     urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
@@ -188,12 +198,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>> index;
     urd::index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
@@ -222,12 +235,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>> index;
     urd::index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
@@ -256,12 +272,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;
     urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
@@ -290,12 +309,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>> index;
     urd::index<runir::kr::dl::Query<>> left_operand {};
     urd::index<runir::kr::dl::Query<>> right_operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
@@ -333,13 +355,16 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::left_operand, &data::right_operand, &data::columns, &data::plan> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>(index); }
 };
 
 template<typename Tag>
     requires boost::mp11::mp_contains<runir::kr::dl::QuerySetTags, Tag>::value
 struct data<runir::kr::dl::Query<Tag>>
 {
-    urd::index<runir::kr::dl::Query<Tag>> index;
+    urd::key<runir::kr::dl::Query<Tag>> index;
     urd::index<runir::kr::dl::Query<>> left_operand {};
     urd::index<runir::kr::dl::Query<>> right_operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
@@ -377,12 +402,14 @@ struct data<runir::kr::dl::Query<Tag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::left_operand, &data::right_operand, &data::columns, &data::plan> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<Tag>> key() const noexcept { return urd::key<runir::kr::dl::Query<Tag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> index;
     urd::index<runir::kr::dl::Query<>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     runir::kr::database::ProjectionPlan plan {};
@@ -411,12 +438,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::plan> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> index;
     urd::index<runir::kr::dl::Query<>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
@@ -445,12 +475,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>> index;
     urd::index<runir::kr::dl::Query<>> operand {};
     urd::index<runir::kr::dl::QueryColumn> left_column {};
     urd::index<runir::kr::dl::QueryColumn> right_column {};
@@ -492,12 +525,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::operand, &data::left_column, &data::right_column, &data::columns, &data::plan> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>> index;
     urd::index<runir::kr::dl::Query<>> operand {};
     urd::index<runir::kr::dl::QueryColumn> column {};
     urd::index<tyr::formalism::Object> object {};
@@ -539,12 +575,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::operand, &data::column, &data::object, &data::columns, &data::plan> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>> index;
     urd::flat_vector<urd::index<runir::kr::dl::Query<>>> args {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> variable_order {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> output_order {};
@@ -586,12 +625,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::args, &data::variable_order, &data::output_order, &data::columns, &data::plan> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     urd::flat_vector<urd::data<ygg::ColumnLayout>> schema {};
 
@@ -615,12 +657,15 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>(index); }
 };
 
 template<runir::kr::dl::ConceptOrRoleTag Category>
 struct data<runir::kr::dl::QueryProjection<Category>>
 {
-    urd::index<runir::kr::dl::QueryProjection<Category>> index;
+    urd::key<runir::kr::dl::QueryProjection<Category>> index;
     urd::index<runir::kr::dl::Query<>> operand {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
     runir::kr::database::ProjectionPlan plan {};
@@ -649,13 +694,15 @@ struct data<runir::kr::dl::QueryProjection<Category>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::plan> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::QueryProjection<Category>> key() const noexcept { return urd::key<runir::kr::dl::QueryProjection<Category>>(index); }
 };
 
 /// A Datalog program over the repository's DatalogRepository whose input slot s reads the rows of inputs[s].
 template<>
 struct data<runir::kr::dl::DatalogProgram>
 {
-    urd::index<runir::kr::dl::DatalogProgram> index;
+    urd::key<runir::kr::dl::DatalogProgram> index;
     ygg::uint_t program {};
     urd::flat_vector<urd::index<runir::kr::dl::Query<>>> inputs {};
     /// The heads that features read (q_head); only these are evaluated, so the others may be evaluated partially.
@@ -691,12 +738,14 @@ struct data<runir::kr::dl::DatalogProgram>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::program, &data::inputs, &data::outputs> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::program, &data::inputs, &data::outputs, &data::is_static> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::DatalogProgram> key() const noexcept { return urd::key<runir::kr::dl::DatalogProgram>(index); }
 };
 
 template<>
 struct data<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>> index;
     urd::index<runir::kr::dl::DatalogProgram> program {};
     ygg::uint_t relation {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
@@ -733,6 +782,9 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::program, &data::relation, &data::columns> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::program, &data::relation, &data::columns, &data::schema> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>>(index); }
 };
 
 }  // namespace urd

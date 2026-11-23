@@ -30,7 +30,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>, C>
 {
-    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>> index;
     urd::built_t<bool, C> value = false;
 
     void initialize(bool value_) noexcept
@@ -52,7 +52,7 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>, 
 template<typename C>
 struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>, C>
 {
-    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> index;
     urd::built_t<ygg::uint_t, C> value = 0;
 
     void initialize(ygg::uint_t value_) noexcept
@@ -186,7 +186,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>, C>
 {
-    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
     urd::built_t<ygg::uint_t, C> num_objects = 0;
     urd::built_t<urd::index<runir::kr::dl::semantics::DenotationBlocks>, C> blocks;
 
@@ -237,7 +237,7 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>, 
 template<typename C>
 struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>, C>
 {
-    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
     urd::built_t<ygg::uint_t, C> num_objects = 0;
     urd::built_t<urd::index<runir::kr::dl::semantics::DenotationBlocks>, C> blocks;
 

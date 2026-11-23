@@ -21,7 +21,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::dl::QueryColumn, C>
 {
-    urd::index<runir::kr::dl::QueryColumn> index;
+    urd::key<runir::kr::dl::QueryColumn> index;
     urd::built_t<urd::flat_string, C> name {};
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"name", &builder::name>> {}; }
@@ -33,7 +33,7 @@ struct builder<runir::kr::dl::QueryColumn, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<void>, C>
 {
-    urd::index<runir::kr::dl::Query<>> index;
+    urd::key<runir::kr::dl::Query<>> index;
     urd::built_t<runir::kr::dl::QueryVariant, C> variant;
     urd::built_t<bool, C> is_static = false;
 
@@ -46,7 +46,7 @@ struct builder<runir::kr::dl::Query<void>, C>
 template<typename T, typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
     urd::built_t<urd::index<tyr::formalism::Predicate<T>>, ::tyr::formalism::Repository> predicate {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
@@ -61,7 +61,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>, C>
 template<typename T, typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>> index;
     urd::built_t<urd::index<tyr::formalism::Predicate<T>>, ::tyr::formalism::Repository> predicate {};
     urd::built_t<bool, C> polarity {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
@@ -82,7 +82,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
@@ -97,7 +97,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
@@ -112,7 +112,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> left_operand {};
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> right_operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
@@ -134,7 +134,7 @@ template<typename Tag, typename C>
     requires boost::mp11::mp_contains<runir::kr::dl::QuerySetTags, Tag>::value
 struct builder<runir::kr::dl::Query<Tag>, C>
 {
-    urd::index<runir::kr::dl::Query<Tag>> index;
+    urd::key<runir::kr::dl::Query<Tag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> left_operand {};
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> right_operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
@@ -155,7 +155,7 @@ struct builder<runir::kr::dl::Query<Tag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<runir::kr::database::ProjectionPlan, C> plan {};
@@ -170,7 +170,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
@@ -185,7 +185,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::index<runir::kr::dl::QueryColumn>, C> left_column {};
     urd::built_t<urd::index<runir::kr::dl::QueryColumn>, C> right_column {};
@@ -208,7 +208,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::index<runir::kr::dl::QueryColumn>, C> column {};
     urd::built_t<urd::index<tyr::formalism::Object>, ::tyr::formalism::Repository> object {};
@@ -231,7 +231,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::Query<>>>, C> args {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> variable_order {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> output_order {};
@@ -254,7 +254,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
 
@@ -267,7 +267,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>, C>
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 struct builder<runir::kr::dl::QueryProjection<Category>, C>
 {
-    urd::index<runir::kr::dl::QueryProjection<Category>> index;
+    urd::key<runir::kr::dl::QueryProjection<Category>> index;
     urd::built_t<urd::index<runir::kr::dl::Query<>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<runir::kr::database::ProjectionPlan, C> plan {};
@@ -282,7 +282,7 @@ struct builder<runir::kr::dl::QueryProjection<Category>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
@@ -297,7 +297,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>> index;
     urd::built_t<urd::index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>, C> operand {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};
     urd::built_t<urd::flat_vector<urd::data<ygg::ColumnLayout>>, C> schema {};
@@ -312,7 +312,7 @@ struct builder<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>, C>
 template<typename C>
 struct builder<runir::kr::dl::DatalogProgram, C>
 {
-    urd::index<runir::kr::dl::DatalogProgram> index;
+    urd::key<runir::kr::dl::DatalogProgram> index;
     urd::built_t<ygg::uint_t, C> program {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::Query<>>>, C> inputs {};
     urd::built_t<urd::flat_vector<ygg::uint_t>, C> outputs {};
@@ -333,7 +333,7 @@ struct builder<runir::kr::dl::DatalogProgram, C>
 template<typename C>
 struct builder<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>, C>
 {
-    urd::index<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>> index;
+    urd::key<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>> index;
     urd::built_t<urd::index<runir::kr::dl::DatalogProgram>, C> program {};
     urd::built_t<ygg::uint_t, C> relation {};
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>>, C> columns {};

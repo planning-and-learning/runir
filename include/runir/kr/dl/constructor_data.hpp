@@ -31,7 +31,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category>
 struct data<runir::kr::dl::Constructor<Category>>
 {
-    urd::index<runir::kr::dl::Constructor<Category>> index;
+    urd::key<runir::kr::dl::Constructor<Category>> index;
     runir::kr::dl::detail::ConstructorDataVariant<Category> variant;
     bool is_static = false;
 
@@ -51,6 +51,8 @@ struct data<runir::kr::dl::Constructor<Category>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant, &data::is_static> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Constructor<Category>> key() const noexcept { return urd::key<runir::kr::dl::Constructor<Category>>(index); }
 };
 
 }  // namespace urd

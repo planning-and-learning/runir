@@ -19,7 +19,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::ext::Module, C>
 {
-    urd::index<runir::kr::ps::ext::Module> index;
+    urd::key<runir::kr::ps::ext::Module> index;
     urd::built_t<urd::index<runir::kr::ps::ModuleSymbol<runir::kr::ExtFamilyTag>>, C> symbol;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>>, ::runir::kr::dl::ConstructorRepository> concept_arguments;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>>, ::runir::kr::dl::ConstructorRepository> role_arguments;

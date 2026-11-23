@@ -23,7 +23,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::ext::ModuleState>
 {
-    urd::index<runir::kr::ps::ext::ModuleState> index;
+    urd::key<runir::kr::ps::ext::ModuleState> index;
     urd::index<runir::kr::ps::ext::Module> mod;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
@@ -61,13 +61,15 @@ struct data<runir::kr::ps::ext::ModuleState>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::ModuleState> key() const noexcept { return urd::key<runir::kr::ps::ext::ModuleState>(index); }
 };
 
 /// A frame: the suspended activation (its memory state the one to return to) and its caller.
 template<>
 struct data<runir::kr::ps::ext::CallStack>
 {
-    urd::index<runir::kr::ps::ext::CallStack> index;
+    urd::key<runir::kr::ps::ext::CallStack> index;
     urd::index<runir::kr::ps::ext::ModuleState> module_state;
     urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller;
 
@@ -91,6 +93,8 @@ struct data<runir::kr::ps::ext::CallStack>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::module_state, &data::caller> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::CallStack> key() const noexcept { return urd::key<runir::kr::ps::ext::CallStack>(index); }
 };
 
 /// A program state: its planning state, activation and call stack (its program is its creator's: an expander's, an
@@ -98,7 +102,7 @@ struct data<runir::kr::ps::ext::CallStack>
 template<tyr::TaskKind Kind>
 struct data<runir::kr::ps::ext::ProgramState<Kind>>
 {
-    urd::index<runir::kr::ps::ext::ProgramState<Kind>> index;
+    urd::key<runir::kr::ps::ext::ProgramState<Kind>> index;
     urd::index<tyr::planning::State<Kind>> state;
     urd::index<runir::kr::ps::ext::ModuleState> module_state;
     urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack;
@@ -127,6 +131,8 @@ struct data<runir::kr::ps::ext::ProgramState<Kind>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::state, &data::module_state, &data::call_stack> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::ProgramState<Kind>> key() const noexcept { return urd::key<runir::kr::ps::ext::ProgramState<Kind>>(index); }
 };
 
 }  // namespace urd

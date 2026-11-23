@@ -23,7 +23,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::ext::ModuleState, C>
 {
-    urd::index<runir::kr::ps::ext::ModuleState> index;
+    urd::key<runir::kr::ps::ext::ModuleState> index;
     urd::built_t<urd::index<runir::kr::ps::ext::Module>, ::runir::kr::ps::ext::Repository> mod;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>, ::runir::kr::ps::ext::Repository> memory_state;
     urd::built_t<urd::index<runir::kr::dl::semantics::RegisterValues>, ::runir::kr::dl::semantics::DenotationRepository> registers;
@@ -44,7 +44,7 @@ struct builder<runir::kr::ps::ext::ModuleState, C>
 template<typename C>
 struct builder<runir::kr::ps::ext::CallStack, C>
 {
-    urd::index<runir::kr::ps::ext::CallStack> index;
+    urd::key<runir::kr::ps::ext::CallStack> index;
     urd::built_t<urd::index<runir::kr::ps::ext::ModuleState>, C> module_state;
     urd::built_t<urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>>, C> caller;
 
@@ -58,7 +58,7 @@ struct builder<runir::kr::ps::ext::CallStack, C>
 template<tyr::TaskKind Kind, typename C>
 struct builder<runir::kr::ps::ext::ProgramState<Kind>, C>
 {
-    urd::index<runir::kr::ps::ext::ProgramState<Kind>> index;
+    urd::key<runir::kr::ps::ext::ProgramState<Kind>> index;
     urd::built_t<urd::index<tyr::planning::State<Kind>>, ::tyr::planning::StateRepository<Kind>> state;
     urd::built_t<urd::index<runir::kr::ps::ext::ModuleState>, ::runir::kr::ps::ext::ControlRepository> module_state;
     urd::built_t<urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>>, ::runir::kr::ps::ext::ControlRepository> call_stack;

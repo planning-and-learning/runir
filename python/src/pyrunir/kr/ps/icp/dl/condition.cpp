@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/conversions.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 #include "pyrunir/module.hpp"
 

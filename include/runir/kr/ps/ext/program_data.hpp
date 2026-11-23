@@ -16,7 +16,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::ext::Program>
 {
-    urd::index<runir::kr::ps::ext::Program> index;
+    urd::key<runir::kr::ps::ext::Program> index;
     urd::index<runir::kr::ps::ext::Module> entry_mod;
     urd::flat_vector<urd::index<runir::kr::ps::ext::Module>> modules;
 
@@ -40,6 +40,8 @@ struct data<runir::kr::ps::ext::Program>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::entry_mod, &data::modules> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::entry_mod, &data::modules> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::Program> key() const noexcept { return urd::key<runir::kr::ps::ext::Program>(index); }
 };
 
 }  // namespace urd

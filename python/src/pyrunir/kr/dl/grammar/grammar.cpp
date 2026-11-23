@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/conversions.hpp"
 #include "pyrunir/module.hpp"
 
 #include <nanobind/stl/string.h>

@@ -27,7 +27,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::ext::OrderTerm>
 {
-    urd::index<runir::kr::ps::ext::OrderTerm> index;
+    urd::key<runir::kr::ps::ext::OrderTerm> index;
     runir::kr::ps::ext::OrderDirection direction = runir::kr::ps::ext::OrderDirection::MIN;
     runir::kr::ps::ext::OrderTermFeature feature;
 
@@ -51,6 +51,8 @@ struct data<runir::kr::ps::ext::OrderTerm>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::direction, &data::feature> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::direction, &data::feature> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ext::OrderTerm> key() const noexcept { return urd::key<runir::kr::ps::ext::OrderTerm>(index); }
 };
 
 }  // namespace urd

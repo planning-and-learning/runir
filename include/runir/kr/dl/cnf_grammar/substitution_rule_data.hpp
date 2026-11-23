@@ -14,7 +14,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category>
 struct data<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>
 {
-    urd::index<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>> index;
+    urd::key<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>> index;
     urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs;
     urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> rhs;
 
@@ -38,6 +38,9 @@ struct data<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::lhs, &data::rhs> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::rhs> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>> key() const noexcept
+    { return urd::key<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>(index); }
 };
 
 }

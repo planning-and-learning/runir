@@ -13,7 +13,6 @@
 #include "runir/kr/dl/detail/constructor_repository.hpp"
 #include "runir/kr/dl/numerical_builder.hpp"
 #include "runir/kr/dl/query_builder.hpp"
-#include "runir/kr/dl/query_construction.hpp"
 #include "runir/kr/dl/register_builder.hpp"
 #include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/dl/role_builder.hpp"
@@ -23,6 +22,7 @@
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::kr::dl
 {
@@ -32,15 +32,10 @@ using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, boost::mp1
 using runir::kr::dl::detail::get_repository;
 using ygg::formalism::checkout;
 
-template<typename T>
-    requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-void prepare_for_insert(const ConstructorRepository& repository, urd::data<T>& data)
-{
-    using ygg::formalism::canonicalize;  // the default, for a kind without a canonical form of its own
-    canonicalize(data);
-    detail::prepare(data, repository);
 }
 
-}
+// Its symbols' reads, finds and inserts instantiated once, where the library instantiates the repository (brokkr's
+// include rule I7): a file that reads records through it completes none of its stores.
+YGG_FORMALISM_SYMBOL_CONTEXT(extern, runir::kr::dl::ConstructorRepository, 114)
 
 #endif

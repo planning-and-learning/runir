@@ -1,12 +1,12 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 
-#include "tyr/formalism/repository.hpp"
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/register_values_view.hpp"
+#include "tyr/formalism/repository.hpp"
 
 #include <cassert>
 #include <memory>
@@ -23,6 +23,7 @@
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/nested.hpp>
 #include <yggdrasil/formalism/symbol_context.hpp>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -73,7 +74,10 @@ public:
 /// A repository owns the records viewed through it.
 inline const DenotationRepository& get_repository(const DenotationRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 
-
 }
+
+// Its symbols' reads, finds and inserts instantiated once, where the library instantiates the repository (brokkr's
+// include rule I7): a file that reads records through it completes none of its stores.
+YGG_FORMALISM_SYMBOL_CONTEXT(extern, runir::kr::dl::semantics::DenotationRepository, 7)
 
 #endif

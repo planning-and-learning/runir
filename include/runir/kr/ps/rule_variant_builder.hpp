@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::ps::ProgramFamilyTag Family, typename C>
 struct builder<runir::kr::ps::Rule<Family>, C>
 {
-    urd::index<runir::kr::ps::Rule<Family>> index;
+    urd::key<runir::kr::ps::Rule<Family>> index;
     urd::built_t<urd::flat_string, C> symbol;
     urd::built_t<runir::kr::ps::RuleVariant<Family>, C> variant;
 

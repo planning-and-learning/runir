@@ -1,5 +1,6 @@
 #include "../module.hpp"
 #include "bindings.hpp"
+#include "pyrunir/conversions.hpp"
 #include "pyrunir/module.hpp"
 
 #include <nanobind/stl/variant.h>

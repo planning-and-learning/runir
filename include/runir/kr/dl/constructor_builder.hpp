@@ -17,7 +17,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct builder<runir::kr::dl::Constructor<Category>, C>
 {
-    urd::index<runir::kr::dl::Constructor<Category>> index;
+    urd::key<runir::kr::dl::Constructor<Category>> index;
     urd::built_t<runir::kr::dl::detail::ConstructorDataVariant<Category>, C> variant;
     urd::built_t<bool, C> is_static = false;
 

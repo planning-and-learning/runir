@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct builder<runir::kr::dl::Argument<Category>, C>
 {
-    urd::index<runir::kr::dl::Argument<Category>> index;
+    urd::key<runir::kr::dl::Argument<Category>> index;
     urd::built_t<urd::flat_string, C> name;
     urd::built_t<runir::kr::dl::ArgumentIdentifier<Category>, C> identifier;
 

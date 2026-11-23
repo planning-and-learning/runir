@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 struct builder<runir::kr::dl::Register<Category>, C>
 {
-    urd::index<runir::kr::dl::Register<Category>> index;
+    urd::key<runir::kr::dl::Register<Category>> index;
     urd::built_t<urd::flat_string, C> name;
     urd::built_t<runir::kr::dl::RegisterIdentifier<Category>, C> identifier;
 

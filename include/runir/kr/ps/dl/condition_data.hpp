@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag>
 struct data<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>>
 {
-    urd::index<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>> index;
+    urd::key<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>> index;
     urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature;
 
     data() = default;
@@ -36,6 +36,9 @@ struct data<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>> key() const noexcept
+    { return urd::key<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>>(index); }
 };
 
 }  // namespace urd

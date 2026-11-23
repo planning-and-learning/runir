@@ -18,7 +18,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::icp::Program, C>
 {
-    urd::index<runir::kr::ps::icp::Program> index;
+    urd::key<runir::kr::ps::icp::Program> index;
     urd::built_t<urd::index<runir::kr::ps::icp::Module>, C> entry_mod;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"entry_mod", &builder::entry_mod>> {}; }

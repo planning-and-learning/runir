@@ -18,7 +18,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::ext::OrderTerm, C>
 {
-    urd::index<runir::kr::ps::ext::OrderTerm> index;
+    urd::key<runir::kr::ps::ext::OrderTerm> index;
     urd::built_t<runir::kr::ps::ext::OrderDirection, C> direction = runir::kr::ps::ext::OrderDirection::MIN;
     urd::built_t<runir::kr::ps::ext::OrderTermFeature, C> feature;
 

@@ -2,6 +2,7 @@
 #define PYRUNIR_KR_DL_QUERY_BINDINGS_HPP_
 
 #include "module.hpp"
+#include "pyrunir/conversions.hpp"
 #include "pyrunir/module.hpp"
 
 #include <boost/mp11.hpp>

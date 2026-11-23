@@ -14,7 +14,7 @@ namespace urd
 template<>
 struct data<runir::kr::ps::icp::Program>
 {
-    urd::index<runir::kr::ps::icp::Program> index;
+    urd::key<runir::kr::ps::icp::Program> index;
     urd::index<runir::kr::ps::icp::Module> entry_mod;
 
     data() = default;
@@ -32,6 +32,8 @@ struct data<runir::kr::ps::icp::Program>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::entry_mod> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::entry_mod> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::icp::Program> key() const noexcept { return urd::key<runir::kr::ps::icp::Program>(index); }
 };
 
 }  // namespace urd

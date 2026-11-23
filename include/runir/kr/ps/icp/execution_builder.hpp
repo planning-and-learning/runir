@@ -21,7 +21,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::icp::Histories, C>
 {
-    urd::index<runir::kr::ps::icp::Histories> index;
+    urd::key<runir::kr::ps::icp::Histories> index;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>>,
                  ::runir::kr::dl::semantics::DenotationRepository>
         concepts;
@@ -35,7 +35,7 @@ struct builder<runir::kr::ps::icp::Histories, C>
 template<tyr::TaskKind Kind, typename C>
 struct builder<runir::kr::ps::icp::ProgramState<Kind>, C>
 {
-    urd::index<runir::kr::ps::icp::ProgramState<Kind>> index;
+    urd::key<runir::kr::ps::icp::ProgramState<Kind>> index;
     urd::built_t<urd::index<runir::kr::ps::icp::Program>, ::runir::kr::ps::icp::Repository> program;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>, ::runir::kr::ps::icp::Repository> memory_state;
     urd::built_t<urd::index<runir::kr::dl::semantics::RegisterValues>, ::runir::kr::dl::semantics::DenotationRepository> registers;

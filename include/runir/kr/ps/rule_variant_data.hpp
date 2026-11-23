@@ -28,7 +28,7 @@ namespace urd
 template<runir::kr::ps::ProgramFamilyTag Family>
 struct data<runir::kr::ps::Rule<Family>>
 {
-    urd::index<runir::kr::ps::Rule<Family>> index;
+    urd::key<runir::kr::ps::Rule<Family>> index;
     urd::flat_string symbol;
     runir::kr::ps::RuleVariant<Family> variant;
 
@@ -47,6 +47,8 @@ struct data<runir::kr::ps::Rule<Family>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::variant> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::variant> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::ps::Rule<Family>> key() const noexcept { return urd::key<runir::kr::ps::Rule<Family>>(index); }
 };
 
 }  // namespace urd

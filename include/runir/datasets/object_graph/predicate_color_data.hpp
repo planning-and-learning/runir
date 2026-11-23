@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #ifndef RUNIR_DATASETS_OBJECT_GRAPH_PREDICATE_COLOR_DATA_HPP_
 #define RUNIR_DATASETS_OBJECT_GRAPH_PREDICATE_COLOR_DATA_HPP_
 
@@ -32,7 +31,7 @@ namespace urd
 template<::tyr::formalism::FactKind T>
 struct data<runir::datasets::PredicateColor<T>>
 {
-    urd::index<runir::datasets::PredicateColor<T>> index;
+    urd::key<runir::datasets::PredicateColor<T>> index;
     urd::index<::tyr::formalism::Predicate<T>> predicate;
     ygg::uint_t argument_position = 0;
     runir::datasets::PredicateContext context {};
@@ -63,6 +62,8 @@ struct data<runir::datasets::PredicateColor<T>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::argument_position, &data::context> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::argument_position, &data::context> {}; }
+
+    [[nodiscard]] urd::key<runir::datasets::PredicateColor<T>> key() const noexcept { return urd::key<runir::datasets::PredicateColor<T>>(index); }
 };
 
 }  // namespace urd

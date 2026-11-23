@@ -14,6 +14,7 @@
 #include <tyr/formalism/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/maps/flat_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/flat_set.hpp>
 #include <urd/store.hpp>

@@ -20,7 +20,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::dl::cnf_grammar::Grammar, C>
 {
-    urd::index<runir::kr::dl::cnf_grammar::Grammar> index;
+    urd::key<runir::kr::dl::cnf_grammar::Grammar> index;
     urd::built_t<urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>>, C> concept_start;
     urd::built_t<urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>>, C> role_start;
     urd::built_t<urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>>, C> boolean_start;

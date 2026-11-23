@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::ps::ProgramFamilyTag Family, typename C>
 struct builder<runir::kr::ps::MemoryState<Family>, C>
 {
-    urd::index<runir::kr::ps::MemoryState<Family>> index;
+    urd::key<runir::kr::ps::MemoryState<Family>> index;
     urd::built_t<urd::flat_string, C> name;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"name", &builder::name>> {}; }

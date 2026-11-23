@@ -5,6 +5,7 @@
 #ifndef RUNIR_KR_DATABASE_SEMANTICS_QUERY_EVALUATION_HPP_
 #define RUNIR_KR_DATABASE_SEMANTICS_QUERY_EVALUATION_HPP_
 
+#include "runir/kr/database/semantics/generic_join.hpp"
 #include "runir/kr/database/syntax/query.hpp"
 
 #include <algorithm>

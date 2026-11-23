@@ -17,7 +17,7 @@ namespace urd
 template<>
 struct data<runir::kr::dl::semantics::CallArguments>
 {
-    urd::index<runir::kr::dl::semantics::CallArguments> index;
+    urd::key<runir::kr::dl::semantics::CallArguments> index;
     urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>> concept_arguments;
     urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>> role_arguments;
     urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>> boolean_arguments;
@@ -56,6 +56,8 @@ struct data<runir::kr::dl::semantics::CallArguments>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::semantics::CallArguments> key() const noexcept { return urd::key<runir::kr::dl::semantics::CallArguments>(index); }
 };
 
 }  // namespace urd

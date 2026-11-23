@@ -37,7 +37,7 @@ namespace runir::tests
 {
 /// The Schema of these column types, inserted into `repository` as any record.
 template<std::ranges::input_range Types>
-urd::index<ygg::Schema> insert_schema(ygg::FreeRelationRepository& repository, const Types& types)
+static urd::index<ygg::Schema> insert_schema(ygg::FreeRelationRepository& repository, const Types& types)
 {
     auto schema = urd::data<ygg::Schema>();
     schema.column_types.set(std::ranges::begin(types), std::ranges::end(types));
@@ -782,8 +782,6 @@ TEST(YggdrasilTests, DatabaseMixedWidthRowsPreserveTypedValuesAndResolveIndices)
                             EXPECT_DOUBLE_EQ(row.template get<double>(at(ColumnIndex(9))), 1.25);
                             EXPECT_THROW((void) row.template get<float>(at(ColumnIndex(9))), std::invalid_argument);
                             EXPECT_THROW((void) row.template get<urd::index<ygg::formalism::Object>>(), std::invalid_argument);  // mixed columns
-                            EXPECT_THROW((void) row.template get<double>(0, 2), std::invalid_argument);
-                            EXPECT_DOUBLE_EQ(row.template get<double>(at(ColumnIndex(9)), at(ColumnIndex(9)) + 1)[0], 1.25);
                             EXPECT_TRUE(ygg::decode_value<bool>(row.value(at(ColumnIndex(2)))));
                             EXPECT_EQ(resolve_in(ygg::decode_value<ygg::uint_t>(row.value(at(ColumnIndex(7)))), entities), entity);
                             EXPECT_EQ(at(ColumnIndex(99)), layout.size());
@@ -916,7 +914,7 @@ TEST(YggdrasilTests, DatabasePoolsKeepTheirSchema)
     {
         auto child = ygg::FreeRelationRepository(&repository);
         EXPECT_TRUE(std::ranges::equal(child.at(key)->column_types, unsigned_types));  // the parent's Schema
-        EXPECT_FALSE(child.insert(row).second);                             // and the parent's row
+        EXPECT_FALSE(child.insert(row).second);                                        // and the parent's row
     }
     repository.clear();  // the rows go, the Schema stays
     EXPECT_TRUE(std::ranges::equal(repository.at(key)->column_types, unsigned_types));

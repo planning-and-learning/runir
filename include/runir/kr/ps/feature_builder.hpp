@@ -18,7 +18,7 @@ namespace urd
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
 struct builder<runir::kr::ps::Feature<Family, FeatureTag>, C>
 {
-    urd::index<runir::kr::ps::Feature<Family, FeatureTag>> index;
+    urd::key<runir::kr::ps::Feature<Family, FeatureTag>> index;
     urd::built_t<runir::kr::ps::FeatureVariant<Family, FeatureTag>, C> variant;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"variant", &builder::variant>> {}; }

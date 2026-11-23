@@ -13,7 +13,7 @@ namespace urd
 template<typename F, runir::kr::dl::AtomicTag Tag>
 struct data<runir::kr::dl::Boolean<F, Tag>>
 {
-    urd::index<runir::kr::dl::Boolean<F, Tag>> index;
+    urd::key<runir::kr::dl::Boolean<F, Tag>> index;
     urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate;
     bool polarity = false;
 
@@ -37,12 +37,14 @@ struct data<runir::kr::dl::Boolean<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::polarity> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Boolean<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Boolean<F, Tag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Boolean<F, runir::kr::dl::NonemptyTag>>
 {
-    urd::index<runir::kr::dl::Boolean<F, runir::kr::dl::NonemptyTag>> index;
+    urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::NonemptyTag>> index;
     typename F::Argument operand;
 
     data() = default;
@@ -60,12 +62,15 @@ struct data<runir::kr::dl::Boolean<F, runir::kr::dl::NonemptyTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::NonemptyTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::NonemptyTag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Boolean<F, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>
 {
-    urd::index<runir::kr::dl::Boolean<F, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> index;
+    urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> index;
     urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>> argument;
 
     data() = default;
@@ -83,12 +88,15 @@ struct data<runir::kr::dl::Boolean<F, runir::kr::dl::ArgumentTag<runir::kr::dl::
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::argument> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> key() const noexcept
+    { return urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(index); }
 };
 
 template<typename F, runir::kr::dl::ComparisonTag Tag>
 struct data<runir::kr::dl::Boolean<F, Tag>>
 {
-    urd::index<runir::kr::dl::Boolean<F, Tag>> index;
+    urd::key<runir::kr::dl::Boolean<F, Tag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::comparison_operand_t<Tag>> left_operand;
     runir::kr::dl::operand_t<F, runir::kr::dl::comparison_operand_t<Tag>> right_operand;
 
@@ -114,12 +122,14 @@ struct data<runir::kr::dl::Boolean<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Boolean<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Boolean<F, Tag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Boolean<F, runir::kr::dl::BooleanConstantTag>>
 {
-    urd::index<runir::kr::dl::Boolean<F, runir::kr::dl::BooleanConstantTag>> index;
+    urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::BooleanConstantTag>> index;
     bool value = false;
 
     data() = default;
@@ -137,12 +147,15 @@ struct data<runir::kr::dl::Boolean<F, runir::kr::dl::BooleanConstantTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::BooleanConstantTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::BooleanConstantTag>>(index); }
 };
 
 template<typename F, runir::kr::dl::LogicalBinaryTag Tag>
 struct data<runir::kr::dl::Boolean<F, Tag>>
 {
-    urd::index<runir::kr::dl::Boolean<F, Tag>> index;
+    urd::key<runir::kr::dl::Boolean<F, Tag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag> left_operand;
     runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag> right_operand;
 
@@ -167,12 +180,14 @@ struct data<runir::kr::dl::Boolean<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Boolean<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Boolean<F, Tag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Boolean<F, runir::kr::dl::NotTag>>
 {
-    urd::index<runir::kr::dl::Boolean<F, runir::kr::dl::NotTag>> index;
+    urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::NotTag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag> operand;
 
     data() = default;
@@ -190,6 +205,9 @@ struct data<runir::kr::dl::Boolean<F, runir::kr::dl::NotTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::NotTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Boolean<F, runir::kr::dl::NotTag>>(index); }
 };
 
 }  // namespace urd

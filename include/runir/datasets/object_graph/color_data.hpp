@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #ifndef RUNIR_DATASETS_OBJECT_GRAPH_COLOR_DATA_HPP_
 #define RUNIR_DATASETS_OBJECT_GRAPH_COLOR_DATA_HPP_
 
@@ -31,7 +30,7 @@ namespace urd
 template<>
 struct data<runir::datasets::Color>
 {
-    urd::index<runir::datasets::Color> index;
+    urd::key<runir::datasets::Color> index;
     urd::flat_vector<runir::datasets::ColorVariant> values;
 
     data() = default;
@@ -49,6 +48,8 @@ struct data<runir::datasets::Color>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::values> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::values> {}; }
+
+    [[nodiscard]] urd::key<runir::datasets::Color> key() const noexcept { return urd::key<runir::datasets::Color>(index); }
 };
 
 }  // namespace urd

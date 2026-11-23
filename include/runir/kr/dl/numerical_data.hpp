@@ -14,7 +14,7 @@ namespace urd
 template<typename F>
 struct data<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>> index;
     typename F::Argument operand;
 
     data() = default;
@@ -32,13 +32,16 @@ struct data<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>>(index); }
 };
 
 /// n_distance(sources, edges, targets): sources and targets are vertices, edges the middle operand.
 template<typename F>
 struct data<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>> index;
     typename F::Vertex sources;
     typename F::Edge edges;
     typename F::Vertex targets;
@@ -65,6 +68,9 @@ struct data<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::sources, &data::edges, &data::targets> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>>(index); }
 };
 
 /// A semantic distance also holds its plan, derived from its children before it is interned (detail::prepare): sources
@@ -72,7 +78,7 @@ struct data<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>>
 template<>
 struct data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>>
 {
-    urd::index<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>> index;
+    urd::key<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>> index;
     runir::kr::dl::SemanticFamily::Vertex sources;
     runir::kr::dl::SemanticFamily::Edge edges;
     runir::kr::dl::SemanticFamily::Vertex targets;
@@ -109,13 +115,16 @@ struct data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::d
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::sources, &data::edges, &data::targets> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::sources, &data::edges, &data::targets, &data::plan> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>>(index); }
 };
 
 /// n_value(query): the least value in the query's one column, infinity if it has no row.
 template<typename F>
 struct data<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>> index;
     urd::index<runir::kr::dl::Query<>> operand;
 
     data() = default;
@@ -133,12 +142,15 @@ struct data<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::ValueTag>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> index;
     urd::index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>> argument;
 
     data() = default;
@@ -156,12 +168,15 @@ struct data<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::argument> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> key() const noexcept
+    { return urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(index); }
 };
 
 template<typename F>
 struct data<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>>
 {
-    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>> index;
+    urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>> index;
     ygg::uint_t value = 0;
 
     data() = default;
@@ -179,12 +194,15 @@ struct data<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>> key() const noexcept
+    { return urd::key<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>>(index); }
 };
 
 template<typename F, runir::kr::dl::NumericalBinaryTag Tag>
 struct data<runir::kr::dl::Numerical<F, Tag>>
 {
-    urd::index<runir::kr::dl::Numerical<F, Tag>> index;
+    urd::key<runir::kr::dl::Numerical<F, Tag>> index;
     runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag> left_operand;
     runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag> right_operand;
 
@@ -209,6 +227,8 @@ struct data<runir::kr::dl::Numerical<F, Tag>>
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::dl::Numerical<F, Tag>> key() const noexcept { return urd::key<runir::kr::dl::Numerical<F, Tag>>(index); }
 };
 
 }  // namespace urd

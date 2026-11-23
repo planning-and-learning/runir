@@ -26,6 +26,11 @@ nanobind_add_module(
     NB_SUPPRESS_WARNINGS
     module.cpp
     pyrunir/module.cpp
+    pyrunir/conversions_control.cpp
+    pyrunir/conversions_dl.cpp
+    pyrunir/conversions_grammar.cpp
+    pyrunir/conversions_ps.cpp
+    pyrunir/conversions_ps_ext.cpp
     pyrunir/datasets/config.cpp
     pyrunir/datasets/equivalence_graph.cpp
     pyrunir/datasets/module.cpp
@@ -57,8 +62,6 @@ brokkr_unity_directories(
         pyrunir/kr
         pyrunir/kr/database/syntax
         pyrunir/kr/dl
-        pyrunir/kr/dl/cnf_grammar
-        pyrunir/kr/dl/grammar
         pyrunir/kr/ps/base
         pyrunir/kr/ps/base/dl
         pyrunir/kr/ps/icp/dl
@@ -67,6 +70,8 @@ brokkr_unity_directories(
         pyrunir/serialization
         pyrunir/serialization/kr
 )
+# The grammars' bindings share much but exceed the heaviest translation unit merged whole: batched by at most 3 sources.
+brokkr_unity_directories(_pyrunir ENABLED ${RUNIR_UNITY_BUILD} BATCH_SIZE 3 DIRECTORIES pyrunir/kr/dl/cnf_grammar pyrunir/kr/dl/grammar)
 target_include_directories(_pyrunir PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 brokkr_python_module_rpaths(PYRUNIR _pyrunir)

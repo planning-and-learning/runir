@@ -37,6 +37,7 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <urd/config.hpp>
 #include <urd/repr/maps/index_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/indexed.hpp>
 #include <urd/store.hpp>
@@ -216,7 +217,8 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
 
     const auto& [start_locator, start_assignment] = *coordinator.get_start();
     assignments.emplace(start_locator, start_assignment);
-    assert(start_assignment.concrete);
+    if (!start_assignment.concrete)
+        throw std::logic_error("Equivalence search did not assign its initial state a state vertex.");
     concrete_states.try_emplace(start_assignment.concrete->state_vertex_index, start_locator);
 
     for (const auto& worker : coordinator.get_workers())

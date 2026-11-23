@@ -1,3 +1,4 @@
+#include "pyrunir/conversions.hpp"
 #include "pyrunir/kr/ps/icp/bindings.hpp"
 #include "pyrunir/module.hpp"
 #include "runir/kr/dl/datas.hpp"

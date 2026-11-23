@@ -23,6 +23,7 @@
 
 #include <concepts>
 #include <mutex>
+#include <urd/repr/maps/unordered_flat_map.hpp>
 #include <vefr/nauty.hpp>
 
 namespace runir::datasets

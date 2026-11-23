@@ -30,7 +30,7 @@ namespace urd
 template<>
 struct data<runir::kr::uns::ClassifierLiteral>
 {
-    urd::index<runir::kr::uns::ClassifierLiteral> index;
+    urd::key<runir::kr::uns::ClassifierLiteral> index;
     runir::kr::uns::ClassifierLiteralVariant feature;
     bool polarity = true;
 
@@ -49,13 +49,15 @@ struct data<runir::kr::uns::ClassifierLiteral>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature, &data::polarity> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature, &data::polarity> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::uns::ClassifierLiteral> key() const noexcept { return urd::key<runir::kr::uns::ClassifierLiteral>(index); }
 };
 
 // A clause: a conjunction of literals.
 template<>
 struct data<runir::kr::uns::ClassifierClause>
 {
-    urd::index<runir::kr::uns::ClassifierClause> index;
+    urd::key<runir::kr::uns::ClassifierClause> index;
     urd::flat_vector<urd::index<runir::kr::uns::ClassifierLiteral>> literals;
 
     data() = default;
@@ -73,13 +75,15 @@ struct data<runir::kr::uns::ClassifierClause>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::literals> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::literals> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::uns::ClassifierClause> key() const noexcept { return urd::key<runir::kr::uns::ClassifierClause>(index); }
 };
 
 // A classifier: named boolean features + a DNF (disjunction of clauses).
 template<>
 struct data<runir::kr::uns::Classifier>
 {
-    urd::index<runir::kr::uns::Classifier> index;
+    urd::key<runir::kr::uns::Classifier> index;
     urd::flat_string symbol;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>> features;
     urd::flat_vector<urd::index<runir::kr::uns::ClassifierClause>> clauses;
@@ -108,6 +112,8 @@ struct data<runir::kr::uns::Classifier>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::features, &data::clauses> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::features, &data::clauses> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::uns::Classifier> key() const noexcept { return urd::key<runir::kr::uns::Classifier>(index); }
 };
 
 }  // namespace urd

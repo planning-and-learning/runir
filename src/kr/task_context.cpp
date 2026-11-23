@@ -16,6 +16,7 @@
 #include <tyr/planning/state_builder.hpp>
 #include <utility>
 #include <yggdrasil/formalism/builder_instantiations.hpp>
+#include <yggdrasil/formalism/symbol_context_impl.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::kr

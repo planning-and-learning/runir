@@ -19,7 +19,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::icp::Module, C>
 {
-    urd::index<runir::kr::ps::icp::Module> index;
+    urd::key<runir::kr::ps::icp::Module> index;
     urd::built_t<urd::index<runir::kr::ps::ModuleSymbol<runir::kr::IcpFamilyTag>>, C> symbol;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>, ::runir::kr::dl::ConstructorRepository> concept_registers;
     urd::built_t<urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>>, ::runir::kr::dl::ConstructorRepository> role_registers;

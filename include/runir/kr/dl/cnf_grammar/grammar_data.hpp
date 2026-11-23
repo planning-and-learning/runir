@@ -19,7 +19,7 @@ namespace urd
 template<>
 struct data<runir::kr::dl::cnf_grammar::Grammar>
 {
-    urd::index<runir::kr::dl::cnf_grammar::Grammar> index;
+    urd::key<runir::kr::dl::cnf_grammar::Grammar> index;
     urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>> concept_start;
     urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>> role_start;
     urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>> boolean_start;
@@ -123,6 +123,8 @@ struct data<runir::kr::dl::cnf_grammar::Grammar>
                             &data::numerical_substitution_rules,
                             &data::domain> {};
     }
+
+    [[nodiscard]] urd::key<runir::kr::dl::cnf_grammar::Grammar> key() const noexcept { return urd::key<runir::kr::dl::cnf_grammar::Grammar>(index); }
 };
 
 }  // namespace urd

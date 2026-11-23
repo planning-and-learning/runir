@@ -6,6 +6,7 @@
 #include <runir/kr/database/syntax/query_repository.hpp>
 #include <utility>
 #include <yggdrasil/formalism/builder_instantiations.hpp>
+#include <yggdrasil/formalism/symbol_context_impl.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::kr::dl::semantics
@@ -21,7 +22,6 @@ DenotationRepository::DenotationRepository(std::shared_ptr<const tyr::formalism:
 DenotationRepository::~DenotationRepository() = default;
 
 }  // namespace runir::kr::dl::semantics
-
 
 // The symbols and builders of the library's repositories, which its other sources only declare.
 YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::dl::semantics::DenotationRepository, 7)

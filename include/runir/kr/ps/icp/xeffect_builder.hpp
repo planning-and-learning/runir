@@ -19,7 +19,7 @@ namespace urd
 template<typename C>
 struct builder<runir::kr::ps::icp::XEffect, C>
 {
-    urd::index<runir::kr::ps::icp::XEffect> index;
+    urd::key<runir::kr::ps::icp::XEffect> index;
     urd::built_t<runir::kr::ps::icp::EffectOperation, C> operation {};
     urd::built_t<urd::flat_variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>,
                  ::runir::kr::dl::ConstructorRepository>

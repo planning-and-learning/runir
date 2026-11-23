@@ -20,7 +20,7 @@ template<runir::kr::ps::icp::BindingRuleKind Kind, typename C>
     requires std::is_same_v<Kind, runir::kr::ps::icp::LoadTag<runir::kr::ps::icp::RuleCategoryFor<Kind>>>
 struct builder<runir::kr::ps::icp::Rule<Kind>, C>
 {
-    urd::index<runir::kr::ps::icp::Rule<Kind>> index;
+    urd::key<runir::kr::ps::icp::Rule<Kind>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>, C> source;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>, C> target;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag>, C> conditions;
@@ -45,7 +45,7 @@ struct builder<runir::kr::ps::icp::Rule<Kind>, C>
 template<typename C>
 struct builder<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>, C>
 {
-    urd::index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>> index;
+    urd::key<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>> index;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>, C> source;
     urd::built_t<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>, C> target;
     urd::built_t<runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag>, C> conditions;

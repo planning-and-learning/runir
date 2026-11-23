@@ -19,7 +19,7 @@ namespace urd
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
 struct builder<runir::kr::ps::ConcreteFeature<Family, FeatureTag>, C>
 {
-    urd::index<runir::kr::ps::ConcreteFeature<Family, FeatureTag>> index;
+    urd::key<runir::kr::ps::ConcreteFeature<Family, FeatureTag>> index;
     urd::built_t<urd::index<typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type>, ::runir::kr::dl::ConstructorRepository> feature;
     urd::built_t<urd::flat_string, C> symbol;
 

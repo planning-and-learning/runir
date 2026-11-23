@@ -43,6 +43,10 @@ add_library(kr SHARED
     dl/optimization.cpp
     dl/query_construction.cpp
     dl/repository.cpp
+    dl/repository_0.cpp
+    dl/repository_1.cpp
+    dl/repository_2.cpp
+    dl/repository_3.cpp
     dl/translations/ygg_query.cpp
     dl/semantics/denotation_caches.cpp
     dl/semantics/evaluation.cpp
@@ -97,6 +101,8 @@ add_library(kr SHARED
     ps/icp/program_executor.cpp
     ps/formatter.cpp
     ps/repository.cpp
+    ps/repository_ext.cpp
+    ps/repository_icp.cpp
     ps/structural_termination.cpp
     ps/structural_termination/incomplete.cpp
     ps/structural_termination/policy_graph.cpp

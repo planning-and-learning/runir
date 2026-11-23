@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <optional>
 #include <tuple>
+#include <urd/repr/maps/postings.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/pools/pools.hpp>
 #include <urd/repr/sequences/sequence.hpp>

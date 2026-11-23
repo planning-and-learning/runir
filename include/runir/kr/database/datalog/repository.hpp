@@ -11,6 +11,7 @@
 
 #include <cstddef>
 #include <urd/config.hpp>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::kr::database::datalog
 {
@@ -34,5 +35,9 @@ public:
     friend const DatalogRepository& get_repository(const DatalogRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 };
 }  // namespace runir::kr::database::datalog
+
+// Its symbols' reads, finds and inserts instantiated once, where the library instantiates the repository (brokkr's
+// include rule I7): a file that reads records through it completes none of its stores.
+YGG_FORMALISM_SYMBOL_CONTEXT(extern, runir::kr::database::datalog::DatalogRepository, 5)
 
 #endif

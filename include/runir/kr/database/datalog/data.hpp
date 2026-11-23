@@ -20,7 +20,7 @@ namespace urd
 template<>
 struct data<runir::kr::database::datalog::Relation>
 {
-    urd::index<runir::kr::database::datalog::Relation> index;
+    urd::key<runir::kr::database::datalog::Relation> index;
     /// A derived relation's id is its relation in the compiled program.
     size_t id = 0;
     size_t arity = 0;
@@ -64,12 +64,14 @@ struct data<runir::kr::database::datalog::Relation>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::id, &data::arity, &data::input, &data::input_slot, &data::name, &data::weighted> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::database::datalog::Relation> key() const noexcept { return urd::key<runir::kr::database::datalog::Relation>(index); }
 };
 
 template<>
 struct data<runir::kr::database::datalog::Atom>
 {
-    urd::index<runir::kr::database::datalog::Atom> index;
+    urd::key<runir::kr::database::datalog::Atom> index;
     urd::index<runir::kr::database::datalog::Relation> relation;
     urd::flat_vector<runir::kr::database::datalog::Term> terms;
 
@@ -92,12 +94,14 @@ struct data<runir::kr::database::datalog::Atom>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::relation, &data::terms> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::relation, &data::terms> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::database::datalog::Atom> key() const noexcept { return urd::key<runir::kr::database::datalog::Atom>(index); }
 };
 
 template<>
 struct data<runir::kr::database::datalog::Aggregate>
 {
-    urd::index<runir::kr::database::datalog::Aggregate> index;
+    urd::key<runir::kr::database::datalog::Aggregate> index;
     runir::kr::database::datalog::AggregateFunction function = runir::kr::database::datalog::AggregateFunction::COUNT;
     /// The variable that receives the aggregate, fresh in the enclosing rule.
     ygg::uint_t result = 0;
@@ -150,12 +154,14 @@ struct data<runir::kr::database::datalog::Aggregate>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::function, &data::result, &data::value, &data::atoms, &data::negated, &data::comparisons, &data::arithmetic> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::database::datalog::Aggregate> key() const noexcept { return urd::key<runir::kr::database::datalog::Aggregate>(index); }
 };
 
 template<>
 struct data<runir::kr::database::datalog::Rule>
 {
-    urd::index<runir::kr::database::datalog::Rule> index;
+    urd::key<runir::kr::database::datalog::Rule> index;
     urd::index<runir::kr::database::datalog::Atom> head;
     urd::flat_vector<urd::index<runir::kr::database::datalog::Atom>> atoms;
     urd::flat_vector<urd::index<runir::kr::database::datalog::Atom>> negated;
@@ -202,12 +208,14 @@ struct data<runir::kr::database::datalog::Rule>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::head, &data::atoms, &data::negated, &data::comparisons, &data::aggregates, &data::arithmetic> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::database::datalog::Rule> key() const noexcept { return urd::key<runir::kr::database::datalog::Rule>(index); }
 };
 
 template<>
 struct data<runir::kr::database::datalog::Program>
 {
-    urd::index<runir::kr::database::datalog::Program> index;
+    urd::key<runir::kr::database::datalog::Program> index;
     urd::flat_vector<urd::index<runir::kr::database::datalog::Rule>> rules;
 
     data() = default;
@@ -225,6 +233,8 @@ struct data<runir::kr::database::datalog::Program>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::rules> {}; }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::rules> {}; }
+
+    [[nodiscard]] urd::key<runir::kr::database::datalog::Program> key() const noexcept { return urd::key<runir::kr::database::datalog::Program>(index); }
 };
 }  // namespace urd
 
