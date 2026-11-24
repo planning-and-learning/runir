@@ -65,9 +65,9 @@ struct QueryHeadEvaluator : QueryValue
 
     /// Calls f(values) for each row of a relation, its values (which the query's columns hold).
     template<typename Relation, typename F>
-    void for_each_row(const Relation& relation, const F& f)
+    void for_each_row(const Relation& rows, const F& f)
     {
-        for (const auto& held : relation.get_rows())
+        for (const auto& held : rows.get_rows())
             ygg::with_values(held,
                              [&](const auto& stored)
                              {

@@ -22,8 +22,6 @@ template<tyr::TaskKind Kind>
 void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
 {
     using namespace nb::literals;
-    using VertexLabel = urd::data<StateGraphVertexLabel<Kind>>;
-    using AnnotatedVertexLabel = urd::data<AnnotatedStateGraphVertexLabel<Kind>>;
     using Graph = StateGraph<Kind>;
     using AnnotatedGraph = AnnotatedStateGraph<Kind>;
     using Result = StateGraphGenerationResult<Kind>;

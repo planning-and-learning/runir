@@ -79,7 +79,9 @@ struct data<runir::kr::dl::semantics::Denotation<Category>>
 
     data() = default;
 
-    data(ygg::uint_t num_objects_, runir::kr::dl::semantics::DenotationWords<Category> values_) : index(), num_objects(num_objects_), values(std::move(values_)) {}
+    data(ygg::uint_t num_objects_, runir::kr::dl::semantics::DenotationWords<Category> values_) : index(), num_objects(num_objects_), values(std::move(values_))
+    {
+    }
 
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;

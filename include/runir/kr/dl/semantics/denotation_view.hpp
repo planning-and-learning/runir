@@ -119,11 +119,6 @@ public:
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     { return value(source).test(static_cast<ygg::uint_t>(target.value)); }
 
-    /// Includes zero padding: trailing concept bits or padding after each role row.
-    auto storage_bits() const
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return get_values().bits().storage_bits(); }
-
     /// Typed indices borrowing only the bits, independently of the view and range wrappers.
     // One function, not an overload per category: functions() takes its address, which deduces the return type of every
     // overload, and AppleClang does not mangle requires-clauses, so a concept and a role overload would share a symbol.
@@ -157,8 +152,7 @@ public:
                                   urd::function<"value", static_cast<decltype(std::declval<Self>().value()) (view_mixin::*)() const>(&view_mixin::value)>,
                                   urd::function<"contains",
                                                 static_cast<bool (view_mixin::*)(urd::index<tyr::formalism::Object>) const>(&view_mixin::contains),
-                                                urd::arg<"object">>,
-                                  urd::function<"storage_bits", &view_mixin::storage_bits>> {};
+                                                urd::arg<"object">>> {};
         }
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
         {
@@ -178,8 +172,7 @@ public:
                                                 static_cast<bool (view_mixin::*)(urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>) const>(
                                                     &view_mixin::contains),
                                                 urd::arg<"source">,
-                                                urd::arg<"target">>,
-                                  urd::function<"storage_bits", &view_mixin::storage_bits>> {};
+                                                urd::arg<"target">>> {};
         }
         else
             return urd::Functions<> {};

@@ -226,8 +226,8 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
         const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
 
         auto bits = result->storage_bits();
-        bits.copy_from(lhs.storage_bits());
-        bits &= rhs.storage_bits();
+        bits.copy_from(lhs.get_values().bits().storage_bits());
+        bits &= rhs.get_values().bits().storage_bits();
     }
     else if constexpr (std::same_as<Tag, UnionTag>)
     {
@@ -235,8 +235,8 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
         const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
 
         auto bits = result->storage_bits();
-        bits.copy_from(lhs.storage_bits());
-        bits |= rhs.storage_bits();
+        bits.copy_from(lhs.get_values().bits().storage_bits());
+        bits |= rhs.get_values().bits().storage_bits();
     }
     else if constexpr (std::same_as<Tag, ComplementTag>)
     {

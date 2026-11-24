@@ -115,7 +115,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
         else if constexpr (std::same_as<Category, kr::dl::RoleTag>)
         {
             EXPECT_EQ(view.get_num_objects(), 3);
-            EXPECT_EQ(view.storage_bits().count(), 1);
+            EXPECT_EQ(view.get_values().bits().storage_bits().count(), 1);
             EXPECT_TRUE(view.value(urd::index<tyr::formalism::Object>(0)).test(2));
         }
         else
@@ -158,8 +158,8 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
         auto builder = runir::tests::make_denotation<kr::dl::semantics::Denotation<Category>>(num_objects, scratch);
         const auto borrowed = urd::resolve(builder, repository);
         EXPECT_EQ(borrowed.views().begin(), borrowed.views().end());
-        EXPECT_FALSE(borrowed.storage_bits().any());
-        EXPECT_EQ(borrowed.storage_bits().count(), 0);
+        EXPECT_FALSE(borrowed.get_values().bits().storage_bits().any());
+        EXPECT_EQ(borrowed.get_values().bits().storage_bits().count(), 0);
         EXPECT_EQ(borrowed.get_num_objects(), num_objects);
         EXPECT_EQ(&borrowed.context(), &repository);
 
@@ -176,7 +176,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
             else
             {
                 static_assert(std::same_as<decltype(borrowed.value(ObjectIndex(0))), urd::bitset_span<const ygg::uint_t>>);
-                static_assert(std::same_as<decltype(borrowed.storage_bits()), urd::bitset_span<const ygg::uint_t>>);
+                static_assert(std::same_as<decltype(borrowed.get_values().bits().storage_bits()), urd::bitset_span<const ygg::uint_t>>);
                 builder.get(urd::index<tyr::formalism::Object>(0)).set(num_objects - 1);
                 builder.get(urd::index<tyr::formalism::Object>(digits)).set(1);
                 builder.get(urd::index<tyr::formalism::Object>(num_objects - 1)).set(digits);
@@ -188,9 +188,9 @@ TEST(RunirEvaluationStorage, DenotationBuildersExposeReadOnlyValuesAndMatchIndex
         const auto indexed = repository.insert(builder, scratch.records()).first;
         EXPECT_EQ(indexed.get_num_objects(), num_objects);
         EXPECT_EQ(&indexed.context().template get<tyr::formalism::Repository>(), formalism.get());
-        EXPECT_TRUE(borrowed.storage_bits().any());
-        EXPECT_EQ(borrowed.storage_bits().count(), expected.size());
-        EXPECT_EQ(indexed.storage_bits().count(), expected.size());
+        EXPECT_TRUE(borrowed.get_values().bits().storage_bits().any());
+        EXPECT_EQ(borrowed.get_values().bits().storage_bits().count(), expected.size());
+        EXPECT_EQ(indexed.get_values().bits().storage_bits().count(), expected.size());
         EXPECT_TRUE(std::ranges::equal(borrowed.views(), expected));
         EXPECT_TRUE(std::ranges::equal(indexed.views(), expected));
         static_assert(std::ranges::borrowed_range<decltype(borrowed.views())> && std::ranges::borrowed_range<decltype(indexed.indices())>);
@@ -469,14 +469,14 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
     const auto retained = kr::dl::semantics::evaluate<tyr::GroundTag>(expression, durable);
     EXPECT_EQ(&retained.context(), &persistent);
     EXPECT_NE(retained, temporary);
-    EXPECT_EQ(retained.storage_bits().count(), temporary.storage_bits().count());
+    EXPECT_EQ(retained.get_values().bits().storage_bits().count(), temporary.get_values().bits().storage_bits().count());
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, durable), retained);
     EXPECT_TRUE(root_caches.find(false, expression).has_value());
 
     root_caches.reset_dynamic();
     storage.reset_dynamic();
     EXPECT_EQ(root_caches.template size<kr::dl::RoleTag>(false), 0);
-    EXPECT_EQ(retained.storage_bits().count(), 4);
+    EXPECT_EQ(retained.get_values().bits().storage_bits().count(), 4);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, durable), retained);
     EXPECT_EQ(persistent.size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 1);
     EXPECT_EQ(storage.get_denotation_repository(false).size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);

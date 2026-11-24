@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_DL_DETAIL_CONSTRUCTOR_REPOSITORY_HPP_
 #define RUNIR_KR_DL_DETAIL_CONSTRUCTOR_REPOSITORY_HPP_
 
-#include "tyr/formalism/repository.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "tyr/formalism/repository.hpp"
 
 #include <boost/mp11.hpp>
 #include <cassert>

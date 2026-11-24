@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #ifndef RUNIR_DATASETS_OBJECT_GRAPH_DECLARATIONS_HPP_
 #define RUNIR_DATASETS_OBJECT_GRAPH_DECLARATIONS_HPP_
 

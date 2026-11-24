@@ -146,13 +146,13 @@ bool evaluate_atomic_goal_boolean(urd::index_view<Boolean<SemanticFamily, Atomic
 
 inline bool nonempty(DenotationView<ConceptTag> value) { return value.value().any(); }
 
-inline bool nonempty(DenotationView<RoleTag> value) { return value.storage_bits().any(); }
+inline bool nonempty(DenotationView<RoleTag> value) { return value.get_values().bits().storage_bits().any(); }
 
 inline bool nonempty(QueryDenotationView value) { return !value.get_rows().empty(); }
 
 inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.value().count()); }
 
-inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.storage_bits().count()); }
+inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.get_values().bits().storage_bits().count()); }
 
 inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.get_rows().size()); }
 

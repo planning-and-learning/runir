@@ -182,7 +182,7 @@ public:
 
     template<ConceptOrRoleTag Category>
     [[nodiscard]] bool nonempty(EvaluationIndex<Category> index) const
-    { return result(index).storage_bits().any(); }
+    { return result(index).get_values().bits().storage_bits().any(); }
 
     [[nodiscard]] bool nonempty(QueryEvaluationIndex index) const { return !result(index).get_rows().empty(); }
 

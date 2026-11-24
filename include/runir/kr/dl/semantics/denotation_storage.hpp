@@ -255,7 +255,8 @@ public:
     [[nodiscard]] DenotationBits<Category> bits(Key key) const
     {
         const auto row = m_rows.at(Handle(key.value));
-        return DenotationBits<Category>(row.data() + 1, row.data()[0]);
+        const auto words = std::span<const ygg::uint_t>(row.data(), row.size());  // the number of objects, then the words
+        return DenotationBits<Category>(words.subspan(1).data(), words.front());
     }
 
     /// The denotations in its pool, none below it (not layered: urd::count_at's size and base).

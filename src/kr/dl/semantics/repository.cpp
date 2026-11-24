@@ -41,8 +41,7 @@ void DenotationRepository::reset() noexcept
 auto DenotationRepository::own_parts() const -> OwnParts<false>
 { return { { *this, m_impl->symbols }, { *this, m_impl->concepts }, { *this, m_impl->roles } }; }
 
-auto DenotationRepository::own_parts() -> OwnParts<true>
-{ return { { *this, m_impl->symbols }, { *this, m_impl->concepts }, { *this, m_impl->roles } }; }
+auto DenotationRepository::own_parts() -> OwnParts<true> { return { { *this, m_impl->symbols }, { *this, m_impl->concepts }, { *this, m_impl->roles } }; }
 
 }  // namespace runir::kr::dl::semantics
 

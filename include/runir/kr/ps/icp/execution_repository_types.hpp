@@ -23,16 +23,15 @@ using ControlBuilder = boost::mp11::mp_apply<
 /// repositories' records and of the planning states, which interning an execution record's builder interns there (its
 /// activation, its frames; its planning state and its storages, in the state repository).
 template<tyr::TaskKind Kind>
-using ExecutionBuilder = boost::mp11::mp_apply<
-    ygg::formalism::BuilderStorage,
-    boost::mp11::mp_push_front<boost::mp11::mp_append<ExecutionRepositoryTypes<Kind>,
-                                                      ControlRepositoryTypes,
-                                                      runir::kr::dl::semantics::DenotationRecordTypes,
-                                                      boost::mp11::mp_list<tyr::planning::State<Kind>,
-                                                                           tyr::planning::FactStorage<Kind>,
-                                                                           tyr::planning::AtomStorage<Kind>,
-                                                                           tyr::planning::NumericStorage<Kind>>>,
-                               runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, Kind>>>;
+using ExecutionBuilder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage,
+                                               boost::mp11::mp_push_front<boost::mp11::mp_append<ExecutionRepositoryTypes<Kind>,
+                                                                                                 ControlRepositoryTypes,
+                                                                                                 runir::kr::dl::semantics::DenotationRecordTypes,
+                                                                                                 boost::mp11::mp_list<tyr::planning::State<Kind>,
+                                                                                                                      tyr::planning::FactStorage<Kind>,
+                                                                                                                      tyr::planning::AtomStorage<Kind>,
+                                                                                                                      tyr::planning::NumericStorage<Kind>>>,
+                                                                          runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, Kind>>>;
 
 /// The execution repositories of the icp family, by task kind.
 using GroundExecutionRepository = runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, tyr::GroundTag>;

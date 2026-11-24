@@ -27,7 +27,6 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
 {
     using Graph = SketchProofGraph<Kind>;
     using Results = SketchProofResults<Kind>;
-    using VertexLabel = urd::data<SketchProofVertexLabel<Kind>>;
 
     urd::python::bind_data<SketchProofVertexLabel<Kind>>(m);
 

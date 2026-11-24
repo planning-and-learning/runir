@@ -827,7 +827,9 @@ void expect_query_action_contracts()
                             if (action.get_name().str() == concrete.get_action_name())
                             {
                                 const auto evaluator = kr::ps::ext::detail::ActionRuleEvaluator<Kind>(concrete, rule, action);
-                                const auto count = task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
+                                const auto count =
+                                    task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(
+                                        action.index());
                                 auto matched = static_cast<size_t>(0);
                                 EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
                                     planning_node,
@@ -845,7 +847,9 @@ void expect_query_action_contracts()
                                         return true;
                                     }));
                                 EXPECT_EQ(matched, 2);
-                                EXPECT_EQ(task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index()), count);
+                                EXPECT_EQ(task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(
+                                              action.index()),
+                                          count);
                             }
                 },
                 rule.get_variant());

@@ -292,7 +292,7 @@ void check_incremental_evaluation()
                 if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                     EXPECT_EQ(state.get_result().value().count(), state.size());
                 else
-                    EXPECT_EQ(state.get_result().storage_bits().count(), state.size());
+                    EXPECT_EQ(state.get_result().get_values().bits().storage_bits().count(), state.size());
             }
             else
                 EXPECT_EQ(snapshot(state.get_result()), expected.get_value());
@@ -306,7 +306,7 @@ void check_incremental_evaluation()
         const auto retained_view = initial.get_result();
         const ygg::uint_t* blocks = nullptr;
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
-            blocks = retained_view.storage_bits().data();
+            blocks = retained_view.get_values().bits().storage_bits().data();
         expect_no_delta(initial);
         expect_unpublished();
         compare_full(initial, initial_context);
@@ -320,7 +320,7 @@ void check_incremental_evaluation()
             // get_delta() and changed() throw unless the root was updated from the delta.
             if constexpr (kr::dl::ConceptOrRoleTag<Category>)
             {
-                EXPECT_EQ(state.get_result().storage_bits().data(), blocks);
+                EXPECT_EQ(state.get_result().get_values().bits().storage_bits().data(), blocks);
                 EXPECT_EQ(elements<Category>(retained_view), snapshot(state.get_result()));
                 EXPECT_TRUE(std::ranges::is_permutation(state.get_delta().added, difference(snapshot(state.get_result()), before)));
                 EXPECT_TRUE(std::ranges::is_permutation(state.get_delta().removed, difference(before, snapshot(state.get_result()))));
@@ -642,8 +642,8 @@ void check_incremental_evaluation()
     compare_graph(initial, initial_context);
     const auto source_view = initial.evaluate(source_id);
     const auto edge_view = initial.evaluate(edge_id);
-    const auto* source_blocks = source_view.storage_bits().data();
-    const auto* edge_blocks = edge_view.storage_bits().data();
+    const auto* source_blocks = source_view.get_values().bits().storage_bits().data();
+    const auto* edge_blocks = edge_view.get_values().bits().storage_bits().data();
     // The previous state's query rows and scalars, read from its handle before entering the next state.
     auto before_query = query_rows(initial.evaluate(query_id));
     auto before_scalars = scalar_values(initial);
@@ -656,8 +656,8 @@ void check_incremental_evaluation()
         auto state = evaluation.enter(context, delta, workspace);
         demand_all(state);
         expect_unpublished();
-        EXPECT_EQ(source_view.storage_bits().data(), source_blocks);
-        EXPECT_EQ(edge_view.storage_bits().data(), edge_blocks);
+        EXPECT_EQ(source_view.get_values().bits().storage_bits().data(), source_blocks);
+        EXPECT_EQ(edge_view.get_values().bits().storage_bits().data(), edge_blocks);
         const auto after_source = elements<kr::dl::ConceptTag>(source_view);
         const auto after_edge = elements<kr::dl::RoleTag>(edge_view);
         EXPECT_TRUE(std::ranges::is_permutation(state.delta(source_id).added, difference(after_source, before_source)));
@@ -782,17 +782,17 @@ void check_incremental_evaluation()
         auto failed_state = demand.enter(invocation_context, invalid, workspace);
         EXPECT_THROW(failed_state.evaluate(root), std::invalid_argument);
         EXPECT_THROW(demand.enter(invocation_context, empty_delta, workspace).delta(root), std::logic_error);
-        EXPECT_EQ(demand.enter(invocation_context).evaluate(root).storage_bits().count(), 0);
+        EXPECT_EQ(demand.enter(invocation_context).evaluate(root).get_values().bits().storage_bits().count(), 0);
         auto unchanged = demand.enter(invocation_context, empty_delta, workspace);
-        EXPECT_EQ(unchanged.evaluate(root).storage_bits().count(), 0);
+        EXPECT_EQ(unchanged.evaluate(root).get_values().bits().storage_bits().count(), 0);
         EXPECT_NO_THROW(unchanged.delta(root));  // Updated from the delta.
 
         const auto roots = std::array<kr::dl::semantics::incremental::EvaluationRoot, 1> { expression };
         auto delta_policy = kr::dl::semantics::DeltaEvaluationPolicy<Kind>(*search->task, roots);
         auto context = delta_policy.make_source_context(invocation_context);
-        EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, context).storage_bits().count(), 0);
+        EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, context).get_values().bits().storage_bits().count(), 0);
         auto recovered = delta_policy.make_source_context(invocation_context);
-        EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, recovered).storage_bits().count(), 0);
+        EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, recovered).get_values().bits().storage_bits().count(), 0);
     };
     reject_multiple_values(source);
     reject_multiple_values(kr::ps::ext::dl::parse_role("(r_register 0)", domain, *constructors));

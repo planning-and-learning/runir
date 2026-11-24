@@ -33,6 +33,7 @@ void bind_plans(nb::module_& m)
     urd::python::bind_data<SetPlan>(m);
     urd::python::bind_data<SelectEqualPlan>(m);
     urd::python::bind_data<SelectValuePlan>(m);
+    urd::python::bind_data<GenericJoinPlan>(m);
     m.def(
         "make_projection_plan",
         [](ColumnIndices input, urd::Store<urd::sequence<Column>> labels) { return make_projection_plan(input, labels); },

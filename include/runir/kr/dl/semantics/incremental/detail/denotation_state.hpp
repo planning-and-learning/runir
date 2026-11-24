@@ -41,7 +41,7 @@ public:
 
     [[nodiscard]] const auto& get_delta() const noexcept { return m_delta; }
 
-    [[nodiscard]] size_t size() const { return result().storage_bits().count(); }
+    [[nodiscard]] size_t size() const { return result().get_values().bits().storage_bits().count(); }
 
     /// Copy a complete result while retaining storage and clearing previous changes.
     template<typename Source>

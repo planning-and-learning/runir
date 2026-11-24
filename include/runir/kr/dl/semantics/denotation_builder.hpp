@@ -76,20 +76,33 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>
 namespace urd
 {
 
-/// A concept's denotation being computed: its values a bitset of its own (DenotationBitset), set in place.
-template<typename C>
-struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>, C>
+/// A concept's or role's denotation being computed: its values a bitset of its own (DenotationBitset), set in place; a
+/// role's rows of blocks are one bitset, as a concept's bits are.
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
+struct builder<runir::kr::dl::semantics::Denotation<Category>, C>
 {
-    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
+    urd::key<runir::kr::dl::semantics::Denotation<Category>> index;
     urd::built_t<ygg::uint_t, C> num_objects = 0;
-    urd::built_t<runir::kr::dl::semantics::DenotationWords<runir::kr::dl::ConceptTag>, C> values;
+    urd::built_t<runir::kr::dl::semantics::DenotationWords<Category>, C> values;
 
-    /// Its bits (a read is its view's: value()).
+    /// A concept's bits (a read is its view's: value()).
     auto get() -> urd::bitset_span<ygg::uint_t>
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     { return urd::bitset_span<ygg::uint_t>(values.words.data(), runir::kr::dl::semantics::detail::ConceptLayout::num_bits(num_objects)); }
 
-    /// Set membership and invalidate published identity; return whether it changed.
+    /// A role's row of `object` (a read is its view's: value(object)).
+    auto get(urd::index<tyr::formalism::Object> object) -> urd::bitset_span<ygg::uint_t>
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        assert(static_cast<ygg::uint_t>(object.value) < num_objects);
+        const auto words = std::span<ygg::uint_t>(values.words.data(), values.words.size());
+        return urd::bitset_span<ygg::uint_t>(words.subspan(runir::kr::dl::semantics::detail::RoleLayout::row_block_offset(object, num_objects)).data(),
+                                             num_objects);
+    }
+
+    /// Set a concept's membership and invalidate published identity; return whether it changed.
     bool set(urd::index<tyr::formalism::Object> object, bool present)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
         auto bits = get();
         const auto changed = bits.test(static_cast<ygg::uint_t>(object.value)) != present;
@@ -98,47 +111,9 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>, 
         return changed;
     }
 
-    void flip()
-    {
-        get().flip();
-        index = {};
-    }
-
-    /// Its words as bits, trailing padding included; bulk operations must preserve its zero bits.
-    auto storage_bits() -> urd::bitset_span<ygg::uint_t>
-    { return urd::bitset_span<ygg::uint_t>(values.words.data(), values.words.size() * urd::bitset_span<ygg::uint_t>::Digits); }
-
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"num_objects", &builder::num_objects>, urd::field<"values", &builder::values>> {}; }
-
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
-
-    static constexpr auto functions() noexcept
-    {
-        return urd::Functions<urd::function<"get", &builder::get>,
-                              urd::function<"set", &builder::set, urd::arg<"object">, urd::arg<"present">>,
-                              urd::function<"flip", &builder::flip>,
-                              urd::function<"storage_bits", &builder::storage_bits>> {};
-    }
-};
-
-/// A role's denotation being computed: as a concept's, its rows of blocks one bitset.
-template<typename C>
-struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>, C>
-{
-    urd::key<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
-    urd::built_t<ygg::uint_t, C> num_objects = 0;
-    urd::built_t<runir::kr::dl::semantics::DenotationWords<runir::kr::dl::RoleTag>, C> values;
-
-    /// The row of `object` (a read is its view's: value(object)).
-    auto get(urd::index<tyr::formalism::Object> object) -> urd::bitset_span<ygg::uint_t>
-    {
-        assert(static_cast<ygg::uint_t>(object.value) < num_objects);
-        return urd::bitset_span<ygg::uint_t>(values.words.data() + runir::kr::dl::semantics::detail::RoleLayout::row_block_offset(object, num_objects),
-                                             num_objects);
-    }
-
-    /// Set membership and invalidate published identity; return whether it changed.
+    /// Set a role's membership and invalidate published identity; return whether it changed.
     bool set(urd::index<tyr::formalism::Object> source, urd::index<tyr::formalism::Object> target, bool present)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
         auto row = get(source);
         const auto changed = row.test(static_cast<ygg::uint_t>(target.value)) != present;
@@ -147,14 +122,19 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>, C>
         return changed;
     }
 
+    /// Complement it: a concept's bits, or each of a role's rows (its padding stays zero).
     void flip()
     {
-        for (ygg::uint_t source = 0; source < num_objects; ++source)
-            get(urd::index<tyr::formalism::Object>(source)).flip();
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            get().flip();
+        else
+            for (ygg::uint_t source = 0; source < num_objects; ++source)
+                get(urd::index<tyr::formalism::Object>(source)).flip();
         index = {};
     }
 
-    /// Its words as bits, per-row padding included; bulk operations must preserve its zero bits.
+    /// Its words as bits, padding included (a concept's trailing bits, a role's per row); bulk operations must preserve
+    /// its zero bits.
     auto storage_bits() -> urd::bitset_span<ygg::uint_t>
     { return urd::bitset_span<ygg::uint_t>(values.words.data(), values.words.size() * urd::bitset_span<ygg::uint_t>::Digits); }
 
@@ -164,10 +144,30 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>, C>
 
     static constexpr auto functions() noexcept
     {
-        return urd::Functions<urd::function<"get", &builder::get, urd::arg<"object">>,
-                              urd::function<"set", &builder::set, urd::arg<"source">, urd::arg<"target">, urd::arg<"present">>,
-                              urd::function<"flip", &builder::flip>,
-                              urd::function<"storage_bits", &builder::storage_bits>> {};
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+        {
+            return urd::Functions<urd::function<"get", static_cast<urd::bitset_span<ygg::uint_t> (builder::*)()>(&builder::get)>,
+                                  urd::function<"set",
+                                                static_cast<bool (builder::*)(urd::index<tyr::formalism::Object>, bool)>(&builder::set),
+                                                urd::arg<"object">,
+                                                urd::arg<"present">>,
+                                  urd::function<"flip", &builder::flip>,
+                                  urd::function<"storage_bits", &builder::storage_bits>> {};
+        }
+        else
+        {
+            return urd::Functions<
+                urd::function<"get",
+                              static_cast<urd::bitset_span<ygg::uint_t> (builder::*)(urd::index<tyr::formalism::Object>)>(&builder::get),
+                              urd::arg<"object">>,
+                urd::function<"set",
+                              static_cast<bool (builder::*)(urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>, bool)>(&builder::set),
+                              urd::arg<"source">,
+                              urd::arg<"target">,
+                              urd::arg<"present">>,
+                urd::function<"flip", &builder::flip>,
+                urd::function<"storage_bits", &builder::storage_bits>> {};
+        }
     }
 };
 

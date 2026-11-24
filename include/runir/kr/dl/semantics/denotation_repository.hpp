@@ -63,9 +63,8 @@ public:
 
     /// The part of its own that holds the records of the keys Keys in Store, read (Writable false) or written into.
     template<bool Writable, typename Store, typename Keys>
-    using Part = ygg::formalism::HeldPart<std::conditional_t<Writable, DenotationRepository, const DenotationRepository>,
-                                          std::conditional_t<Writable, Store, const Store>,
-                                          Keys>;
+    using Part = ygg::formalism::
+        HeldPart<std::conditional_t<Writable, DenotationRepository, const DenotationRepository>, std::conditional_t<Writable, Store, const Store>, Keys>;
 
     /// Its own parts (ygg::formalism::key_parts): its symbols, and the pools of its concept and role denotations.
     template<bool Writable>

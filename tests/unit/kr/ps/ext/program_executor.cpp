@@ -1280,7 +1280,7 @@ void check_state_memorization()
                     ASSERT_EQ(arguments.template arguments<kr::dl::BooleanTag>().size(), 1);
                     ASSERT_EQ(arguments.template arguments<kr::dl::NumericalTag>().size(), 1);
                     EXPECT_EQ(arguments.template arguments<kr::dl::ConceptTag>().at(0).value().count(), 2);
-                    EXPECT_EQ(arguments.template arguments<kr::dl::RoleTag>().at(0).storage_bits().count(), 3);
+                    EXPECT_EQ(arguments.template arguments<kr::dl::RoleTag>().at(0).get_values().bits().storage_bits().count(), 3);
                     EXPECT_TRUE(arguments.template arguments<kr::dl::BooleanTag>().at(0).get_value());
                     EXPECT_EQ(arguments.template arguments<kr::dl::NumericalTag>().at(0).get_value(), 2);
                 }
@@ -1480,7 +1480,6 @@ void check_transient_builder_values_and_reuse()
     auto& executions = *context->execution_repository;
     auto& controls = *context->control_repository;
     auto& denotations = *context->dl_denotation_repository;
-    auto& states = *search->state_repository;
     // The pools the built children come from, before the program states that hold them.
     auto state_pool = urd::Store<urd::slots<urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>>> {};
     auto register_pool = urd::Store<urd::slots<urd::builder<kr::dl::semantics::RegisterValues, runir::kr::dl::semantics::DenotationRepository>>> {};

@@ -219,7 +219,7 @@ void check_queries()
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(concept_, context).value().count(), 3);
     const auto role = kr::ps::ext::dl::parse_role("(r_project y x " + triple + ")", domain, *repository);
     const auto reversed = kr::dl::semantics::evaluate<Kind>(role, context);
-    EXPECT_EQ(reversed.storage_bits().count(), 3);
+    EXPECT_EQ(reversed.get_values().bits().storage_bits().count(), 3);
     const auto a = domain.get_constants()[0];
     const auto b = domain.get_constants()[1];
     const auto c = domain.get_constants()[2];
@@ -923,9 +923,9 @@ void check_query_cache_across_states()
     {
         storage.reset_dynamic();
         EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
-        EXPECT_EQ(static_value.storage_bits().count(), 2);
+        EXPECT_EQ(static_value.get_values().bits().storage_bits().count(), 2);
         const auto value = kr::dl::semantics::evaluate<Kind>(dynamic_role, i % 2 == 0 ? context : next);
-        EXPECT_EQ(value.storage_bits().count(), i % 2 == 0 ? 4 : 3);
+        EXPECT_EQ(value.get_values().bits().storage_bits().count(), i % 2 == 0 ? 4 : 3);
         EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 1);
         EXPECT_EQ(denotations.template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
     }
@@ -943,12 +943,12 @@ void check_query_cache_across_states()
     EXPECT_NE(&storage.get_denotation_repository(false), &storage.get_denotation_repository(true));
     auto target_context =
         kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().get_state(), builder, target_storage, next.arguments(), next.registers());
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(dynamic_role, target_context).storage_bits().count(), 3);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(dynamic_role, target_context).get_values().bits().storage_bits().count(), 3);
     EXPECT_NE(kr::dl::semantics::evaluate<Kind>(static_role, target_context), static_value);
     target_storage.reset_all();
-    EXPECT_EQ(source_value.storage_bits().count(), 4);
-    EXPECT_EQ(static_value.storage_bits().count(), 2);
-    EXPECT_EQ(retained.storage_bits().count(), 4);
+    EXPECT_EQ(source_value.get_values().bits().storage_bits().count(), 4);
+    EXPECT_EQ(static_value.get_values().bits().storage_bits().count(), 2);
+    EXPECT_EQ(retained.get_values().bits().storage_bits().count(), 4);
 
     storage.reset_all();
     EXPECT_TRUE(caches.get_queries(true).empty());
@@ -957,7 +957,7 @@ void check_query_cache_across_states()
     EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
     EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
     EXPECT_EQ(storage.get_denotation_repository(true).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
-    EXPECT_EQ(retained.storage_bits().count(), 4);
+    EXPECT_EQ(retained.get_values().bits().storage_bits().count(), 4);
     // A full clear releases the cached rows as well; reevaluation rebuilds them.
     EXPECT_TRUE(check_mixed_joins(context));
     storage.reset_all();
@@ -1129,7 +1129,8 @@ void check_predicate_repository_identity()
             if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
                 role_data.polarity = true;
             auto role_wrapper = urd::data<kr::dl::Constructor<kr::dl::RoleTag>>(repository->insert(role_data).first.index(), false);
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(role_wrapper).first, context).storage_bits().count(), size_t(expected));
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(role_wrapper).first, context).get_values().bits().storage_bits().count(),
+                      size_t(expected));
 
             auto boolean_data = urd::data<kr::dl::Boolean<kr::dl::SemanticFamily, Tag>>(predicates[0], true);
             auto boolean_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(repository->insert(boolean_data).first.index(), false);

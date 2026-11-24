@@ -150,7 +150,7 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<ds::Denotation<Cate
 
 template<dl::ConceptOrRoleTag Category>
 fmt::format_context::iterator fmt::formatter<ds::DenotationWords<Category>>::format(const ds::DenotationWords<Category>& value,
-                                                                                  fmt::format_context& context) const
+                                                                                    fmt::format_context& context) const
 { return fmt::format_to(context.out(), "[{}]", fmt::join(value.words, ", ")); }
 
 // Query<> and each query constructor tag (dl::QueryConstructorTags).

@@ -198,8 +198,8 @@ void initialize_set(IntersectionTag,
 {
     auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
     auto bits = result.storage_bits();
-    bits.copy_from(lhs.storage_bits());
-    bits &= rhs.storage_bits();
+    bits.copy_from(lhs.get_values().bits().storage_bits());
+    bits &= rhs.get_values().bits().storage_bits();
 }
 
 template<ConceptOrRoleTag Category>
@@ -228,8 +228,8 @@ void initialize_set(UnionTag,
 {
     auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
     auto bits = result.storage_bits();
-    bits.copy_from(lhs.storage_bits());
-    bits |= rhs.storage_bits();
+    bits.copy_from(lhs.get_values().bits().storage_bits());
+    bits |= rhs.get_values().bits().storage_bits();
 }
 
 template<ConceptOrRoleTag Category>
