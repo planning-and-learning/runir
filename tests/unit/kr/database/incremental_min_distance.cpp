@@ -395,7 +395,7 @@ struct TwoSlotEdges
     /// The changes as views (SlotChanges).
     [[nodiscard]] auto changes_of(const urd::Store<urd::sequence<SlotChange>>& changes) const
     {
-        return [this, &changes](size_t slot) { return ChangeView { borrow(changes[slot].added), borrow(changes[slot].removed) }; };
+        return [&changes](size_t slot) { return ChangeView { borrow(changes[slot].added), borrow(changes[slot].removed) }; };
     }
 };
 

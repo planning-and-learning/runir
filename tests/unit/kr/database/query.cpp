@@ -24,7 +24,7 @@ using runir::tests::values_of;
 using Delta = runir::tests::Change;
 using Change = std::pair<ygg::FreeRelationBuilderView, ygg::FreeRelationBuilderView>;
 
-const Column x(0), y(1), z(2), d(3);
+const Column x(0), y(1), z(2);
 
 auto rows(const auto& relation)
 {
