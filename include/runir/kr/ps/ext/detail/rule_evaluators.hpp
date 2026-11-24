@@ -99,7 +99,7 @@ class RuleEvaluators
     {
         return urd::visit_view(state.get_module_state(),
                                [this](const auto& module_state)
-                               { return source_rules(urd::interned_view(module_state.get_mod()), urd::interned_view(module_state.get_memory_state())); });
+                               { return this->source_rules(urd::interned_view(module_state.get_mod()), urd::interned_view(module_state.get_memory_state())); });
     }
 
     [[nodiscard]] auto source_rules(ModuleView module_, MemoryStateView memory_state) const

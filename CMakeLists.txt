@@ -82,6 +82,12 @@ else()
     endif()
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og -g2 -ggdb")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$")
+        # The debug strings of librunir_kr exceed 4 GiB, more than 32-bit DWARF offsets reach (the link fails with
+        # "relocation truncated to fit ... .debug_str"); 64-bit DWARF offsets reach them. Code is unchanged.
+        string(APPEND CMAKE_CXX_FLAGS_DEBUG " -gdwarf64")
+        string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO " -gdwarf64")
+    endif()
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g2 -fno-omit-frame-pointer -fno-lto")
 
     if(
