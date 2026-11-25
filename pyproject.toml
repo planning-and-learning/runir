@@ -2,11 +2,11 @@
 requires = [
     "scikit-build-core>=1.0.3,<2",
     "nanobind-backend>=1.0",
-    "pyyggdrasil>=0.13.0,<0.14",
+    "pyyggdrasil>=0.14.0,<0.15",
     "pyurd>=0.6.0,<0.7",
-    "pybrokkr>=0.3.0,<0.4",
-    "pytyr>=0.11.0,<0.12",
-    "pypddl>=1.14.0,<1.15",
+    "pybrokkr>=0.3.1,<0.4",
+    "pytyr>=0.12.0,<0.13",
+    "pypddl>=1.15.0,<1.16",
     "pyvefr>=0.5.0,<0.6",
 ]
 build-backend = "pyrunir_build_backend"
@@ -24,11 +24,11 @@ authors = [
 ]
 dependencies = [
     "nanobind-backend>=1.0",
-    "pyyggdrasil>=0.13.0,<0.14",
+    "pyyggdrasil>=0.14.0,<0.15",
     "pyurd>=0.6.0,<0.7",
-    "pybrokkr>=0.3.0,<0.4",
-    "pytyr>=0.11.0,<0.12",
-    "pypddl>=1.14.0,<1.15",
+    "pybrokkr>=0.3.1,<0.4",
+    "pytyr>=0.12.0,<0.13",
+    "pypddl>=1.15.0,<1.16",
     "pyvefr>=0.5.0,<0.6",
 ]
 
@@ -38,7 +38,7 @@ mcp = [
 ]
 test = [
     "pytest",
-    "pypddl-datasets>=0.0.17,<0.1",
+    "pypddl-datasets>=0.0.22,<0.1",
     # override for Python 3.11 in the tests.
     "typing-extensions>=4.4",
 ]
@@ -98,7 +98,7 @@ container-engine = "docker"
 # Because --no-isolation also skips scikit-build-core's dynamic build tools,
 # cmake/ninja must be installed here too (manylinux ships cmake but not ninja).
 build-frontend = { name = "build", args = ["--no-isolation"] }
-before-build = "n=0; until python -m pip install --no-cache-dir 'scikit-build-core>=1.0.3,<2' 'cmake>=3.21' 'ninja>=1.5' 'nanobind-backend>=1.0' 'pypddl>=1.14.0,<1.15' 'pyyggdrasil>=0.13.0,<0.14' 'pytyr>=0.11.0,<0.12' 'pybrokkr>=0.3.0,<0.4' 'pyvefr>=0.5.0,<0.6'; do n=$((n+1)); [ $n -ge 30 ] && exit 1; echo 'provider wheels not on the index yet; retrying in 60s'; sleep 60; done"
+before-build = "n=0; until python -m pip install --no-cache-dir 'scikit-build-core>=1.0.3,<2' 'cmake>=3.21' 'ninja>=1.5' 'nanobind-backend>=1.0' 'pypddl>=1.15.0,<1.16' 'pyyggdrasil>=0.14.0,<0.15' 'pytyr>=0.12.0,<0.13' 'pybrokkr>=0.3.1,<0.4' 'pyvefr>=0.5.0,<0.6'; do n=$((n+1)); [ $n -ge 30 ] && exit 1; echo 'provider wheels not on the index yet; retrying in 60s'; sleep 60; done"
 
 [tool.cibuildwheel.linux]
 repair-wheel-command = "python -m pyurd.repair --providers pypddl,pyyggdrasil,pytyr,pyurd_native,pyvefr --dest-dir {dest_dir} {wheel}"

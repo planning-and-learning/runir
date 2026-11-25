@@ -139,8 +139,8 @@ endif()
 
 # Dependencies
 
-set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.13.0)
-set(RUNIR_TYR_REQUIRED_VERSION 0.11.0)
+set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.14.0)
+set(RUNIR_TYR_REQUIRED_VERSION 0.12.0)
 set(RUNIR_VEFR_REQUIRED_VERSION 0.5.0)
 
 brokkr_find_python_native_prefix(pyurd URD_PREFIX)
@@ -207,7 +207,7 @@ if(RUNIR_BUILD_TESTS OR RUNIR_BUILD_EXECUTABLES)
     if(NOT RUNIR_BENCHMARKS_RESULT EQUAL 0)
         message(
             FATAL_ERROR
-            "Could not resolve the benchmark data root; install 'pypddl-datasets>=0.0.17,<0.1' into the configuring Python (${Python_EXECUTABLE})."
+            "Could not resolve the benchmark data root; install 'pypddl-datasets>=0.0.22,<0.1' into the configuring Python (${Python_EXECUTABLE})."
         )
     endif()
     message(STATUS "Benchmark data: ${RUNIR_BENCHMARKS_DIR}")
