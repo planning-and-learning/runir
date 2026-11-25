@@ -19,7 +19,12 @@
 
 namespace runir::kr::database
 {
-using QueryBuilder = boost::mp11::mp_apply<::ygg::formalism::BuilderStorage, boost::mp11::mp_push_front<QuerySymbolTypes, QueryRepository>>;
+/// Its builder types under a name of their own (yggdrasil's NamesList).
+struct QueryBuilders : boost::mp11::mp_apply<::ygg::formalism::Builders, QuerySymbolTypes>
+{
+};
+
+using QueryBuilder = ::ygg::formalism::BasicBuilderStorage<QueryRepository, QueryBuilders>;
 
 using ::ygg::formalism::checkout;
 

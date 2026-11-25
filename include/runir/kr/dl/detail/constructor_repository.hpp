@@ -18,21 +18,25 @@
 namespace runir::kr::dl::detail
 {
 
-/// Constructors, over the planning repository whose symbols their records refer to (nested, read only).
-template<typename RepositoryTypes>
+/// Constructors, over the planning repository whose symbols their records refer to (nested, read only). Derived is the
+/// repository's own class (ConstructorRepository of dl, grammar and cnf_grammar): the context of its records' views and
+/// builders, so that their names spell its name instead of every one of its RepositoryTypes.
+template<typename Derived, typename RepositoryTypes>
 class BasicConstructorRepository :
-    public ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>,
-    public ygg::formalism::Nests<BasicConstructorRepository<RepositoryTypes>, ygg::formalism::Nested<const tyr::formalism::Repository>>
+    public ygg::formalism::SymbolContext<Derived, RepositoryTypes>,
+    public ygg::formalism::Nests<Derived, ygg::formalism::Nested<const tyr::formalism::Repository>>
 {
-    using Base = ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>;
-    using NestsBase = ygg::formalism::Nests<BasicConstructorRepository<RepositoryTypes>, ygg::formalism::Nested<const tyr::formalism::Repository>>;
+    using Base = ygg::formalism::SymbolContext<Derived, RepositoryTypes>;
+    using NestsBase = ygg::formalism::Nests<Derived, ygg::formalism::Nested<const tyr::formalism::Repository>>;
 
 private:
     /// The rules of the repository's DatalogPrograms.
     std::unique_ptr<runir::kr::database::datalog::DatalogRepository> m_datalog_repository;
     size_t m_index;
 
-public:
+    /// Constructed only as its Derived, which forwards to it (a CRTP base, not a class of its own).
+    friend Derived;
+
     /// Over the planning repository whose symbols its records refer to. Numbered by ygg::next_layer(), the process-wide
     /// counter, so that no two contexts share a number.
     explicit BasicConstructorRepository(std::shared_ptr<const tyr::formalism::Repository> planning_repository) :
@@ -42,6 +46,7 @@ public:
         m_index(ygg::next_layer())
     { this->clear(); }
 
+public:
     BasicConstructorRepository(const BasicConstructorRepository&) = delete;
     BasicConstructorRepository& operator=(const BasicConstructorRepository&) = delete;
     BasicConstructorRepository(BasicConstructorRepository&&) = delete;

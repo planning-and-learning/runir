@@ -22,7 +22,11 @@ namespace runir::kr::dl::semantics
 /// The builders and scratch records of every record the denotation repository holds (denotations, their words,
 /// register values, call arguments): read through it, each child through the repository that holds its kind (an
 /// object through the planning repository, the rest through this one).
-using RecordStorage = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, boost::mp11::mp_push_front<DenotationRecordTypes, DenotationRepository>>;
+struct RecordBuilders : boost::mp11::mp_apply<ygg::formalism::Builders, DenotationRecordTypes>
+{
+};
+
+using RecordStorage = ygg::formalism::BasicBuilderStorage<DenotationRepository, RecordBuilders>;
 
 /// The builders and scratch records of the query relations interned with denotations: free relations'.
 using RelationStorage = ygg::FreeRelationStorage;

@@ -18,20 +18,22 @@
 namespace runir::kr::ps
 {
 
-template<FamilyTag Family, typename RepositoryTypes, typename T>
-using RecordView = urd::index_view<T, BasicRepository<Family, RepositoryTypes>>;
+template<FamilyRepository Repository, typename T>
+using RecordView = urd::index_view<T, Repository>;
 
 /// Rebuilds ps records bottom-up. Records the leaf policy can rewrite (leaves.rewrite(view, repository)) are delegated
 /// to it; every other record is reinserted with rewritten children, so records whose children are unchanged keep their
 /// index. Results are memoized per record.
-template<FamilyTag Family, typename RepositoryTypes, typename Leaves>
+template<FamilyRepository Repository, typename Leaves>
 class RecordOptimizer
 {
+    using RepositoryTypes = typename Repository::RepositoryTypes;
+
     template<typename T>
-    using View = RecordView<Family, RepositoryTypes, T>;
+    using View = RecordView<Repository, T>;
 
 public:
-    RecordOptimizer(BasicRepository<Family, RepositoryTypes>& repository, Leaves leaves) : m_repository(&repository), m_leaves(std::move(leaves)) {}
+    RecordOptimizer(Repository& repository, Leaves leaves) : m_repository(&repository), m_leaves(std::move(leaves)) {}
 
     template<typename T>
     View<T> optimize(View<T> view)
@@ -58,18 +60,20 @@ private:
         }
     }
 
-    BasicRepository<Family, RepositoryTypes>* m_repository;
+    Repository* m_repository;
     Leaves m_leaves;
     urd::Store<urd::map<runir::kr::detail::RecordKey, ygg::uint_t>> m_rewritten;  ///< Rewritten record index by record.
 };
 
 /// Visits every record reachable from the added records once and hands those the leaf policy accepts
 /// (leaves.add(view)) to it.
-template<FamilyTag Family, typename RepositoryTypes, typename Leaves>
+template<FamilyRepository Repository, typename Leaves>
 class RecordCollector
 {
+    using RepositoryTypes = typename Repository::RepositoryTypes;
+
     template<typename T>
-    using View = RecordView<Family, RepositoryTypes, T>;
+    using View = RecordView<Repository, T>;
 
 public:
     template<typename T>

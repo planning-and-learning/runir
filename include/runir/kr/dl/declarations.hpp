@@ -1120,7 +1120,7 @@ struct SemanticFamily
 namespace detail
 {
 
-template<typename RepositoryTypes>
+template<typename Derived, typename RepositoryTypes>
 class BasicConstructorRepository;
 
 }  // namespace detail
@@ -1150,7 +1150,8 @@ using ConstructorRepositoryTypes =
                            QueryTypes,
                            boost::mp11::mp_list<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>, DatalogProgram>>;
 
-using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
+/// The constructor repository of ConstructorRepositoryTypes (dl/repository.hpp), a class of its own.
+class ConstructorRepository;
 
 using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 

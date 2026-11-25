@@ -14,7 +14,12 @@
 
 namespace runir::kr::database::datalog
 {
-using DatalogBuilder = boost::mp11::mp_apply<::ygg::formalism::BuilderStorage, boost::mp11::mp_push_front<DatalogSymbolTypes, DatalogRepository>>;
+/// Its builder types under a name of their own (yggdrasil's NamesList).
+struct DatalogBuilders : boost::mp11::mp_apply<::ygg::formalism::Builders, DatalogSymbolTypes>
+{
+};
+
+using DatalogBuilder = ::ygg::formalism::BasicBuilderStorage<DatalogRepository, DatalogBuilders>;
 
 using ::ygg::formalism::checkout;
 

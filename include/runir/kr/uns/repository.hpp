@@ -14,6 +14,7 @@
 #include "runir/kr/uns/classifier_view.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
+#include <utility>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
@@ -21,7 +22,22 @@
 namespace runir::kr::uns
 {
 
-using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, boost::mp11::mp_push_front<RepositoryTypes, Repository>>;
+/// The family's records, in a class of its own (named, so that names that mention it spell its name, not its types).
+class Repository final : public runir::kr::ps::BasicRepository<Repository, runir::kr::UnsFamilyTag, RepositoryTypes>
+{
+public:
+    explicit Repository(DlRepositoryPtr dl_repository) :
+        runir::kr::ps::BasicRepository<Repository, runir::kr::UnsFamilyTag, RepositoryTypes>(std::move(dl_repository))
+    {
+    }
+};
+
+/// Its builder types under a name of their own (yggdrasil's NamesList).
+struct Builders : boost::mp11::mp_apply<ygg::formalism::Builders, RepositoryTypes>
+{
+};
+
+using Builder = ygg::formalism::BasicBuilderStorage<Repository, Builders>;
 
 using ygg::formalism::checkout;
 

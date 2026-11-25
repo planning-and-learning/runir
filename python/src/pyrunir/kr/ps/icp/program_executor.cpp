@@ -30,6 +30,7 @@
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
+#include <runir/kr/uns/repository.hpp>
 #include <string>
 #include <tyr/planning/declarations.hpp>
 #include <urd/dot.hpp>

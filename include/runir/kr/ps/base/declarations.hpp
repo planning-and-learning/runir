@@ -25,7 +25,8 @@ using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::BaseFamilyTag>
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::BaseFamilyTag>;
 using SketchTypes = boost::mp11::mp_list<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, runir::kr::ps::base::Sketch>;
 using RepositoryTypes = boost::mp11::mp_append<runir::kr::ps::PsCoreTypes<runir::kr::BaseFamilyTag>, SketchTypes>;
-using Repository = runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, RepositoryTypes>;
+/// The family's records (repository.hpp), a class of its own.
+class Repository;
 using RepositoryPtr = std::shared_ptr<Repository>;
 
 using SketchView = urd::index_view<runir::kr::ps::base::Sketch, Repository>;

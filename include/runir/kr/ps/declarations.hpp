@@ -73,8 +73,12 @@ struct ConcreteEffect
 
 // Repository
 
-template<FamilyTag Family, typename RepositoryTypes>
+template<typename Derived, FamilyTag Family, typename RepositoryTypes>
 class BasicRepository;
+
+/// Whether R is a family's repository (a class deriving from BasicRepository): its Family and its RepositoryTypes.
+template<typename R>
+concept FamilyRepository = FamilyTag<typename R::Family> && requires { typename R::RepositoryTypes; };
 
 /// A family's own types, specialized in the family's declarations.hpp: `Repository` for the policy families; the
 /// program families (ext, icp) also name `ConcreteRuleTypes`, `ControlRepositoryTypes`, `ExecutionRepositoryTypes<Kind>` and

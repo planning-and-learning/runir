@@ -26,7 +26,9 @@
 #include "runir/kr/dl/role_builder.hpp"
 
 #include <boost/mp11.hpp>
+#include <memory>
 #include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
@@ -34,7 +36,22 @@
 namespace runir::kr::dl::grammar
 {
 
-using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, boost::mp11::mp_push_front<ConstructorRepositoryTypes, ConstructorRepository>>;
+/// Its constructors, in a class of its own (named, so that names that mention it spell its name, not its types).
+class ConstructorRepository final : public runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepository, ConstructorRepositoryTypes>
+{
+public:
+    explicit ConstructorRepository(std::shared_ptr<const tyr::formalism::Repository> planning_repository) :
+        runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepository, ConstructorRepositoryTypes>(std::move(planning_repository))
+    {
+    }
+};
+
+/// Its builder types under a name of their own (yggdrasil's NamesList).
+struct Builders : boost::mp11::mp_apply<ygg::formalism::Builders, ConstructorRepositoryTypes>
+{
+};
+
+using Builder = ygg::formalism::BasicBuilderStorage<ConstructorRepository, Builders>;
 
 using ygg::formalism::checkout;
 

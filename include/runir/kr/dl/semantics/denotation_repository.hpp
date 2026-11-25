@@ -61,16 +61,20 @@ public:
     /// The keys it resolves itself: its records'.
     using KeyTypes = boost::mp11::mp_transform<urd::key, DenotationRecordTypes>;
 
-    /// The part of its own that holds the records of the keys Keys in Store, read (Writable false) or written into.
-    template<bool Writable, typename Store, typename Keys>
-    using Part = ygg::formalism::
-        HeldPart<std::conditional_t<Writable, DenotationRepository, const DenotationRepository>, std::conditional_t<Writable, Store, const Store>, Keys>;
+    /// Its own parts' stores and the keys each resolves (ygg::formalism::HeldPart<DenotationRepository, P>): its symbols,
+    /// and the pools of its concept and role denotations.
+    using PartStores = boost::mp11::mp_list<Symbols, DenotationPool<ConceptTag>, DenotationPool<RoleTag>>;
+    using PartKeys = boost::mp11::mp_list<boost::mp11::mp_transform<urd::key, SymbolKinds>,
+                                          boost::mp11::mp_list<urd::key<Denotation<ConceptTag>>>,
+                                          boost::mp11::mp_list<urd::key<Denotation<RoleTag>>>>;
 
-    /// Its own parts (ygg::formalism::key_parts): its symbols, and the pools of its concept and role denotations.
+    /// Part P of its own, read (Writable false) or written into.
+    template<bool Writable, std::size_t P>
+    using Part = ygg::formalism::HeldPart<std::conditional_t<Writable, DenotationRepository, const DenotationRepository>, P>;
+
+    /// Its own parts (ygg::formalism::key_parts).
     template<bool Writable>
-    using OwnParts = std::tuple<Part<Writable, Symbols, boost::mp11::mp_transform<urd::key, SymbolKinds>>,
-                                Part<Writable, DenotationPool<ConceptTag>, boost::mp11::mp_list<urd::key<Denotation<ConceptTag>>>>,
-                                Part<Writable, DenotationPool<RoleTag>, boost::mp11::mp_list<urd::key<Denotation<RoleTag>>>>>;
+    using OwnParts = std::tuple<Part<Writable, 0>, Part<Writable, 1>, Part<Writable, 2>>;
 
     /// Over the planning repository whose objects its denotations range over. Numbered by ygg::next_layer(), the
     /// process-wide counter, so that no two contexts share a number. The constructor and destructor are defined in the

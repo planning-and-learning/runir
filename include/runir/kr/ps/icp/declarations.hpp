@@ -103,7 +103,8 @@ using EffectTypes = ps::PsEffectTypes<IcpFamilyTag>;
 using ProgramTypes = boost::mp11::mp_list<MemoryState<IcpFamilyTag>, ModuleSymbol<IcpFamilyTag>, Module, Program>;
 using IndexicalTypes = boost::mp11::mp_list<XCondition, XEffect>;
 using RepositoryTypes = boost::mp11::mp_append<ps::PsCoreTypes<runir::kr::IcpFamilyTag>, RuleTypes, ProgramTypes, IndexicalTypes>;
-using Repository = ps::BasicRepository<IcpFamilyTag, RepositoryTypes>;
+/// The family's records (repository.hpp), a class of its own.
+class Repository;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using MemoryStateView = urd::index_view<MemoryState<IcpFamilyTag>, Repository>;
 using ModuleSymbolView = urd::index_view<ModuleSymbol<IcpFamilyTag>, Repository>;

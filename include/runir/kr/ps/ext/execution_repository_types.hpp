@@ -15,23 +15,31 @@ namespace runir::kr::ps::ext
 
 /// The builders and scratch records of the control records, and the scratch records of the denotation repository's
 /// records, which interning a control record's builder interns there (its registers, its arguments).
-using ControlBuilder = boost::mp11::mp_apply<
-    ygg::formalism::BuilderStorage,
-    boost::mp11::mp_push_front<boost::mp11::mp_append<ControlRepositoryTypes, runir::kr::dl::semantics::DenotationRecordTypes>, ControlRepository>>;
+struct ControlBuilders :
+    boost::mp11::mp_apply<ygg::formalism::Builders, boost::mp11::mp_append<ControlRepositoryTypes, runir::kr::dl::semantics::DenotationRecordTypes>>
+{
+};
+
+using ControlBuilder = ygg::formalism::BasicBuilderStorage<ControlRepository, ControlBuilders>;
 
 /// The builders and scratch records of the execution records, and the scratch records of the control and denotation
 /// repositories' records and of the planning states, which interning an execution record's builder interns there (its
 /// activation, its frames; its planning state and its storages, in the state repository).
 template<tyr::TaskKind Kind>
-using ExecutionBuilder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage,
-                                               boost::mp11::mp_push_front<boost::mp11::mp_append<ExecutionRepositoryTypes<Kind>,
-                                                                                                 ControlRepositoryTypes,
-                                                                                                 runir::kr::dl::semantics::DenotationRecordTypes,
-                                                                                                 boost::mp11::mp_list<tyr::planning::State<Kind>,
-                                                                                                                      tyr::planning::FactStorage<Kind>,
-                                                                                                                      tyr::planning::AtomStorage<Kind>,
-                                                                                                                      tyr::planning::NumericStorage<Kind>>>,
-                                                                          runir::kr::ps::ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>>;
+struct ExecutionBuilders :
+    boost::mp11::mp_apply<
+        ygg::formalism::Builders,
+        boost::mp11::mp_append<
+            ExecutionRepositoryTypes<Kind>,
+            ControlRepositoryTypes,
+            runir::kr::dl::semantics::DenotationRecordTypes,
+            boost::mp11::
+                mp_list<tyr::planning::State<Kind>, tyr::planning::FactStorage<Kind>, tyr::planning::AtomStorage<Kind>, tyr::planning::NumericStorage<Kind>>>>
+{
+};
+
+template<tyr::TaskKind Kind>
+using ExecutionBuilder = ygg::formalism::BasicBuilderStorage<runir::kr::ps::ExecutionRepository<runir::kr::ExtFamilyTag, Kind>, ExecutionBuilders<Kind>>;
 
 /// The execution repositories of the ext family, by task kind.
 using GroundExecutionRepository = runir::kr::ps::ExecutionRepository<runir::kr::ExtFamilyTag, tyr::GroundTag>;

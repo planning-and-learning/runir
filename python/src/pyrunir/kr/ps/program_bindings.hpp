@@ -29,11 +29,10 @@ namespace runir::kr::python
 
 namespace nb = nanobind;
 
-template<runir::kr::FamilyTag Family, typename RepositoryTypes>
-void bind_repository(nb::module_& /*m*/, nb::class_<runir::kr::ps::BasicRepository<Family, RepositoryTypes>>& repository)
+template<runir::kr::ps::FamilyRepository Repository>
+void bind_repository(nb::module_& /*m*/, nb::class_<Repository>& repository)
 {
     using namespace nb::literals;
-    using Repository = runir::kr::ps::BasicRepository<Family, RepositoryTypes>;
     repository
         .def(nb::new_([](runir::kr::dl::ConstructorRepositoryPtr dl_repository) { return std::make_shared<Repository>(std::move(dl_repository)); }),
              "dl_repository"_a)

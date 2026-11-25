@@ -76,7 +76,8 @@ using GrammarTypes = boost::mp11::mp_list<GrammarTag>;
 using ConstructorRepositoryTypes =
     boost::mp11::mp_append<ConceptTypes, RoleTypes, BooleanTypes, NumericalTypes, NonTerminalTypes, DerivationRuleTypes, GrammarTypes>;
 
-using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
+/// The constructor repository of ConstructorRepositoryTypes (grammar/constructor_repository.hpp), a class of its own.
+class ConstructorRepository;
 
 using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 

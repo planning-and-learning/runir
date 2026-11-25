@@ -25,9 +25,9 @@ public:
     {
     }
 
-    template<typename FeatureTag, typename RepositoryTypes>
-    RecordView<Family, RepositoryTypes, ConcreteFeature<Family, FeatureTag>>
-    rewrite(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, FeatureTag>> view, BasicRepository<Family, RepositoryTypes>& repository)
+    template<typename FeatureTag, FamilyRepository Repository>
+    RecordView<Repository, ConcreteFeature<Family, FeatureTag>> rewrite(RecordView<Repository, ConcreteFeature<Family, FeatureTag>> view,
+                                                                        Repository& repository)
     {
         const auto expression = view.get_feature();
         const auto optimized = m_optimizer.optimize(expression);
@@ -46,8 +46,8 @@ template<FamilyTag Family>
 class FeatureStatisticsCollector
 {
 public:
-    template<typename FeatureTag, typename RepositoryTypes>
-    void add(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, FeatureTag>> view)
+    template<typename FeatureTag, FamilyRepository Repository>
+    void add(RecordView<Repository, ConcreteFeature<Family, FeatureTag>> view)
     { m_collector.add(view.get_feature()); }
 
     [[nodiscard]] const runir::kr::dl::QueryStatisticsCollector& get_collector() const noexcept { return m_collector; }
@@ -58,14 +58,13 @@ private:
 
 /// Optimizes the queries of any ps record (a base sketch, an ext/icp program, module or rule, an uns classifier, or a
 /// single feature) and returns the rewritten record in the same repositories.
-template<FamilyTag Family, typename T, typename RepositoryTypes>
-RecordView<Family, RepositoryTypes, T> optimize(RecordView<Family, RepositoryTypes, T> object,
-                                                BasicRepository<Family, RepositoryTypes>& repository,
-                                                const runir::kr::dl::QueryStatistics& statistics = {})
+template<FamilyRepository Repository, typename T>
+RecordView<Repository, T> optimize(RecordView<Repository, T> object, Repository& repository, const runir::kr::dl::QueryStatistics& statistics = {})
 {
+    using Family = typename Repository::Family;
     if (&object.context() != &repository)
         throw std::invalid_argument("optimize: the object belongs to another repository.");
-    auto optimizer = RecordOptimizer<Family, RepositoryTypes, FeatureOptimizer<Family>>(
+    auto optimizer = RecordOptimizer<Repository, FeatureOptimizer<Family>>(
         repository,
         FeatureOptimizer<Family>(repository.template get<runir::kr::dl::ConstructorRepository>(), statistics));
     return optimizer.template optimize<T>(object);
@@ -73,21 +72,22 @@ RecordView<Family, RepositoryTypes, T> optimize(RecordView<Family, RepositoryTyp
 
 /// Leaf statistics of every query in a ps record; contexts holds one state evaluation context per sample state. Leaves
 /// empty in every sample are reported in warnings.
-template<tyr::TaskKind Kind, FamilyTag Family, typename T, typename RepositoryTypes, runir::kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
-runir::kr::dl::QueryStatistics collect_query_statistics(RecordView<Family, RepositoryTypes, T> object,
-                                                        const urd::Store<urd::sequence<Context*>>& contexts,
-                                                        ygg::diagnostics::Warnings& warnings)
+template<tyr::TaskKind Kind, FamilyRepository Repository, typename T, runir::kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
+runir::kr::dl::QueryStatistics
+collect_query_statistics(RecordView<Repository, T> object, const urd::Store<urd::sequence<Context*>>& contexts, ygg::diagnostics::Warnings& warnings)
 {
-    auto collector = RecordCollector<Family, RepositoryTypes, FeatureStatisticsCollector<Family>>();
+    using Family = typename Repository::Family;
+    auto collector = RecordCollector<Repository, FeatureStatisticsCollector<Family>>();
     collector.template add<T>(object);
     return collector.get_leaves().get_collector().template measure<Kind>(contexts, warnings);
 }
 
 /// A sampler for the query leaves of a ps record, to measure sample states one at a time with bounded memory.
-template<FamilyTag Family, typename T, typename RepositoryTypes>
-runir::kr::dl::QueryStatisticsSampler query_statistics_sampler(RecordView<Family, RepositoryTypes, T> object)
+template<FamilyRepository Repository, typename T>
+runir::kr::dl::QueryStatisticsSampler query_statistics_sampler(RecordView<Repository, T> object)
 {
-    auto collector = RecordCollector<Family, RepositoryTypes, FeatureStatisticsCollector<Family>>();
+    using Family = typename Repository::Family;
+    auto collector = RecordCollector<Repository, FeatureStatisticsCollector<Family>>();
     collector.template add<T>(object);
     return collector.get_leaves().get_collector().sampler();
 }

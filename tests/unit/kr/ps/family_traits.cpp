@@ -10,6 +10,7 @@
 #include <runir/kr/uns/repository.hpp>
 #include <type_traits>
 #include <tyr/planning/state_repository.hpp>
+#include <utility>
 
 namespace runir::tests::ps_family_traits
 {
@@ -65,8 +66,33 @@ using UnsCustomTypes = boost::mp11::mp_append<kr::ps::PsCoreTypes<kr::UnsFamilyT
                                               boost::mp11::mp_list<UnsNumerical, kr::ps::Feature<kr::UnsFamilyTag, kr::dl::NumericalTag>>,
                                               kr::ps::detail::PsConcreteConditionTypes<kr::UnsFamilyTag>,
                                               kr::ps::detail::PsConcreteEffectTypes<kr::UnsFamilyTag>>;
-using BaseCustomRepository = kr::ps::BasicRepository<kr::BaseFamilyTag, BaseCustomTypes>;
-using UnsCustomRepository = kr::ps::BasicRepository<kr::UnsFamilyTag, UnsCustomTypes>;
+
+}  // namespace
+
+// Outside the anonymous namespace: yggdrasil's parts over a repository are declared in its headers and defined where a
+// library instantiates them, which a class without linkage forbids (clang: used but never defined).
+// NOLINTNEXTLINE(misc-use-internal-linkage): yggdrasil's parts over it are defined where a library instantiates them
+class BaseCustomRepository final : public kr::ps::BasicRepository<BaseCustomRepository, kr::BaseFamilyTag, BaseCustomTypes>
+{
+public:
+    explicit BaseCustomRepository(DlRepositoryPtr dl_repository) :
+        kr::ps::BasicRepository<BaseCustomRepository, kr::BaseFamilyTag, BaseCustomTypes>(std::move(dl_repository))
+    {
+    }
+};
+
+// NOLINTNEXTLINE(misc-use-internal-linkage): yggdrasil's parts over it are defined where a library instantiates them
+class UnsCustomRepository final : public kr::ps::BasicRepository<UnsCustomRepository, kr::UnsFamilyTag, UnsCustomTypes>
+{
+public:
+    explicit UnsCustomRepository(DlRepositoryPtr dl_repository) :
+        kr::ps::BasicRepository<UnsCustomRepository, kr::UnsFamilyTag, UnsCustomTypes>(std::move(dl_repository))
+    {
+    }
+};
+
+namespace
+{
 static_assert(usable_inventory<BaseCustomRepository>(BaseCustomTypes {}));
 static_assert(usable_inventory<UnsCustomRepository>(UnsCustomTypes {}));
 static_assert(usable_inventory<kr::ps::ext::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));

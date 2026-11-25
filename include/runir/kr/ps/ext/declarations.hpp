@@ -130,7 +130,8 @@ using CallArgument =
 using ProgramTypes = boost::mp11::mp_list<MemoryState<ExtFamilyTag>, ModuleSymbol<ExtFamilyTag>, Module, Program, OrderTerm>;
 using RepositoryTypes =
     boost::mp11::mp_append<runir::kr::ps::base::RepositoryTypes, runir::kr::ps::PsCoreTypes<runir::kr::ExtFamilyTag>, RuleTypes, ProgramTypes>;
-using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes>;
+/// The family's records (repository.hpp), a class of its own.
+class Repository;
 using RepositoryPtr = std::shared_ptr<Repository>;
 
 using ConceptRegisterView = urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::ConstructorRepository>;
