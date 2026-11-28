@@ -3,8 +3,10 @@
 
 #include <concepts>
 #include <functional>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -18,7 +20,7 @@ template<tyr::TaskKind Kind>
 auto initial_planning_node(const kr::ps::ext::SuccessorExpander<Kind>& expander)
 {
     auto& search = *expander.get_task_context()->search_context;
-    return search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
+    return runir::datasets::initial_node(search);
 }
 
 template<tyr::TaskKind Kind>
@@ -59,11 +61,11 @@ auto collect_steps(
 }
 
 template<tyr::TaskKind Kind>
-bool is_planning_goal(const kr::ps::ext::SuccessorExpander<Kind>& expander, const tyr::planning::StateView<Kind>& state)
+bool is_planning_goal(const kr::ps::ext::SuccessorExpander<Kind>& expander, const tyr::planning::SharedStateBuilderView<Kind>& state)
 {
     const auto& task = *expander.get_task_context()->search_context->task;
     auto goal = tyr::planning::ConjunctiveGoalStrategy<Kind>(task);
-    return goal.is_static_goal_satisfied(task) && goal.is_dynamic_goal_satisfied(initial_planning_node(expander).get_state(), state);
+    return goal.is_static_goal_satisfied(task) && goal.is_dynamic_goal_satisfied(initial_planning_node(expander).state(), state);
 }
 
 }

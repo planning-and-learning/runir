@@ -9,10 +9,12 @@ from typing import TypedDict, cast
 import pytest
 from ext_execution_utils import ExecutionStep, Outcome, collect_steps
 from fixture_utils import FIXTURE_ROOT, load_fixture, read_fixture
+from planning_utils import planning_module
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pytyr.formalism import LiftedPlanningTask, Parser, PlanningDomain, RowActionLifted
-from pytyr.planning.ground import PackedPlan as GroundPackedPlan, Task as GroundTask
+from pytyr.planning.ground import Task as GroundTask
+from pytyr.planning.ground.deterministic import OwnedPlanRecordView as GroundPackedPlan
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
 
@@ -150,86 +152,78 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
 
     modules = dl.parse_modules(descriptions, planning_domain, repository)
 
-    assert [module.get_symbol().get_name() for module in modules] == [case["name"] for case in MODULE_FACTORY_CASES]
+    assert [module.symbol().name() for module in modules] == [case["name"] for case in MODULE_FACTORY_CASES]
     assert len(modules) == len(MODULE_FACTORY_CASES)
     for module, case in zip(modules, MODULE_FACTORY_CASES, strict=True):
-        assert len(module.get_concept_features()) == case["concept_features"]
-        assert len(module.get_role_features()) == case["role_features"]
-        assert len(module.get_boolean_features()) == case["boolean_features"]
-        assert len(module.get_numerical_features()) == case["numerical_features"]
-        assert len(module.get_memory_transitions()) == case["transitions"]
+        assert len(module.concept_features()) == case["concept_features"]
+        assert len(module.role_features()) == case["role_features"]
+        assert len(module.boolean_features()) == case["boolean_features"]
+        assert len(module.numerical_features()) == case["numerical_features"]
+        assert len(module.memory_transitions()) == case["transitions"]
         assert module.syntactic_complexity() == case["syntactic_complexity"]
     assert "(:symbol blocks)" in str(modules[3])
     for feature in (
-        next(feature for module in modules for feature in module.get_concept_features()),
-        next(feature for module in modules for feature in module.get_role_features()),
-        next(feature for module in modules for feature in module.get_boolean_features()),
-        next(feature for module in modules for feature in module.get_numerical_features()),
+        next(feature for module in modules for feature in module.concept_features()),
+        next(feature for module in modules for feature in module.role_features()),
+        next(feature for module in modules for feature in module.boolean_features()),
+        next(feature for module in modules for feature in module.numerical_features()),
     ):
-        assert feature.syntactic_complexity() == feature.get_variant().syntactic_complexity()
+        assert feature.syntactic_complexity() == feature.variant().syntactic_complexity()
     for module in modules:
         feature_groups = (
-            module.get_concept_features(),
-            module.get_role_features(),
-            module.get_boolean_features(),
-            module.get_numerical_features(),
+            module.concept_features(),
+            module.role_features(),
+            module.boolean_features(),
+            module.numerical_features(),
         )
         assert module.syntactic_complexity() == sum(
             feature.syntactic_complexity() for feature_group in feature_groups for feature in feature_group
         )
-    memory_transitions = modules[3].get_memory_transitions()
+    memory_transitions = modules[3].memory_transitions()
     assert len(memory_transitions) > 0
     first_transition = memory_transitions[0]
     assert len(first_transition) > 0
-    first_rule = first_transition[0].get_variant()
+    first_rule = first_transition[0].variant()
     assert isinstance(first_rule, (ext.RuleLoadConcept, ext.RuleLoadRole))
-    assert first_rule.get_source() is not None
-    assert first_rule.get_target() is not None
-    assert first_rule.get_feature().get_variant().get_symbol() == "L_load"
+    assert first_rule.source() is not None
+    assert first_rule.target() is not None
+    assert first_rule.feature().variant().symbol() == "L_load"
 
     created_modules = dl.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
-    assert [module.get_symbol().get_name() for module in created_modules] == [
-        case["name"] for case in MODULE_FACTORY_CASES
-    ]
+    assert [module.symbol().name() for module in created_modules] == [case["name"] for case in MODULE_FACTORY_CASES]
     assert (
         dl.ModuleFactory.create(dl.ModuleSpecification.ON_BONET_ET_AL_ICAPS2024, planning_domain, repository)
-        .get_symbol()
-        .get_name()
+        .symbol()
+        .name()
         == "on"
     )
-    assert dl.ModuleFactory.create_on_bonet_et_al_icaps2024(planning_domain, repository).get_symbol().get_name() == "on"
+    assert dl.ModuleFactory.create_on_bonet_et_al_icaps2024(planning_domain, repository).symbol().name() == "on"
     assert (
-        dl.ModuleFactory.create_on_table_bonet_et_al_icaps2024(planning_domain, repository).get_symbol().get_name()
+        dl.ModuleFactory.create_on_table_bonet_et_al_icaps2024(planning_domain, repository).symbol().name()
         == "on-table"
     )
-    assert (
-        dl.ModuleFactory.create_tower_bonet_et_al_icaps2024(planning_domain, repository).get_symbol().get_name()
-        == "tower"
-    )
-    assert (
-        dl.ModuleFactory.create_blocks_bonet_et_al_icaps2024(planning_domain, repository).get_symbol().get_name()
-        == "blocks"
-    )
+    assert dl.ModuleFactory.create_tower_bonet_et_al_icaps2024(planning_domain, repository).symbol().name() == "tower"
+    assert dl.ModuleFactory.create_blocks_bonet_et_al_icaps2024(planning_domain, repository).symbol().name() == "blocks"
 
     formatted_on = str(modules[0])
     reparsed_on = dl.parse_module(formatted_on, planning_domain, repository)
 
-    assert reparsed_on.get_symbol().get_name() == "on"
-    assert len(reparsed_on.get_concept_features()) == len(modules[0].get_concept_features())
-    assert len(reparsed_on.get_boolean_features()) == len(modules[0].get_boolean_features())
+    assert reparsed_on.symbol().name() == "on"
+    assert len(reparsed_on.concept_features()) == len(modules[0].concept_features())
+    assert len(reparsed_on.boolean_features()) == len(modules[0].boolean_features())
     assert str(reparsed_on) == formatted_on
 
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
-    assert program.get_entry_mod().get_symbol().get_name() == PROGRAM_FACTORY_CASE["entry"]
-    assert [module.get_symbol().get_name() for module in program.get_modules()] == PROGRAM_FACTORY_CASE["modules"]
+    assert program.entry_mod().symbol().name() == PROGRAM_FACTORY_CASE["entry"]
+    assert [module.symbol().name() for module in program.modules()] == PROGRAM_FACTORY_CASE["modules"]
     assert program.syntactic_complexity() == PROGRAM_FACTORY_CASE["syntactic_complexity"]
 
     formatted_program = str(program)
     assert MODULE_FACTORY_SKETCH_FRAGMENT in formatted_program
 
     reparsed_program = dl.parse_program(formatted_program, planning_domain, repository)
-    assert reparsed_program.get_entry_mod().get_symbol().get_name() == "root"
-    assert len(reparsed_program.get_modules()) == 5
+    assert reparsed_program.entry_mod().symbol().name() == "root"
+    assert len(reparsed_program.modules()) == 5
 
 
 def test_program_parser_reports_x3_syntax_position() -> None:
@@ -294,7 +288,7 @@ def test_module_parser_accepts_more_than_four_registers(category: str) -> None:
     )
 
     module = dl.parse_module(source, planning_domain, repository)
-    registers = module.get_concept_registers() if category == "concept" else module.get_role_registers()
+    registers = module.concept_registers() if category == "concept" else module.role_registers()
     assert len(registers) == 5
 
 
@@ -365,8 +359,8 @@ def test_empty_module_factory_uses_ext_repositories() -> None:
     module = dl.ModuleFactory.create_empty(repository)
     reparsed = dl.parse_module(str(module), planning_domain, repository)
 
-    assert module.get_symbol().get_name() == "empty"
-    assert reparsed.get_symbol().get_name() == "empty"
+    assert module.symbol().name() == "empty"
+    assert reparsed.symbol().name() == "empty"
     assert module.syntactic_complexity() == 0
     assert reparsed.syntactic_complexity() == 0
 
@@ -390,10 +384,6 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     assert dl.structural_termination(program).is_terminating()
 
     search_options = ext.GroundProgramSearchOptions()
-    assert not hasattr(search_options, "brfs_options")
-    assert not hasattr(search_options, "iw_options")
-    assert not hasattr(search_options, "siw_options")
-    assert not hasattr(search_options, "max_arity")
     assert search_options.max_num_states > 0
     assert search_options.max_time is None
     assert search_options.universal is False
@@ -403,7 +393,7 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     assert search_result.status == ProofStatus.SUCCESS
     assert search_result.is_successful()
     assert isinstance(search_result.plan, GroundPackedPlan)
-    assert search_result.plan.get_length() == 2
+    assert search_result.plan.length() == 2
     assert search_result.statistics.choice_depth == 0
 
     classifier_dl_repository = task_context.domain_context.uns_repository.get_dl_repository()
@@ -448,10 +438,10 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     if edge_label.action is not None:
         assert isinstance(edge_label.action, RowActionLifted)
     vertex_label = proof.graph.vertex_value(vertex)
-    assert vertex_label.program_state.get_module_state().get_memory_state() is not None
-    frame = vertex_label.program_state.get_module_state()
-    assert len(frame.get_registers().get_concept_values()) == len(frame.get_mod().get_concept_registers())
-    assert len(frame.get_registers().get_role_values()) == len(frame.get_mod().get_role_registers())
+    assert vertex_label.program_state.module_state().memory_state() is not None
+    frame = vertex_label.program_state.module_state()
+    assert len(frame.registers().concept_values()) == len(frame.mod().concept_registers())
+    assert len(frame.registers().role_values()) == len(frame.mod().role_registers())
     assert len(proof.deadend_states) == 0
     assert len(proof.open_states) == 0
     assert len(proof.cycle) == 0
@@ -467,14 +457,13 @@ def test_packed_solution_plan_owns_states_after_result_release(mode: ext.StateMe
         assert result.is_successful()
         plan = result.plan
         assert isinstance(plan, GroundPackedPlan)
-        return plan, str(plan), str(plan.get_labeled_succ_nodes()[-1].node.get_state().unpack())
+        return plan, str(plan), str(plan.labeled_succ_nodes()[-1].node().state().unpack())
 
     plan, text, final_state_text = solve()
     gc.collect()
-    assert plan.get_length() == 2
+    assert plan.length() == 2
     assert str(plan) == text
-    assert str(plan.get_labeled_succ_nodes()[-1].node.get_state().unpack()) == final_state_text
-    assert plan.unpack().get_length() == 2
+    assert str(plan.labeled_succ_nodes()[-1].node().state().unpack()) == final_state_text
 
 
 @pytest.mark.parametrize("case", EXECUTION_CASES, ids=[case["name"] for case in EXECUTION_CASES])
@@ -513,7 +502,7 @@ def test_program_parser_rejects_missing_action() -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
     with pytest.raises(
         UndefinedSymbolError,
-        match=rf"Undefined action in domain '{planning_domain.get_domain().get_name()}': missing-action",
+        match=rf"Undefined action in domain '{planning_domain.get_domain().name()}': missing-action",
     ):
         dl.parse_program(
             read_fixture("kr/ps/ext/execution/missing_action.program"),
@@ -569,8 +558,8 @@ def _check_ground_successor_callbacks() -> None:
     context = GroundTaskContext(DomainContext(planning_domain), search)
     program = dl.parse_program(_SUCCESSOR_CALLBACK_PROGRAM, planning_domain, context.domain_context.ext_repository)
     expander = ext.GroundSuccessorExpander(context, program)
-    node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
-    initial = expander.initial_state(node.get_state())
+    node = planning_module(search).get_initial_node(search.state_repository, search.axiom_evaluator)
+    initial = expander.initial_state(node.state())
     statistics = ext.ProgramSearchStatistics()
     actual: list[ext.GroundProgramExecutionStep] = []
 
@@ -595,18 +584,16 @@ def _check_ground_successor_callbacks() -> None:
     assert len(actual) > 1
     assert statistics.num_generated == len(actual) + 1
     assert statistics.num_expanded == 0
-    expected = search.successor_generator.get_labeled_successor_nodes(
-        node,
-        search.state_repository,
-        search.axiom_evaluator,
+    expected = planning_module(search).deterministic.get_successors(
+        search.successor_generator, search.state_repository, search.axiom_evaluator, node
     )
-    assert Counter((_transition(step).action, step.target.get_state().index()) for step in actual) == Counter(
-        (step.label, step.node.get_state().pack().index())
+    assert Counter((_transition(step).action, step.target.state().index()) for step in actual) == Counter(
+        (step.label(), step.node().state().pack().index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )
     retained = actual[0]
-    signature = (str(_transition(retained).action), str(retained.target.get_state().unpack()))
+    signature = (str(_transition(retained).action), str(retained.target.state().unpack()))
     actual.clear()
     del expected, node, initial, expander, program, context, search, task, lifted_task
     del planning_task, planning_domain, execution_context, parser
@@ -614,11 +601,11 @@ def _check_ground_successor_callbacks() -> None:
 
     assert (
         str(_transition(retained).action),
-        str(retained.target.get_state().unpack()),
+        str(retained.target.state().unpack()),
     ) == signature
     successor = retained.planning_successor
     assert successor is not None
-    assert successor.node.get_state().unpack() == retained.target.get_state().unpack()
+    assert successor.node().state().unpack() == retained.target.state().unpack()
 
 
 def _check_lifted_successor_callbacks() -> None:
@@ -633,8 +620,8 @@ def _check_lifted_successor_callbacks() -> None:
     context = LiftedTaskContext(DomainContext(planning_domain), search)
     program = dl.parse_program(_SUCCESSOR_CALLBACK_PROGRAM, planning_domain, context.domain_context.ext_repository)
     expander = ext.LiftedSuccessorExpander(context, program)
-    node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
-    initial = expander.initial_state(node.get_state())
+    node = planning_module(search).get_initial_node(search.state_repository, search.axiom_evaluator)
+    initial = expander.initial_state(node.state())
     statistics = ext.ProgramSearchStatistics()
     actual: list[ext.LiftedProgramExecutionStep] = []
 
@@ -659,18 +646,16 @@ def _check_lifted_successor_callbacks() -> None:
     assert len(actual) > 1
     assert statistics.num_generated == len(actual) + 1
     assert statistics.num_expanded == 0
-    expected = search.successor_generator.get_labeled_successor_nodes(
-        node,
-        search.state_repository,
-        search.axiom_evaluator,
+    expected = planning_module(search).deterministic.get_successors(
+        search.successor_generator, search.state_repository, search.axiom_evaluator, node
     )
-    assert Counter((_transition(step).action, step.target.get_state().index()) for step in actual) == Counter(
-        (step.label, step.node.get_state().pack().index())
+    assert Counter((_transition(step).action, step.target.state().index()) for step in actual) == Counter(
+        (step.label(), step.node().state().pack().index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )
     retained = actual[0]
-    signature = (str(_transition(retained).action), str(retained.target.get_state().unpack()))
+    signature = (str(_transition(retained).action), str(retained.target.state().unpack()))
     actual.clear()
     del expected, node, initial, expander, program, context, search, task, lifted_task
     del planning_task, planning_domain, execution_context, parser
@@ -678,11 +663,11 @@ def _check_lifted_successor_callbacks() -> None:
 
     assert (
         str(_transition(retained).action),
-        str(retained.target.get_state().unpack()),
+        str(retained.target.state().unpack()),
     ) == signature
     successor = retained.planning_successor
     assert successor is not None
-    assert successor.node.get_state().unpack() == retained.target.get_state().unpack()
+    assert successor.node().state().unpack() == retained.target.state().unpack()
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -702,21 +687,21 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     expander = ext.GroundSuccessorExpander(task_context, program)
     search = task_context.search_context
     initial = expander.initial_state(
-        search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator).get_state()
+        planning_module(search).get_initial_node(search.state_repository, search.axiom_evaluator).state()
     )
     duplicate_initial = expander.initial_state(
-        search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator).get_state()
+        planning_module(search).get_initial_node(search.state_repository, search.axiom_evaluator).state()
     )
     assert isinstance(initial, ext.ProgramStateGround)
-    assert initial.get_call_stack() is None
-    assert isinstance(initial.get_module_state(), ext.ModuleState)
-    assert isinstance(initial.get_module_state().get_registers(), RegisterValues)
-    assert isinstance(initial.get_module_state().get_arguments(), CallArguments)
-    assert initial.get_module_state().get_arguments().get_concept_arguments() == []
+    assert initial.call_stack() is None
+    assert isinstance(initial.module_state(), ext.ModuleState)
+    assert isinstance(initial.module_state().registers(), RegisterValues)
+    assert isinstance(initial.module_state().arguments(), CallArguments)
+    assert initial.module_state().arguments().concept_arguments() == []
     assert initial == duplicate_initial
-    assert initial.get_module_state() == duplicate_initial.get_module_state()
-    assert initial.get_module_state().get_registers() == duplicate_initial.get_module_state().get_registers()
-    assert initial.get_module_state().get_arguments() == duplicate_initial.get_module_state().get_arguments()
+    assert initial.module_state() == duplicate_initial.module_state()
+    assert initial.module_state().registers() == duplicate_initial.module_state().registers()
+    assert initial.module_state().arguments() == duplicate_initial.module_state().arguments()
     assert len({initial, duplicate_initial}) == 1
 
     steps = collect_steps(expander, initial)
@@ -727,8 +712,8 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     del steps, duplicate_initial, initial, expander, program, repository, dl_repository, task_context
     gc.collect()
 
-    assert target.get_state() is not None
-    assert target.get_module_state().get_mod() is not None
+    assert target.state() is not None
+    assert target.module_state().mod() is not None
     del target
     gc.collect()
 
@@ -746,13 +731,13 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode:
 
     expander = ext.LiftedSuccessorExpander(task_context, program)
     initial = expander.initial_state(
-        search_context.successor_generator.get_initial_node(
-            search_context.state_repository, search_context.axiom_evaluator
-        ).get_state()
+        planning_module(search_context)
+        .get_initial_node(search_context.state_repository, search_context.axiom_evaluator)
+        .state()
     )
     assert isinstance(initial, ext.ProgramStateLifted)
-    assert initial.get_call_stack() is None
-    assert isinstance(initial.get_module_state(), ext.ModuleState)
+    assert initial.call_stack() is None
+    assert isinstance(initial.module_state(), ext.ModuleState)
 
     options = ext.LiftedProgramSearchOptions()
     options.universal = True
@@ -765,5 +750,5 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode:
     del result, expander, initial, program, repository, dl_repository, task_context, search_context, lifted_task
     gc.collect()
 
-    assert label.program_state.get_state() is not None
-    assert label.program_state.get_module_state().get_memory_state() is not None
+    assert label.program_state.state() is not None
+    assert label.program_state.module_state().memory_state() is not None

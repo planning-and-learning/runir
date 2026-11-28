@@ -27,9 +27,10 @@
 #include <tuple>
 #include <tyr/planning/algorithms/astar_eager.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/heuristics/blind.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
@@ -87,8 +88,8 @@ template<tyr::TaskKind Kind>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& generation_options) -> StateGraphGenerationResult<Kind>
 {
     auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
-    const auto initial_node = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator);
-    auto event_handler = std::make_shared<detail::StateGraphEventHandler<Kind>>(initial_node.get_state());
+    const auto initial_node = tyr::planning::get_initial_node(*context.state_repository, *context.axiom_evaluator);
+    auto event_handler = std::make_shared<detail::StateGraphEventHandler<Kind>>(initial_node.state());
     auto options = create_astar_options<Kind>(generation_options);
     options.event_handler = event_handler;
     options.goal_strategy = tyr::planning::ExhaustiveGoalStrategy<Kind>::create();
@@ -100,7 +101,7 @@ auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGr
                                                                   heuristic,
                                                                   options);
 
-    return { detail::build_state_graph(*event_handler, *context.state_repository, *context.axiom_evaluator), result.status };
+    return { detail::build_state_graph(*event_handler, *context.state_repository), result.status };
 }
 
 template<tyr::TaskKind Kind>
@@ -113,7 +114,8 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
 {
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*context.task);
-    const auto initial_state = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator).get_state();
+    const auto initial_node = tyr::planning::get_initial_node(*context.state_repository, *context.axiom_evaluator);
+    const auto initial_state = initial_node.state();
     const auto packed_initial_state = initial_state.pack();
 
     auto is_goal = urd::Store<urd::set<VertexIndex>, urd::dense> {};

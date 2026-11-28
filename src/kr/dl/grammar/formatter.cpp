@@ -19,16 +19,16 @@ template<dl::CategoryTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<dg::NonTerminal<Category>, dg::ConstructorRepository>>::format(
     const urd::index_view<dg::NonTerminal<Category>, dg::ConstructorRepository>& value,
     fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value.get_name().str()); }
+{ return fmt::format_to(context.out(), "{}", value.name().str()); }
 
 template<dl::CategoryTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<dg::DerivationRule<Category>, dg::ConstructorRepository>>::format(
     const urd::index_view<dg::DerivationRule<Category>, dg::ConstructorRepository>& value,
     fmt::format_context& context) const
 {
-    auto out = fmt::format_to(context.out(), "({} (", value.get_lhs());
+    auto out = fmt::format_to(context.out(), "({} (", value.lhs());
     auto separator = std::string_view {};
-    for (auto symbol : value.get_rhs())
+    for (auto symbol : value.rhs())
     {
         out = fmt::format_to(out, "{}", separator);
         separator = " or ";
@@ -55,10 +55,10 @@ fmt::formatter<urd::index_view<dg::GrammarTag, dg::ConstructorRepository>>::form
         for (auto rule : rules)
             out = fmt::format_to(out, "    {}\n", rule);
     };
-    write(value.get_derivation_rules<dl::ConceptTag>());
-    write(value.get_derivation_rules<dl::RoleTag>());
-    write(value.get_derivation_rules<dl::BooleanTag>());
-    write(value.get_derivation_rules<dl::NumericalTag>());
+    write(value.derivation_rules<dl::ConceptTag>());
+    write(value.derivation_rules<dl::RoleTag>());
+    write(value.derivation_rules<dl::BooleanTag>());
+    write(value.derivation_rules<dl::NumericalTag>());
     return fmt::format_to(out, ")\n");
 }
 

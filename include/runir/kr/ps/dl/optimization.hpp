@@ -29,11 +29,11 @@ public:
     RecordView<Repository, ConcreteFeature<Family, FeatureTag>> rewrite(RecordView<Repository, ConcreteFeature<Family, FeatureTag>> view,
                                                                         Repository& repository)
     {
-        const auto expression = view.get_feature();
+        const auto expression = view.feature();
         const auto optimized = m_optimizer.optimize(expression);
         if (optimized == expression)
             return view;
-        auto data = urd::data<ConcreteFeature<Family, FeatureTag>>(optimized.index(), view.get_symbol());
+        auto data = urd::data<ConcreteFeature<Family, FeatureTag>>(optimized.index(), view.symbol());
         return repository.insert(data).first;
     }
 
@@ -48,7 +48,7 @@ class FeatureStatisticsCollector
 public:
     template<typename FeatureTag, FamilyRepository Repository>
     void add(RecordView<Repository, ConcreteFeature<Family, FeatureTag>> view)
-    { m_collector.add(view.get_feature()); }
+    { m_collector.add(view.feature()); }
 
     [[nodiscard]] const runir::kr::dl::QueryStatisticsCollector& get_collector() const noexcept { return m_collector; }
 

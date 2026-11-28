@@ -8,15 +8,15 @@ namespace runir::kr::ps
 {
 
 template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-struct RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>
+struct RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::SharedStateBuilderView<Kind>, EvaluationPolicy>
 {
     using FamilyType = BaseFamilyTag;
 
     base::EvaluationEnvironment<Kind, EvaluationPolicy>* environment;
 
-    auto make_dl_context(tyr::planning::StateView<Kind> source) { return environment->make_dl_context(source); }
+    auto make_dl_context(tyr::planning::SharedStateBuilderView<Kind> source) { return environment->make_dl_context(source); }
 
-    auto make_dl_transition_context(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> candidate)
+    auto make_dl_transition_context(tyr::planning::SharedStateBuilderView<Kind> source, tyr::planning::SharedStateBuilderView<Kind> candidate)
     { return environment->make_dl_transition_context(source, candidate); }
 };
 

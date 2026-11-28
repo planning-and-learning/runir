@@ -42,7 +42,7 @@ TEST(RunirTests, SyntacticComplexityRecursesIntoConceptChildren)
     EXPECT_EQ(runir::kr::dl::semantics::syntactic_complexity(at_least), 3);
 
     auto objects = urd::flat_vector<urd::index<tyr::formalism::Object>> {};
-    objects.push_back(planning_domain.get_domain().get_constants().front().index());
+    objects.push_back(planning_domain.get_domain().constants().front().index());
     auto fillers_data = urd::data<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::RoleFillersTag>>(inverse.index(), objects);
     const auto fillers = repo.insert(fillers_data).first;
     EXPECT_EQ(runir::kr::dl::semantics::syntactic_complexity(fillers), 3);

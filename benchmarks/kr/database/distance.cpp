@@ -190,9 +190,9 @@ struct Trace
 
 bool equal_rows(ygg::FreeRelationBuilderView actual, const RelationBuilder& expected)
 {
-    if (actual.get_rows().size() != expected.size())
+    if (actual.rows().size() != expected.size())
         return false;
-    for (const auto& row : borrow(expected).get_rows())
+    for (const auto& row : borrow(expected).rows())
         if (!actual.contains(values_of(row)))
             return false;
     return true;
@@ -201,21 +201,21 @@ bool equal_rows(ygg::FreeRelationBuilderView actual, const RelationBuilder& expe
 bool equal_delta(const kr::database::incremental::Delta& actual, const RelationBuilder& before, const RelationBuilder& after)
 {
     size_t added = 0, removed = 0;
-    for (const auto& row : borrow(after).get_rows())
+    for (const auto& row : borrow(after).rows())
         if (!before.contains(values_of(row)))
         {
             ++added;
             if (!actual.added->view().contains(values_of(row)))
                 return false;
         }
-    for (const auto& row : borrow(before).get_rows())
+    for (const auto& row : borrow(before).rows())
         if (!after.contains(values_of(row)))
         {
             ++removed;
             if (!actual.removed->view().contains(values_of(row)))
                 return false;
         }
-    return actual.added->view().get_rows().size() == added && actual.removed->view().get_rows().size() == removed;
+    return actual.added->view().rows().size() == added && actual.removed->view().rows().size() == removed;
 }
 
 template<bool Incremental, TraceKind Kind = TraceKind::shortcuts>
@@ -295,14 +295,14 @@ void distance_changes(benchmark::State& state)
     for (auto _ : state)
     {
         update(true);
-        benchmark::DoNotOptimize(result().get_rows().size());
+        benchmark::DoNotOptimize(result().rows().size());
         benchmark::ClobberMemory();
         update(false);
-        benchmark::DoNotOptimize(result().get_rows().size());
+        benchmark::DoNotOptimize(result().rows().size());
         benchmark::ClobberMemory();
     }
     state.SetItemsProcessed(state.iterations() * 2);
-    state.counters["output_rows"] = static_cast<double>(result().get_rows().size());
+    state.counters["output_rows"] = static_cast<double>(result().rows().size());
     state.counters["input_delta_rows"] = static_cast<double>(trace.edge_change.added.size() + trace.edge_change.removed.size());
     state.counters["updates_per_iteration"] = 2;
     state.counters["graph_edges"] = static_cast<double>(trace.edges.size());
@@ -350,12 +350,12 @@ void distance_initialize_warm(benchmark::State& state)
     for (auto _ : state)
     {
         initialize();
-        benchmark::DoNotOptimize(result().get_rows().size());
+        benchmark::DoNotOptimize(result().rows().size());
         benchmark::ClobberMemory();
     }
     state.SetItemsProcessed(state.iterations());
     state.counters["initializations_per_iteration"] = 1;
-    state.counters["output_rows"] = static_cast<double>(result().get_rows().size());
+    state.counters["output_rows"] = static_cast<double>(result().rows().size());
     state.counters["graph_edges"] = static_cast<double>(trace.edges.size());
     if constexpr (Incremental)
         state.counters["retained_bytes"] = static_cast<double>(evaluation.memory_usage());

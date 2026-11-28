@@ -88,16 +88,16 @@ TEST(RunirTests, ExtendedModuleFormatterPreservesAlternativeRuleGrouping)
     auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/parser/alternative_rules.module"), domain, *repository);
 
-    ASSERT_EQ(module_.get_memory_transitions().size(), 1);
-    ASSERT_EQ(module_.get_memory_transitions().front().size(), 2);
+    ASSERT_EQ(module_.memory_transitions().size(), 1);
+    ASSERT_EQ(module_.memory_transitions().front().size(), 2);
     const auto formatted = fmt::format("{}", module_);
     const auto symbol = std::string("(:symbol choose)");
     ASSERT_NE(formatted.find(symbol), std::string::npos) << formatted;
     EXPECT_EQ(formatted.find(symbol), formatted.rfind(symbol)) << formatted;
 
     const auto reparsed = kr::ps::ext::dl::parse_module(formatted, domain, *repository);
-    ASSERT_EQ(reparsed.get_memory_transitions().size(), 1);
-    EXPECT_EQ(reparsed.get_memory_transitions().front().size(), 2);
+    ASSERT_EQ(reparsed.memory_transitions().size(), 1);
+    EXPECT_EQ(reparsed.memory_transitions().front().size(), 2);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
 }
 
@@ -122,8 +122,8 @@ TEST(RunirTests, ExtendedBacktrackRulesRoundTripWithoutTargetOrEffects)
           (:sketch (:conditions) (:effects)))))
     ))";
     const auto module_ = kr::ps::ext::dl::parse_module(description, domain, *repository);
-    ASSERT_EQ(module_.get_memory_transitions().size(), 2);
-    const auto rules = module_.get_memory_transitions().front();
+    ASSERT_EQ(module_.memory_transitions().size(), 2);
+    const auto rules = module_.memory_transitions().front();
     ASSERT_EQ(rules.size(), 2);
     size_t condition_count = 0;
     for (const auto variant : rules)
@@ -132,13 +132,13 @@ TEST(RunirTests, ExtendedBacktrackRulesRoundTripWithoutTargetOrEffects)
             {
                 if constexpr (std::same_as<decltype(rule), kr::ps::ext::RuleView<kr::ps::ext::BacktrackTag>>)
                 {
-                    EXPECT_EQ(rule.get_source(), module_.get_entry_memory_state());
-                    condition_count += rule.get_conditions().size();
+                    EXPECT_EQ(rule.source(), module_.entry_memory_state());
+                    condition_count += rule.conditions().size();
                 }
                 else
                     ADD_FAILURE() << "Expected a backtrack rule.";
             },
-            variant.get_variant());
+            variant.variant());
     EXPECT_EQ(condition_count, 1);
 
     const auto formatted = fmt::format("{}", module_);
@@ -318,33 +318,33 @@ TEST(RunirTests, ExtendedQueryFeatureActionRuleRoundTrip)
           (:action (:conditions) (:action "move") (:query moves) (:effects)))))
     ))";
     const auto module_ = kr::ps::ext::dl::parse_module(description, domain, *repository);
-    ASSERT_EQ(module_.get_query_features().size(), 3);
-    const auto query_feature = module_.get_query_features().front();
-    EXPECT_EQ(std::visit([](auto concrete) { return concrete.get_symbol(); }, query_feature.get_variant()), "moves");
-    const auto columns = columns_of(std::visit([](auto concrete) { return concrete.get_feature(); }, query_feature.get_variant()));
+    ASSERT_EQ(module_.query_features().size(), 3);
+    const auto query_feature = module_.query_features().front();
+    EXPECT_EQ(std::visit([](auto concrete) { return concrete.symbol(); }, query_feature.variant()), "moves");
+    const auto columns = columns_of(std::visit([](auto concrete) { return concrete.feature(); }, query_feature.variant()));
     ASSERT_EQ(columns.size(), 2);
-    EXPECT_EQ(columns[0].get_name(), "to");
-    EXPECT_EQ(columns[1].get_name(), "from");
-    EXPECT_TRUE(schema_of(std::visit([](auto concrete) { return concrete.get_feature(); }, module_.get_query_features().back().get_variant())).empty());
+    EXPECT_EQ(columns[0].name(), "to");
+    EXPECT_EQ(columns[1].name(), "from");
+    EXPECT_TRUE(schema_of(std::visit([](auto concrete) { return concrete.feature(); }, module_.query_features().back().variant())).empty());
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(module_), 13);
 
-    ASSERT_EQ(module_.get_memory_transitions().size(), 1);
-    ASSERT_EQ(module_.get_memory_transitions().front().size(), 1);
+    ASSERT_EQ(module_.memory_transitions().size(), 1);
+    ASSERT_EQ(module_.memory_transitions().front().size(), 1);
     std::visit(
         [&](auto rule)
         {
             using R = std::remove_cvref_t<decltype(rule)>;
             if constexpr (std::same_as<R, kr::ps::ext::RuleView<kr::ps::ext::ActionTag>>)
             {
-                EXPECT_EQ(rule.get_action_name(), "move");
-                EXPECT_EQ(rule.get_query_feature(), query_feature);
-                EXPECT_TRUE(rule.get_conditions().empty());
-                EXPECT_TRUE(rule.get_effects().empty());
+                EXPECT_EQ(rule.action_name(), "move");
+                EXPECT_EQ(rule.query_feature(), query_feature);
+                EXPECT_TRUE(rule.conditions().empty());
+                EXPECT_TRUE(rule.effects().empty());
             }
             else
                 ADD_FAILURE() << "Expected an action rule.";
         },
-        module_.get_memory_transitions().front().front().get_variant());
+        module_.memory_transitions().front().front().variant());
 
     const auto formatted = fmt::format("{}", module_);
     EXPECT_NE(formatted.find("(:query moves)"), std::string::npos);
@@ -376,7 +376,7 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
     }
     catch (const kr::UndefinedSymbolError& error)
     {
-        EXPECT_EQ(error.message(), fmt::format("Undefined action in domain '{}': missing", domain.get_name().str()));
+        EXPECT_EQ(error.message(), fmt::format("Undefined action in domain '{}': missing", domain.name().str()));
         EXPECT_TRUE(error.diagnostic().location.has_value()) << error.what();
     }
     EXPECT_THROW(parse("move", "(q_role (X Y) (r_universal))", ""), ygg::diagnostics::ParseError);
@@ -401,8 +401,8 @@ TEST(RunirTests, ExtendedQueryActionRuleUsesNormalizedActionArity)
                                                         std::nullopt)
                                      .get_domain();
     const auto domain = planning_domain.get_domain();
-    ASSERT_EQ(domain.get_actions().size(), 1);
-    EXPECT_EQ(domain.get_actions().front().get_arity(), 2);
+    ASSERT_EQ(domain.actions().size(), 1);
+    EXPECT_EQ(domain.actions().front().arity(), 2);
     auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
     auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto parse = [&](const std::string& query)

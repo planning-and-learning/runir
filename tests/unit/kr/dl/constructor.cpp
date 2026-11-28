@@ -17,7 +17,7 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
                                  data.index;
                                  data.variant;
                                  view.index();
-                                 view.get_variant();
+                                 view.variant();
                              };
 
 template<typename... Ts>
@@ -53,12 +53,12 @@ consteval bool query_projection_contract()
     {
         data.operand;
         data.columns;
-        view.get_operand();
-        view.get_columns();
+        view.operand();
+        view.columns();
     }
     &&
         requires(const View& view)
-    { view.get_plan(); };
+    { view.plan(); };
 }
 
 template<typename... Tags>
@@ -87,8 +87,8 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
     auto data = urd::data<Constructor>(concrete_index, false);
     const auto constructor = repository->insert(data).first;
 
-    ASSERT_TRUE((std::holds_alternative<urd::index_view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant())));
-    EXPECT_EQ((std::get<urd::index_view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant()).index()), concrete_index);
+    ASSERT_TRUE((std::holds_alternative<urd::index_view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.variant())));
+    EXPECT_EQ((std::get<urd::index_view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.variant()).index()), concrete_index);
 }
 
 TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
@@ -103,8 +103,8 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
         auto second_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(repository->insert(bot).first.index(), false);
         const auto first = repository->insert(first_data).first;
         const auto second = repository->insert(second_data).first;
-        EXPECT_TRUE(first.get_is_static());
-        EXPECT_TRUE(second.get_is_static());
+        EXPECT_TRUE(first.is_static());
+        EXPECT_TRUE(second.is_static());
 
         auto data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::IntersectionTag>>(second.index(), first.index());
         ASSERT_FALSE(kr::dl::is_canonical(data));

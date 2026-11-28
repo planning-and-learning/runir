@@ -48,7 +48,7 @@ concept TransitionEvaluationContextConcept = runir::kr::FamilyTag<Family> && tyr
     { context.get_target_context() } -> runir::kr::dl::semantics::EvaluationContextConcept<Kind>;
 };
 
-template<runir::kr::FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
+template<runir::kr::FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateBuilderViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
 class TransitionEvaluationContext
 {
 public:

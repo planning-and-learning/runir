@@ -42,14 +42,14 @@ urd::Store<urd::sequence<ConjunctiveBranch>> UnionNormalFormBuilder::flatten(Que
         {
             if constexpr (std::same_as<Tag, QueryInputTag>)
             {
-                const auto slot = concrete.get_input_slot();
+                const auto slot = concrete.input_slot();
                 if (m_result.input_columns.size() <= slot)
                     m_result.input_columns.resize(slot + 1);
                 if (!m_result.input_columns[slot].empty() && !std::ranges::equal(m_result.input_columns[slot], columns))
                     throw std::invalid_argument("Union normal form: an input slot has two schemas.");
                 m_result.input_columns[slot].assign(columns.begin(), columns.end());
                 auto branch = ConjunctiveBranch {};
-                branch.atoms.push_back(ConjunctiveAtom { concrete.get_input_slot(), urd::Store<urd::sequence<uint32_t>>(mapping.begin(), mapping.end()) });
+                branch.atoms.push_back(ConjunctiveAtom { concrete.input_slot(), urd::Store<urd::sequence<uint32_t>>(mapping.begin(), mapping.end()) });
                 return { std::move(branch) };
             }
             else if constexpr (std::same_as<Tag, QueryEmptyTag>)
@@ -57,8 +57,8 @@ urd::Store<urd::sequence<ConjunctiveBranch>> UnionNormalFormBuilder::flatten(Que
             else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QuerySemijoinTag>)
             {
                 // A semijoin's right-only columns are not in the output, so they get fresh variables.
-                const auto left_operand = concrete.get_left_operand();
-                const auto right_operand = concrete.get_right_operand();
+                const auto left_operand = concrete.left_operand();
+                const auto right_operand = concrete.right_operand();
                 return product(flatten(left_operand, by_label(columns_of(left_operand), columns, mapping)),
                                flatten(right_operand, by_label(columns_of(right_operand), columns, mapping)));
             }
@@ -68,7 +68,7 @@ urd::Store<urd::sequence<ConjunctiveBranch>> UnionNormalFormBuilder::flatten(Que
                 urd::Store<urd::sequence<urd::data<ygg::ColumnLayout>>> labels(columns.begin(), columns.end());
                 urd::Store<urd::sequence<uint32_t>> variables(mapping.begin(), mapping.end());
                 auto result = urd::Store<urd::sequence<ConjunctiveBranch>>(1);
-                for (const auto input : concrete.get_inputs())
+                for (const auto input : concrete.inputs())
                 {
                     const auto child = input;
                     for (const auto& column : columns_of(child))
@@ -83,29 +83,29 @@ urd::Store<urd::sequence<ConjunctiveBranch>> UnionNormalFormBuilder::flatten(Que
             }
             else if constexpr (std::same_as<Tag, QueryProjectTag>)
             {
-                const auto arg = concrete.get_operand();
+                const auto arg = concrete.operand();
                 return flatten(arg, by_label(columns_of(arg), columns, mapping));
             }
             else if constexpr (std::same_as<Tag, QueryRenameTag>)
-                return flatten(concrete.get_operand(), mapping);
+                return flatten(concrete.operand(), mapping);
             else if constexpr (std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
             {
-                auto branches = flatten(concrete.get_operand(), mapping);
+                auto branches = flatten(concrete.operand(), mapping);
                 for (auto& branch : branches)
                 {
                     if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
-                        branch.equal.emplace_back(mapping[concrete.get_plan().left_position], mapping[concrete.get_plan().right_position]);
+                        branch.equal.emplace_back(mapping[concrete.plan().left_position], mapping[concrete.plan().right_position]);
                     else
                     {
-                        branch.value.emplace_back(mapping[concrete.get_plan().position], concrete.get_constant());
+                        branch.value.emplace_back(mapping[concrete.plan().position], concrete.constant());
                     }
                 }
                 return branches;
             }
             else if constexpr (std::same_as<Tag, QueryUnionTag>)
             {
-                const auto left_operand = concrete.get_left_operand();
-                const auto right_operand = concrete.get_right_operand();
+                const auto left_operand = concrete.left_operand();
+                const auto right_operand = concrete.right_operand();
                 auto result = flatten(left_operand, by_label(columns_of(left_operand), columns, mapping));
                 auto right = flatten(right_operand, by_label(columns_of(right_operand), columns, mapping));
                 result.insert(result.end(), std::make_move_iterator(right.begin()), std::make_move_iterator(right.end()));
@@ -114,8 +114,8 @@ urd::Store<urd::sequence<ConjunctiveBranch>> UnionNormalFormBuilder::flatten(Que
             else if constexpr (std::same_as<Tag, QueryDifferenceTag> || std::same_as<Tag, QueryAntijoinTag>)
             {
                 // An antijoin's right-only columns get fresh variables inside the negation.
-                const auto left_operand = concrete.get_left_operand();
-                const auto right_operand = concrete.get_right_operand();
+                const auto left_operand = concrete.left_operand();
+                const auto right_operand = concrete.right_operand();
                 auto result = flatten(left_operand, by_label(columns_of(left_operand), columns, mapping));
                 auto negation = ConjunctiveNegation { urd::Store<urd::sequence<uint32_t>>(mapping.begin(), mapping.end()),
                                                       flatten(right_operand, by_label(columns_of(right_operand), columns, mapping)) };
@@ -128,6 +128,6 @@ urd::Store<urd::sequence<ConjunctiveBranch>> UnionNormalFormBuilder::flatten(Que
                 static_assert(!std::same_as<Tag, Tag>, "unhandled query operator");
             }
         },
-        query.get_variant());
+        query.variant());
 }
 }

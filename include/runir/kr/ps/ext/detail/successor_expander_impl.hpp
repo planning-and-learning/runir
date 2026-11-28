@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_DETAIL_SUCCESSOR_EXPANDER_IMPL_HPP_
 
 #include "runir/datasets/state_graph.hpp"
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
@@ -20,8 +21,9 @@
 #include <type_traits>
 #include <tyr/formalism/planning/action_view.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/node.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -41,7 +43,7 @@ SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::SuccessorExpander(r
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::initial_state(const tyr::planning::StateView<Kind>& state) -> StoredState
+auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::initial_state(const tyr::planning::StateBuilderView<Kind>& state) -> StoredState
 {
     validate_planning_state(state);
     return m_storage.initial_state(state);
@@ -107,11 +109,12 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply_choice(S
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-std::optional<RuleVariantView> SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::matching_rule(ProgramStateView<Kind> state,
-                                                                                                          const tyr::planning::LabeledNode<Kind>& candidate)
+std::optional<RuleVariantView>
+SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::matching_rule(ProgramStateView<Kind> state,
+                                                                           const runir::datasets::LabeledPlanningNode<Kind>& candidate)
 {
     validate_source(state);
-    validate_planning_state(candidate.node.get_state());
+    validate_planning_state(candidate.node().state());
     get_environment().reset_source();
     get_environment().select_source(state);
     get_environment().reset_target();
@@ -122,11 +125,12 @@ std::optional<RuleVariantView> SuccessorExpander<Kind, ExecutionStorage, Evaluat
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply(StorageStateView<ExecutionStorage> state,
                                                                         RuleVariantView rule,
-                                                                        std::optional<tyr::planning::LabeledNode<Kind>> candidate) -> std::optional<Step>
+                                                                        std::optional<runir::datasets::LabeledPlanningNode<Kind>> candidate)
+    -> std::optional<Step>
 {
     validate_source(state);
     if (candidate)
-        validate_planning_state(candidate->node.get_state());
+        validate_planning_state(candidate->node().state());
     get_environment().reset_source();
     get_environment().select_source(state);
     get_environment().reset_target();
@@ -135,7 +139,7 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply(StorageS
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-template<tyr::planning::StateViewConcept<Kind> S>
+template<tyr::planning::StateBuilderViewConcept<Kind> S>
 void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_planning_state(const S& state) const
 {
     if (&state.context() != m_task_context->search_context->state_repository.get())
@@ -152,13 +156,13 @@ void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_sourc
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-template<urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateViewConcept<Kind> PS>
+template<urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateBuilderViewConcept<Kind> PS>
 auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::fallback(S state, const PS& planning_state) -> Step
 {
     if (const auto caller = call_stack(state))
     {
         // Return: the caller's activation (at its return memory state) and its caller, over the current planning state.
-        auto target = m_storage.store(planning_state, caller->get_module_state(), caller->get_caller());
+        auto target = m_storage.store(planning_state, caller->module_state(), caller->caller());
         return detail::make_step<Kind, ExecutionStorage>(ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
     }
     return detail::make_step<Kind, ExecutionStorage>(ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);

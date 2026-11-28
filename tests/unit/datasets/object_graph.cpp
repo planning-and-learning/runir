@@ -5,8 +5,10 @@
 #include <gtest/gtest.h>
 #include <runir/datasets/formatter.hpp>
 #include <runir/datasets/object_graph.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/ground/task.hpp>
+#include <runir/datasets/successors.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
 #include <urd/dot.hpp>
 #include <vefr/properties.hpp>
 
@@ -18,7 +20,8 @@ TEST(ObjectGraphTest, InitialStateObjectGraphIsSimpleAndCanonicalizesVertexColor
     auto context = make_gripper_ground_context();
     auto color_repository = std::make_shared<datasets::ColorRepository>(context->task->get_domain().get_repository());
 
-    const auto initial_state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
+    const auto initial = runir::datasets::initial_node(*context);
+    const tyr::planning::StateBuilderView<tyr::GroundTag>& initial_state = initial.state();  // read as the borrowed view
     const auto graph = datasets::create_object_graph(initial_state, *color_repository);
 
     ASSERT_GT(graph->num_vertices(), 0);

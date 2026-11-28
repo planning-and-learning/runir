@@ -45,7 +45,7 @@ template<runir::kr::dl::CategoryTag Category, typename Value>
 bool references_register(const Value& value, runir::kr::dl::RegisterIdentifier<Category> reg)
 {
     if constexpr (std::same_as<Value, RegisterConstructorView<Category>>)
-        return value.get_slot().get_identifier() == reg;
+        return value.slot().identifier() == reg;
     else if constexpr (is_variant<Value>)
         return std::visit([&](const auto& child) { return references_register<Category>(child, reg); }, value);
     else if constexpr (RecordView<Value>)
@@ -70,14 +70,14 @@ template<typename FeatureTag, typename C, runir::kr::dl::CategoryTag Category>
 bool feature_references_register(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, C> feature,
                                  runir::kr::dl::RegisterIdentifier<Category> reg)
 {
-    return std::visit([&](auto concrete) { return references_register(concrete.get_feature(), reg); }, feature.get_variant());
+    return std::visit([&](auto concrete) { return references_register(concrete.feature(), reg); }, feature.variant());
 }
 
 template<runir::kr::dl::CategoryTag Category>
 void record_binding_effects(ModuleView module_, runir::kr::ps::detail::RuleProfile& profile, runir::kr::dl::RegisterIdentifier<Category> reg)
 {
-    const auto booleans = module_.get_features<runir::kr::dl::BooleanTag>();
-    const auto numericals = module_.get_features<runir::kr::dl::NumericalTag>();
+    const auto booleans = module_.features<runir::kr::dl::BooleanTag>();
+    const auto numericals = module_.features<runir::kr::dl::NumericalTag>();
     for (std::size_t position = 0; position < booleans.size(); ++position)
         if ((profile.boolean_unconstrained_effects & (std::uint64_t { 1 } << position))
             && !feature_references_register(booleans[static_cast<std::ptrdiff_t>(position)], reg))
@@ -99,10 +99,10 @@ void record_binding_effects(ModuleView module_, runir::kr::ps::detail::RuleProfi
 
 Analysis analyze_module(ModuleView module_)
 {
-    const auto memory_states = module_.get_memory_states();
+    const auto memory_states = module_.memory_states();
 
-    const auto booleans = module_.get_features<runir::kr::dl::BooleanTag>();
-    const auto numericals = module_.get_features<runir::kr::dl::NumericalTag>();
+    const auto booleans = module_.features<runir::kr::dl::BooleanTag>();
+    const auto numericals = module_.features<runir::kr::dl::NumericalTag>();
     auto policy = runir::kr::ps::detail::QualitativePolicy(memory_states.size(), booleans.size(), numericals.size());
     auto analysis = Analysis { {}, std::move(policy) };
     const auto memory_position = [&](MemoryStateView memory_state)
@@ -113,7 +113,7 @@ Analysis analyze_module(ModuleView module_)
         throw std::logic_error("structural_termination: rule references a memory state not listed in the module.");
     };
 
-    for (auto transition : module_.get_memory_transitions())
+    for (auto transition : module_.memory_transitions())
         for (auto rule : transition)
             std::visit(
                 [&](auto concrete_rule)
@@ -123,24 +123,24 @@ Analysis analyze_module(ModuleView module_)
                     if constexpr (TransitionRuleKind<Kind>)
                     {
                         auto profile = runir::kr::ps::detail::RuleProfile(booleans.size(), numericals.size());
-                        profile.source_memory_position = memory_position(concrete_rule.get_source());
-                        profile.target_memory_position = memory_position(concrete_rule.get_target());
-                        for (auto condition : concrete_rule.get_conditions())
+                        profile.source_memory_position = memory_position(concrete_rule.source());
+                        profile.target_memory_position = memory_position(concrete_rule.target());
+                        for (auto condition : concrete_rule.conditions())
                             std::visit([&](auto concrete) { ps::detail::record_condition(module_, profile, concrete); }, condition);
                         if constexpr (EffectRuleKind<Kind>)
                         {
-                            for (auto effect : concrete_rule.get_effects())
+                            for (auto effect : concrete_rule.effects())
                                 std::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); }, effect);
                         }
                         if constexpr (BindingRuleKind<Kind>)
-                            record_binding_effects(module_, profile, concrete_rule.get_slot().get_identifier());
+                            record_binding_effects(module_, profile, concrete_rule.slot().identifier());
                         // Other rules leave unmentioned features unconstrained.
                         // Call rules have no effect entries.
                         analysis.rules.push_back(rule);
                         analysis.policy.rule_profiles.push_back(profile);
                     }
                 },
-                rule.get_variant());
+                rule.variant());
 
     runir::kr::ps::detail::validate_policy(analysis.policy);
     return analysis;

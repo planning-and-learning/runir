@@ -114,7 +114,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     nb::class_<Results>(m, (std::string(prefix) + "ProgramProofResults").c_str())
         .def_ro("status", &Results::status)
         .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
-        .def_ro("plan", &Results::plan, nb::rv_policy::copy, nb::keep_alive<0, 1>())
+        .def_ro("plan", &Results::plan, nb::rv_policy::reference_internal)
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
@@ -133,7 +133,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_prop_ro("target", &Step::get_target, nb::keep_alive<0, 1>())
         .def_prop_ro("state_transition", &Step::get_state_transition, nb::keep_alive<0, 1>())
         .def_prop_ro("rule", &Step::get_rule, nb::keep_alive<0, 1>())
-        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy, nb::keep_alive<0, 1>());
+        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::reference_internal);
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 3>())

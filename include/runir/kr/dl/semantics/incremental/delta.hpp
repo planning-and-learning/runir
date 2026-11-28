@@ -9,7 +9,7 @@
 #include <optional>
 #include <ranges>
 #include <stdexcept>
-#include <tyr/planning/state_view_concepts.hpp>
+#include <tyr/planning/states/state_view_concepts.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -21,16 +21,16 @@ namespace runir::kr::dl::semantics::incremental
 namespace detail
 {
 /// Appends the atoms of kind F true in `lhs` but not in `rhs`.
-template<tyr::TaskKind Kind, tyr::formalism::FactKind F, tyr::planning::StateViewConcept<Kind> Lhs, tyr::planning::StateViewConcept<Kind> Rhs>
+template<tyr::TaskKind Kind, tyr::formalism::FactKind F, tyr::planning::StateBuilderViewConcept<Kind> Lhs, tyr::planning::StateBuilderViewConcept<Kind> Rhs>
 void append_only_in(const Lhs& lhs, const Rhs& rhs, urd::Store<urd::sequence<tyr::formalism::AtomView<tyr::GroundTag, F>>>& atoms)
 {
-    for (const auto atom : lhs.template get_atoms<F>())
+    for (const auto atom : lhs.template atoms<F>())
         if (!rhs.test(atom))
             atoms.push_back(atom);
 }
 
 /// `DeltaType` is Delta, which is defined below.
-template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target, typename DeltaType>
+template<tyr::TaskKind Kind, tyr::planning::StateBuilderViewConcept<Kind> Source, tyr::planning::StateBuilderViewConcept<Kind> Target, typename DeltaType>
 void assign_atom_delta(const Source& source, const Target& target, DeltaType& delta)
 {
     if (&*source.context().get_task() != &*target.context().get_task())
@@ -48,8 +48,8 @@ void assign_atom_delta(const Source& source, const Target& target, DeltaType& de
 template<typename Side>
 std::size_t change_size(const Side& side)
 {
-    if constexpr (requires { side.get_rows(); })
-        return std::ranges::size(side.get_rows());
+    if constexpr (requires { side.rows(); })
+        return std::ranges::size(side.rows());
     else
         return std::ranges::size(side);
 }
@@ -85,16 +85,16 @@ struct Delta
     Values removed;
 
     /// Refill retained buffers with the atom changes between completed states.
-    template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target>
+    template<tyr::TaskKind Kind, tyr::planning::StateBuilderViewConcept<Kind> Source, tyr::planning::StateBuilderViewConcept<Kind> Target>
     void assign(const Source& source, const Target& target)
     { detail::assign_atom_delta<Kind>(source, target, *this); }
 
     /// Refill retained buffers from completed states, including their derived atoms, and their registers.
     /// Both endpoints must belong to the same module invocation.
     template<tyr::TaskKind Kind,
-             tyr::planning::StateViewConcept<Kind> Source,
+             tyr::planning::StateBuilderViewConcept<Kind> Source,
              RegisterValuesViewConcept SourceRegisters,
-             tyr::planning::StateViewConcept<Kind> Target,
+             tyr::planning::StateBuilderViewConcept<Kind> Target,
              RegisterValuesViewConcept TargetRegisters>
     void assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers);
 
@@ -151,13 +151,13 @@ void assign_register_delta(Source source,
 }  // namespace detail
 
 template<tyr::TaskKind Kind,
-         tyr::planning::StateViewConcept<Kind> Source,
+         tyr::planning::StateBuilderViewConcept<Kind> Source,
          RegisterValuesViewConcept SourceRegisters,
-         tyr::planning::StateViewConcept<Kind> Target,
+         tyr::planning::StateBuilderViewConcept<Kind> Target,
          RegisterValuesViewConcept TargetRegisters>
 void Delta::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
 {
-    const auto* repository = source.get_formalism_repository().get();
+    const auto* repository = source.formalism_repository().get();
     if (&source_registers.context().template get<tyr::formalism::Repository>() != repository
         || &target_registers.context().template get<tyr::formalism::Repository>() != repository)
         throw std::invalid_argument("Feature delta requires registers for the same planning task.");

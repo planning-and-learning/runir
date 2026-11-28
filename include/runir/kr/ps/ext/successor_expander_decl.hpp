@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_SUCCESSOR_EXPANDER_DECL_HPP_
 #define RUNIR_KR_PS_EXT_SUCCESSOR_EXPANDER_DECL_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
@@ -13,8 +14,8 @@
 
 #include <optional>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/node_concepts.hpp>
-#include <tyr/planning/state_view_concepts.hpp>
+#include <tyr/planning/nodes/node_concepts.hpp>
+#include <tyr/planning/states/state_view_concepts.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -39,7 +40,7 @@ public:
     [[nodiscard]] StorageStateView<ExecutionStorage> view(const StoredState& state) const { return m_storage.view(state); }
 
     /// Create the entry module with empty registers and arguments, and no caller.
-    StoredState initial_state(const tyr::planning::StateView<Kind>& state);
+    StoredState initial_state(const tyr::planning::StateBuilderView<Kind>& state);
 
     /// Continue from an interned program state reached under this task and program, e.g. a proof graph vertex.
     StoredState start_state(ProgramStateView<Kind> state);
@@ -63,17 +64,17 @@ public:
     Step apply_choice(S state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics);
 
     /// Find the first rule that admits this planning successor; control-only rules do not match planning actions.
-    std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const tyr::planning::LabeledNode<Kind>& candidate);
+    std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const runir::datasets::LabeledPlanningNode<Kind>& candidate);
 
     /// Apply one rule, using a supplied planning successor for Do, Action, or a Sketch with effects.
     /// Load, Choose, Call, and empty-effect Sketch rules derive their own control transition.
     /// Backtrack emits failure without requiring a planning successor.
     std::optional<Step>
-    apply(StorageStateView<ExecutionStorage> state, RuleVariantView rule, std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt);
+    apply(StorageStateView<ExecutionStorage> state, RuleVariantView rule, std::optional<runir::datasets::LabeledPlanningNode<Kind>> candidate = std::nullopt);
 
 private:
     // Validate borrowed views before evaluating features or modifying the execution repository.
-    template<tyr::planning::StateViewConcept<Kind> S>
+    template<tyr::planning::StateBuilderViewConcept<Kind> S>
     void validate_planning_state(const S& state) const;
 
     template<urd::ViewOf<ProgramState<Kind>> S>
@@ -81,7 +82,7 @@ private:
 
     /// With no emitted rule outcome, return to the caller or report an open top-level state.
     /// Restore caller control and bindings while retaining the planning state reached by the callee.
-    template<urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateViewConcept<Kind> PS>
+    template<urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateBuilderViewConcept<Kind> PS>
     Step fallback(S state, const PS& planning_state);
 
     runir::kr::TaskContextPtr<Kind> m_task_context;

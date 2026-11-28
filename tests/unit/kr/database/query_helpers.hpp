@@ -53,11 +53,11 @@ public:
 
     [[nodiscard]] std::span<const urd::data<ygg::ColumnLayout>> columns() const { return view().columns(); }
 
-    [[nodiscard]] size_t size() const { return view().get_rows().size(); }
+    [[nodiscard]] size_t size() const { return view().rows().size(); }
 
     [[nodiscard]] size_t arity() const { return view().arity(); }
 
-    [[nodiscard]] bool empty() const { return view().get_rows().empty(); }
+    [[nodiscard]] bool empty() const { return view().rows().empty(); }
 
     template<ygg::RowValues V>
     [[nodiscard]] bool contains(const V& values) const
@@ -126,10 +126,10 @@ const void* record_of(const R& row)
     return urd::visit_view(row,
                            []<typename V>(const V& held) -> const void*
                            {
-                               if constexpr (std::is_lvalue_reference_v<decltype(held.get_values())>)
-                                   return &held.get_values();
+                               if constexpr (std::is_lvalue_reference_v<decltype(held.values())>)
+                                   return &held.values();
                                else
-                                   return held.get_values().data();
+                                   return held.values().data();
                            });
 }
 
@@ -319,7 +319,7 @@ intern_relation(ygg::FreeRelationRepository& repository, urd::data<ygg::Relation
 {
     auto columns = urd::data<ygg::Columns>();
     columns.values.set(labels.begin(), labels.end());
-    relation.columns = repository.insert(columns).first.index();
+    relation.layout = repository.insert(columns).first.index();
     return repository.insert(relation);
 }
 
@@ -335,7 +335,7 @@ std::pair<ygg::FreeRelationView, bool> intern(ygg::FreeRelationRepository& repos
     relation.pool = repository.insert(schema).first.index();
     auto row = urd::data<ygg::Row<ygg::Schema>>();
     row.relation = relation.pool;
-    for (const auto& held : source.get_rows())
+    for (const auto& held : source.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          {
@@ -353,7 +353,7 @@ inline ygg::FreeRelationView rename(ygg::FreeRelationRepository& repository, ygg
 {
     auto relation = urd::data<ygg::Relation<ygg::Schema>>();
     relation.pool = repository.at(source.index())->pool;  // std::out_of_range where the repository holds no such relation
-    urd::store(relation.rows, source.get_rows());
+    urd::store(relation.rows, source.rows());
     return intern_relation(repository, relation, labels).first;
 }
 
@@ -458,7 +458,7 @@ distances_to(ygg::FreeRelationBuilderView edges, ygg::FreeRelationBuilderView ta
 {
     urd::Store<urd::map<urd::Store<urd::sequence<ygg::uint_t>>, ygg::uint_t>> result;
     urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::uint_t>>>> frontier;
-    for (size_t i = 0; i < targets.get_rows().size(); ++i)
+    for (size_t i = 0; i < targets.rows().size(); ++i)
     {
         const auto vertex = decode(targets.row(i));
         if (result.emplace(vertex, 0).second)
@@ -467,7 +467,7 @@ distances_to(ygg::FreeRelationBuilderView edges, ygg::FreeRelationBuilderView ta
     for (ygg::uint_t level = 1; !frontier.empty(); ++level)
     {
         urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::uint_t>>>> next;
-        for (size_t i = 0; i < edges.get_rows().size(); ++i)
+        for (size_t i = 0; i < edges.rows().size(); ++i)
         {
             const auto edge = decode(edges.row(i));
             const auto from = urd::Store<urd::sequence<ygg::uint_t>>(edge.begin(), edge.begin() + static_cast<std::ptrdiff_t>(k));

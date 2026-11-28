@@ -2,6 +2,7 @@
 #include "planning_fixtures.hpp"
 
 #include <gtest/gtest.h>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -9,8 +10,9 @@
 #include <runir/kr/uns/classify.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 
 namespace runir::tests
 {
@@ -22,7 +24,7 @@ TEST(RunirTests, UnsClassifierClassifies)
     auto repository = std::make_shared<kr::uns::Repository>(dl_repository);
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/positive.classifier"), search->task->get_domain().get_domain(), *repository);
 
-    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    const auto state = runir::datasets::initial_node(*search).state();
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotation_repository);
@@ -50,23 +52,23 @@ void check_classifier_evaluation_policies(datasets::TaskSearchContextPtr<Kind> s
     auto full = kr::ps::ClassifierUnsolvability<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(*task_context, classifier);
     auto delta = kr::ps::ClassifierUnsolvability<Kind, kr::dl::semantics::DeltaEvaluationPolicy<Kind>>(*task_context, classifier);
     auto& generator = *search->successor_generator;
-    const auto initial = generator.get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    EXPECT_FALSE(full.is_unsolvable(initial.get_state()));
-    EXPECT_FALSE(delta.is_unsolvable(initial.get_state()));
+    const auto initial = runir::datasets::initial_node(*search);
+    EXPECT_FALSE(full.is_unsolvable(initial.state()));
+    EXPECT_FALSE(delta.is_unsolvable(initial.state()));
 
     auto matches = 0;
-    EXPECT_TRUE(generator.for_each_applicable_action_binding(
-        initial,
-        [&](auto binding)
-        {
-            const auto successor = generator.get_successor_node(initial, binding, *search->state_repository, *search->axiom_evaluator);
-            const auto expected = full.is_unsolvable(successor.get_state());
-            matches += expected;
-            EXPECT_EQ(delta.is_unsolvable(successor.get_state()), expected);
-            EXPECT_FALSE(delta.is_unsolvable(initial.get_state()));
-            EXPECT_EQ(delta.is_unsolvable(successor.get_state()), expected);
-            return true;
-        }));
+    EXPECT_TRUE(generator.for_each_applicable_action_binding(runir::datasets::node_of<Kind>(initial.state()),
+                                                             {},
+                                                             [&](auto binding)
+                                                             {
+                                                                 const auto successor = runir::datasets::successor_node(*search, initial, binding);
+                                                                 const auto expected = full.is_unsolvable(successor.state());
+                                                                 matches += expected;
+                                                                 EXPECT_EQ(delta.is_unsolvable(successor.state()), expected);
+                                                                 EXPECT_FALSE(delta.is_unsolvable(initial.state()));
+                                                                 EXPECT_EQ(delta.is_unsolvable(successor.state()), expected);
+                                                                 return true;
+                                                             }));
     EXPECT_GT(matches, 0);
 }
 

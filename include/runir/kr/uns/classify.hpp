@@ -17,13 +17,13 @@ namespace runir::kr::uns
 template<tyr::TaskKind Kind, typename C, runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
 bool classify(urd::index_view<runir::kr::uns::Classifier, C> classifier, Context& context)
 {
-    for (auto clause : classifier.get_clauses())
+    for (auto clause : classifier.clauses())
     {
         bool satisfied = true;
-        for (auto literal : clause.get_literals())
+        for (auto literal : clause.literals())
         {
-            const bool value = std::visit([&](auto feature) { return runir::kr::ps::evaluate<Kind>(feature, context).get_value(); }, literal.get_feature());
-            if (literal.get_polarity() ? !value : value)
+            const bool value = std::visit([&](auto feature) { return runir::kr::ps::evaluate<Kind>(feature, context).value(); }, literal.feature());
+            if (literal.polarity() ? !value : value)
             {
                 satisfied = false;
                 break;

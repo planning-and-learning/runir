@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_DO_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_DO_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
@@ -11,9 +12,10 @@
 #include <concepts>
 #include <functional>
 #include <tyr/formalism/planning/action_view.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
-#include <tyr/planning/node.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
 #include <urd/bits.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -53,13 +55,13 @@ private:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     auto& evaluate_do_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                 DoRuleWorkspace& workspace,
                                 RuleView<DoTag> rule,
                                 State state) const
     {
-        const auto arguments = rule.get_arguments();
+        const auto arguments = rule.arguments();
         auto& denotations = workspace.denotations;
         denotations.clear();
         auto state_context = context.make_dl_context(state);
@@ -71,9 +73,9 @@ private:
     template<ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding, typename ConceptDenotations>
     static bool action_matches_do_arguments(RuleView<DoTag> rule, Binding action, const ConceptDenotations& denotations)
     {
-        if (urd::visit_view(action.get_relation(), [](const auto& relation) { return relation.get_name(); }) != rule.get_action_name())
+        if (urd::visit_view(action.relation(), [](const auto& relation) { return relation.name(); }) != rule.action_name())
             return false;
-        if (action.get_values().size() != denotations.size())
+        if (action.values().size() != denotations.size())
             return false;
         // The canonical values of its object columns are the objects' indices (a lifted binding may be borrowed, its pool not
         // yet made, so it is not read typed).
@@ -86,22 +88,22 @@ private:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState,
-             tyr::planning::StateViewConcept<Kind> Candidate>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
+             tyr::planning::StateBuilderViewConcept<Kind> Candidate>
     bool do_effects_match(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                           RuleView<DoTag> rule,
                           State state,
                           const PlanningState& planning_state,
                           const Candidate& target_state) const
     {
-        auto transition = urd::visit_view(state.get_module_state(),
+        auto transition = urd::visit_view(state.module_state(),
                                           [&](const auto& activation)
                                           {
                                               return context.environment->make_dl_transition_context(planning_state,
                                                                                                      target_state,
-                                                                                                     activation.get_arguments(),
-                                                                                                     activation.get_registers(),
-                                                                                                     activation.get_registers());
+                                                                                                     activation.arguments(),
+                                                                                                     activation.registers(),
+                                                                                                     activation.registers());
                                           });
         return is_compatible_with<Kind>(rule, transition);
     }
@@ -109,8 +111,8 @@ private:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState,
-             tyr::planning::StateViewConcept<Kind> Candidate,
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
+             tyr::planning::StateBuilderViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool do_rule_matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                          DoRuleWorkspace& workspace,
@@ -132,7 +134,7 @@ public:
              EmitConcept<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     bool
     emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
@@ -146,41 +148,43 @@ public:
         if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.count() == 0; }))
             return true;
         auto& search = *(*context.task_context)->search_context;
+        // Tyr reads a source from a node: one for every binding of this state.
+        const auto planning_node = runir::datasets::node_of<Kind>(planning_state);
         const auto accept = [&](tyr::planning::ActionBindingView<Kind> binding) { return action_matches_do_arguments(rule, binding, denotations); };
         const auto visit = [&](tyr::planning::ActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
-            const auto candidate = context.storage->successor(planning_state, binding);
+            const auto candidate = context.storage->successor(planning_node, binding);
             context.environment->reset_target();
-            if (!do_effects_match(context, rule, state, planning_state, candidate.get_state()))
+            if (!do_effects_match(context, rule, state, planning_state, candidate.state()))
                 return true;
             if (stop())
                 return false;
             const auto labeled =
-                tyr::planning::LabeledNode<Kind, typename Storage::PlanningState> { search.successor_generator->materialize_action_binding(binding),
-                                                                                    candidate };
-            return emit(detail::planning_step(*context.storage, state, labeled, rule_variant, rule.get_target(), *context.task_context));
+                runir::datasets::LabeledPlanningNode<Kind, typename Storage::PlanningState> { runir::datasets::interned_binding(search, binding), candidate };
+            return emit(detail::planning_step(*context.storage, state, labeled, rule_variant, rule.target(), *context.task_context));
         };
-        return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
-                                                                                       m_action,
-                                                                                       std::ref(accept),
-                                                                                       std::ref(visit),
-                                                                                       std::ref(stop));
+        auto filter = tyr::planning::ActionBindingFilter<Kind> {};
+        filter.action = m_action;
+        // By reference: a std::function holds a reference inline, and so allocates nothing.
+        filter.accept = std::ref(accept);
+        filter.stop = std::ref(stop);
+        return search.successor_generator->for_each_applicable_action_binding(planning_node, filter, std::ref(visit));
     }
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState,
-             tyr::planning::StateViewConcept<Kind> Candidate,
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
+             tyr::planning::StateBuilderViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
-                 const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate) const
+                 const runir::datasets::LabeledPlanningNode<Kind, Candidate, Binding>& candidate) const
     {
         const auto& planning_state = context.planning_state;
-        return do_rule_matches(context, *context.do_workspace, m_rule, state, planning_state, candidate.label, candidate.node.get_state());
+        return do_rule_matches(context, *context.do_workspace, m_rule, state, planning_state, candidate.label(), candidate.node().state());
     }
 };
 

@@ -6,7 +6,7 @@ from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pytyr.formalism import Parser, PlanningDomain
 from pytyr.planning import lifted
-from pytyr.planning.ground import StateBuilderShared
+from pytyr.planning.ground import SharedStateBuilderView
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
@@ -32,7 +32,7 @@ _GOALS = (
 def _ground(
     gripper_planning_domain: PlanningDomain,
     ground_gripper_search_context: GroundTaskSearchContext,
-) -> tuple[DomainContext, GroundTaskContext, StateBuilderShared]:
+) -> tuple[DomainContext, GroundTaskContext, SharedStateBuilderView]:
     """Return the gripper domain context, ground task context, and initial state."""
     domain = DomainContext(gripper_planning_domain)
     task = GroundTaskContext(domain, ground_gripper_search_context)
@@ -63,10 +63,8 @@ def test_base_sketch(
         assert optimized != sketch
         # Rules must refer to the rewritten features, or printing and parsing would not round-trip.
         assert parse_sketch(str(optimized), gripper_planning_domain, domain.base_repository) == optimized
-        before = semantics.evaluate(sketch.get_numerical_features()[0].get_variant().get_feature(), context).get_value()
-        after = semantics.evaluate(
-            optimized.get_numerical_features()[0].get_variant().get_feature(), context
-        ).get_value()
+        before = semantics.evaluate(sketch.numerical_features()[0].variant().feature(), context).value()
+        after = semantics.evaluate(optimized.numerical_features()[0].variant().feature(), context).value()
         assert before == after
     plain = parse_sketch("(:sketch (:features) (:rules))", gripper_planning_domain, domain.base_repository)
     assert base.optimize(plain, domain.base_repository) == plain
@@ -94,9 +92,7 @@ def test_statistics_warn_about_leaves_empty_in_every_sample(
         statistics = base.collect_query_statistics(sketch, [context])
     assert statistics.num_leaves() == 2
     optimized = base.optimize(sketch, domain.base_repository, statistics)
-    assert (
-        semantics.evaluate(optimized.get_numerical_features()[0].get_variant().get_feature(), context).get_value() == 0
-    )
+    assert semantics.evaluate(optimized.numerical_features()[0].variant().feature(), context).value() == 0
 
 
 def test_ext_program(
@@ -126,14 +122,10 @@ def test_ext_program(
         assert optimized != program
         # The rule lives in the module's memory transitions; a missed rule would keep the old feature.
         assert parse_program(str(optimized), gripper_planning_domain, domain.ext_repository) == optimized
-        before = semantics.evaluate(
-            program.get_entry_mod().get_numerical_features()[0].get_variant().get_feature(), context
-        ).get_value()
-        after = semantics.evaluate(
-            optimized.get_entry_mod().get_numerical_features()[0].get_variant().get_feature(), context
-        ).get_value()
+        before = semantics.evaluate(program.entry_mod().numerical_features()[0].variant().feature(), context).value()
+        after = semantics.evaluate(optimized.entry_mod().numerical_features()[0].variant().feature(), context).value()
         assert before == after
-    module = program.get_entry_mod()
+    module = program.entry_mod()
     assert ext.optimize(module, domain.ext_repository) != module
     # Sampling one state at a time gives the statistics of the batch call.
     sampler = ext.query_statistics_sampler(program)

@@ -31,17 +31,17 @@ bool visit_complement_argument(QueryView<> query, F f)
                     {
                         if constexpr (is_complement_view_v<V>)
                         {
-                            f(constructor.get_operand());
+                            f(constructor.operand());
                             return true;
                         }
                         else
                             return false;
                     },
-                    concrete.get_operand().get_variant());
+                    concrete.operand().variant());
             else
                 return false;
         },
-        query.get_variant());
+        query.variant());
 }
 
 /// Whether a query is a role or concept leaf over a complement (r_complement, c_not).
@@ -56,7 +56,7 @@ QueryTranslator::YggQuery QueryTranslator::translate(DlQuery query)
 {
     if (const auto it = m_translated.find(query); it != m_translated.end())
         return it->second;
-    const auto result = std::visit([&]<typename Tag>(QueryView<Tag> concrete) { return translate_concrete(query, concrete); }, query.get_variant());
+    const auto result = std::visit([&]<typename Tag>(QueryView<Tag> concrete) { return translate_concrete(query, concrete); }, query.variant());
     m_translated.emplace(query, result);
     return result;
 }
@@ -92,7 +92,7 @@ QueryTranslator::YggQuery QueryTranslator::input(QuerySlot slot)
 
 std::span<const urd::data<ygg::ColumnLayout>> QueryTranslator::schema(DlQuery query)
 {
-    return std::visit([](auto concrete) { return concrete.get_schema(); }, query.get_variant());
+    return std::visit([](auto concrete) { return concrete.schema(); }, query.variant());
 }
 
 void QueryTranslator::flatten(DlQuery query, urd::Store<urd::sequence<DlQuery>>& conjuncts)
@@ -102,13 +102,13 @@ void QueryTranslator::flatten(DlQuery query, urd::Store<urd::sequence<DlQuery>>&
         {
             if constexpr (std::same_as<Tag, QueryJoinTag>)
             {
-                flatten(concrete.get_left_operand(), conjuncts);
-                flatten(concrete.get_right_operand(), conjuncts);
+                flatten(concrete.left_operand(), conjuncts);
+                flatten(concrete.right_operand(), conjuncts);
             }
             else
                 conjuncts.push_back(query);
         },
-        query.get_variant());
+        query.variant());
 }
 
 std::optional<QueryTranslator::YggQuery> QueryTranslator::rewrite_complements(DlQuery join, std::span<const Label> labels)
@@ -153,7 +153,7 @@ QueryTranslator::YggQuery QueryTranslator::complement_argument(DlQuery complemen
     auto slot = QuerySlot {};
     const auto columns = schema(complement);
     slot.columns.assign(columns.begin(), columns.end());
-    slot.is_static = complement.get_is_static();
+    slot.is_static = complement.is_static();
     visit_complement_argument(complement,
                               [&]<typename V>(V argument)
                               {
@@ -171,50 +171,50 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
 {
     if constexpr (is_query_leaf_tag_v<Tag>)
     {
-        const auto columns = concrete.get_schema();
+        const auto columns = concrete.schema();
         return input(
-            QuerySlot { QuerySlot::Kind::QUERY, static_cast<ygg::uint_t>(query.index().value), { columns.begin(), columns.end() }, query.get_is_static() });
+            QuerySlot { QuerySlot::Kind::QUERY, static_cast<ygg::uint_t>(query.index().value), { columns.begin(), columns.end() }, query.is_static() });
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag>)
     {
         if (m_rewrite_complements)
-            if (const auto rewritten = rewrite_complements(query, query_labels(concrete.get_columns())))
+            if (const auto rewritten = rewrite_complements(query, query_labels(concrete.columns())))
                 return *rewritten;
-        return binary<runir::kr::database::QueryJoinTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
+        return binary<runir::kr::database::QueryJoinTag>(translate(concrete.left_operand()), translate(concrete.right_operand()));
     }
     else if constexpr (std::same_as<Tag, QueryUnionTag>)
-        return binary<runir::kr::database::QueryUnionTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
+        return binary<runir::kr::database::QueryUnionTag>(translate(concrete.left_operand()), translate(concrete.right_operand()));
     else if constexpr (std::same_as<Tag, QueryDifferenceTag>)
-        return binary<runir::kr::database::QueryDifferenceTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
+        return binary<runir::kr::database::QueryDifferenceTag>(translate(concrete.left_operand()), translate(concrete.right_operand()));
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
-        return unary<runir::kr::database::QueryProjectTag>(translate(concrete.get_operand()), query_labels(concrete.get_columns()));
+        return unary<runir::kr::database::QueryProjectTag>(translate(concrete.operand()), query_labels(concrete.columns()));
     else if constexpr (std::same_as<Tag, QueryRenameTag>)
-        return unary<runir::kr::database::QueryRenameTag>(translate(concrete.get_operand()), query_labels(concrete.get_columns()));
+        return unary<runir::kr::database::QueryRenameTag>(translate(concrete.operand()), query_labels(concrete.columns()));
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QuerySelectEqualTag>>(m_builder);
-        urd::store(out->operand, translate(concrete.get_operand()));
-        out->left_column = Label(concrete.get_left_column().index().value);
-        out->right_column = Label(concrete.get_right_column().index().value);
+        urd::store(out->operand, translate(concrete.operand()));
+        out->left_column = Label(concrete.left_column().index().value);
+        out->right_column = Label(concrete.right_column().index().value);
         return insert(*out);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         using Object = urd::index<ygg::formalism::Object>;
         auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QuerySelectValueTag>>(m_builder);
-        urd::store(out->operand, translate(concrete.get_operand()));
-        out->column = Label(concrete.get_column().index().value);
-        out->constant = ygg::encode_value(Object(concrete.get_object().index().value));
+        urd::store(out->operand, translate(concrete.operand()));
+        out->column = Label(concrete.column().index().value);
+        out->constant = ygg::encode_value(Object(concrete.object().index().value));
         out->constant_type = ygg::type_id<Object>;
         return insert(*out);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
         auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QueryGenericJoinTag>>(m_builder);
-        for (const auto arg : concrete.get_args())
+        for (const auto arg : concrete.args())
             urd::append(out->inputs, translate(arg));
-        const auto variable_order = query_labels(concrete.get_variable_order());
-        const auto output_order = query_labels(concrete.get_output_order());
+        const auto variable_order = query_labels(concrete.variable_order());
+        const auto output_order = query_labels(concrete.output_order());
         out->variable_order.assign(variable_order.begin(), variable_order.end());
         out->output_order.assign(output_order.begin(), output_order.end());
         return insert(*out);
@@ -222,7 +222,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
     {
         auto out = runir::kr::database::checkout<runir::kr::database::Query<runir::kr::database::QueryEmptyTag>>(m_builder);
-        const auto columns = concrete.get_schema();
+        const auto columns = concrete.schema();
         out->columns.assign(columns.begin(), columns.end());
         return insert(*out);
     }

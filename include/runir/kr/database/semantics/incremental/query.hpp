@@ -87,11 +87,11 @@ struct NodeRules
             return;
         else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
         {
-            const auto left_operand = graph.result(operation.get_left_operand());
-            const auto right_operand = graph.result(operation.get_right_operand());
+            const auto left_operand = graph.result(operation.left_operand());
+            const auto right_operand = graph.result(operation.right_operand());
             const auto reconcile = [&](const auto& rows)
             {
-                for (const auto& held : rows.get_rows())
+                for (const auto& held : rows.rows())
                     ygg::with_values(held,
                                      [&](const auto& row)
                                      {
@@ -112,7 +112,7 @@ struct NodeRules
         {
             const auto apply = [&](const auto& rows, bool present)
             {
-                for (const auto& held : rows.get_rows())
+                for (const auto& held : rows.rows())
                     ygg::with_values(held,
                                      [&](const auto& row)
                                      {
@@ -124,13 +124,13 @@ struct NodeRules
             };
             if constexpr (std::same_as<Tag, QueryInputTag>)
             {
-                const auto& [added, removed] = changes[operation.get_input_slot()];
+                const auto& [added, removed] = changes[operation.input_slot()];
                 apply(removed, false);
                 apply(added, true);
             }
             else
             {
-                const auto [added, removed] = graph.delta(operation.get_operand()).change();
+                const auto [added, removed] = graph.delta(operation.operand()).change();
                 apply(removed, false);
                 apply(added, true);
             }
@@ -143,15 +143,15 @@ struct NodeRules<QueryProjectTag>
 {
     using State = ProjectionEvaluator;
 
-    static State make(ygg::FreeScratchRelations& scratch, QueryView<QueryProjectTag> operation) { return State(scratch, operation.get_plan()); }
+    static State make(ygg::FreeScratchRelations& scratch, QueryView<QueryProjectTag> operation) { return State(scratch, operation.plan()); }
 
     template<RelationViewRange R, std::same_as<QueryEvaluator> Graph>
     static void initialize(State& state, QueryView<QueryProjectTag> operation, const Graph& graph, const R&, Workspace& workspace)
-    { state.initialize(graph.result(operation.get_operand()), workspace); }
+    { state.initialize(graph.result(operation.operand()), workspace); }
 
     template<RelationDeltaRange R, std::same_as<QueryEvaluator> Graph>
     static void update(State& state, QueryView<QueryProjectTag> operation, const Graph& graph, const R&, Workspace& workspace)
-    { state.apply(graph.delta(operation.get_operand()).change(), workspace); }
+    { state.apply(graph.delta(operation.operand()).change(), workspace); }
 };
 
 template<>
@@ -159,15 +159,15 @@ struct NodeRules<QueryJoinTag>
 {
     using State = JoinEvaluator;
 
-    static State make(ygg::FreeScratchRelations& scratch, QueryView<QueryJoinTag> operation) { return State(scratch, operation.get_plan()); }
+    static State make(ygg::FreeScratchRelations& scratch, QueryView<QueryJoinTag> operation) { return State(scratch, operation.plan()); }
 
     template<RelationViewRange R, std::same_as<QueryEvaluator> Graph>
     static void initialize(State& state, QueryView<QueryJoinTag> operation, const Graph& graph, const R&, Workspace& workspace)
-    { state.initialize(graph.result(operation.get_left_operand()), graph.result(operation.get_right_operand()), workspace); }
+    { state.initialize(graph.result(operation.left_operand()), graph.result(operation.right_operand()), workspace); }
 
     template<RelationDeltaRange R, std::same_as<QueryEvaluator> Graph>
     static void update(State& state, QueryView<QueryJoinTag> operation, const Graph& graph, const R&, Workspace& workspace)
-    { state.apply(graph.delta(operation.get_left_operand()).change(), graph.delta(operation.get_right_operand()).change(), workspace); }
+    { state.apply(graph.delta(operation.left_operand()).change(), graph.delta(operation.right_operand()).change(), workspace); }
 };
 
 template<typename Tag>
@@ -177,15 +177,15 @@ struct NodeRules<Tag>
     using State = SemijoinEvaluator;
 
     static State make(ygg::FreeScratchRelations& scratch, QueryView<Tag> operation)
-    { return State(scratch, operation.get_plan(), std::same_as<Tag, QueryAntijoinTag>); }
+    { return State(scratch, operation.plan(), std::same_as<Tag, QueryAntijoinTag>); }
 
     template<RelationViewRange R, std::same_as<QueryEvaluator> Graph>
     static void initialize(State& state, QueryView<Tag> operation, const Graph& graph, const R&, Workspace&)
-    { state.initialize(graph.result(operation.get_left_operand()), graph.result(operation.get_right_operand())); }
+    { state.initialize(graph.result(operation.left_operand()), graph.result(operation.right_operand())); }
 
     template<RelationDeltaRange R, std::same_as<QueryEvaluator> Graph>
     static void update(State& state, QueryView<Tag> operation, const Graph& graph, const R&, Workspace&)
-    { state.apply(graph.delta(operation.get_left_operand()).change(), graph.delta(operation.get_right_operand()).change()); }
+    { state.apply(graph.delta(operation.left_operand()).change(), graph.delta(operation.right_operand()).change()); }
 };
 
 template<>
@@ -193,18 +193,18 @@ struct NodeRules<QueryGenericJoinTag>
 {
     using State = GenericJoinEvaluator;
 
-    static State make(ygg::FreeScratchRelations& scratch, QueryView<QueryGenericJoinTag> operation) { return State(scratch, operation.get_plan()); }
+    static State make(ygg::FreeScratchRelations& scratch, QueryView<QueryGenericJoinTag> operation) { return State(scratch, operation.plan()); }
 
     template<RelationViewRange R, std::same_as<QueryEvaluator> Graph>
     static void initialize(State& state, QueryView<QueryGenericJoinTag> operation, const Graph& graph, const R&, Workspace&)
     {
-        state.initialize(operation.get_inputs() | std::views::transform([&](QueryView<> input) { return graph.result(input.index()); }));
+        state.initialize(operation.inputs() | std::views::transform([&](QueryView<> input) { return graph.result(input.index()); }));
     }
 
     template<RelationDeltaRange R, std::same_as<QueryEvaluator> Graph>
     static void update(State& state, QueryView<QueryGenericJoinTag> operation, const Graph& graph, const R&, Workspace&)
     {
-        state.apply(operation.get_inputs() | std::views::transform([&](QueryView<> input) { return graph.delta(input.index()).change(); }));
+        state.apply(operation.inputs() | std::views::transform([&](QueryView<> input) { return graph.delta(input.index()).change(); }));
     }
 };
 
@@ -265,7 +265,7 @@ public:
         for (size_t i = 0; i < m_plan.node_count(); ++i)
             std::visit([&]<typename Tag>(QueryView<Tag> operation)
                        { m_nodes.emplace_back(std::in_place_type<detail::QueryNode<Tag>>, Rules<Tag>::make(scratch, operation)); },
-                       m_plan[NodeId(ygg::to_uint_t(i))].get_variant());
+                       m_plan[NodeId(ygg::to_uint_t(i))].variant());
     }
 
     template<RelationViewRange R>
@@ -279,7 +279,7 @@ public:
                 {
                     Rules<Tag>::initialize(std::get<detail::QueryNode<Tag>>(m_nodes[NodeId(ygg::to_uint_t(i))]).state, operation, *this, bindings, m_workspace);
                 },
-                m_plan[NodeId(ygg::to_uint_t(i))].get_variant());
+                m_plan[NodeId(ygg::to_uint_t(i))].variant());
         // Its relations stay where they are, including after a failed update.
         m_contexts.clear();
         for (size_t i = 0; i < m_nodes.size(); ++i)
@@ -302,7 +302,7 @@ public:
             const auto query = m_plan[NodeId(ygg::to_uint_t(i))];
             if (!is<QueryInputTag>(query))
                 continue;
-            const auto slot = as<QueryInputTag>(query).get_input_slot();
+            const auto slot = as<QueryInputTag>(query).input_slot();
             if (slot >= std::ranges::size(changes))
                 throw std::invalid_argument("Incremental query: missing input delta.");
             const auto& [added, removed] = changes[slot];
@@ -311,10 +311,10 @@ public:
                 throw std::invalid_argument("Incremental query: input aliases evaluator storage.");
             const auto baseline = result(query);
             const auto in_baseline = [&](const auto& held) { return ygg::with_values(held, [&](const auto& values) { return baseline.contains(values); }); };
-            for (const auto& held : added.get_rows())
+            for (const auto& held : added.rows())
                 if (in_baseline(held))
                     throw std::invalid_argument("Incremental query: added row is already present.");
-            for (const auto& held : removed.get_rows())
+            for (const auto& held : removed.rows())
                 if (!in_baseline(held))
                     throw std::invalid_argument("Incremental query: removed row is absent.");
         }
@@ -323,7 +323,7 @@ public:
             std::visit(
                 [&]<typename Tag>(QueryView<Tag> operation)
                 { Rules<Tag>::update(std::get<detail::QueryNode<Tag>>(m_nodes[NodeId(ygg::to_uint_t(i))]).state, operation, *this, changes, m_workspace); },
-                m_plan[NodeId(ygg::to_uint_t(i))].get_variant());
+                m_plan[NodeId(ygg::to_uint_t(i))].variant());
         m_initialized = true;
     }
 

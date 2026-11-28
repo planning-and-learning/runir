@@ -59,7 +59,7 @@ struct ProjectionEvaluator
         auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context), graph.records(), graph.denotations());
         operation.initialize(graph.result(child), context.get_workspace().get_database_workspace());
         const auto rows = operation.get_result();
-        for (size_t i = 0; i < rows.get_rows().size(); ++i)
+        for (size_t i = 0; i < rows.rows().size(); ++i)
             set_row(builder, rows.row(i), true);
     }
 
@@ -67,9 +67,9 @@ struct ProjectionEvaluator
     {
         operation.update(graph.change(child).change(), workspace);
         const auto [added, removed] = operation.get_delta().change();
-        for (size_t i = 0; i < removed.get_rows().size(); ++i)
+        for (size_t i = 0; i < removed.rows().size(); ++i)
             set_row(value, removed.row(i), false, graph.repository());
-        for (size_t i = 0; i < added.get_rows().size(); ++i)
+        for (size_t i = 0; i < added.rows().size(); ++i)
             set_row(value, added.row(i), true, graph.repository());
     }
 };

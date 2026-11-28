@@ -32,14 +32,14 @@ public:
 
     size_t table_of(RelationView relation)
     {
-        auto& map = relation.get_input() ? m_input_tables : m_derived_tables;
-        const auto key = relation.get_input() ? relation.get_input_slot() : relation.get_id();
+        auto& map = relation.input() ? m_input_tables : m_derived_tables;
+        const auto key = relation.input() ? relation.input_slot() : relation.id();
         if (const auto it = map.find(key); it != map.end())
             return it->second;
-        const auto table = add_table(relation.get_arity());
-        m_program.tables[table]->weighted = relation.get_weighted();
+        const auto table = add_table(relation.arity());
+        m_program.tables[table]->weighted = relation.weighted();
         map.emplace(key, table);
-        if (relation.get_input())
+        if (relation.input())
         {
             m_program.tables[table]->slot = key;
             if (m_program.slot_tables.size() <= key)
@@ -55,23 +55,23 @@ public:
         auto slot_of = urd::Store<urd::map<ygg::uint_t, ygg::uint_t>, urd::sorted>();
         // Positive atoms first, so that the outer variables an aggregate groups by are known.
         auto positives = urd::Store<urd::sequence<Literal>>();
-        body(view.get_atoms(), std::span<const AtomView>(), {}, {}, slot_of, positives);
+        body(view.atoms(), std::span<const AtomView>(), {}, {}, slot_of, positives);
         auto outer = urd::Store<urd::set<ygg::uint_t>, urd::sorted>();
-        for (const auto atom : view.get_atoms())
-            for (const auto t : atom.get_terms())
+        for (const auto atom : view.atoms())
+            for (const auto t : atom.terms())
                 if (t.is_variable())
                     outer.insert(t.value);
         auto aggregate_literals = urd::Store<urd::sequence<Literal>>();
-        for (const auto aggregate : view.get_aggregates())
+        for (const auto aggregate : view.aggregates())
             aggregate_literals.push_back(add_aggregate(aggregate, outer, slot_of));
         auto others = urd::Store<urd::sequence<Literal>>();
-        body(std::span<const AtomView>(), view.get_negated(), view.get_comparisons(), view.get_arithmetic(), slot_of, others);
+        body(std::span<const AtomView>(), view.negated(), view.comparisons(), view.arithmetic(), slot_of, others);
         rule.literals = std::move(positives);
         rule.literals.insert(rule.literals.end(), aggregate_literals.begin(), aggregate_literals.end());
         rule.literals.insert(rule.literals.end(), others.begin(), others.end());
-        const auto head = view.get_head();
-        rule.head = table_of(head.get_relation());
-        for (const auto t : head.get_terms())
+        const auto head = view.head();
+        rule.head = table_of(head.relation());
+        for (const auto t : head.terms())
             rule.head_terms.push_back(t.is_variable() ? Term::variable(slot_of.at(t.value)) : t);
         rule.slots = slot_of.size();
         finish_rule(std::move(rule));
@@ -108,8 +108,8 @@ private:
         };
         const auto literal = [&](Literal::Kind kind, AtomView atom)
         {
-            auto result = Literal { kind, table_of(atom.get_relation()), {} };
-            for (const auto t : atom.get_terms())
+            auto result = Literal { kind, table_of(atom.relation()), {} };
+            for (const auto t : atom.terms())
                 result.terms.push_back(term(t));
             return result;
         };
@@ -147,7 +147,7 @@ private:
     {
         auto inner_slots = urd::Store<urd::map<ygg::uint_t, ygg::uint_t>, urd::sorted>();
         auto inner = CompiledRule {};
-        body(view.get_atoms(), view.get_negated(), view.get_comparisons(), view.get_arithmetic(), inner_slots, inner.literals);
+        body(view.atoms(), view.negated(), view.comparisons(), view.arithmetic(), inner_slots, inner.literals);
         auto variables = urd::Store<urd::sequence<ygg::uint_t>>();  // In slot order.
         variables.resize(inner_slots.size());
         for (const auto& [variable, slot] : inner_slots)
@@ -161,7 +161,7 @@ private:
 
         auto aggregate = AggregateTable {};
         aggregate.source = source;
-        aggregate.function = view.get_function();
+        aggregate.function = view.function();
         auto literal = Literal { Literal::Kind::AGGREGATE, npos, {} };
         for (size_t column = 0; column < variables.size(); ++column)
             if (outer.contains(variables[column]))
@@ -169,12 +169,12 @@ private:
                 aggregate.group.push_back(column);
                 literal.terms.push_back(Term::variable(outer_slots.at(variables[column])));
             }
-        if (view.get_function() != AggregateFunction::COUNT)
-            aggregate.value = inner_slots.at(view.get_value());
+        if (view.function() != AggregateFunction::COUNT)
+            aggregate.value = inner_slots.at(view.value());
         aggregate.table = add_table(aggregate.group.size() + 1);
-        if (view.get_function() == AggregateFunction::COUNT || view.get_function() == AggregateFunction::SUM)
+        if (view.function() == AggregateFunction::COUNT || view.function() == AggregateFunction::SUM)
             m_program.tables[aggregate.table]->fallback = 0;
-        const auto [result, inserted] = outer_slots.try_emplace(view.get_result(), ygg::to_uint_t(outer_slots.size()));
+        const auto [result, inserted] = outer_slots.try_emplace(view.result(), ygg::to_uint_t(outer_slots.size()));
         literal.terms.push_back(Term::variable(result->second));
         literal.table = aggregate.table;
         m_dependencies.push_back(Dependency { aggregate.table, source, true });
@@ -270,7 +270,7 @@ urd::Store<urd::sequence<bool>> needed_tables(const CompiledProgram& program, st
 CompiledProgram translate(ProgramView view, std::span<const RelationView> outputs, std::span<const size_t> static_slots)
 {
     auto translator = Translator {};
-    for (const auto rule : view.get_rules())
+    for (const auto rule : view.rules())
         translator.add_rule(rule);
     auto& program = translator.program();
     for (const auto relation : outputs)

@@ -16,13 +16,12 @@ using runir::kr::ps::is_compatible_with;
 
 template<tyr::TaskKind Kind, RuleKind Tag, typename C, CompatibilityContext<ExtFamilyTag, Kind> Context>
 bool conditions_are_compatible(urd::index_view<Rule<Tag>, C> rule, Context& context)
-{ return all_compatible<Kind, ExtFamilyTag>(rule.get_conditions(), context); }
+{ return all_compatible<Kind, ExtFamilyTag>(rule.conditions(), context); }
 
 template<tyr::TaskKind Kind, RuleKind RuleKindT, typename C, urd::ViewOf<ProgramState<Kind>> S>
 bool has_current_source(urd::index_view<Rule<RuleKindT>, C> rule, S state)
 {
-    return rule.get_source()
-           == urd::visit_view(state.get_module_state(), [](const auto& activation) { return urd::interned_view(activation.get_memory_state()); });
+    return rule.source() == urd::visit_view(state.module_state(), [](const auto& activation) { return urd::interned_view(activation.memory_state()); });
 }
 
 // Reject the source memory before evaluating conditions in the reusable environment.
@@ -30,17 +29,17 @@ template<tyr::TaskKind Kind,
          RuleKind RuleKindT,
          typename C,
          urd::ViewOf<ProgramState<Kind>> S,
-         tyr::planning::StateViewConcept<Kind> PS,
+         tyr::planning::StateBuilderViewConcept<Kind> PS,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 bool rule_is_applicable(urd::index_view<Rule<RuleKindT>, C> rule, S state, const PS& planning_state, EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
 {
     if (!has_current_source<Kind>(rule, state))
         return false;
     environment.select_source(state);
-    return urd::visit_view(state.get_module_state(),
+    return urd::visit_view(state.module_state(),
                            [&](const auto& module_)
                            {
-                               auto state_context = environment.make_dl_context(planning_state, module_.get_arguments(), module_.get_registers());
+                               auto state_context = environment.make_dl_context(planning_state, module_.arguments(), module_.registers());
                                return conditions_are_compatible<Kind>(rule, state_context);
                            });
 }
@@ -51,8 +50,8 @@ bool is_compatible_with(urd::index_view<Rule<Tag>, C> rule, Context& context)
     if (!conditions_are_compatible<Kind>(rule, context))
         return false;
 
-    if constexpr (requires { rule.get_effects(); })
-        return all_compatible<Kind, ExtFamilyTag>(rule.get_effects(), context);
+    if constexpr (requires { rule.effects(); })
+        return all_compatible<Kind, ExtFamilyTag>(rule.effects(), context);
 
     return true;
 }

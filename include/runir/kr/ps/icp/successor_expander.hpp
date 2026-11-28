@@ -11,7 +11,7 @@ class SuccessorExpander
 {
     detail::RuleEvaluators<Kind, EvaluationPolicy> m_rules;
 
-    void validate(tyr::planning::StateView<Kind> state) const
+    void validate(tyr::planning::StateBuilderView<Kind> state) const
     {
         if (&state.context() != get_task_context()->search_context->state_repository.get())
             throw std::invalid_argument("ICP requires a planning state from the selected task.");
@@ -19,7 +19,7 @@ class SuccessorExpander
 
     void validate(ProgramStateView<Kind> state) const
     {
-        if (&state.context() != get_task_context()->icp_execution_repository.get() || state.get_program() != m_rules.get_program())
+        if (&state.context() != get_task_context()->icp_execution_repository.get() || state.program() != m_rules.get_program())
             throw std::invalid_argument("ICP requires an execution state from the selected task and program.");
     }
 
@@ -30,7 +30,7 @@ public:
 
     [[nodiscard]] const auto& get_task_context() const noexcept { return m_rules.get_task_context(); }
 
-    ProgramStateView<Kind> initial_state(tyr::planning::StateView<Kind> state)
+    ProgramStateView<Kind> initial_state(tyr::planning::StateBuilderView<Kind> state)
     {
         validate(state);
         return m_rules.initial_state(state);

@@ -13,13 +13,7 @@ namespace ped = runir::kr::ps::ext::dl;
 
 fmt::format_context::iterator fmt::formatter<ped::ModulePolicyGraphVertexLabel>::format(const ped::ModulePolicyGraphVertexLabel& value,
                                                                                         fmt::format_context& context) const
-{
-    return fmt::format_to(context.out(),
-                          "(booleans={}, numericals={}, memory={})",
-                          value.boolean_values,
-                          value.numerical_values,
-                          value.memory_state.get_name());
-}
+{ return fmt::format_to(context.out(), "(booleans={}, numericals={}, memory={})", value.boolean_values, value.numerical_values, value.memory_state.name()); }
 
 fmt::format_context::iterator fmt::formatter<ped::ModuleStructuralTerminationResult>::format(const ped::ModuleStructuralTerminationResult& value,
                                                                                              fmt::format_context& context) const

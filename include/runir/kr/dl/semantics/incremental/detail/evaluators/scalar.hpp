@@ -27,11 +27,11 @@ struct ScalarBinaryEvaluator
     void refresh(EvaluationGraph<Kind>& graph)
     {
         if constexpr (NumericalBinaryTag<Tag>)
-            value.set(semantics::detail::apply_numerical_binary<Tag>(graph.result(left).get_value(), graph.result(right).get_value()));
+            value.set(semantics::detail::apply_numerical_binary<Tag>(graph.result(left).value(), graph.result(right).value()));
         else if constexpr (LogicalBinaryTag<Tag>)
-            value.set(semantics::detail::apply_logical_binary<Tag>(graph.result(left).get_value(), graph.result(right).get_value()));
+            value.set(semantics::detail::apply_logical_binary<Tag>(graph.result(left).value(), graph.result(right).value()));
         else
-            value.set(semantics::detail::apply_comparison<Tag>(graph.result(left).get_value(), graph.result(right).get_value()));
+            value.set(semantics::detail::apply_comparison<Tag>(graph.result(left).value(), graph.result(right).value()));
     }
 
     template<StateEvaluationContextConcept<Kind> Context>
@@ -51,9 +51,9 @@ struct LogicalNotEvaluator
 
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    { value.set(!graph.result(child).get_value()); }
+    { value.set(!graph.result(child).value()); }
 
-    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&) { value.set(!graph.result(child).get_value()); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&) { value.set(!graph.result(child).value()); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

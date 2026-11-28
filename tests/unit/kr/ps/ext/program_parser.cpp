@@ -59,11 +59,10 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
 
     const auto expect_feature_complexity = [](auto feature, std::size_t expected)
     {
-        const auto concrete = std::visit([](auto view) { return kr::dl::semantics::syntactic_complexity(view.get_feature()); }, feature.get_variant());
+        const auto concrete = std::visit([](auto view) { return kr::dl::semantics::syntactic_complexity(view.feature()); }, feature.variant());
         EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete);
-        EXPECT_EQ(
-            concrete,
-            kr::dl::semantics::syntactic_complexity(std::visit([](auto concrete_feature) { return concrete_feature.get_feature(); }, feature.get_variant())));
+        EXPECT_EQ(concrete,
+                  kr::dl::semantics::syntactic_complexity(std::visit([](auto concrete_feature) { return concrete_feature.feature(); }, feature.variant())));
         EXPECT_EQ(concrete, expected);
     };
     expect_feature_complexity(concept_feature, 1);
@@ -113,16 +112,16 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
     const auto description = read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_argument_register_memory_sections/description.module");
 
     const auto module_ = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
-    EXPECT_EQ(module_.get_symbol().get_name(), "entry");
-    EXPECT_EQ(module_.get_arguments<kr::dl::ConceptTag>().size(), 1);
-    EXPECT_EQ(module_.get_arguments<kr::dl::RoleTag>().size(), 1);
-    EXPECT_EQ(module_.get_arguments<kr::dl::BooleanTag>().size(), 1);
-    EXPECT_EQ(module_.get_arguments<kr::dl::NumericalTag>().size(), 1);
-    EXPECT_EQ(module_.get_registers<kr::dl::ConceptTag>().size(), 1);
-    EXPECT_EQ(module_.get_registers<kr::dl::RoleTag>().size(), 1);
-    EXPECT_EQ(module_.get_features<kr::dl::ConceptTag>().size(), 1);
-    EXPECT_EQ(module_.get_entry_memory_state().get_name(), "m0");
-    EXPECT_EQ(module_.get_memory_states().size(), 2);
+    EXPECT_EQ(module_.symbol().name(), "entry");
+    EXPECT_EQ(module_.arguments<kr::dl::ConceptTag>().size(), 1);
+    EXPECT_EQ(module_.arguments<kr::dl::RoleTag>().size(), 1);
+    EXPECT_EQ(module_.arguments<kr::dl::BooleanTag>().size(), 1);
+    EXPECT_EQ(module_.arguments<kr::dl::NumericalTag>().size(), 1);
+    EXPECT_EQ(module_.registers<kr::dl::ConceptTag>().size(), 1);
+    EXPECT_EQ(module_.registers<kr::dl::RoleTag>().size(), 1);
+    EXPECT_EQ(module_.features<kr::dl::ConceptTag>().size(), 1);
+    EXPECT_EQ(module_.entry_memory_state().name(), "m0");
+    EXPECT_EQ(module_.memory_states().size(), 2);
 }
 
 TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
@@ -141,11 +140,11 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
 
     const auto modules = kr::ps::ext::dl::parse_modules({ caller_description, callee_description }, planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(modules.size(), 2);
-    EXPECT_EQ(modules[0].get_symbol().get_name(), "caller");
-    EXPECT_EQ(modules[1].get_symbol().get_name(), "callee");
+    EXPECT_EQ(modules[0].symbol().name(), "caller");
+    EXPECT_EQ(modules[1].symbol().name(), "callee");
 
     ASSERT_EQ(modules[0].context()[modules[0].index()]->memory_transitions.size(), 1);
-    const auto rules = modules[0].get_memory_transitions()[0];
+    const auto rules = modules[0].memory_transitions()[0];
     ASSERT_FALSE(rules.empty());
     auto found_call_rule = false;
     std::visit(
@@ -155,10 +154,10 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
             if constexpr (std::same_as<RuleView, kr::ps::ext::RuleView<kr::ps::ext::CallTag>>)
             {
                 found_call_rule = true;
-                EXPECT_EQ(rule.get_callee().get_name(), "callee");
+                EXPECT_EQ(rule.callee().name(), "callee");
             }
         },
-        rules.front().get_variant());
+        rules.front().variant());
     EXPECT_TRUE(found_call_rule) << "Expected call rule.";
 }
 
@@ -200,7 +199,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
     }
     catch (const kr::UndefinedSymbolError& error)
     {
-        EXPECT_EQ(error.message(), fmt::format("Undefined action in domain '{}': missing-action", planning_task.get_domain().get_domain().get_name().str()));
+        EXPECT_EQ(error.message(), fmt::format("Undefined action in domain '{}': missing-action", planning_task.get_domain().get_domain().name().str()));
         EXPECT_TRUE(error.diagnostic().location.has_value()) << error.what();
     }
 
@@ -417,22 +416,22 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
     {
         const auto& expected = ygg::common::as_object(cases[i], "module");
         const auto module_ = modules[i];
-        EXPECT_EQ(module_.get_symbol().get_name(), ygg::common::as_string(expected, "name", "module"));
-        EXPECT_EQ(module_.get_features<kr::dl::ConceptTag>().size(), ygg::common::as_size(expected, "concept_features", "module"));
-        EXPECT_EQ(module_.get_features<kr::dl::RoleTag>().size(), ygg::common::as_size(expected, "role_features", "module"));
-        EXPECT_EQ(module_.get_features<kr::dl::BooleanTag>().size(), ygg::common::as_size(expected, "boolean_features", "module"));
-        EXPECT_EQ(module_.get_features<kr::dl::NumericalTag>().size(), ygg::common::as_size(expected, "numerical_features", "module"));
-        EXPECT_EQ(module_.get_memory_transitions().size(), ygg::common::as_size(expected, "transitions", "module"));
+        EXPECT_EQ(module_.symbol().name(), ygg::common::as_string(expected, "name", "module"));
+        EXPECT_EQ(module_.features<kr::dl::ConceptTag>().size(), ygg::common::as_size(expected, "concept_features", "module"));
+        EXPECT_EQ(module_.features<kr::dl::RoleTag>().size(), ygg::common::as_size(expected, "role_features", "module"));
+        EXPECT_EQ(module_.features<kr::dl::BooleanTag>().size(), ygg::common::as_size(expected, "boolean_features", "module"));
+        EXPECT_EQ(module_.features<kr::dl::NumericalTag>().size(), ygg::common::as_size(expected, "numerical_features", "module"));
+        EXPECT_EQ(module_.memory_transitions().size(), ygg::common::as_size(expected, "transitions", "module"));
         EXPECT_EQ(kr::ps::ext::syntactic_complexity(module_), ygg::common::as_size(expected, "syntactic_complexity", "module"));
     }
 
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), *repository);
     const auto& expected_program = ygg::common::as_object(ygg::common::require_member(suite_object, "program", "suite"), "suite.program");
-    EXPECT_EQ(program.get_entry_mod().get_symbol().get_name(), ygg::common::as_string(expected_program, "entry", "program"));
+    EXPECT_EQ(program.entry_mod().symbol().name(), ygg::common::as_string(expected_program, "entry", "program"));
     const auto& expected_modules = ygg::common::as_array(ygg::common::require_member(expected_program, "modules", "program"), "program.modules");
-    ASSERT_EQ(program.get_modules().size(), expected_modules.size());
+    ASSERT_EQ(program.modules().size(), expected_modules.size());
     for (std::size_t i = 0; i < expected_modules.size(); ++i)
-        EXPECT_EQ(program.get_modules()[i].get_symbol().get_name(), ygg::common::as_string(expected_modules[i], "program.module"));
+        EXPECT_EQ(program.modules()[i].symbol().name(), ygg::common::as_string(expected_modules[i], "program.module"));
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(program), ygg::common::as_size(expected_program, "syntactic_complexity", "program"));
 }
 
@@ -456,17 +455,17 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
         try
         {
             const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
-            EXPECT_EQ(reparsed.get_symbol().get_name(), module_.get_symbol().get_name());
-            EXPECT_EQ(reparsed.get_memory_states().size(), module_.get_memory_states().size());
-            EXPECT_EQ(reparsed.get_memory_transitions().size(), module_.get_memory_transitions().size());
-            EXPECT_EQ(reparsed.get_arguments<kr::dl::ConceptTag>().size(), module_.get_arguments<kr::dl::ConceptTag>().size());
-            EXPECT_EQ(reparsed.get_arguments<kr::dl::RoleTag>().size(), module_.get_arguments<kr::dl::RoleTag>().size());
-            EXPECT_EQ(reparsed.get_arguments<kr::dl::BooleanTag>().size(), module_.get_arguments<kr::dl::BooleanTag>().size());
-            EXPECT_EQ(reparsed.get_arguments<kr::dl::NumericalTag>().size(), module_.get_arguments<kr::dl::NumericalTag>().size());
+            EXPECT_EQ(reparsed.symbol().name(), module_.symbol().name());
+            EXPECT_EQ(reparsed.memory_states().size(), module_.memory_states().size());
+            EXPECT_EQ(reparsed.memory_transitions().size(), module_.memory_transitions().size());
+            EXPECT_EQ(reparsed.arguments<kr::dl::ConceptTag>().size(), module_.arguments<kr::dl::ConceptTag>().size());
+            EXPECT_EQ(reparsed.arguments<kr::dl::RoleTag>().size(), module_.arguments<kr::dl::RoleTag>().size());
+            EXPECT_EQ(reparsed.arguments<kr::dl::BooleanTag>().size(), module_.arguments<kr::dl::BooleanTag>().size());
+            EXPECT_EQ(reparsed.arguments<kr::dl::NumericalTag>().size(), module_.arguments<kr::dl::NumericalTag>().size());
         }
         catch (const std::exception& err)
         {
-            FAIL() << "Failed to reparse formatted module " << module_.get_symbol().get_name() << ": " << err.what() << "\n" << formatted;
+            FAIL() << "Failed to reparse formatted module " << module_.symbol().name() << ": " << err.what() << "\n" << formatted;
         }
     }
 
@@ -474,8 +473,8 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
     const auto formatted_program = fmt::format("{}", program);
     EXPECT_NE(formatted_program.find(formatter_fragment("module_factory_sketch")), std::string::npos) << formatted_program;
     const auto reparsed_program = kr::ps::ext::dl::parse_program(formatted_program, planning_task.get_domain().get_domain(), *repository);
-    EXPECT_EQ(reparsed_program.get_entry_mod().get_symbol().get_name(), program.get_entry_mod().get_symbol().get_name());
-    EXPECT_EQ(reparsed_program.get_modules().size(), program.get_modules().size());
+    EXPECT_EQ(reparsed_program.entry_mod().symbol().name(), program.entry_mod().symbol().name());
+    EXPECT_EQ(reparsed_program.modules().size(), program.modules().size());
 }
 
 TEST(RunirTests, ExtModuleFormatterPreservesOrderedDeclarations)
@@ -493,23 +492,23 @@ TEST(RunirTests, ExtModuleFormatterPreservesOrderedDeclarations)
     kr::ps::ext::dl::parse_module(seed, planning_task.get_domain().get_domain(), *repository);
     const auto module_ = kr::ps::ext::dl::parse_module(target, planning_task.get_domain().get_domain(), *repository);
 
-    const auto arguments = module_.get_arguments<kr::dl::ConceptTag>();
+    const auto arguments = module_.arguments<kr::dl::ConceptTag>();
     ASSERT_EQ(arguments.size(), 2);
-    EXPECT_EQ(arguments[0].get_name(), "Y");
-    EXPECT_EQ(arguments[1].get_name(), "X");
+    EXPECT_EQ(arguments[0].name(), "Y");
+    EXPECT_EQ(arguments[1].name(), "X");
 
-    const auto registers = module_.get_registers<kr::dl::ConceptTag>();
+    const auto registers = module_.registers<kr::dl::ConceptTag>();
     ASSERT_EQ(registers.size(), 2);
-    EXPECT_EQ(registers[0].get_name(), "RY");
-    EXPECT_EQ(registers[1].get_name(), "RX");
+    EXPECT_EQ(registers[0].name(), "RY");
+    EXPECT_EQ(registers[1].name(), "RX");
 
     const auto formatted = fmt::format("{}", module_);
     auto reparsed_dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
     auto reparsed_repository = std::make_shared<kr::ps::ext::Repository>(reparsed_dl_repository);
     const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *reparsed_repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
-    EXPECT_EQ(reparsed.get_arguments<kr::dl::ConceptTag>()[0].get_name(), "Y");
-    EXPECT_EQ(reparsed.get_registers<kr::dl::ConceptTag>()[0].get_name(), "RY");
+    EXPECT_EQ(reparsed.arguments<kr::dl::ConceptTag>()[0].name(), "Y");
+    EXPECT_EQ(reparsed.registers<kr::dl::ConceptTag>()[0].name(), "RY");
 }
 
 TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
@@ -529,7 +528,7 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
     EXPECT_EQ(formatted.find(std::string(":") + "description"), std::string::npos) << formatted;
 
     const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
-    EXPECT_EQ(reparsed.get_symbol().get_name(), module_.get_symbol().get_name());
+    EXPECT_EQ(reparsed.symbol().name(), module_.symbol().name());
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
 }
 
@@ -570,27 +569,27 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
     const auto description = read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_supported_transitions/description.module");
 
     const auto module_ = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
-    ASSERT_EQ(module_.get_memory_transitions().size(), 3);
+    ASSERT_EQ(module_.memory_transitions().size(), 3);
 
-    const auto load_rules = module_.get_memory_transitions()[0];
+    const auto load_rules = module_.memory_transitions()[0];
     ASSERT_EQ(load_rules.size(), 1);
-    EXPECT_EQ(load_rules[0].get_symbol(), "load-edge");
+    EXPECT_EQ(load_rules[0].symbol(), "load-edge");
     EXPECT_TRUE(std::visit(
         [](auto rule)
         {
             using View = std::decay_t<decltype(rule)>;
             using Expected = urd::index_view<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(rule.get_slot().get_identifier().value) == 0 && rule.get_conditions().size() == 1;
+                return ygg::uint_t(rule.slot().identifier().value) == 0 && rule.conditions().size() == 1;
             else
                 return false;
         },
-        load_rules[0].get_variant()));
+        load_rules[0].variant()));
 
-    const auto sketch_rules = module_.get_memory_transitions()[1];
+    const auto sketch_rules = module_.memory_transitions()[1];
     ASSERT_EQ(sketch_rules.size(), 1);
 
-    const auto do_rules = module_.get_memory_transitions()[2];
+    const auto do_rules = module_.memory_transitions()[2];
     ASSERT_EQ(do_rules.size(), 1);
     EXPECT_TRUE(std::visit(
         [](auto rule)
@@ -598,11 +597,11 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
             using View = std::decay_t<decltype(rule)>;
             using Expected = urd::index_view<kr::ps::ext::Rule<kr::ps::ext::DoTag>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return rule.get_action_name() == "pick" && rule.get_arguments().size() == 3 && rule.get_effects().size() == 1;
+                return rule.action_name() == "pick" && rule.arguments().size() == 3 && rule.effects().size() == 1;
             else
                 return false;
         },
-        do_rules[0].get_variant()));
+        do_rules[0].variant()));
 }
 
 TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
@@ -638,7 +637,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                 SCOPED_TRACE(fmt::format("{} {} {}", keyword, category, effects));
                 const auto module_ = parse(description("F", category, effects));
                 const auto expected_effects = std::string(effects).find("unchanged") == std::string::npos ? 0U : 2U;
-                const auto rules = module_.get_memory_transitions()[0];
+                const auto rules = module_.memory_transitions()[0];
                 ASSERT_EQ(rules.size(), 1U);
                 std::visit(
                     [&](auto rule)
@@ -647,9 +646,9 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                         if constexpr (kr::ps::ext::BindingRuleView<R>)
                         {
                             EXPECT_EQ(kr::ps::ext::ChooseRuleView<R>, std::string(keyword) == "choose");
-                            EXPECT_EQ(std::visit([](auto concrete) { return concrete.get_symbol(); }, rule.get_feature().get_variant()), "F");
-                            EXPECT_EQ(rule.get_slot().get_name(), "r");
-                            EXPECT_EQ(rule.get_effects().size(), expected_effects);
+                            EXPECT_EQ(std::visit([](auto concrete) { return concrete.symbol(); }, rule.feature().variant()), "F");
+                            EXPECT_EQ(rule.slot().name(), "r");
+                            EXPECT_EQ(rule.effects().size(), expected_effects);
                             auto data = runir::tests::copy_fields(*rule.context()[rule.index()]);
                             EXPECT_TRUE(kr::ps::ext::is_canonical(data));
                             urd::clear_fields(data);
@@ -658,7 +657,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                         else
                             FAIL() << "Expected a binding rule";
                     },
-                    rules[0].get_variant());
+                    rules[0].variant());
                 const auto formatted = fmt::format("{}", module_);
                 EXPECT_EQ(formatted.find("(:effects") != std::string::npos, expected_effects != 0U);
                 EXPECT_EQ(parse(formatted).index(), module_.index());
@@ -690,11 +689,11 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
             using View = std::decay_t<decltype(child)>;
             using Expected = urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::ArgumentTag<kr::dl::ConceptTag>>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(child.get_argument().get_identifier().value) == 0;
+                return ygg::uint_t(child.argument().identifier().value) == 0;
             else
                 return false;
         },
-        concept_argument.get_variant()));
+        concept_argument.variant()));
 
     const auto concept_register =
         kr::ps::ext::dl::parse_concept(read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_ext_dl_concept_and_role_expressions/case_2.dsl"),
@@ -706,11 +705,11 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
             using View = std::decay_t<decltype(child)>;
             using Expected = urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::RegisterTag>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(child.get_slot().get_identifier().value) == 1;
+                return ygg::uint_t(child.slot().identifier().value) == 1;
             else
                 return false;
         },
-        concept_register.get_variant()));
+        concept_register.variant()));
 
     const auto role_argument =
         kr::ps::ext::dl::parse_role(read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_ext_dl_concept_and_role_expressions/case_3.dsl"),
@@ -722,11 +721,11 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
             using View = std::decay_t<decltype(child)>;
             using Expected = urd::index_view<kr::dl::Role<kr::dl::SemanticFamily, kr::dl::ArgumentTag<kr::dl::RoleTag>>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(child.get_argument().get_identifier().value) == 0;
+                return ygg::uint_t(child.argument().identifier().value) == 0;
             else
                 return false;
         },
-        role_argument.get_variant()));
+        role_argument.variant()));
 
     EXPECT_NO_THROW(kr::ps::ext::dl::parse_concept(read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_ext_dl_concept_and_role_expressions/case_4.dsl"),
                                                    planning_task.get_domain().get_domain(),
@@ -762,16 +761,16 @@ TEST(RunirTests, ExtModuleFactoryCreatesEmptyModule)
     auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto empty = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
-    EXPECT_EQ(empty.get_symbol().get_name(), "empty");
-    EXPECT_EQ(empty.get_entry_memory_state().get_name(), "m0");
-    EXPECT_EQ(empty.get_memory_states().size(), 1);
+    EXPECT_EQ(empty.symbol().name(), "empty");
+    EXPECT_EQ(empty.entry_memory_state().name(), "m0");
+    EXPECT_EQ(empty.memory_states().size(), 1);
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(empty), 0);
 
     const auto description = kr::ps::ext::dl::ModuleFactory::create_empty_description();
     const auto reparsed = kr::ps::ext::dl::parse_module(description, planning_domain.get_domain(), *repository);
-    EXPECT_EQ(reparsed.get_symbol().get_name(), empty.get_symbol().get_name());
-    EXPECT_EQ(reparsed.get_entry_memory_state().get_name(), empty.get_entry_memory_state().get_name());
-    EXPECT_EQ(reparsed.get_memory_states().size(), empty.get_memory_states().size());
+    EXPECT_EQ(reparsed.symbol().name(), empty.symbol().name());
+    EXPECT_EQ(reparsed.entry_memory_state().name(), empty.entry_memory_state().name());
+    EXPECT_EQ(reparsed.memory_states().size(), empty.memory_states().size());
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(reparsed), 0);
 }
 
@@ -806,15 +805,15 @@ TEST(RunirTests, ExtChooseOrderRoundTrip)
             {
                 if constexpr (kr::ps::ext::ChooseRuleView<decltype(rule)>)
                 {
-                    ASSERT_EQ(rule.get_order().size(), 3U);
-                    EXPECT_EQ(rule.get_order()[0].get_direction(), kr::ps::ext::OrderDirection::MAX);
+                    ASSERT_EQ(rule.order().size(), 3U);
+                    EXPECT_EQ(rule.order()[0].direction(), kr::ps::ext::OrderDirection::MAX);
                     auto bytes = cista::serialize(*rule.context()[rule.index()]);
                     using Data = std::remove_cvref_t<decltype(*rule.context()[rule.index()])>;
                     const auto* decoded = cista::deserialize<Data>(bytes);
                     EXPECT_EQ(decoded->order.size(), 3U);
-                    EXPECT_EQ(decoded->order[1], rule.get_order()[1].index());
+                    EXPECT_EQ(decoded->order[1], rule.order()[1].index());
                     EXPECT_EQ(decoded->order[0], decoded->order[2]);
-                    const auto term = rule.get_order()[1];
+                    const auto term = rule.order()[1];
                     const auto& term_data = *term.context()[term.index()];
                     auto term_bytes = cista::serialize(term_data);
                     const auto* decoded_term = cista::deserialize<urd::data<kr::ps::ext::OrderTerm>>(term_bytes);
@@ -823,7 +822,7 @@ TEST(RunirTests, ExtChooseOrderRoundTrip)
                     EXPECT_TRUE(urd::EqualTo<Data> {}(*decoded, *rule.context()[rule.index()]));
                 }
             },
-            module_.get_memory_transitions()[0][0].get_variant());
+            module_.memory_transitions()[0][0].variant());
         EXPECT_ANY_THROW(parse(source("(:order (min candidates))")));
         EXPECT_ANY_THROW(parse(source("(:order (min missing))")));
         EXPECT_ANY_THROW(parse(source("(:order (ascending score))")));

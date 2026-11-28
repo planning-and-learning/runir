@@ -29,9 +29,9 @@ static_assert(requires(Data& data) {
 });
 static_assert(requires(const View& view) {
     view.index();
-    view.template get_features<kr::dl::BooleanTag>();
-    view.template get_features<kr::dl::NumericalTag>();
-    view.get_rules();
+    view.template features<kr::dl::BooleanTag>();
+    view.template features<kr::dl::NumericalTag>();
+    view.rules();
 });
 
 }

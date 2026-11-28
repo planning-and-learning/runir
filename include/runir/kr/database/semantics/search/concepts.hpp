@@ -82,9 +82,9 @@ std::span<const ygg::Value> vertex_values(const R& row, urd::Store<urd::sequence
     }
 }
 
-/// A row's values, the row as it is held: a row view, or a builder's row child resolved (a variant of row views).
+/// A row's values, the row as it is held: a row view, or a builder's row child resolved (the view of its form).
 template<typename R>
-    requires urd::View<R> || urd::variant_value<R>
+    requires urd::View<R> || urd::variant_value<R> || urd::ChildView<R>
 std::span<const ygg::Value> vertex_values(const R& row, urd::Store<urd::sequence<ygg::Value>>& buffer)
 {
     return ygg::with_values(row, [&buffer](const auto& values) { return vertex_values(values, buffer); });
@@ -94,8 +94,8 @@ std::span<const ygg::Value> vertex_values(const R& row, urd::Store<urd::sequence
 template<typename R>
 size_t vertex_count(const R& range)
 {
-    if constexpr (requires { range.get_rows().size(); })
-        return range.get_rows().size();
+    if constexpr (requires { std::ranges::size(range.rows()); })
+        return std::ranges::size(range.rows());
     else
         return range.size();
 }

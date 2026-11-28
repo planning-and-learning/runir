@@ -156,7 +156,7 @@ private:
     void abstract_targets(const PatternDatabase& database, const Targets& targets)
     {
         m_abstract_targets.clear();
-        for (size_t r = 0; r < targets.get_rows().size(); ++r)
+        for (size_t r = 0; r < targets.rows().size(); ++r)
             m_abstract_targets.insert(ygg::decode_value<ygg::uint_t>(ygg::value_of(targets.row(r), database.pattern)));
     }
 

@@ -9,7 +9,7 @@
 #include <runir/kr/dl/datas.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 
 namespace runir::kr::dl
 {

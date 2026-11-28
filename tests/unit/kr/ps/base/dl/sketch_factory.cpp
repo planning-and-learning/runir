@@ -73,19 +73,17 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>>()), 2);
     EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::NumericalTag>>()), 1);
 
-    const auto first_rule = sketch.get_rules()[0];
-    EXPECT_EQ(first_rule.get_symbol(), "ready-rule");
-    EXPECT_EQ(fmt::format("{}", first_rule.get_conditions().front()), "(positive r)");
-    EXPECT_EQ(fmt::format("{}", first_rule.get_effects().front()), "(negative r)");
+    const auto first_rule = sketch.rules()[0];
+    EXPECT_EQ(first_rule.symbol(), "ready-rule");
+    EXPECT_EQ(fmt::format("{}", first_rule.conditions().front()), "(positive r)");
+    EXPECT_EQ(fmt::format("{}", first_rule.effects().front()), "(negative r)");
 
     const auto formatted = fmt::format("{}", sketch);
     EXPECT_EQ(fmt::format("{}", kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository)), formatted);
-    const auto feature = sketch.template get_features<kr::dl::BooleanTag>().front();
-    const auto concrete_complexity =
-        std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
+    const auto feature = sketch.template features<kr::dl::BooleanTag>().front();
+    const auto concrete_complexity = std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.feature()); }, feature.variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
-    EXPECT_EQ(concrete_complexity,
-              kr::dl::semantics::syntactic_complexity(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant())));
+    EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(std::visit([](auto concrete) { return concrete.feature(); }, feature.variant())));
     EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);
 }
 

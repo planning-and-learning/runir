@@ -27,12 +27,12 @@ namespace runir::kr::database
 /// Whether the query's operation has the tag.
 template<class Tag>
 bool is(QueryView<> query)
-{ return std::holds_alternative<QueryView<Tag>>(query.get_variant()); }
+{ return std::holds_alternative<QueryView<Tag>>(query.variant()); }
 
 /// The query's operation; requires is<Tag>(query).
 template<class Tag>
 QueryView<Tag> as(QueryView<> query)
-{ return std::get<QueryView<Tag>>(query.get_variant()); }
+{ return std::get<QueryView<Tag>>(query.variant()); }
 
 namespace detail
 {

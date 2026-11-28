@@ -31,7 +31,7 @@ Here ``move`` has two parameters, and each row of ``moves`` supplies its complet
 
 - **Rows are bindings.** A row is the complete normalized action binding in schema-variable order
   (``get_variables()``), including the existential witness variables Tyr's normalization introduces. The parser checks
-  that the action exists in the domain and that the query's width is the normalized schema's ``get_arity()``.
+  that the action exists in the domain and that the query's width is the normalized schema's ``arity()``.
 - **Columns.** Column names need not equal the PDDL parameter names; ``q_project`` reorders and ``q_rename`` renames
   the output columns.
 - **Declaration.** An Action rule's ``:query`` names a query feature declared in the module's ``:features``; inline
@@ -108,8 +108,8 @@ produces, with the matching ``GroundEvaluationEnvironment`` or ``LiftedEvaluatio
 - ``matching_rule(state, successor)`` and ``apply(state, rule, successor)`` accept a Tyr labeled successor.
 - Expansion uses states without accumulated metrics; a successful plan gets them when Tyr replays its actions.
 
-**Evaluating features.** ``module.get_query_features()`` returns the named ``ext.dl.QueryFeature`` values,
-``ActionRule.get_query_feature()`` the rule's selector, and ``feature.get_expression().get_columns()`` its schema.
+**Evaluating features.** ``module.query_features()`` returns the named ``ext.dl.QueryFeature`` values,
+``ActionRule.query_feature()`` the rule's selector, and ``feature.get_expression().columns()`` its schema.
 ``environment.make_dl_context(program_state)`` creates a context that borrows the state's registers and arguments, and
 ``ext.evaluate(feature, state_context)`` returns the feature's denotation: Boolean and numerical ones give their value
 through ``.get_value()``, concept and role ones give their objects (or object pairs) through ``.views()``.
@@ -118,8 +118,8 @@ through ``.get_value()``, concept and role ones give their objects (or object pa
 
    from pyrunir.kr.ps import ext
 
-   feature = module.get_query_features()[0]
-   columns = tuple(column.get_name() for column in feature.get_expression().get_columns())
+   feature = module.query_features()[0]
+   columns = tuple(column.name() for column in feature.get_expression().columns())
    state_context = environment.make_dl_context(program_state)
    relation = ext.evaluate(feature, state_context)
    snapshot = tuple(tuple(row) for row in relation)

@@ -6,14 +6,16 @@
 #include <cista/serialization.h>
 #include <gtest/gtest.h>
 #include <optional>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/ps/execution_repository.hpp>
 #include <runir/kr/ps/ext/execution_data.hpp>
 #include <runir/kr/ps/ext/execution_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/task_context.hpp>
 #include <string>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::tests
@@ -171,12 +173,12 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         urd::clear_fields(*data);
         const auto empty = denotations.insert(*data).first;
         EXPECT_TRUE(empty.arguments<kr::dl::BooleanTag>().empty());
-        EXPECT_TRUE(arguments.arguments<kr::dl::BooleanTag>()[0].get_value());
+        EXPECT_TRUE(arguments.arguments<kr::dl::BooleanTag>()[0].value());
         EXPECT_EQ(denotations.size<kr::dl::semantics::CallArguments>(), 2);
     }
 
-    const auto initial = search_context->successor_generator->get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator);
-    const auto& state = initial.get_state();
+    const auto initial = runir::datasets::initial_node(*search_context);
+    const auto& state = initial.state();
     using CallStackView = kr::ps::ext::CallStackView;
 
     // An activation: a module, a memory state, registers and arguments, interned once.
@@ -193,12 +195,13 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto callee_activation = activation(callee, callee_entry);
     EXPECT_EQ(activation(callee, callee_entry), callee_activation);
     EXPECT_EQ(&callee_activation.context(), control_repository.get());
-    EXPECT_EQ(&callee_activation.get_mod().context(), repository.get());
-    EXPECT_EQ(&callee_activation.get_registers().context(), &denotations);
+    EXPECT_EQ(&callee_activation.mod().context(), repository.get());
+    EXPECT_EQ(&callee_activation.registers().context(), &denotations);
     EXPECT_EQ(control_repository->size<kr::ps::ext::ModuleState>(), 2);
 
-    const auto program_state =
-        [&](const tyr::planning::StateView<tyr::GroundTag>& planning_state, kr::ps::ext::ModuleStateView activation_, std::optional<CallStackView> caller_)
+    const auto program_state = [&](const tyr::planning::SharedStateBuilderView<tyr::GroundTag>& planning_state,
+                                   kr::ps::ext::ModuleStateView activation_,
+                                   std::optional<CallStackView> caller_)
     {
         auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
         data->state = planning_state.pack().index();
@@ -209,16 +212,15 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     };
     {
         // Program states that differ in their planning state share their activation.
-        const auto successors =
-            search_context->successor_generator->get_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
-        const auto changed = std::ranges::find_if(successors, [&](const auto& node) { return node.get_state().pack().index() != state.pack().index(); });
+        const auto successors = runir::datasets::successor_nodes(*search_context, initial);
+        const auto changed = std::ranges::find_if(successors, [&](const auto& node) { return node.state().pack().index() != state.pack().index(); });
         ASSERT_NE(changed, successors.end());
         const auto first = program_state(state, callee_activation, std::nullopt);
-        const auto moved = program_state(changed->get_state(), callee_activation, std::nullopt);
+        const auto moved = program_state(changed->state(), callee_activation, std::nullopt);
         EXPECT_NE(moved, first);
-        EXPECT_EQ(moved.get_module_state(), first.get_module_state());
-        EXPECT_EQ(moved.get_state().index(), changed->get_state().pack().index());
-        EXPECT_EQ(first.get_state().index(), state.pack().index());
+        EXPECT_EQ(moved.module_state(), first.module_state());
+        EXPECT_EQ(moved.state().index(), changed->state().pack().index());
+        EXPECT_EQ(first.state().index(), state.pack().index());
         EXPECT_EQ(program_state(state, callee_activation, std::nullopt), first);
         EXPECT_EQ(control_repository->size<kr::ps::ext::ModuleState>(), 2);
     }
@@ -239,15 +241,15 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         const auto first = program_state(state, callee_activation, caller_frame);
         const auto nested = program_state(state, callee_activation, nested_caller);
         EXPECT_NE(nested, first);
-        EXPECT_EQ(nested.get_module_state(), first.get_module_state());
-        EXPECT_EQ(nested.get_call_stack().value(), nested_caller);
+        EXPECT_EQ(nested.module_state(), first.module_state());
+        EXPECT_EQ(nested.call_stack().value(), nested_caller);
         EXPECT_EQ(program_state(state, callee_activation, nested_caller), nested);
         EXPECT_EQ(control_repository->size<kr::ps::ext::ModuleState>(), 2);
     }
 
-    ASSERT_TRUE(callee_frame.get_caller());
-    EXPECT_EQ(callee_frame.get_caller().value().index(), caller_frame.index());
-    const auto saved = callee_frame.get_caller().value().get_module_state().get_registers();
+    ASSERT_TRUE(callee_frame.caller());
+    EXPECT_EQ(callee_frame.caller().value().index(), caller_frame.index());
+    const auto saved = callee_frame.caller().value().module_state().registers();
     EXPECT_EQ(saved.template values<kr::dl::ConceptTag>()[0].value().index(), urd::index<tyr::formalism::Object>(0));
     const auto role_value = saved.template values<kr::dl::RoleTag>()[0];
     ASSERT_TRUE(role_value);
@@ -256,11 +258,11 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     EXPECT_EQ(pair.second.index(), urd::index<tyr::formalism::Object>(1));
 
     // A return: the frame's activation and caller, over the current planning state.
-    const auto returned_state = program_state(state, caller_frame.get_module_state(), caller_frame.get_caller());
-    EXPECT_EQ(returned_state.get_module_state().get_mod().get_symbol().get_name(), "caller");
-    EXPECT_EQ(returned_state.get_module_state(), caller_activation);
-    EXPECT_EQ(returned_state.get_state().index(), state.pack().index());
-    EXPECT_FALSE(returned_state.get_call_stack());
+    const auto returned_state = program_state(state, caller_frame.module_state(), caller_frame.caller());
+    EXPECT_EQ(returned_state.module_state().mod().symbol().name(), "caller");
+    EXPECT_EQ(returned_state.module_state(), caller_activation);
+    EXPECT_EQ(returned_state.state().index(), state.pack().index());
+    EXPECT_FALSE(returned_state.call_stack());
 }
 
 TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)

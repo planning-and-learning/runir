@@ -98,10 +98,10 @@ def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(
         gripper_planning_domain,
         context.base_repository,
     )
-    (feature,) = policy.get_boolean_features()
+    (feature,) = policy.boolean_features()
     dictionaries = Dictionaries()
     dictionaries.register_table(semantics.BooleanSemanticNonempty, "nonempty", "b")
-    expression = feature.get_variant().get_feature()
+    expression = feature.variant().feature()
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Constructor.*BooleanTag"):
         dictionaries.serialize(expression)
 
@@ -118,7 +118,7 @@ def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(
         semantics.BooleanSemanticNonempty,
         "nonempty",
         "b",
-        project=lambda nonempty: {"operand": str(nonempty.get_operand())},
+        project=lambda nonempty: {"operand": str(nonempty.operand())},
     )
     assert dictionaries.serialize(expression) == "x0"
     assert dictionaries.table(semantics.ConstructorBoolean) == [{"variant": "b0", "is_static": True}]
@@ -132,8 +132,8 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: form
         gripper_planning_domain,
         context.base_repository,
     )
-    (rule,) = policy.get_rules()
-    feature = policy.get_numerical_features()[0].get_variant()
+    (rule,) = policy.rules()
+    feature = policy.numerical_features()[0].variant()
     dictionaries = Dictionaries()
     dictionaries.register_table(base.RuleBase, "rules", "r")
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Sketch"):
@@ -150,32 +150,32 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: form
         "rules",
         "r",
         project=lambda value: {
-            "symbol": value.get_symbol(),
-            "conditions": [str(condition) for condition in value.get_conditions()],
-            "effects": [str(effect) for effect in value.get_effects()],
+            "symbol": value.symbol(),
+            "conditions": [str(condition) for condition in value.conditions()],
+            "effects": [str(effect) for effect in value.effects()],
         },
     )
     dictionaries.register_table(
         base.dl.ConcreteFeatureBaseNumerical,
         "features",
         "f",
-        project=lambda value: {"symbol": value.get_symbol(), "feature": str(value.get_feature())},
+        project=lambda value: {"symbol": value.symbol(), "feature": str(value.feature())},
     )
     assert dictionaries.serialize(rule) == "r0"
     assert list(rows(dictionaries.table(base.RuleBase))[0]) == list(base.RuleBase.Fields.__members__)
     assert dictionaries.table(base.RuleBase) == [
         {
-            "symbol": rule.get_symbol(),
-            "conditions": [str(condition) for condition in rule.get_conditions()],
-            "effects": [str(effect) for effect in rule.get_effects()],
+            "symbol": rule.symbol(),
+            "conditions": [str(condition) for condition in rule.conditions()],
+            "effects": [str(effect) for effect in rule.effects()],
         }
     ]
     assert dictionaries.table(base.dl.ConcreteFeatureBaseNumerical) == []
     assert dictionaries.serialize(feature) == "f0"
     assert dictionaries.table(base.dl.ConcreteFeatureBaseNumerical) == [
         {
-            "symbol": feature.get_symbol(),
-            "feature": str(feature.get_feature()),
+            "symbol": feature.symbol(),
+            "feature": str(feature.feature()),
         }
     ]
 
@@ -188,7 +188,7 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: form
     )
     assert selected.serialize(rule) == "r0"
     (row,) = rows(selected.table(base.RuleBase))
-    assert row == {"symbol": rule.get_symbol()}
+    assert row == {"symbol": rule.symbol()}
 
 
 def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context: GroundTaskSearchContext) -> None:
@@ -202,8 +202,8 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         domain_context.ext_repository,
     )
     expander = ext.GroundSuccessorExpander(context, program)
-    planning_state = initial_node(context).get_state()
-    assert isinstance(planning_state, ground.StateBuilderShared)
+    planning_state = initial_node(context).state()
+    assert isinstance(planning_state, ground.StateBuilderView)
     initial = expander.initial_state(planning_state)
     (step,) = collect_steps(expander, initial)
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ProgramState.*GroundTag"):
@@ -212,8 +212,8 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         Dictionaries().serialize(domain)
 
     dictionaries = Dictionaries()
-    dictionaries.register_table(ground.StateBuilderShared, "states", "s")
-    dictionaries.register_table(formalism.AtomGroundFluent, "atoms", "a", fields=())
+    # A registered state is a record of its storages' keys: referenced here, its storages left out.
+    dictionaries.register_table(ground.State, "states", "s", fields=())
     dictionaries.register_table(ext.ProgramStateGround, "program_states", "e")
     dictionaries.register_table(ext.ModuleState, "module_states", "z")
     dictionaries.register_table(ext.CallStack, "call_stacks", "c")
@@ -226,20 +226,20 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         "programs",
         "p",
         project=lambda value: {
-            "entry_mod": str(value.get_entry_mod()),
-            "modules": [str(module) for module in value.get_modules()],
+            "entry_mod": str(value.entry_mod()),
+            "modules": [str(module) for module in value.modules()],
         },
     )
 
     assert dictionaries.serialize(initial) == "e0"
-    assert dictionaries.serialize(initial.get_state().unpack()) == "s0"
+    assert dictionaries.serialize(initial.state()) == "s0"
     assert dictionaries.serialize(step.target) == "e1"
     assert dictionaries.serialize(initial) == "e0"
     first, second = rows(dictionaries.table(ext.ProgramStateGround))
     assert first == {"state": "s0", "module_state": "z0", "call_stack": None}
     assert second == {"state": "s0", "module_state": "z1", "call_stack": "c0"}
-    assert initial.get_call_stack() is None
-    assert dictionaries.serialize(initial.get_module_state()) == "z0"
+    assert initial.call_stack() is None
+    assert dictionaries.serialize(initial.module_state()) == "z0"
     module_states = rows(dictionaries.table(ext.ModuleState))
     assert module_states[0] == {
         "mod": "m0",
@@ -247,11 +247,11 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         "registers": "r0",
         "arguments": "b0",
     }
-    call_stack = step.target.get_call_stack()
+    call_stack = step.target.call_stack()
     assert call_stack is not None
     assert dictionaries.table(ext.CallStack) == [
         {
-            "module_state": dictionaries.serialize(call_stack.get_module_state()),
+            "module_state": dictionaries.serialize(call_stack.module_state()),
             "caller": None,
         }
     ]
@@ -264,23 +264,19 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
             "numerical_arguments": [],
         }
     ]
-    (state,) = rows(dictionaries.table(ground.StateBuilderShared))
-    assert set(state) == {"fluent_atoms", "derived_atoms", "fluent_fterm_values"}
-    assert state["fluent_atoms"] == [
-        f"a{index}" for index in range(len(rows(dictionaries.table(formalism.AtomGroundFluent))))
-    ]
+    assert dictionaries.table(ground.State) == [{}]
     assert dictionaries.tables()["program_states"]["rows"] == [first, second]
 
     # A program state does not name its program (an input to the search): it is serialized on its own.
     assert dictionaries.serialize(program) == "p0"
-    assert rows(dictionaries.table(ext.Program))[0]["modules"] == [str(module) for module in program.get_modules()]
+    assert rows(dictionaries.table(ext.Program))[0]["modules"] == [str(module) for module in program.modules()]
     snapshot = dictionaries.tables()
     assert json.loads(json.dumps(snapshot)) == snapshot
     assert dictionaries.serialize(initial) == "e0"
     assert dictionaries.tables() == snapshot
 
     selected = Dictionaries()
-    selected.register_table(ground.StateBuilderShared, "states", "s")
+    selected.register_table(ground.State, "states", "s")
     selected.register_table(
         ext.ProgramStateGround,
         "program_states",
@@ -294,19 +290,19 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     (program_state,) = rows(selected.table(ext.ProgramStateGround))
     assert program_state == {"module_state": "z0", "call_stack": None}
     assert list(program_state) == ["module_state", "call_stack"]
-    assert selected.table(ground.StateBuilderShared) == []
+    assert selected.table(ground.State) == []
     assert selected.table(ext.ModuleState) == [{}]
     assert selected.table(ext.CallStack) == []
     assert selected.table(ext.Program) == []
 
     def project(value: ext.ProgramStateGround) -> dict[str, object]:
         return {
-            "planning_state": value.get_state().unpack(),
-            "has_caller": value.get_call_stack() is not None,
+            "planning_state": value.state(),
+            "has_caller": value.call_stack() is not None,
         }
 
     projected = Dictionaries()
-    projected.register_table(ground.StateBuilderShared, "states", "s", fields=())
+    projected.register_table(ground.State, "states", "s", fields=())
     projected.register_table(ext.ProgramStateGround, "program_states", "e", project=project)
     assert projected.serialize(initial) == "e0"
     assert projected.table(ext.ProgramStateGround) == [
@@ -315,12 +311,12 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
             "has_caller": False,
         }
     ]
-    assert projected.serialize(initial.get_state().unpack()) == "s0"
-    assert projected.table(ground.StateBuilderShared) == [{}]
+    assert projected.serialize(initial.state()) == "s0"
+    assert projected.table(ground.State) == [{}]
 
     reverse = Dictionaries()
     reverse.register_table(
-        ground.StateBuilderShared,
+        ground.State,
         "states",
         "s",
         project=lambda _state: {"program_state": initial},
@@ -329,9 +325,9 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         ext.ProgramStateGround,
         "program_states",
         "e",
-        project=lambda value: {"state": value.get_state().unpack()},
+        project=lambda value: {"state": value.state()},
     )
-    assert reverse.serialize(initial.get_state().unpack()) == "s0"
-    assert reverse.table(ground.StateBuilderShared) == [{"program_state": "e0"}]
+    assert reverse.serialize(initial.state()) == "s0"
+    assert reverse.table(ground.State) == [{"program_state": "e0"}]
     assert reverse.table(ext.ProgramStateGround) == [{"state": "s0"}]
     assert reverse.serialize(initial) == "e0"

@@ -32,11 +32,11 @@ def relation(arity: int, values: Iterable[tuple[int, ...]] = ()) -> db.ScratchRe
     return result
 
 
-def borrow(value: db.ScratchRelation) -> formalism.RelationSchemaBuilderBorrowed:
+def borrow(value: db.ScratchRelation) -> formalism.RelationSchemaBuilderView:
     return value.view()
 
 
-def rows(value: formalism.RelationSchemaBuilderBorrowed) -> Rows:
+def rows(value: formalism.RelationSchemaBuilderView) -> Rows:
     return {tuple(int(cell) for cell in row) for row in tuples(value)}  # type: ignore[call-overload]
 
 
@@ -143,7 +143,7 @@ def test_weighted_shortest_paths() -> None:
     p = Programs()
     e, start = p.relation(100, 2, 0), p.relation(101, 1, 1)
     dist = p.repository.insert(record(db.DatalogRelationData, id=0, arity=2, weighted=True))[0]
-    assert dist.get_weighted()
+    assert dist.weighted()
     x, y, w, v = 0, 1, 2, 3
     var, const = db.DatalogTerm.variable, db.DatalogTerm.constant
     base = p.repository.insert(

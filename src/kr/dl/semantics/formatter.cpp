@@ -25,7 +25,7 @@ namespace ds = runir::kr::dl::semantics;
 fmt::format_context::iterator
 fmt::formatter<urd::index_view<dl::QueryColumn, dl::ConstructorRepository>>::format(const urd::index_view<dl::QueryColumn, dl::ConstructorRepository>& value,
                                                                                     fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value.get_name()); }
+{ return fmt::format_to(context.out(), "{}", value.name()); }
 
 template<typename Tag>
 fmt::format_context::iterator
@@ -33,7 +33,7 @@ fmt::formatter<urd::index_view<dl::Query<Tag>, dl::ConstructorRepository>>::form
                                                                                    fmt::format_context& context) const
 {
     if constexpr (std::same_as<Tag, void>)
-        return fmt::format_to(context.out(), "{}", value.get_variant());
+        return fmt::format_to(context.out(), "{}", value.variant());
     else
     {
         // (keyword components...), each component after a space; a list of columns as (column column ...).
@@ -48,43 +48,43 @@ fmt::formatter<urd::index_view<dl::Query<Tag>, dl::ConstructorRepository>>::form
         const auto columns = [](auto range) { return fmt::format("({})", fmt::join(range, " ")); };
 
         if constexpr (dl::is_atomic_state_tag_v<Tag>)
-            return write("q_atomic_state", fmt::format("{:?}", value.get_predicate().get_name().view()), columns(value.get_columns()));
+            return write("q_atomic_state", fmt::format("{:?}", value.predicate().name().view()), columns(value.columns()));
         else if constexpr (dl::is_atomic_goal_tag_v<Tag>)
             return write("q_atomic_goal",
-                         fmt::format("{:?}", value.get_predicate().get_name().view()),
-                         value.get_polarity() ? dl::TrueTag::keyword : dl::FalseTag::keyword,
-                         columns(value.get_columns()));
+                         fmt::format("{:?}", value.predicate().name().view()),
+                         value.polarity() ? dl::TrueTag::keyword : dl::FalseTag::keyword,
+                         columns(value.columns()));
         else if constexpr (std::same_as<Tag, dl::QueryConceptTag>)
-            return write(dl::QueryConceptTag::keyword, *value.get_columns().begin(), value.get_operand());
+            return write(dl::QueryConceptTag::keyword, *value.columns().begin(), value.operand());
         else if constexpr (std::same_as<Tag, dl::QueryRoleTag>)
-            return write(dl::QueryRoleTag::keyword, columns(value.get_columns()), value.get_operand());
+            return write(dl::QueryRoleTag::keyword, columns(value.columns()), value.operand());
         else if constexpr (std::same_as<Tag, dl::QueryProjectTag>)
-            return write(dl::QueryProjectTag::keyword, columns(value.get_columns()), value.get_operand());
+            return write(dl::QueryProjectTag::keyword, columns(value.columns()), value.operand());
         else if constexpr (std::same_as<Tag, dl::QueryRenameTag>)
-            return write(dl::QueryRenameTag::keyword, columns(value.get_columns()), value.get_operand());
+            return write(dl::QueryRenameTag::keyword, columns(value.columns()), value.operand());
         else if constexpr (std::same_as<Tag, dl::QuerySelectEqualTag>)
-            return write(dl::QuerySelectEqualTag::keyword, value.get_left_column(), value.get_right_column(), value.get_operand());
+            return write(dl::QuerySelectEqualTag::keyword, value.left_column(), value.right_column(), value.operand());
         else if constexpr (std::same_as<Tag, dl::QuerySelectValueTag>)
-            return write(dl::QuerySelectValueTag::keyword, value.get_column(), fmt::format("{:?}", value.get_object().get_name().view()), value.get_operand());
+            return write(dl::QuerySelectValueTag::keyword, value.column(), fmt::format("{:?}", value.object().name().view()), value.operand());
         else if constexpr (std::same_as<Tag, dl::QueryJoinTag>)
-            return write(dl::QueryJoinTag::keyword, value.get_left_operand(), value.get_right_operand());
+            return write(dl::QueryJoinTag::keyword, value.left_operand(), value.right_operand());
         else if constexpr (std::same_as<Tag, dl::QueryUnionTag>)
-            return write(dl::QueryUnionTag::keyword, value.get_left_operand(), value.get_right_operand());
+            return write(dl::QueryUnionTag::keyword, value.left_operand(), value.right_operand());
         else if constexpr (std::same_as<Tag, dl::QueryDifferenceTag>)
-            return write(dl::QueryDifferenceTag::keyword, value.get_left_operand(), value.get_right_operand());
+            return write(dl::QueryDifferenceTag::keyword, value.left_operand(), value.right_operand());
         else if constexpr (std::same_as<Tag, dl::QueryGenericJoinTag>)
             return write(dl::QueryGenericJoinTag::keyword,
-                         columns(value.get_variable_order()),
-                         columns(value.get_output_order()),
-                         fmt::format("{}", fmt::join(value.get_args(), " ")));
+                         columns(value.variable_order()),
+                         columns(value.output_order()),
+                         fmt::format("{}", fmt::join(value.args(), " ")));
         else if constexpr (std::same_as<Tag, dl::QueryEmptyTag>)
-            return write(dl::QueryEmptyTag::keyword, columns(value.get_columns()));
+            return write(dl::QueryEmptyTag::keyword, columns(value.columns()));
         else if constexpr (std::same_as<Tag, dl::QueryBooleanTag>)
-            return write(dl::QueryBooleanTag::keyword, value.get_operand());
+            return write(dl::QueryBooleanTag::keyword, value.operand());
         else if constexpr (std::same_as<Tag, dl::QueryNumericalTag>)
-            return write(dl::QueryNumericalTag::keyword, *value.get_columns().begin(), value.get_operand());
+            return write(dl::QueryNumericalTag::keyword, *value.columns().begin(), value.operand());
         else if constexpr (std::same_as<Tag, dl::QueryHeadTag>)
-            return write(dl::QueryHeadTag::keyword, value.get_relation().get_name(), columns(value.get_columns()));
+            return write(dl::QueryHeadTag::keyword, value.relation().name(), columns(value.columns()));
         else
             static_assert(false, "unhandled DL query constructor tag");
     }
@@ -95,32 +95,32 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<dl::QueryProjection
     const urd::index_view<dl::QueryProjection<Category>, dl::ConstructorRepository>& value,
     fmt::format_context& context) const
 {
-    auto columns = value.get_columns();
+    auto columns = value.columns();
     auto it = columns.begin();
     auto lhs = *it++;
     if constexpr (std::same_as<Category, dl::ConceptTag>)
-        return fmt::format_to(context.out(), "({} {} {})", dl::ConceptProjectSyntaxTag::keyword, lhs, value.get_operand());
+        return fmt::format_to(context.out(), "({} {} {})", dl::ConceptProjectSyntaxTag::keyword, lhs, value.operand());
     else
-        return fmt::format_to(context.out(), "({} {} {} {})", dl::RoleProjectSyntaxTag::keyword, lhs, *it, value.get_operand());
+        return fmt::format_to(context.out(), "({} {} {} {})", dl::RoleProjectSyntaxTag::keyword, lhs, *it, value.operand());
 }
 
 template<dl::CategoryTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<dl::Argument<Category>, dl::ConstructorRepository>>::format(
     const urd::index_view<dl::Argument<Category>, dl::ConstructorRepository>& value,
     fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value.get_name()); }
+{ return fmt::format_to(context.out(), "{}", value.name()); }
 
 template<dl::ConceptOrRoleTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<dl::Register<Category>, dl::ConstructorRepository>>::format(
     const urd::index_view<dl::Register<Category>, dl::ConstructorRepository>& value,
     fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value.get_name()); }
+{ return fmt::format_to(context.out(), "{}", value.name()); }
 
 template<dl::CategoryTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<dl::Constructor<Category>, dl::ConstructorRepository>>::format(
     const urd::index_view<dl::Constructor<Category>, dl::ConstructorRepository>& value,
     fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value.get_variant()); }
+{ return fmt::format_to(context.out(), "{}", value.variant()); }
 
 template<dl::CategoryTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<ds::Denotation<Category>, ds::DenotationRepository>>::format(
@@ -128,9 +128,9 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<ds::Denotation<Cate
     fmt::format_context& context) const
 {
     if constexpr (std::same_as<Category, dl::BooleanTag>)
-        return fmt::format_to(context.out(), "{}", value.get_value() ? dl::TrueTag::keyword : dl::FalseTag::keyword);
+        return fmt::format_to(context.out(), "{}", value.value() ? dl::TrueTag::keyword : dl::FalseTag::keyword);
     else if constexpr (std::same_as<Category, dl::NumericalTag>)
-        return fmt::format_to(context.out(), "{}", value.get_value());
+        return fmt::format_to(context.out(), "{}", value.value());
     else if constexpr (std::same_as<Category, dl::ConceptTag>)
         return fmt::format_to(context.out(), "{}{}", Category::keyword, value.value());
     else if constexpr (std::same_as<Category, dl::RoleTag>)

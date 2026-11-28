@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATORS_HPP_
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATORS_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/icp/detail/rule_evaluation/crule.hpp"
 #include "runir/kr/ps/icp/detail/rule_evaluation/load.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
@@ -8,8 +9,8 @@
 #include <algorithm>
 #include <functional>
 #include <span>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <variant>
@@ -40,7 +41,7 @@ class RuleEvaluators
     urd::Store<urd::sequence<CruleEvaluator>> m_matching;
 
     template<EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
-    bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
+    bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::SharedStateBuilderView<Kind>, EvaluationPolicy>& context,
                      Action action,
                      std::span<const CruleEvaluator> rules,
                      ProgramStateView<Kind> source,
@@ -50,6 +51,8 @@ class RuleEvaluators
         auto& search = *get_task_context()->search_context;
         auto& environment = m_workspace.get_environment();
         auto source_context = context.make_dl_context(source);
+        // Tyr reads a source from a node: one for every binding of this state.
+        const auto source_node = runir::datasets::node_of<Kind>(context.planning_state);
         const auto visit = [&](tyr::planning::ActionBindingView<Kind> binding)
         {
             if (stop())
@@ -60,11 +63,10 @@ class RuleEvaluators
                     m_matching.push_back(evaluator);
             if (m_matching.empty())
                 return true;
-            const auto node = search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(context.planning_state, 0),
-                                                                             binding,
-                                                                             *search.state_repository,
-                                                                             *search.axiom_evaluator);
-            const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::ActionBindingView<Kind>> { binding, node };
+            const auto node = runir::datasets::registered_successor_node<Kind>(search, source_node, binding);
+            const auto candidate =
+                runir::datasets::LabeledPlanningNode<Kind, tyr::planning::SharedStateBuilderView<Kind>, tyr::planning::ActionBindingView<Kind>> { binding,
+                                                                                                                                                  node };
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, candidate);
             auto histories = std::optional<HistoriesView> {};
@@ -84,26 +86,26 @@ class RuleEvaluators
                 if (stop())
                     return false;
                 if (!label)
-                    label = search.successor_generator->materialize_action_binding(binding);
-                const auto labeled = tyr::planning::LabeledNode<Kind> { *label, candidate.node };
+                    label = runir::datasets::interned_binding(search, binding);
+                const auto labeled = runir::datasets::LabeledPlanningNode<Kind> { *label, candidate.node() };
                 if (!emit(evaluator.apply(m_workspace, source, labeled, *histories)))
                     return false;
             }
             return true;
         };
-        return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind>(context.planning_state, 0),
-                                                                                       action,
-                                                                                       std::ref(visit));
+        auto filter = tyr::planning::ActionBindingFilter<Kind> {};
+        filter.action = action;
+        return search.successor_generator->for_each_applicable_action_binding(source_node, filter, std::ref(visit));
     }
 
 public:
     RuleEvaluators(TaskContextPtr<Kind> task, ProgramView program) : m_workspace(std::move(task), program)
     {
-        for (const auto transition : program.get_entry_mod().get_memory_transitions())
+        for (const auto transition : program.entry_mod().memory_transitions())
             for (const auto variant : transition)
                 m_evaluators.push_back(std::visit([&]<RuleKind Tag>(RuleView<Tag> rule) -> Evaluator
                                                   { return RuleEvaluator<Kind, Tag>(*get_task_context(), rule, variant); },
-                                                  variant.get_variant()));
+                                                  variant.variant()));
         m_matching.reserve(m_evaluators.size());
         m_enabled.reserve(m_evaluators.size());
     }
@@ -112,7 +114,7 @@ public:
 
     [[nodiscard]] auto get_program() const noexcept { return m_workspace.get_program(); }
 
-    auto initial_state(tyr::planning::StateView<Kind> state) { return m_workspace.initial_state(state); }
+    auto initial_state(tyr::planning::StateBuilderView<Kind> state) { return m_workspace.initial_state(state); }
 
     /// Callbacks borrow shared scratch and must not reenter the evaluators or planning generator.
     template<EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
@@ -123,8 +125,9 @@ public:
         auto& environment = m_workspace.get_environment();
         environment.reset_source();
         auto source_context = environment.make_dl_context(state);
-        auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { &m_workspace,
-                                                                                                                                          state.get_state() };
+        auto context =
+            runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::SharedStateBuilderView<Kind>, EvaluationPolicy> { &m_workspace,
+                                                                                                                                            state.state() };
         bool emitted = false;
         const auto output = [&](ProgramStep<IcpFamilyTag, Kind>&& step)
         {
@@ -132,13 +135,13 @@ public:
             return emit(std::move(step));
         };
         std::size_t num_enabled = 0;
-        const auto memory = state.get_memory_state();
+        const auto memory = state.memory_state();
         for (const auto& rule : m_evaluators)
         {
             const auto exhausted = std::visit(
                 [&]<typename Concrete>(const Concrete& evaluator)
                 {
-                    if (evaluator.get_rule().get_source() != memory)
+                    if (evaluator.get_rule().source() != memory)
                         return true;
                     if (stop())
                         return false;

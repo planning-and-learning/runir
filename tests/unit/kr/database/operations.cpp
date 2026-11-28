@@ -173,9 +173,9 @@ std::set<urd::Store<urd::sequence<ygg::uint_t>>> reference_join(const Relation& 
             extra.push_back(right);
     }
     std::set<urd::Store<urd::sequence<ygg::uint_t>>> result;
-    for (size_t left = 0; left < left_relation.get_rows().size(); ++left)
+    for (size_t left = 0; left < left_relation.rows().size(); ++left)
     {
-        for (size_t right = 0; right < right_relation.get_rows().size(); ++right)
+        for (size_t right = 0; right < right_relation.rows().size(); ++right)
         {
             bool matches = true;
             for (const auto& [l, r] : keys)
@@ -307,7 +307,7 @@ TEST(YggdrasilTests, DatabaseBuilderViewsShareSchemasAndObserveRefills)
     EXPECT_EQ(copy.columns()[0].label, ColumnIndex(3));
     EXPECT_EQ(record_of(view.row(0)), first_row);
     relation.clear();
-    EXPECT_TRUE(view.get_rows().empty());
+    EXPECT_TRUE(view.rows().empty());
     relation.insert(cells(9, 10));
     EXPECT_TRUE(copy.contains(cells(9, 10)));
     expect_relation(projected(view, { ColumnIndex(4), ColumnIndex(3) }), { ColumnIndex(4), ColumnIndex(3) }, { { 10, 9 } });
@@ -644,7 +644,7 @@ TEST(YggdrasilTests, DatabaseNullaryRelationsObeyBooleanLaws)
     objects.clear();
     kr::database::project(borrow(objects), nothing, output, workspace);
     expect_relation(output, {}, {});
-    expect_relation(selected(borrow(true_), [](const auto& row) { return row.get_values().size() == 0; }), {}, { {} });
+    expect_relation(selected(borrow(true_), [](const auto& row) { return row.values().size() == 0; }), {}, { {} });
     expect_relation(selected(borrow(true_), [](const auto&) { return false; }), {}, {});
 }
 

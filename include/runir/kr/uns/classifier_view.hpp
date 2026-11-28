@@ -27,9 +27,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
+    auto feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
 
-    auto get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
+    auto polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 };
 
 template<typename V>
@@ -39,7 +39,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_literals() const noexcept { return self().template member<&urd::record_of<V>::literals>(); }
+    auto literals() const noexcept { return self().template member<&urd::record_of<V>::literals>(); }
 };
 
 template<typename V>
@@ -49,11 +49,11 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    const auto& get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
+    const auto& symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
 
-    auto get_features() const noexcept { return self().template member<&urd::record_of<V>::features>(); }
+    auto features() const noexcept { return self().template member<&urd::record_of<V>::features>(); }
 
-    auto get_clauses() const noexcept { return self().template member<&urd::record_of<V>::clauses>(); }
+    auto clauses() const noexcept { return self().template member<&urd::record_of<V>::clauses>(); }
 
     static constexpr auto functions() noexcept
     { return urd::Functions<urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::uns::syntactic_complexity)>> {}; }

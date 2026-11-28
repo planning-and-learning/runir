@@ -12,7 +12,7 @@ from relation_utils import insert, intern, labels, tuples, values
 
 from pyrunir.kr import database
 
-Readable = database.ScratchRelation | formalism.RelationSchemaBuilderBorrowed | formalism.RelationSchema
+Readable = database.ScratchRelation | formalism.RelationSchemaBuilderView | formalism.RelationSchema
 # Reads the tests' relation builders and evaluator results.
 RELATIONS = formalism.RelationRepository()
 SCRATCH = database.ScratchRelations()
@@ -41,30 +41,30 @@ def relation(
     return result
 
 
-def rows(value: formalism.RelationSchemaBuilderBorrowed | formalism.RelationSchema) -> set[tuple[object, ...]]:
+def rows(value: formalism.RelationSchemaBuilderView | formalism.RelationSchema) -> set[tuple[object, ...]]:
     return set(tuples(value))
 
 
 def borrow(
     source: database.ScratchRelation, edges: database.ScratchRelation, target: database.ScratchRelation
 ) -> tuple[
-    formalism.RelationSchemaBuilderBorrowed,
-    formalism.RelationSchemaBuilderBorrowed,
-    formalism.RelationSchemaBuilderBorrowed,
+    formalism.RelationSchemaBuilderView,
+    formalism.RelationSchemaBuilderView,
+    formalism.RelationSchemaBuilderView,
 ]:
     return source.view(), edges.view(), target.view()
 
 
 def change(
     added: database.ScratchRelation, removed: database.ScratchRelation
-) -> tuple[formalism.RelationSchemaBuilderBorrowed, formalism.RelationSchemaBuilderBorrowed]:
+) -> tuple[formalism.RelationSchemaBuilderView, formalism.RelationSchemaBuilderView]:
     return added.view(), removed.view()
 
 
 def distance(
-    source: formalism.RelationSchemaBuilderBorrowed,
-    edges: formalism.RelationSchemaBuilderBorrowed,
-    target: formalism.RelationSchemaBuilderBorrowed,
+    source: formalism.RelationSchemaBuilderView,
+    edges: formalism.RelationSchemaBuilderView,
+    target: formalism.RelationSchemaBuilderView,
     plan: database.DistancePlanData,
 ) -> database.ScratchRelation:
     """The distances of borrowed inputs into a fresh relation of the plan's output columns."""
@@ -158,8 +158,8 @@ def test_incremental_distance_exact_deltas(intern_added: bool) -> None:
     )
     expected = {(0, 0, 0), (0, 2, 2), (0, 3, 1), (2, 2, 0), (2, 3, 1)}
     assert rows(evaluator.get_result()) == expected
-    assert not evaluator.get_delta().added.get_rows()
-    assert not evaluator.get_delta().removed.get_rows()
+    assert not evaluator.get_delta().added.rows()
+    assert not evaluator.get_delta().removed.rows()
     assert evaluator.memory_usage() > 0
 
     unchanged: tuple[Rows, Rows] = ((), ())
@@ -196,8 +196,8 @@ def test_incremental_distance_exact_deltas(intern_added: bool) -> None:
     assert rows(evaluator.get_delta().removed) == before - expected
     update()
     assert rows(evaluator.get_result()) == expected
-    assert not evaluator.get_delta().added.get_rows()
-    assert not evaluator.get_delta().removed.get_rows()
+    assert not evaluator.get_delta().added.rows()
+    assert not evaluator.get_delta().removed.rows()
 
 
 @pytest.mark.parametrize(
@@ -229,17 +229,14 @@ def test_evaluator_borrowed_results_are_read_only_and_retain_owners(leaf: str) -
     )
     result = evaluator.get_result()
     delta = evaluator.get_delta()
-    assert isinstance(result, formalism.RelationSchemaBuilderBorrowed)
+    assert isinstance(result, formalism.RelationSchemaBuilderView)
     assert isinstance(delta, database.RelationDelta)
 
-    def check_read_only(value: formalism.RelationSchemaBuilderBorrowed) -> None:
-        assert not hasattr(value, "insert")
-        assert not hasattr(value, "clear")
-        assert not hasattr(value, "erase")
+    def check_read_only(value: formalism.RelationSchemaBuilderView) -> None:
         assert value.arity() == 3
         assert labels(value.columns()) == columns(20, 21, 99)
         with pytest.raises(IndexError):
-            value.row(len(value.get_rows()))
+            value.row(len(value.rows()))
 
     for value in (result, delta.added, delta.removed):
         check_read_only(value)
@@ -247,7 +244,7 @@ def test_evaluator_borrowed_results_are_read_only_and_retain_owners(leaf: str) -
     with pytest.raises(AttributeError):
         cast("Any", delta).added = source
     with pytest.raises(TypeError):
-        cast("Any", formalism.RelationSchemaBuilderBorrowed)()
+        cast("Any", formalism.RelationSchemaBuilderView)()
     with pytest.raises(TypeError):
         database.RelationDelta()
     retained: Any  # each leaf is a different borrowed type
@@ -259,7 +256,7 @@ def test_evaluator_borrowed_results_are_read_only_and_retain_owners(leaf: str) -
         case "delta":
             retained = delta
         case "result_row":
-            retained = result.row(len(result.get_rows()) - 1)
+            retained = result.row(len(result.rows()) - 1)
         case "added_row":
             retained = delta.added.row(0)
         case "removed_row":
@@ -271,7 +268,7 @@ def test_evaluator_borrowed_results_are_read_only_and_retain_owners(leaf: str) -
         case "removed_columns":
             retained = delta.removed.columns()
         case "rows":
-            retained = result.get_rows()
+            retained = result.rows()
         case _:
             raise AssertionError(leaf)
     del evaluator, delta, result, plan, source, edges, target

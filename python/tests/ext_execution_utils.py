@@ -6,6 +6,7 @@
 from collections.abc import Callable
 from typing import TypeAlias
 
+from planning_utils import planning_module
 from pytyr.planning import ground, lifted
 
 from pyrunir.datasets import GroundTaskSearchContext
@@ -19,16 +20,16 @@ ProgramState: TypeAlias = ext.ProgramStateGround | ext.ProgramStateLifted
 EvaluationEnvironment: TypeAlias = ext.GroundEvaluationEnvironment | ext.LiftedEvaluationEnvironment
 ExecutionStep: TypeAlias = ext.GroundProgramExecutionStep | ext.LiftedProgramExecutionStep
 Outcome: TypeAlias = ExecutionStep | ext.ConceptChoice | ext.RoleChoice
-PlanningState: TypeAlias = ground.StateBuilderShared | lifted.StateBuilderShared
+PlanningState: TypeAlias = ground.StateBuilderView | lifted.StateBuilderView
 DlContext: TypeAlias = semantics.GroundStateEvaluationContext | semantics.LiftedStateEvaluationContext
 
 
-def initial_node(task_context: TaskContext) -> ground.Node | lifted.Node:
+def initial_node(task_context: TaskContext) -> ground.OwnedNodeBuilderView | lifted.OwnedNodeBuilderView:
     """Return the planning search node of the task's initial state."""
     search = task_context.search_context
     if isinstance(search, GroundTaskSearchContext):
-        return search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
-    return search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
+        return planning_module(search).get_initial_node(search.state_repository, search.axiom_evaluator)
+    return planning_module(search).get_initial_node(search.state_repository, search.axiom_evaluator)
 
 
 def make_expander(task_context: TaskContext, program: ext.Program) -> Expander:
@@ -48,9 +49,9 @@ def make_environment(task_context: TaskContext, program: ext.Program) -> Evaluat
 def initial_program_state(expander: Expander, state: PlanningState) -> ProgramState:
     """Return the program state that starts `expander`'s program in the planning `state` of the same kind."""
     if isinstance(expander, ext.GroundSuccessorExpander):
-        assert isinstance(state, ground.StateBuilderShared)
+        assert isinstance(state, ground.StateBuilderView)
         return expander.initial_state(state)
-    assert isinstance(state, lifted.StateBuilderShared)
+    assert isinstance(state, lifted.StateBuilderView)
     return expander.initial_state(state)
 
 

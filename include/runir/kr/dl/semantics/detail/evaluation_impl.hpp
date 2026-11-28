@@ -42,28 +42,28 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
     }
     else if constexpr (std::same_as<Tag, IntersectionTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
         result_bitset.copy_from(lhs.value());
         result_bitset &= rhs.value();
     }
     else if constexpr (std::same_as<Tag, UnionTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
         result_bitset.copy_from(lhs.value());
         result_bitset |= rhs.value();
     }
     else if constexpr (std::same_as<Tag, NegationTag>)
     {
-        const auto arg = evaluate<Kind>(constructor.get_operand(), children);
+        const auto arg = evaluate<Kind>(constructor.operand(), children);
         result_bitset.copy_from(arg.value());
         result_bitset.flip();
     }
     else if constexpr (std::same_as<Tag, ValueRestrictionTag>)
     {
-        const auto role = evaluate<Kind>(constructor.get_role(), children);
-        const auto concept_denotation = evaluate<Kind>(constructor.get_qualifier(), children);
+        const auto role = evaluate<Kind>(constructor.role(), children);
+        const auto concept_denotation = evaluate<Kind>(constructor.qualifier(), children);
         const auto concept_bitset = concept_denotation.value();
 
         result_bitset.set();
@@ -75,8 +75,8 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
     }
     else if constexpr (std::same_as<Tag, ExistentialQuantificationTag>)
     {
-        const auto role = evaluate<Kind>(constructor.get_role(), children);
-        const auto concept_denotation = evaluate<Kind>(constructor.get_qualifier(), children);
+        const auto role = evaluate<Kind>(constructor.role(), children);
+        const auto concept_denotation = evaluate<Kind>(constructor.qualifier(), children);
         const auto concept_bitset = concept_denotation.value();
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -88,23 +88,23 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
     else if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag> || std::same_as<Tag, AtMostNumberRestrictionTag>
                        || std::same_as<Tag, ExactNumberRestrictionTag>)
     {
-        const auto role = evaluate<Kind>(constructor.get_role(), children);
+        const auto role = evaluate<Kind>(constructor.role(), children);
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             const auto count = static_cast<ygg::uint_t>(role.value(urd::index<tyr::formalism::Object>(object)).count());
             if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag>)
             {
-                if (count >= constructor.get_n())
+                if (count >= constructor.n())
                     result_bitset.set(object);
             }
             else if constexpr (std::same_as<Tag, AtMostNumberRestrictionTag>)
             {
-                if (count <= constructor.get_n())
+                if (count <= constructor.n())
                     result_bitset.set(object);
             }
             else if constexpr (std::same_as<Tag, ExactNumberRestrictionTag>)
             {
-                if (count == constructor.get_n())
+                if (count == constructor.n())
                     result_bitset.set(object);
             }
         }
@@ -112,8 +112,8 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
     else if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>
                        || std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
     {
-        const auto role = evaluate<Kind>(constructor.get_role(), children);
-        const auto concept_denotation = evaluate<Kind>(constructor.get_qualifier(), children);
+        const auto role = evaluate<Kind>(constructor.role(), children);
+        const auto concept_denotation = evaluate<Kind>(constructor.qualifier(), children);
         const auto concept_bitset = concept_denotation.value();
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -121,25 +121,25 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
             const auto count = role.value(urd::index<tyr::formalism::Object>(object)).count_intersection(concept_bitset);
             if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag>)
             {
-                if (count >= constructor.get_n())
+                if (count >= constructor.n())
                     result_bitset.set(object);
             }
             else if constexpr (std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>)
             {
-                if (count <= constructor.get_n())
+                if (count <= constructor.n())
                     result_bitset.set(object);
             }
             else if constexpr (std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
             {
-                if (count == constructor.get_n())
+                if (count == constructor.n())
                     result_bitset.set(object);
             }
         }
     }
     else if constexpr (std::same_as<Tag, RoleValueMapTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
 
         result_bitset.set();
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -150,8 +150,8 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
     }
     else if constexpr (std::same_as<Tag, AgreementTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
 
         result_bitset.set();
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -162,18 +162,18 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
     }
     else if constexpr (std::same_as<Tag, NominalTag>)
     {
-        const auto object = constructor.get_object().index();
+        const auto object = constructor.object().index();
         assert(ygg::uint_t(object.value) < num_objects);
         result_bitset.set(ygg::uint_t(object.value));
     }
     else if constexpr (std::same_as<Tag, RoleFillersTag>)
     {
-        const auto role = evaluate<Kind>(constructor.get_role(), children);
+        const auto role = evaluate<Kind>(constructor.role(), children);
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             auto row = role.value(urd::index<tyr::formalism::Object>(object));
             auto contains_all_fillers = true;
-            for (auto filler : constructor.get_objects())
+            for (auto filler : constructor.objects())
             {
                 if (!row.test(ygg::uint_t(filler.index().value)))
                 {
@@ -187,7 +187,7 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
     }
     else if constexpr (std::same_as<Tag, OneOfTag>)
     {
-        for (auto object : constructor.get_objects())
+        for (auto object : constructor.objects())
             result_bitset.set(ygg::uint_t(object.index().value));
     }
     else
@@ -222,25 +222,25 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
     }
     else if constexpr (std::same_as<Tag, IntersectionTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
 
         auto bits = result->storage_bits();
-        bits.copy_from(lhs.get_values().bits().storage_bits());
-        bits &= rhs.get_values().bits().storage_bits();
+        bits.copy_from(lhs.values().bits().storage_bits());
+        bits &= rhs.values().bits().storage_bits();
     }
     else if constexpr (std::same_as<Tag, UnionTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
 
         auto bits = result->storage_bits();
-        bits.copy_from(lhs.get_values().bits().storage_bits());
-        bits |= rhs.get_values().bits().storage_bits();
+        bits.copy_from(lhs.values().bits().storage_bits());
+        bits |= rhs.values().bits().storage_bits();
     }
     else if constexpr (std::same_as<Tag, ComplementTag>)
     {
-        const auto arg = evaluate<Kind>(constructor.get_operand(), children);
+        const auto arg = evaluate<Kind>(constructor.operand(), children);
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
@@ -251,7 +251,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
     }
     else if constexpr (std::same_as<Tag, InverseTag>)
     {
-        const auto arg = evaluate<Kind>(constructor.get_operand(), children);
+        const auto arg = evaluate<Kind>(constructor.operand(), children);
 
         for (ygg::uint_t lhs = 0; lhs < num_objects; ++lhs)
         {
@@ -262,8 +262,8 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
     }
     else if constexpr (std::same_as<Tag, CompositionTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
 
         for (ygg::uint_t source = 0; source < num_objects; ++source)
         {
@@ -276,7 +276,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
     }
     else if constexpr (std::same_as<Tag, TransitiveClosureTag> || std::same_as<Tag, ReflexiveTransitiveClosureTag>)
     {
-        const auto arg = evaluate<Kind>(constructor.get_operand(), children);
+        const auto arg = evaluate<Kind>(constructor.operand(), children);
 
         assign(*result, arg, context.get_builder().records());
 
@@ -296,8 +296,8 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
     }
     else if constexpr (std::same_as<Tag, RestrictionTag>)
     {
-        const auto role = evaluate<Kind>(constructor.get_role(), children);
-        const auto concept_denotation = evaluate<Kind>(constructor.get_qualifier(), children);
+        const auto role = evaluate<Kind>(constructor.role(), children);
+        const auto concept_denotation = evaluate<Kind>(constructor.qualifier(), children);
         const auto concept_bitset = concept_denotation.value();
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -309,7 +309,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
     }
     else if constexpr (std::same_as<Tag, IdentityTag>)
     {
-        const auto concept_denotation = evaluate<Kind>(constructor.get_operand(), children);
+        const auto concept_denotation = evaluate<Kind>(constructor.operand(), children);
         const auto bitset = concept_denotation.value();
 
         for (const auto object : urd::set_bit_indices(bitset))
@@ -340,30 +340,30 @@ auto evaluate_impl(urd::index_view<Boolean<SemanticFamily, Tag>, C> constructor,
     }
     else if constexpr (std::same_as<Tag, NonemptyTag>)
     {
-        result_value = std::visit([&](auto arg) { return detail::nonempty(evaluate<Kind>(arg, children)); }, constructor.get_operand());
+        result_value = std::visit([&](auto arg) { return detail::nonempty(evaluate<Kind>(arg, children)); }, constructor.operand());
     }
     else if constexpr (ComparisonTag<Tag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
-        const auto lhs_value = static_cast<ygg::uint_t>(lhs.get_value());
-        const auto rhs_value = static_cast<ygg::uint_t>(rhs.get_value());
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
+        const auto lhs_value = static_cast<ygg::uint_t>(lhs.value());
+        const auto rhs_value = static_cast<ygg::uint_t>(rhs.value());
         result_value = detail::apply_comparison<Tag>(lhs_value, rhs_value);
     }
     else if constexpr (std::same_as<Tag, BooleanConstantTag>)
     {
-        result_value = constructor.get_value();
+        result_value = constructor.value();
     }
     else if constexpr (LogicalBinaryTag<Tag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
-        result_value = detail::apply_logical_binary<Tag>(lhs.get_value(), rhs.get_value());
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
+        result_value = detail::apply_logical_binary<Tag>(lhs.value(), rhs.value());
     }
     else if constexpr (std::same_as<Tag, NotTag>)
     {
-        const auto arg = evaluate<Kind>(constructor.get_operand(), children);
-        result_value = !arg.get_value();
+        const auto arg = evaluate<Kind>(constructor.operand(), children);
+        result_value = !arg.value();
     }
     else
     {
@@ -384,7 +384,7 @@ auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, Tag>, C> constructo
 
     if constexpr (std::same_as<Tag, CountTag>)
     {
-        result_value = std::visit([&](auto arg) { return detail::count(evaluate<Kind>(arg, children)); }, constructor.get_operand());
+        result_value = std::visit([&](auto arg) { return detail::count(evaluate<Kind>(arg, children)); }, constructor.operand());
     }
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
@@ -392,17 +392,17 @@ auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, Tag>, C> constructo
     }
     else if constexpr (std::same_as<Tag, ValueTag>)
     {
-        result_value = detail::least_value(evaluate<Kind>(constructor.get_operand(), children));
+        result_value = detail::least_value(evaluate<Kind>(constructor.operand(), children));
     }
     else if constexpr (std::same_as<Tag, NumericalConstantTag>)
     {
-        result_value = constructor.get_value();
+        result_value = constructor.value();
     }
     else if constexpr (NumericalBinaryTag<Tag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
-        result_value = detail::apply_numerical_binary<Tag>(lhs.get_value(), rhs.get_value());
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
+        result_value = detail::apply_numerical_binary<Tag>(lhs.value(), rhs.value());
     }
     else
     {
@@ -416,13 +416,13 @@ auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, Tag>, C> constructo
 template<tyr::TaskKind Kind, CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
 auto evaluate_impl(ConstructorView<Category> constructor, Context& context) -> DenotationView<Category>
 {
-    return std::visit([&](auto child) { return evaluate_impl<Kind>(child, context); }, constructor.get_variant());
+    return std::visit([&](auto child) { return evaluate_impl<Kind>(child, context); }, constructor.variant());
 }
 
 template<tyr::TaskKind Kind, CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
 auto evaluate(ConstructorView<Category> constructor, Context& context) -> DenotationView<Category>
 {
-    const auto is_static = constructor.get_is_static();
+    const auto is_static = constructor.is_static();
     auto& caches = context.get_caches();
     if (const auto cached = caches.find(is_static, constructor))
         return *cached;
@@ -436,19 +436,19 @@ auto evaluate_impl(urd::index_view<Query<QueryRenameTag>, C> constructor, Contex
 {
     // Keep rows in their owning output partition, even when a low-level query
     // wrapper conservatively marks a static child as dynamic.
-    const auto child = evaluate<Kind>(constructor.get_operand(), context);
+    const auto child = evaluate<Kind>(constructor.operand(), context);
     auto static_output = context.for_result(true);
     auto dynamic_output = context.for_result(false);
     auto& static_denotations = static_output.get_denotation_repository();
     auto& denotations = &child.context() == &static_denotations.get_relation_repository() ? static_denotations : dynamic_output.get_denotation_repository();
-    return rename(denotations, child, constructor.get_schema(), context.get_builder());
+    return rename(denotations, child, constructor.schema(), context.get_builder());
 }
 
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
 auto evaluate_impl(urd::index_view<Query<Tag>, C> constructor, Context& context) -> QueryDenotationView
 {
-    auto result = context.get_workspace().get_scratch().draw(constructor.get_schema());
+    auto result = context.get_workspace().get_scratch().draw(constructor.schema());
     detail::evaluate_query<Kind>(constructor, context, *result);
     auto& relations = context.get_denotation_repository().get_relation_repository();
     return relations.view(urd::copy(result->view(), relations, context.get_builder().relations()));
@@ -458,20 +458,20 @@ template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typena
 auto evaluate(urd::index_view<Query<>, C> constructor, Context& context) -> QueryDenotationView
 {
     auto& caches = context.get_caches();
-    if (const auto cached = caches.find_query(constructor.get_is_static(), constructor))
+    if (const auto cached = caches.find_query(constructor.is_static(), constructor))
         return *cached;
 
-    auto output = context.for_result(constructor.get_is_static());
-    const auto result = std::visit([&](auto child) { return evaluate_impl<Kind>(child, output); }, constructor.get_variant());
-    return caches.insert_query(constructor.get_is_static(), constructor, result);
+    auto output = context.for_result(constructor.is_static());
+    const auto result = std::visit([&](auto child) { return evaluate_impl<Kind>(child, output); }, constructor.variant());
+    return caches.insert_query(constructor.is_static(), constructor, result);
 }
 
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Context& context) -> DenotationView<Category>
 {
-    const auto columns = constructor.get_columns();
+    const auto columns = constructor.columns();
     auto children = context.child_context();
-    const auto relation = evaluate<Kind>(constructor.get_operand(), children);
+    const auto relation = evaluate<Kind>(constructor.operand(), children);
     const auto schema = relation.columns();
     const auto position = [&](size_t i)
     {
@@ -483,7 +483,7 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
     {
         auto bits = result->get();
         const auto object = position(0);
-        for (const auto row : relation.get_rows())
+        for (const auto row : relation.rows())
             bits.set(ygg::decode_value<ygg::uint_t>(row.value(object)));
     }
     else
@@ -491,7 +491,7 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
         static_assert(std::same_as<Category, RoleTag>);
         const auto source = position(0);
         const auto target = position(1);
-        for (const auto row : relation.get_rows())
+        for (const auto row : relation.rows())
             result->get(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(row.value(source))))
                 .set(ygg::decode_value<ygg::uint_t>(row.value(target)));
     }
@@ -504,7 +504,7 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, RegisterTag>, C> cons
     auto result = detail::make_concept_builder<Kind>(context);
     auto result_bitset = result->get();
 
-    const auto object = register_value(context, constructor.get_slot().get_identifier());
+    const auto object = register_value(context, constructor.slot().identifier());
     if (object)
         result_bitset.set(ygg::uint_t(object.value().index().value));
 
@@ -516,7 +516,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, RegisterTag>, C> constru
 {
     auto result = detail::make_role_builder<Kind>(context);
 
-    const auto value = register_value(context, constructor.get_slot().get_identifier());
+    const auto value = register_value(context, constructor.slot().identifier());
     if (value)
     {
         const auto pair = value.value();
@@ -528,19 +528,19 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, RegisterTag>, C> constru
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<Concept<SemanticFamily, ArgumentTag<ConceptTag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
-{ return argument_value(context, constructor.get_argument().get_identifier()); }
+{ return argument_value(context, constructor.argument().identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<Role<SemanticFamily, ArgumentTag<RoleTag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
-{ return argument_value(context, constructor.get_argument().get_identifier()); }
+{ return argument_value(context, constructor.argument().identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<Boolean<SemanticFamily, ArgumentTag<BooleanTag>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
-{ return argument_value(context, constructor.get_argument().get_identifier()); }
+{ return argument_value(context, constructor.argument().identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, ArgumentTag<NumericalTag>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
-{ return argument_value(context, constructor.get_argument().get_identifier()); }
+{ return argument_value(context, constructor.argument().identifier()); }
 
 }  // namespace runir::kr::dl::semantics
 

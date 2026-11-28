@@ -30,8 +30,8 @@ class EvaluationEnvironment
         auto result = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
         const auto append = [&]<typename FeatureTag>()
         {
-            for (const auto feature : program.get_entry_mod().template get_features<FeatureTag>())
-                result.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
+            for (const auto feature : program.entry_mod().template features<FeatureTag>())
+                result.emplace_back(std::visit([](auto concrete) { return concrete.feature(); }, feature.variant()));
         };
         append.template operator()<runir::kr::dl::ConceptTag>();
         append.template operator()<runir::kr::dl::RoleTag>();
@@ -81,16 +81,16 @@ public:
     /// Contexts borrow stored data; callers clear dynamic caches before evaluating a new configuration.
     auto make_dl_context(ProgramStateView<Kind> state)
     {
-        if (&state.context() != m_task->icp_execution_repository.get() || state.get_program() != m_program)
+        if (&state.context() != m_task->icp_execution_repository.get() || state.program() != m_program)
             throw std::invalid_argument("ICP evaluation requires a state from the selected task and program.");
-        return make_dl_context(state.get_state(), state.get_registers());
+        return make_dl_context(state.state(), state.registers());
     }
 
-    auto make_dl_context(tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::RegisterValuesView registers)
+    auto make_dl_context(tyr::planning::SharedStateBuilderView<Kind> state, runir::kr::dl::semantics::RegisterValuesView registers)
     { return m_policy.make_source_context(StateContext(state, m_task->dl_builder, m_source_storage, m_arguments, registers)); }
 
-    auto make_dl_transition_context(tyr::planning::StateView<Kind> source,
-                                    tyr::planning::StateView<Kind> target,
+    auto make_dl_transition_context(tyr::planning::SharedStateBuilderView<Kind> source,
+                                    tyr::planning::SharedStateBuilderView<Kind> target,
                                     runir::kr::dl::semantics::RegisterValuesView source_registers,
                                     runir::kr::dl::semantics::RegisterValuesView target_registers)
     {

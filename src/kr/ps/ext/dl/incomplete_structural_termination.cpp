@@ -18,7 +18,7 @@ runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag
 ProgramIncompleteStructuralTerminationResult incomplete_structural_termination(ProgramView program, bool use_memory_scc_scope)
 {
     auto result = ProgramIncompleteStructuralTerminationResult {};
-    for (auto module_ : program.get_modules())
+    for (auto module_ : program.modules())
     {
         auto module_result = incomplete_structural_termination(module_, use_memory_scc_scope);
         if (!module_result.is_terminating())

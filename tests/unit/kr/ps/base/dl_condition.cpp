@@ -26,7 +26,7 @@ concept ConditionContract = IndexedDataView<Entity> && requires(urd::data<Entity
     data.index;
     data.feature;
     view.index();
-    view.get_feature();
+    view.feature();
 };
 
 template<typename Feature, typename Observation>

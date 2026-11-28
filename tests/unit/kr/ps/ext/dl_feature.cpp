@@ -33,8 +33,8 @@ concept ConcreteFeatureContract =
            requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>, urd::index<Expression>>;
            requires std::same_as<std::remove_cvref_t<std::tuple_element_t<1, urd::detail::identity_t<urd::data<Entity>>>>, urd::flat_string>;
            view.index();
-           view.get_feature();
-           view.get_symbol();
+           view.feature();
+           view.symbol();
        };
 
 template<typename Feature>

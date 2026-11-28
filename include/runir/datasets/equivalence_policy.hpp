@@ -22,7 +22,7 @@
 
 #include <concepts>
 #include <tuple>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
 
@@ -56,9 +56,10 @@ template<tyr::TaskKind Kind>
 struct StateGraphVertexCandidate : urd::compared_by_identity<StateGraphVertexCandidate<Kind>>
 {
     ygg::uint_t state_graph_index = 0;
-    tyr::planning::StateView<Kind> state;
+    /// Borrowed from the search that offers the candidate, for the call.
+    tyr::planning::StateBuilderView<Kind> state;
 
-    StateGraphVertexCandidate(ygg::uint_t state_graph_index_, tyr::planning::StateView<Kind> state_) noexcept :
+    StateGraphVertexCandidate(ygg::uint_t state_graph_index_, tyr::planning::StateBuilderView<Kind> state_) noexcept :
         state_graph_index(state_graph_index_),
         state(std::move(state_))
     {

@@ -12,7 +12,7 @@
 #include <runir/kr/ps/base/rule_data.hpp>
 #include <runir/kr/ps/base/rule_view.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/python/bindings.hpp>
 #include <urd/python/sequences/sequence.hpp>
 #include <urd/repr/sequences/sequence.hpp>

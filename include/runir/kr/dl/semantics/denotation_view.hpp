@@ -72,30 +72,36 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_value() const
-        requires runir::kr::dl::BooleanOrNumericalTag<Category>
-    { return self().template member<&urd::record_of<V>::value>(); }
-
-    auto get_num_objects() const
+    auto num_objects() const
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return self().template member<&urd::record_of<V>::num_objects>(); }
 
     /// What it denotes, its words read in place (a stored record's, or a builder's), iterated as the views of its
     /// objects (a concept's) or of its pairs of objects (a role's).
-    auto get_values() const
+    auto values() const
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return self().template member<&urd::record_of<V>::values>(); }
 
     // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
 
+    /// A boolean's or a numerical's value (its field), or a concept's objects as the bits of its row.
+    // One function, not an overload per category: functions() takes its address, which deduces the return type of every
+    // overload of the name (see indices()).
     auto value() const
-        requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
+        requires(runir::kr::dl::BooleanOrNumericalTag<Category> || std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        using Layout = runir::kr::dl::semantics::detail::ConceptLayout;
-        using Bitset = urd::bitset_span<const ygg::uint_t>;
+        if constexpr (runir::kr::dl::BooleanOrNumericalTag<Category>)
+        {
+            return self().template member<&urd::record_of<V>::value>();
+        }
+        else
+        {
+            using Layout = runir::kr::dl::semantics::detail::ConceptLayout;
+            using Bitset = urd::bitset_span<const ygg::uint_t>;
 
-        const auto bits = get_values().bits();
-        return Bitset(bits.words().data(), Layout::num_bits(bits.num_objects()));
+            const auto bits = values().bits();
+            return Bitset(bits.words().data(), Layout::num_bits(bits.num_objects()));
+        }
     }
 
     auto value(urd::index<::tyr::formalism::Object> object) const
@@ -104,7 +110,7 @@ public:
         using Layout = runir::kr::dl::semantics::detail::RoleLayout;
         using Bitset = urd::bitset_span<const ygg::uint_t>;
 
-        const auto bits = get_values().bits();
+        const auto bits = values().bits();
         assert(ygg::uint_t(object.value) < bits.num_objects());
         return Bitset(bits.words().data() + Layout::row_block_offset(object, bits.num_objects()), bits.num_objects());
     }
@@ -124,7 +130,7 @@ public:
     // overload, and AppleClang does not mangle requires-clauses, so a concept and a role overload would share a symbol.
     auto indices() const
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return get_values().bits().elements(); }
+    { return values().bits().elements(); }
 
     /// The targets of `source` (a role's row): only a role denotation has rows.
     [[nodiscard]] runir::kr::dl::semantics::detail::ObjectIndices indices(urd::index<tyr::formalism::Object> source) const

@@ -29,16 +29,16 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_entry_mod() const noexcept { return self().template member<&urd::record_of<V>::entry_mod>(); }
+    auto entry_mod() const noexcept { return self().template member<&urd::record_of<V>::entry_mod>(); }
 
-    auto get_modules() const noexcept { return self().template member<&urd::record_of<V>::modules>(); }
+    auto modules() const noexcept { return self().template member<&urd::record_of<V>::modules>(); }
 
     template<typename Symbol>
     auto find_module(Symbol symbol) const
     {
-        using Module = decltype(get_entry_mod());
-        for (auto module_ : get_modules())
-            if (module_.get_symbol() == symbol)
+        using Module = decltype(entry_mod());
+        for (auto module_ : modules())
+            if (module_.symbol() == symbol)
                 return std::optional<Module>(module_);
         return std::optional<Module>();
     }

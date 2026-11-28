@@ -34,15 +34,16 @@ struct data<runir::datasets::PredicateColor<T>>
     urd::key<runir::datasets::PredicateColor<T>> index;
     urd::index<::tyr::formalism::Predicate<T>> predicate;
     ygg::uint_t argument_position = 0;
-    runir::datasets::PredicateContext context {};
+    /// Where the predicate occurs (the state, the goal). Not named `context`: that is a view's repository.
+    runir::datasets::PredicateContext predicate_context {};
 
     data() = default;
 
-    data(urd::index<::tyr::formalism::Predicate<T>> predicate_, ygg::uint_t argument_position_, runir::datasets::PredicateContext context_) noexcept :
+    data(urd::index<::tyr::formalism::Predicate<T>> predicate_, ygg::uint_t argument_position_, runir::datasets::PredicateContext predicate_context_) noexcept :
         index(),
         predicate(predicate_),
         argument_position(argument_position_),
-        context(context_)
+        predicate_context(predicate_context_)
     {
     }
 
@@ -56,12 +57,13 @@ struct data<runir::datasets::PredicateColor<T>>
     {
         return urd::Fields<urd::field<"predicate", &data::predicate>,
                            urd::field<"argument_position", &data::argument_position>,
-                           urd::field<"context", &data::context>> {};
+                           urd::field<"predicate_context", &data::predicate_context>> {};
     }
 
-    static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::argument_position, &data::context> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::argument_position, &data::predicate_context> {}; }
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::argument_position, &data::context> {}; }
+    static constexpr auto cista_members() noexcept
+    { return urd::Members<&data::index, &data::predicate, &data::argument_position, &data::predicate_context> {}; }
 
     [[nodiscard]] urd::key<runir::datasets::PredicateColor<T>> key() const noexcept { return urd::key<runir::datasets::PredicateColor<T>>(index); }
 };

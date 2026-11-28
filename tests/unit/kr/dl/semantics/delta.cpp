@@ -9,13 +9,15 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <ranges>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
-#include <tyr/planning/lifted/task.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
+#include <tyr/planning/tasks/lifted/task.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -43,7 +45,7 @@ template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact, typename State>
 auto atoms(const State& state)
 {
     auto result = urd::Store<urd::sequence<tyr::formalism::AtomView<tyr::GroundTag, Fact>>> {};
-    for (const auto atom : state.template get_atoms<Fact>())
+    for (const auto atom : state.template atoms<Fact>())
         result.push_back(atom);
     std::ranges::sort(result);
     return result;
@@ -74,7 +76,7 @@ void expect_same_side(const Side& lhs, const Side& rhs)
 }
 
 template<tyr::TaskKind Kind>
-void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
+void check_state_delta(tyr::planning::SharedStateBuilderView<Kind> source, tyr::planning::SharedStateBuilderView<Kind> target)
 {
     auto delta = kr::dl::semantics::incremental::Delta {};
     auto source_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
@@ -113,8 +115,7 @@ void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::Sta
     delta.template assign<Kind>(target, source);
     expect_atoms(target, source);
     EXPECT_EQ(capacities(), reserved);
-    const auto other_repository =
-        std::make_shared<tyr::planning::StateRepository<Kind>>(std::make_shared<tyr::planning::Task<Kind>>(*source.context().get_task()));
+    const auto other_repository = tyr::planning::StateRepository<Kind>::create(std::make_shared<tyr::planning::Task<Kind>>(*source.context().get_task()));
     EXPECT_THROW(delta.template assign<Kind>(source, urd::resolve(source_builder, *other_repository)), std::invalid_argument);
     expect_atoms(target, source);
     delta.template assign<Kind>(source, source);
@@ -132,11 +133,11 @@ void check_delta()
         else
             return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
     }();
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
+    const auto successors = runir::datasets::successor_nodes(*search, initial);
     ASSERT_FALSE(successors.empty());
-    const auto& source = initial.get_state();
-    const auto target = successors.front().get_state();
+    const auto& source = initial.state();
+    const auto target = successors.front().state();
     const auto source_fluent = atoms<Kind, tyr::formalism::FluentTag>(source);
     const auto target_fluent = atoms<Kind, tyr::formalism::FluentTag>(target);
     const auto source_derived = atoms<Kind, tyr::formalism::DerivedTag>(source);

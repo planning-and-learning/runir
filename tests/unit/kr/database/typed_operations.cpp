@@ -24,8 +24,8 @@ using RelationBuilder = Relation;
 
 void expect_same_rows(const auto& actual, const auto& expected)
 {
-    ASSERT_EQ(actual.get_rows().size(), expected.get_rows().size());
-    for (const auto& row : expected.get_rows())
+    ASSERT_EQ(actual.rows().size(), expected.rows().size());
+    for (const auto& row : expected.rows())
         EXPECT_TRUE(actual.contains(values_of(row)));
 }
 
@@ -33,9 +33,9 @@ template<typename C>
 void apply_changes(RelationBuilder& input, const C& delta, bool undo = false)
 {
     const auto [added, removed] = delta.change();
-    for (const auto& row : (undo ? added : removed).get_rows())
+    for (const auto& row : (undo ? added : removed).rows())
         EXPECT_TRUE(input.erase(values_of(row)));
-    for (const auto& row : (undo ? removed : added).get_rows())
+    for (const auto& row : (undo ? removed : added).rows())
         input.insert(values_of(row));
 }
 
@@ -84,8 +84,8 @@ TEST(YggdrasilTests, DatabaseTypedProjectionConsolidatesWitnessesAndUndoesMixedC
     kr::database::project(borrow(input), plan, updated, workspace);
     expect_same_rows(evaluator.get_result(), borrow(updated));
     expect_delta(evaluator.get_delta(), initial, updated);
-    EXPECT_TRUE(evaluator.get_delta().removed->view().get_rows().empty());
-    ASSERT_EQ(evaluator.get_delta().added->view().get_rows().size(), 1);
+    EXPECT_TRUE(evaluator.get_delta().removed->view().rows().empty());
+    ASSERT_EQ(evaluator.get_delta().added->view().rows().size(), 1);
     EXPECT_TRUE(evaluator.get_delta().added->view().contains(std::array { ygg::encode_value(false), ygg::encode_value(3.5) }));
 
     evaluator.update(std::pair { borrow(changes.removed), borrow(changes.added) }, workspace);
@@ -139,8 +139,8 @@ TEST(YggdrasilTests, DatabaseTypedJoinUpdatesBothInputsAndRepairsCompactedIndexe
     EXPECT_TRUE(updated.contains(std::array { ygg::encode_value(ygg::uint_t(1)), ygg::encode_value(1.75), ygg::encode_value(true), ygg::encode_value(10.0) }));
     EXPECT_TRUE(updated.contains(std::array { ygg::encode_value(ygg::uint_t(2)), ygg::encode_value(2.5), ygg::encode_value(false), ygg::encode_value(22.0) }));
     EXPECT_TRUE(updated.contains(std::array { ygg::encode_value(ygg::uint_t(4)), ygg::encode_value(4.5), ygg::encode_value(false), ygg::encode_value(40.0) }));
-    EXPECT_EQ(evaluator.get_delta().added->view().get_rows().size(), 3);
-    EXPECT_EQ(evaluator.get_delta().removed->view().get_rows().size(), 2);
+    EXPECT_EQ(evaluator.get_delta().added->view().rows().size(), 3);
+    EXPECT_EQ(evaluator.get_delta().removed->view().rows().size(), 2);
 
     evaluator.update(std::pair { borrow(left_changes.removed), borrow(left_changes.added) },
                      std::pair { borrow(right_changes.removed), borrow(right_changes.added) },
@@ -203,8 +203,8 @@ TEST(YggdrasilTests, DatabaseTypedSchemaErrorsPreserveOperatorAndIncrementalResu
     kr::database::incremental::ProjectionEvaluator evaluator(scratch(), plan);
     evaluator.initialize(input_view, workspace);
     EXPECT_TRUE(evaluator.get_result().contains(std::array { ygg::encode_value(ygg::uint_t(1)) }));
-    EXPECT_TRUE(evaluator.get_delta().added->view().get_rows().empty());
-    EXPECT_TRUE(evaluator.get_delta().removed->view().get_rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().added->view().rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().removed->view().rows().empty());
     RelationBuilder empty(columns);
     EXPECT_NO_THROW(evaluator.update(std::pair { borrow(empty), borrow(empty) }, workspace));
 }

@@ -100,10 +100,10 @@ RelationStatistics with_default_distinct(RelationStatistics stats, std::span<con
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QueryInputTag> query, FactorIdentity, GetEstimate&&, const Statistics& statistics)
 {
-    const auto it = statistics.inputs.find(query.get_input_slot());
+    const auto it = statistics.inputs.find(query.input_slot());
     if (it == statistics.inputs.end())
         throw std::logic_error("Optimizer: estimates require the input's row count.");
-    return factor(with_default_distinct(it->second, query.columns(), statistics.objects), query.columns(), InputFactorIdentity { query.get_input_slot() });
+    return factor(with_default_distinct(it->second, query.columns(), statistics.objects), query.columns(), InputFactorIdentity { query.input_slot() });
 }
 
 template<class GetEstimate>
@@ -112,12 +112,12 @@ Estimate estimate_operation(QueryView<QueryEmptyTag> query, FactorIdentity ident
 
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QueryJoinTag> query, FactorIdentity, GetEstimate child, const Statistics&)
-{ return conjunction(combine(child(query.get_left_operand()), child(query.get_right_operand())), query.columns()); }
+{ return conjunction(combine(child(query.left_operand()), child(query.right_operand())), query.columns()); }
 
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QueryGenericJoinTag> query, FactorIdentity identity, GetEstimate child, const Statistics&)
 {
-    const auto inputs = query.get_inputs();
+    const auto inputs = query.inputs();
     if (inputs.empty())
         return factor({ 1, {} }, query.columns(), identity);
     auto result = child(*inputs.begin());
@@ -129,8 +129,8 @@ Estimate estimate_operation(QueryView<QueryGenericJoinTag> query, FactorIdentity
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QuerySelectEqualTag> query, FactorIdentity, GetEstimate child, const Statistics&)
 {
-    auto result = child(query.get_operand());
-    const auto left = query.get_left_column(), right = query.get_right_column();
+    auto result = child(query.operand());
+    const auto left = query.left_column(), right = query.right_column();
     result.equalities.emplace(std::min(left, right), std::max(left, right));
     return conjunction(std::move(result), query.columns());
 }
@@ -138,17 +138,17 @@ Estimate estimate_operation(QueryView<QuerySelectEqualTag> query, FactorIdentity
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QuerySelectValueTag> query, FactorIdentity, GetEstimate child, const Statistics&)
 {
-    auto result = child(query.get_operand());
-    result.constants.emplace(query.get_column(), query.get_constant());
+    auto result = child(query.operand());
+    result.constants.emplace(query.column(), query.constant());
     return conjunction(std::move(result), query.columns());
 }
 
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QueryRenameTag> query, FactorIdentity, GetEstimate child, const Statistics&)
 {
-    auto result = child(query.get_operand());
+    auto result = child(query.operand());
     urd::Store<urd::map<urd::index<ygg::Column>, urd::index<ygg::Column>>> renamed;
-    const auto before = columns_of(query.get_operand()), after = query.columns();
+    const auto before = columns_of(query.operand()), after = query.columns();
     for (size_t i = 0; i < before.size(); ++i)
         renamed[before[i].label] = after[i].label;
     for (auto& single : result.factors)
@@ -175,8 +175,8 @@ RelationStatistics capped(RelationStatistics stats);
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QueryProjectTag> query, FactorIdentity identity, GetEstimate child, const Statistics&)
 {
-    auto argument = child(query.get_operand());
-    if (query.columns().size() == columns_of(query.get_operand()).size())
+    auto argument = child(query.operand());
+    if (query.columns().size() == columns_of(query.operand()).size())
         return argument;
     RelationStatistics result { 0, {} };
     double combinations = 1;
@@ -193,7 +193,7 @@ Estimate estimate_operation(QueryView<QueryProjectTag> query, FactorIdentity ide
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QueryUnionTag> query, FactorIdentity identity, GetEstimate child, const Statistics&)
 {
-    const auto left = child(query.get_left_operand()), right = child(query.get_right_operand());
+    const auto left = child(query.left_operand()), right = child(query.right_operand());
     RelationStatistics result { bounded(std::max(left.rows, right.rows) + std::min(left.rows, right.rows) / 2), {} };
     for (const auto& [column, count] : left.distinct)
         result.distinct[column] = std::max(count, right.distinct.at(column));
@@ -204,7 +204,7 @@ Estimate estimate_operation(QueryView<QueryUnionTag> query, FactorIdentity ident
 template<class GetEstimate>
 Estimate estimate_operation(QueryView<QueryDifferenceTag> query, FactorIdentity identity, GetEstimate child, const Statistics&)
 {
-    const auto left = child(query.get_left_operand()), right = child(query.get_right_operand());
+    const auto left = child(query.left_operand()), right = child(query.right_operand());
     return factor(capped({ std::max(0.0, left.rows - right.rows / 2), left.distinct }), query.columns(), identity);
 }
 
@@ -213,8 +213,8 @@ template<typename Tag, class GetEstimate>
     requires(std::same_as<Tag, QuerySemijoinTag> || std::same_as<Tag, QueryAntijoinTag>)
 Estimate estimate_operation(QueryView<Tag> query, FactorIdentity identity, GetEstimate child, const Statistics&)
 {
-    const auto left = child(query.get_left_operand());
-    const auto matched = std::min(left.rows, conjunction(combine(left, child(query.get_right_operand())), query.columns()).rows);
+    const auto left = child(query.left_operand());
+    const auto matched = std::min(left.rows, conjunction(combine(left, child(query.right_operand())), query.columns()).rows);
     const auto rows = std::same_as<Tag, QuerySemijoinTag> ? matched : std::max(0.0, left.rows - matched);
     return factor(capped({ rows, left.distinct }), query.columns(), identity);
 }
@@ -228,7 +228,7 @@ Estimate estimate(QueryView<> query, std::type_identity_t<std::optional<urd::ind
     if (source)
         if (const auto it = statistics.expressions.find(*source); it != statistics.expressions.end())
             return factor(with_default_distinct(it->second, columns_of(query), statistics.objects), columns_of(query), identity);
-    return std::visit([&]<typename Child>(Child operation) { return estimate_operation(operation, identity, child, statistics); }, query.get_variant());
+    return std::visit([&]<typename Child>(Child operation) { return estimate_operation(operation, identity, child, statistics); }, query.variant());
 }
 }  // namespace runir::kr::database::detail
 

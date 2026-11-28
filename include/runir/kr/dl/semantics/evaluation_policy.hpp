@@ -9,7 +9,7 @@
 #include <concepts>
 #include <span>
 #include <stdexcept>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <utility>
 
 namespace runir::kr::dl::semantics

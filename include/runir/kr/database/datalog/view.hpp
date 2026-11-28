@@ -20,17 +20,17 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] size_t get_id() const { return self().template member<&urd::record_of<V>::id>(); }
+    [[nodiscard]] size_t id() const { return self().template member<&urd::record_of<V>::id>(); }
 
-    [[nodiscard]] size_t get_arity() const { return self().template member<&urd::record_of<V>::arity>(); }
+    [[nodiscard]] size_t arity() const { return self().template member<&urd::record_of<V>::arity>(); }
 
-    [[nodiscard]] bool get_input() const { return self().template member<&urd::record_of<V>::input>(); }
+    [[nodiscard]] bool input() const { return self().template member<&urd::record_of<V>::input>(); }
 
-    [[nodiscard]] size_t get_input_slot() const { return self().template member<&urd::record_of<V>::input_slot>(); }
+    [[nodiscard]] size_t input_slot() const { return self().template member<&urd::record_of<V>::input_slot>(); }
 
-    [[nodiscard]] std::string_view get_name() const noexcept { return std::string_view(self().template member<&urd::record_of<V>::name>()); }
+    [[nodiscard]] std::string_view name() const noexcept { return std::string_view(self().template member<&urd::record_of<V>::name>()); }
 
-    [[nodiscard]] bool get_weighted() const { return self().template member<&urd::record_of<V>::weighted>(); }
+    [[nodiscard]] bool weighted() const { return self().template member<&urd::record_of<V>::weighted>(); }
 };
 
 template<typename V>
@@ -40,9 +40,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] auto get_relation() const { return self().template member<&urd::record_of<V>::relation>(); }
+    [[nodiscard]] auto relation() const { return self().template member<&urd::record_of<V>::relation>(); }
 
-    [[nodiscard]] std::span<const runir::kr::database::datalog::Term> get_terms() const
+    [[nodiscard]] std::span<const runir::kr::database::datalog::Term> terms() const
     { return { self().template member<&urd::record_of<V>::terms>().data(), self().template member<&urd::record_of<V>::terms>().size() }; }
 };
 
@@ -53,20 +53,20 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] auto get_function() const { return self().template member<&urd::record_of<V>::function>(); }
+    [[nodiscard]] auto function() const { return self().template member<&urd::record_of<V>::function>(); }
 
-    [[nodiscard]] ygg::uint_t get_result() const { return self().template member<&urd::record_of<V>::result>(); }
+    [[nodiscard]] ygg::uint_t result() const { return self().template member<&urd::record_of<V>::result>(); }
 
-    [[nodiscard]] ygg::uint_t get_value() const { return self().template member<&urd::record_of<V>::value>(); }
+    [[nodiscard]] ygg::uint_t value() const { return self().template member<&urd::record_of<V>::value>(); }
 
-    [[nodiscard]] auto get_atoms() const { return self().template member<&urd::record_of<V>::atoms>(); }
+    [[nodiscard]] auto atoms() const { return self().template member<&urd::record_of<V>::atoms>(); }
 
-    [[nodiscard]] auto get_negated() const { return self().template member<&urd::record_of<V>::negated>(); }
+    [[nodiscard]] auto negated() const { return self().template member<&urd::record_of<V>::negated>(); }
 
-    [[nodiscard]] std::span<const runir::kr::database::datalog::Comparison> get_comparisons() const
+    [[nodiscard]] std::span<const runir::kr::database::datalog::Comparison> comparisons() const
     { return { self().template member<&urd::record_of<V>::comparisons>().data(), self().template member<&urd::record_of<V>::comparisons>().size() }; }
 
-    [[nodiscard]] std::span<const runir::kr::database::datalog::Arithmetic> get_arithmetic() const
+    [[nodiscard]] std::span<const runir::kr::database::datalog::Arithmetic> arithmetic() const
     { return { self().template member<&urd::record_of<V>::arithmetic>().data(), self().template member<&urd::record_of<V>::arithmetic>().size() }; }
 };
 
@@ -77,18 +77,18 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] auto get_head() const { return self().template member<&urd::record_of<V>::head>(); }
+    [[nodiscard]] auto head() const { return self().template member<&urd::record_of<V>::head>(); }
 
-    [[nodiscard]] auto get_atoms() const { return self().template member<&urd::record_of<V>::atoms>(); }
+    [[nodiscard]] auto atoms() const { return self().template member<&urd::record_of<V>::atoms>(); }
 
-    [[nodiscard]] auto get_negated() const { return self().template member<&urd::record_of<V>::negated>(); }
+    [[nodiscard]] auto negated() const { return self().template member<&urd::record_of<V>::negated>(); }
 
-    [[nodiscard]] std::span<const runir::kr::database::datalog::Comparison> get_comparisons() const
+    [[nodiscard]] std::span<const runir::kr::database::datalog::Comparison> comparisons() const
     { return { self().template member<&urd::record_of<V>::comparisons>().data(), self().template member<&urd::record_of<V>::comparisons>().size() }; }
 
-    [[nodiscard]] auto get_aggregates() const { return self().template member<&urd::record_of<V>::aggregates>(); }
+    [[nodiscard]] auto aggregates() const { return self().template member<&urd::record_of<V>::aggregates>(); }
 
-    [[nodiscard]] std::span<const runir::kr::database::datalog::Arithmetic> get_arithmetic() const
+    [[nodiscard]] std::span<const runir::kr::database::datalog::Arithmetic> arithmetic() const
     { return { self().template member<&urd::record_of<V>::arithmetic>().data(), self().template member<&urd::record_of<V>::arithmetic>().size() }; }
 };
 
@@ -99,7 +99,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] auto get_rules() const { return self().template member<&urd::record_of<V>::rules>(); }
+    [[nodiscard]] auto rules() const { return self().template member<&urd::record_of<V>::rules>(); }
 };
 }  // namespace urd
 

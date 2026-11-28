@@ -57,7 +57,7 @@ public:
     /// nullopt means nothing is known: ⊤ when over, ∅ when under.
     std::optional<QueryView<>> relax(QueryView<> query, const Labels& needed, Polarity polarity)
     {
-        auto result = std::visit([&]<typename Tag>(QueryView<Tag> concrete) { return relax(concrete, needed, polarity); }, query.get_variant());
+        auto result = std::visit([&]<typename Tag>(QueryView<Tag> concrete) { return relax(concrete, needed, polarity); }, query.variant());
         // Labels nobody needs are eliminated here, in the order of `needed`; with none needed, only the emptiness remains.
         if (result)
             result = m_build.project(*result, intersection(needed, labels(*result)));
@@ -118,7 +118,7 @@ private:
 
     std::optional<QueryView<>> input(QueryView<QueryInputTag> concrete)
     {
-        const auto slot = concrete.get_input_slot();
+        const auto slot = concrete.input_slot();
         if (!m_known(slot))
             return std::nullopt;
         const auto columns = concrete.columns();
@@ -161,9 +161,9 @@ private:
         {
             auto conjuncts = urd::Store<urd::sequence<QueryView<>>>();
             if constexpr (std::same_as<Tag, QueryJoinTag>)
-                conjuncts = { concrete.get_left_operand(), concrete.get_right_operand() };
+                conjuncts = { concrete.left_operand(), concrete.right_operand() };
             else
-                for (const auto input : concrete.get_inputs())
+                for (const auto input : concrete.inputs())
                     conjuncts.push_back(input);
             // A conjunct needs its labels that are needed above or shared with another conjunct (early elimination).
             auto result = std::optional<QueryView<>>();
@@ -179,15 +179,15 @@ private:
             return result;
         }
         else if constexpr (std::same_as<Tag, QueryProjectTag>)
-            return relax(concrete.get_operand(), needed, polarity);
+            return relax(concrete.operand(), needed, polarity);
         else if constexpr (std::same_as<Tag, QueryRenameTag>)
         {
-            const auto before = columns_of(concrete.get_operand());
+            const auto before = columns_of(concrete.operand());
             const auto after = concrete.columns();
             auto inner = Labels();
             for (const auto label : needed)
                 inner.push_back(before[static_cast<size_t>(std::ranges::find(after, label, &urd::data<ygg::ColumnLayout>::label) - after.begin())].label);
-            const auto arg = relax(concrete.get_operand(), inner, polarity);
+            const auto arg = relax(concrete.operand(), inner, polarity);
             if (!arg)
                 return std::nullopt;
             // The relaxed columns keep their labels' positions in the argument's schema.
@@ -202,11 +202,11 @@ private:
             const auto selected = [&]
             {
                 if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
-                    return Labels { concrete.get_left_column(), concrete.get_right_column() };
+                    return Labels { concrete.left_column(), concrete.right_column() };
                 else
-                    return Labels { concrete.get_column() };
+                    return Labels { concrete.column() };
             }();
-            const auto arg = relax(concrete.get_operand(), united(needed, selected), polarity);
+            const auto arg = relax(concrete.operand(), united(needed, selected), polarity);
             if (!arg)
                 return std::nullopt;
             // A selection on an unconstrained column is dropped.
@@ -220,21 +220,21 @@ private:
                 });
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            return disjoin(relax(concrete.get_left_operand(), needed, polarity), relax(concrete.get_right_operand(), needed, polarity), polarity);
+            return disjoin(relax(concrete.left_operand(), needed, polarity), relax(concrete.right_operand(), needed, polarity), polarity);
         else if constexpr (std::same_as<Tag, QuerySemijoinTag>)
         {
-            const auto shared = intersection(labels(concrete.get_left_operand()), labels(concrete.get_right_operand()));
-            return conjoin<QuerySemijoinTag>(relax(concrete.get_left_operand(), united(needed, shared), polarity),
-                                             relax(concrete.get_right_operand(), shared, polarity),
+            const auto shared = intersection(labels(concrete.left_operand()), labels(concrete.right_operand()));
+            return conjoin<QuerySemijoinTag>(relax(concrete.left_operand(), united(needed, shared), polarity),
+                                             relax(concrete.right_operand(), shared, polarity),
                                              polarity);
         }
         else if constexpr (std::same_as<Tag, QueryDifferenceTag> || std::same_as<Tag, QueryAntijoinTag>)
         {
             // A \ B is A ▷ B on all of A's labels. The subtrahend is bounded on the other side: B̂ ⊇ B when under,
             // B̌ ⊆ B when over.
-            const auto shared = intersection(labels(concrete.get_left_operand()), labels(concrete.get_right_operand()));
-            const auto left_operand = relax(concrete.get_left_operand(), polarity == Polarity::under ? united(needed, shared) : needed, polarity);
-            const auto right_operand = relax(concrete.get_right_operand(), shared, flip(polarity));
+            const auto shared = intersection(labels(concrete.left_operand()), labels(concrete.right_operand()));
+            const auto left_operand = relax(concrete.left_operand(), polarity == Polarity::under ? united(needed, shared) : needed, polarity);
+            const auto right_operand = relax(concrete.right_operand(), shared, flip(polarity));
             if (polarity == Polarity::under)
             {
                 // B ⊆ B̂ × U: a row matching no row of B̂ on its labels matches none of B. Subtracting ⊤ leaves ∅.

@@ -17,8 +17,8 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
                                  data.name;
                                  data.identifier;
                                  view.index();
-                                 view.get_name();
-                                 view.get_identifier();
+                                 view.name();
+                                 view.identifier();
                              };
 
 template<typename Repository, typename... Ts>
@@ -55,7 +55,7 @@ TEST(RunirKrDlArgument, ExposesNameAndIdentifier)
     auto data = urd::data<kr::dl::Argument<kr::dl::ConceptTag>>(std::string("source"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(3));
     const auto argument = repository->insert(data).first;
 
-    EXPECT_EQ(argument.get_name(), "source");
-    EXPECT_EQ(argument.get_identifier(), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(3));
+    EXPECT_EQ(argument.name(), "source");
+    EXPECT_EQ(argument.identifier(), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(3));
 }
 }

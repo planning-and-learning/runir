@@ -9,7 +9,7 @@
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <type_traits>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <utility>
 
 namespace runir::tests::ps_family_traits
@@ -98,7 +98,7 @@ static_assert(usable_inventory<UnsCustomRepository>(UnsCustomTypes {}));
 static_assert(usable_inventory<kr::ps::ext::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));
 
 using BaseFeatureInExt = urd::index_view<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>, kr::ps::ext::Repository>;
-static_assert(requires(BaseFeatureInExt feature) { feature.get_variant(); });
+static_assert(requires(BaseFeatureInExt feature) { feature.variant(); });
 
 // Storage contexts remain structural; no exact repository type is required.
 struct BaseFeatureStorage

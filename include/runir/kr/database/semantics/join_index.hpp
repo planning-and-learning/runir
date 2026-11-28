@@ -51,9 +51,9 @@ template<ygg::RelationViewConcept<ygg::Schema> V>
 void build_join_index(const V& build, std::span<const ColumnSlice> keys, urd::Store<urd::map<ygg::hash_t, size_t>, urd::multi, urd::retains>& index)
 {
     index.clear();
-    index.reserve(build.get_rows().size());
-    for (size_t i = 0; i < build.get_rows().size(); ++i)
-        index.insert({ urd::visit_view(build.row(i), [&](const auto& row) { return join_key_hash(row.get_values(), keys); }), i });
+    index.reserve(build.rows().size());
+    for (size_t i = 0; i < build.rows().size(); ++i)
+        index.insert({ urd::visit_view(build.row(i), [&](const auto& row) { return join_key_hash(row.values(), keys); }), i });
 }
 }  // namespace runir::kr::database::detail
 

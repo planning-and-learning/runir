@@ -49,10 +49,10 @@ struct RoleEdgeDistanceEvaluator
     DenotationState<NumericalTag> value;
 
     RoleEdgeDistanceEvaluator(NumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
-        sources(prepare_argument(expression.get_sources(), expression.get_plan().source_columns, graph, dependencies)),
-        edges(prepare_argument(expression.get_edges(), expression.get_plan().edge_columns, graph, dependencies)),
-        targets(prepare_argument(expression.get_targets(), expression.get_plan().target_columns, graph, dependencies)),
-        operation(graph.scratch(), expression.get_plan())
+        sources(prepare_argument(expression.sources(), expression.plan().source_columns, graph, dependencies)),
+        edges(prepare_argument(expression.edges(), expression.plan().edge_columns, graph, dependencies)),
+        targets(prepare_argument(expression.targets(), expression.plan().target_columns, graph, dependencies)),
+        operation(graph.scratch(), expression.plan())
     {
     }
 
@@ -95,9 +95,9 @@ struct QueryEdgeDistanceEvaluator
                                urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
         expression(expression_),
         edges(edges_),
-        sources(prepare_argument(expression_.get_sources(), expression_.get_plan().source_columns, graph, dependencies)),
-        targets(prepare_argument(expression_.get_targets(), expression_.get_plan().target_columns, graph, dependencies)),
-        feature(semantics::detail::make_distance_feature<Distance>(graph.scratch(), expression_.get_plan(), edges_))
+        sources(prepare_argument(expression_.sources(), expression_.plan().source_columns, graph, dependencies)),
+        targets(prepare_argument(expression_.targets(), expression_.plan().target_columns, graph, dependencies)),
+        feature(semantics::detail::make_distance_feature<Distance>(graph.scratch(), expression_.plan(), edges_))
     {
         for (const auto& slot : feature.slots)
             slots.push_back(visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
@@ -110,7 +110,7 @@ struct QueryEdgeDistanceEvaluator
         if (!heuristic)
             heuristic = semantics::detail::make_heuristic(graph.scratch(),
                                                           feature,
-                                                          expression.get_plan(),
+                                                          expression.plan(),
                                                           semantics::detail::num_objects<Kind>(context),
                                                           [&](size_t slot) { return feature.distance.input(slot); });
         set_targets(graph);
@@ -156,7 +156,7 @@ private:
     }
 
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
-    { return !graph.change(index).added->view().get_rows().empty() || !graph.change(index).removed->view().get_rows().empty(); }
+    { return !graph.change(index).added->view().rows().empty() || !graph.change(index).removed->view().rows().empty(); }
 
     void set_targets(const EvaluationGraph<Kind>& graph)
     {

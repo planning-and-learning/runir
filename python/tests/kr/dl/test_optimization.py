@@ -21,7 +21,7 @@ def _feature(expression: str, domain: PlanningDomain, context: DomainContext) ->
         domain,
         context.base_repository,
     )
-    return sketch.get_numerical_features()[0]
+    return sketch.numerical_features()[0]
 
 
 @pytest.mark.parametrize(
@@ -46,7 +46,7 @@ def test_optimized_features_evaluate_like_originals(
     context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
 
     feature = _feature(expression, gripper_planning_domain, domain)
-    original = feature.get_variant().get_feature()
+    original = feature.variant().feature()
     statistics = base.dl.collect_query_statistics(feature, [context])
     assert isinstance(statistics, semantics.QueryStatistics)
     assert statistics.objects is not None
@@ -56,30 +56,30 @@ def test_optimized_features_evaluate_like_originals(
         base.dl.optimize(feature, domain.base_repository),
         base.dl.optimize(feature, domain.base_repository, statistics),
     ):
-        assert optimized_feature.get_variant().get_symbol() == feature.get_variant().get_symbol()
-        optimized = optimized_feature.get_variant().get_feature()
-        assert semantics.evaluate(optimized, context).get_value() == semantics.evaluate(original, context).get_value()
+        assert optimized_feature.variant().symbol() == feature.variant().symbol()
+        optimized = optimized_feature.variant().feature()
+        assert semantics.evaluate(optimized, context).value() == semantics.evaluate(original, context).value()
         # The optimized expression prints as valid syntax that parses back to itself.
-        assert _feature(str(optimized), gripper_planning_domain, domain).get_variant().get_feature() == optimized
+        assert _feature(str(optimized), gripper_planning_domain, domain).variant().feature() == optimized
 
     dl_repository = domain.base_repository.get_dl_repository()
     assert (
-        semantics.evaluate(semantics.optimize(original, dl_repository), context).get_value()
-        == semantics.evaluate(original, context).get_value()
+        semantics.evaluate(semantics.optimize(original, dl_repository), context).value()
+        == semantics.evaluate(original, context).value()
     )
     assert (
         semantics.evaluate(
             semantics.optimize(original, dl_repository, semantics.collect_query_statistics(original, [context])),
             context,
-        ).get_value()
-        == semantics.evaluate(original, context).get_value()
+        ).value()
+        == semantics.evaluate(original, context).value()
     )
 
 
 def _count_arg_variant(feature: FeatureBaseNumerical) -> object:
-    count = feature.get_variant().get_feature().get_variant()
+    count = feature.variant().feature().variant()
     assert isinstance(count, semantics.NumericalSemanticCount)
-    return count.get_operand().get_variant()
+    return count.operand().variant()
 
 
 def test_generic_join_and_empty_bindings(gripper_planning_domain: PlanningDomain) -> None:
@@ -89,9 +89,9 @@ def test_generic_join_and_empty_bindings(gripper_planning_domain: PlanningDomain
     )
     join = _count_arg_variant(feature)
     assert isinstance(join, semantics.QueryGenericJoin)
-    assert [str(column) for column in join.get_variable_order()] == ["ball", "room"]
-    assert [str(column) for column in join.get_output_order()] == ["room", "ball"]
-    assert len(join.get_args()) == 2
+    assert [str(column) for column in join.variable_order()] == ["ball", "room"]
+    assert [str(column) for column in join.output_order()] == ["room", "ball"]
+    assert len(join.args()) == 2
     empty = _count_arg_variant(_feature("(n_count (q_empty (ball)))", gripper_planning_domain, domain))
     assert isinstance(empty, semantics.QueryEmpty)
-    assert [str(column) for column in empty.get_columns()] == ["ball"]
+    assert [str(column) for column in empty.columns()] == ["ball"]

@@ -56,14 +56,14 @@ void record_condition(Definition definition,
                       RuleProfile& profile,
                       urd::index_view<runir::kr::ps::ConcreteCondition<Family, FeatureTag, ObservationTag>, C> condition)
 {
-    const auto position = feature_position(definition.template get_features<FeatureTag>(), condition.get_feature());
+    const auto position = feature_position(definition.template features<FeatureTag>(), condition.feature());
     profile.template conditions<ObservationTag>() |= std::uint64_t { 1 } << position;
 }
 
 template<runir::kr::FamilyTag Family, typename C, typename Definition, typename FeatureTag, typename ObservationTag>
 void record_effect(Definition definition, RuleProfile& profile, urd::index_view<runir::kr::ps::ConcreteEffect<Family, FeatureTag, ObservationTag>, C> effect)
 {
-    const auto position = feature_position(definition.template get_features<FeatureTag>(), effect.get_feature());
+    const auto position = feature_position(definition.template features<FeatureTag>(), effect.feature());
     const auto bit = std::uint64_t { 1 } << position;
     profile.template effects<FeatureTag, dl::Unconstrained>() &= ~bit;
     profile.template effects<FeatureTag, ObservationTag>() |= bit;
@@ -155,8 +155,8 @@ template<typename Result, runir::kr::FamilyTag Family, typename C, typename Defi
 Result materialize_incomplete_result(Definition definition, const PolicyAnalysis<Family, C>& analysis, const IncompletePolicyResult& policy_result)
 {
     auto result = Result {};
-    const auto booleans = definition.template get_features<runir::kr::dl::BooleanTag>();
-    const auto numericals = definition.template get_features<runir::kr::dl::NumericalTag>();
+    const auto booleans = definition.template features<runir::kr::dl::BooleanTag>();
+    const auto numericals = definition.template features<runir::kr::dl::NumericalTag>();
     for (const auto& policy_rule : policy_result.surviving_rules)
     {
         result.surviving_rules.push_back({ analysis.rules[policy_rule.rule_position], {} });
@@ -193,8 +193,8 @@ Result materialize_result(Definition definition,
 
     auto& sieve = result.sieve_result.emplace();
     sieve.scc_results = materialize_scc_results<Family, C>(*sieve_result.scc_feature_positions,
-                                                           definition.template get_features<runir::kr::dl::BooleanTag>(),
-                                                           definition.template get_features<runir::kr::dl::NumericalTag>());
+                                                           definition.template features<runir::kr::dl::BooleanTag>(),
+                                                           definition.template features<runir::kr::dl::NumericalTag>());
     if (sieve_result.components.empty())
         return result;
 

@@ -46,16 +46,16 @@ struct AtomicEvaluator
         if constexpr (std::same_as<Category, BooleanTag>)
         {
             bool present = false;
-            for ([[maybe_unused]] const auto atom : context.get_state().get_atoms(predicate))
+            for ([[maybe_unused]] const auto atom : context.get_state().atoms(predicate))
                 present = true;
             value.set(present == polarity);
         }
         else
         {
             auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context), graph.records(), graph.denotations());
-            for (const auto atom : context.get_state().get_atoms(predicate))
+            for (const auto atom : context.get_state().atoms(predicate))
             {
-                const auto objects = atom.get_row().template get<urd::index<tyr::formalism::Object>>();
+                const auto objects = atom.row().template get<urd::index<tyr::formalism::Object>>();
                 if constexpr (std::same_as<Category, ConceptTag>)
                     builder.set(objects[0], true);
                 else
@@ -76,7 +76,7 @@ private:
     static DenotationElementView<Category> atom_element(tyr::formalism::AtomView<tyr::GroundTag, Fact> atom)
         requires ConceptOrRoleTag<Category>
     {
-        const auto objects = atom.get_row().template resolve<tyr::formalism::Object>();
+        const auto objects = atom.row().template resolve<tyr::formalism::Object>();
         if constexpr (std::same_as<Category, ConceptTag>)
             return objects[0];
         else
@@ -102,17 +102,17 @@ private:
                 value.set(atom_element(atom), is_present);
         };
         for (const auto atom : added)
-            if (atom.get_predicate() == predicate && present(atom))
+            if (atom.predicate() == predicate && present(atom))
                 throw std::invalid_argument("Incremental DL: added atom is already present.");
         for (const auto atom : removed)
-            if (atom.get_predicate() == predicate)
+            if (atom.predicate() == predicate)
             {
                 if (!present(atom))
                     throw std::invalid_argument("Incremental DL: removed atom is absent.");
                 change(atom, false);
             }
         for (const auto atom : added)
-            if (atom.get_predicate() == predicate)
+            if (atom.predicate() == predicate)
                 change(atom, true);
     }
 };

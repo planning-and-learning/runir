@@ -16,7 +16,7 @@
 #include <runir/kr/database/semantics/incremental/projection.hpp>
 #include <span>
 #include <stdexcept>
-#include <tyr/planning/state_view_concepts.hpp>
+#include <tyr/planning/states/state_view_concepts.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -47,7 +47,7 @@ public:
     AtomicQueryEvaluator(ygg::FreeScratchRelations& scratch, urd::index_view<Query<AtomicStateTag<Fact>>, C> query);
 
     /// Replace the baseline from a completed state, retaining buffers and clearing the last delta.
-    template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
+    template<tyr::TaskKind Kind, tyr::planning::StateBuilderViewConcept<Kind> State>
     void initialize(const State& state);
 
     /// Actual, disjoint atom changes from the initialized task. Other predicates are ignored.
@@ -67,24 +67,24 @@ template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
 template<typename C>
 AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(ygg::FreeScratchRelations& scratch, urd::index_view<Query<AtomicStateTag<Fact>>, C> query) :
-    m_predicate(query.get_predicate()),
-    m_result(scratch.draw(query.get_schema())),
-    m_delta(scratch, query.get_schema())
+    m_predicate(query.predicate()),
+    m_result(scratch.draw(query.schema())),
+    m_delta(scratch, query.schema())
 {
 }
 
 template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
-template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
+template<tyr::TaskKind Kind, tyr::planning::StateBuilderViewConcept<Kind> State>
 void AtomicQueryEvaluator<Fact>::initialize(const State& state)
 {
-    if (!state.get_formalism_repository()->contains(m_predicate))
+    if (!state.formalism_repository()->contains(m_predicate))
         throw std::invalid_argument("Incremental atomic query: predicate does not belong to the task repository.");
     m_initialized = false;
     m_result->clear();
     m_delta.clear();
-    for (const auto atom : state.get_atoms(m_predicate))
-        m_result->insert(encode_object_row(atom.get_row().get_values(), m_row));
+    for (const auto atom : state.atoms(m_predicate))
+        m_result->insert(encode_object_row(atom.row().values(), m_row));
     m_initialized = true;
 }
 
@@ -100,24 +100,24 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::AtomView
     // Check additions against the original result, so an atom cannot occur on both sides.
     for (const auto atom : added)
     {
-        if (atom.get_predicate() != m_predicate)
+        if (atom.predicate() != m_predicate)
             continue;
-        const auto row = encode_object_row(atom.get_row().get_values(), m_row);
+        const auto row = encode_object_row(atom.row().values(), m_row);
         if (m_result->view().contains(row))
             throw std::invalid_argument("Incremental atomic query: added atom is already present.");
         m_delta.added->insert(row);
     }
     for (const auto atom : removed)
     {
-        if (atom.get_predicate() != m_predicate)
+        if (atom.predicate() != m_predicate)
             continue;
-        const auto row = encode_object_row(atom.get_row().get_values(), m_row);
+        const auto row = encode_object_row(atom.row().values(), m_row);
         if (!m_result->erase(row))
             throw std::invalid_argument("Incremental atomic query: removed atom is absent.");
         m_delta.removed->insert(row);
     }
     const auto added_rows = m_delta.added->view();
-    for (size_t i = 0; i < added_rows.get_rows().size(); ++i)
+    for (size_t i = 0; i < added_rows.rows().size(); ++i)
         ygg::with_values(added_rows.row(i), [this](const auto& values) { m_result->insert(values); });
     m_initialized = true;
 }

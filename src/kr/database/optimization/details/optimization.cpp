@@ -16,7 +16,7 @@ void validate(std::span<const QueryView<>> roots, const Statistics& statistics)
     for (const auto query : reachable(roots))
     {
         if (is<QueryInputTag>(query))
-            if (const auto it = statistics.inputs.find(as<QueryInputTag>(query).get_input_slot()); it != statistics.inputs.end())
+            if (const auto it = statistics.inputs.find(as<QueryInputTag>(query).input_slot()); it != statistics.inputs.end())
                 validate_statistics(it->second, columns_of(query));
         if (const auto it = statistics.expressions.find(query.index()); it != statistics.expressions.end())
             validate_statistics(it->second, columns_of(query));
@@ -64,7 +64,7 @@ bool Planner::known(QueryView<> plan)
     if (const auto caller = source(plan); caller && m_statistics->expressions.contains(*caller))
         result = true;
     else if (is<QueryInputTag>(plan))
-        result = m_statistics->inputs.contains(as<QueryInputTag>(plan).get_input_slot());
+        result = m_statistics->inputs.contains(as<QueryInputTag>(plan).input_slot());
     else
     {
         result = true;
@@ -107,8 +107,8 @@ QueryView<> Planner::plan(QueryView<> normalized)
             return plan_block(normalized, columns_of(normalized));
         if (is<QueryProjectTag>(normalized))
         {
-            if (const auto projection = as<QueryProjectTag>(normalized); joins(projection.get_operand()))
-                return plan_block(projection.get_operand(), columns_of(normalized));
+            if (const auto projection = as<QueryProjectTag>(normalized); joins(projection.operand()))
+                return plan_block(projection.operand(), columns_of(normalized));
         }
         urd::Store<urd::sequence<QueryView<>>> children;
         for_each_child(normalized, [&](QueryView<> child) { children.push_back(plan(child)); });

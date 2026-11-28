@@ -33,7 +33,7 @@ public:
              EmitConcept<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     bool
     emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
@@ -43,27 +43,23 @@ public:
         if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment))
             return true;
         auto state_context = context.make_dl_context(state);
-        const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);
+        const auto denotation = evaluate<Kind>(rule.feature(), state_context);
         auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
         for (const auto value : denotation.views())
         {
             if (stop())
                 return false;
-            const auto target_registers = urd::visit_view(
-                state.get_module_state(),
-                [&](const auto& activation) { return bound_registers<Kind>(rule, activation.get_registers(), value, *registers, *context.storage); });
+            const auto target_registers = urd::visit_view(state.module_state(),
+                                                          [&](const auto& activation)
+                                                          { return bound_registers<Kind>(rule, activation.registers(), value, *registers, *context.storage); });
             if (!binding_effects_match(rule, state, planning_state, target_registers, *context.environment))
                 continue;
-            auto target = urd::visit_view(state.get_module_state(),
-                                          [&](const auto& activation)
-                                          {
-                                              return context.storage->store(planning_state,
-                                                                            activation.get_mod(),
-                                                                            rule.get_target(),
-                                                                            target_registers,
-                                                                            activation.get_arguments(),
-                                                                            call_stack(state));
-                                          });
+            auto target = urd::visit_view(
+                state.module_state(),
+                [&](const auto& activation)
+                {
+                    return context.storage->store(planning_state, activation.mod(), rule.target(), target_registers, activation.arguments(), call_stack(state));
+                });
             if (!emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, *context.task_context)))
                 return false;
         }

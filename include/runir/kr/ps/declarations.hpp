@@ -8,7 +8,7 @@
 #include <concepts>
 #include <memory>
 #include <string_view>
-#include <tyr/planning/state_view_concepts.hpp>
+#include <tyr/planning/states/state_view_concepts.hpp>
 #include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 
@@ -50,7 +50,7 @@ namespace dl
 {
 template<FamilyTag Family,
          tyr::TaskKind Kind,
-         tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>,
+         tyr::planning::StateBuilderViewConcept<Kind> S = tyr::planning::SharedStateBuilderView<Kind>,
          runir::kr::dl::semantics::RegisterValuesViewConcept R = runir::kr::dl::semantics::RegisterValuesView>
 class TransitionEvaluationContext;
 }

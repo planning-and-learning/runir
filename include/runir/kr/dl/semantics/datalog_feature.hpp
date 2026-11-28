@@ -36,7 +36,7 @@ template<typename C>
 urd::Store<urd::sequence<runir::kr::database::datalog::RelationView>> program_heads(urd::index_view<DatalogProgram, C> program)
 {
     auto heads = urd::Store<urd::sequence<runir::kr::database::datalog::RelationView>>();
-    for (const auto head : program.get_outputs())
+    for (const auto head : program.outputs())
         heads.push_back(head);
     return heads;
 }
@@ -46,9 +46,9 @@ template<typename C>
 urd::Store<urd::sequence<size_t>> static_slots(urd::index_view<DatalogProgram, C> program)
 {
     auto result = urd::Store<urd::sequence<size_t>>();
-    const auto inputs = program.get_inputs();
+    const auto inputs = program.inputs();
     for (size_t slot = 0; slot < inputs.size(); ++slot)
-        if (inputs[slot].get_is_static())
+        if (inputs[slot].is_static())
             result.push_back(slot);
     return result;
 }
@@ -59,7 +59,7 @@ DatalogFeature make_datalog_feature(ygg::FreeScratchRelations& scratch, urd::ind
 {
     const auto heads = program_heads(program);
     const auto slots = static_slots(program);
-    auto feature = DatalogFeature { runir::kr::database::datalog::Evaluator(scratch, program.get_program(), heads, slots), {}, 0 };
+    auto feature = DatalogFeature { runir::kr::database::datalog::Evaluator(scratch, program.program(), heads, slots), {}, 0 };
     for (const auto head : heads)
         feature.heads.push_back(head.index());
     return feature;

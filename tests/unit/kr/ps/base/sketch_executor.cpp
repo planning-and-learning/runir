@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 #include <ranges>
 #include <runir/datasets/state_graph.hpp>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -17,10 +18,11 @@
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
-#include <tyr/planning/axiom_evaluator.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/axioms/axiom_evaluator.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
@@ -96,25 +98,25 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_LE(fragment.graph->num_vertices(), result.graph->num_vertices()) << test_case.domain;
         ASSERT_TRUE(fragment.plan) << test_case.domain;
         const auto& plan = *fragment.plan;
-        EXPECT_EQ(plan.get_length(), fragment.graph->num_edges()) << test_case.domain;
+        EXPECT_EQ(plan.length(), fragment.graph->num_edges()) << test_case.domain;
         auto& generator = *context->successor_generator;
-        auto replay = generator.get_initial_node(*context->state_repository, *context->axiom_evaluator);
-        EXPECT_EQ(plan.get_start_node().get_state().index(), replay.get_state().pack().index());
-        EXPECT_EQ(plan.get_start_node().get_metric(), replay.get_metric());
-        for (const auto& step : plan.get_labeled_succ_nodes())
+        auto replay = runir::datasets::initial_node(*context);
+        EXPECT_EQ(plan.start_node().state().index(), replay.state().pack().index());
+        EXPECT_EQ(plan.start_node().metric(), replay.metric());
+        for (const auto& step : plan.labeled_succ_nodes())
         {
-            replay = generator.get_successor_node(replay, step.label, *context->state_repository, *context->axiom_evaluator);
-            EXPECT_EQ(step.node.get_state().index(), replay.get_state().pack().index());
-            EXPECT_EQ(step.node.get_metric(), replay.get_metric());
+            replay = runir::datasets::successor_node(*context, replay, step.label());
+            EXPECT_EQ(step.node().state().index(), replay.state().pack().index());
+            EXPECT_EQ(step.node().metric(), replay.metric());
         }
-        EXPECT_EQ(plan.get_cost(), replay.get_metric());
-        EXPECT_EQ(plan.get_cost(), plan.get_length());
+        EXPECT_EQ(plan.cost(), replay.metric());
+        EXPECT_EQ(plan.cost(), plan.length());
         const auto& terminal = fragment.graph->vertex_value(fragment.graph->num_vertices() - 1);
         EXPECT_TRUE(terminal.is_goal);
-        EXPECT_EQ(replay.get_state().pack().index(), terminal.state.index());
+        EXPECT_EQ(replay.state().pack().index(), terminal.state.index());
 
         auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>(*task_context, sketch);
-        const auto state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
+        const auto state = runir::datasets::initial_node(*context).state();
         auto dl_context = expander.get_environment().make_dl_context(state);
         EXPECT_EQ(task_context->search_context.get(), context.get());
         EXPECT_EQ(task_context->search_context, context);
@@ -139,17 +141,18 @@ TEST(RunirTests, BaseMatchingDistinguishesCollidingStateIdsAcrossStorage)
                                                        *task_context->domain_context->base_repository);
     auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
     auto& generator = *search_context->successor_generator;
-    const auto initial = generator.get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator);
-    const auto successors = generator.get_labeled_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
-    const auto successor = std::ranges::find_if(successors, [&](const auto& candidate) { return candidate.node.get_state() != initial.get_state(); });
+    const auto initial = runir::datasets::initial_node(*search_context);
+    const auto successors = runir::datasets::labeled_successor_nodes(*search_context, initial);
+    const auto successor = std::ranges::find_if(successors, [&](const auto& candidate) { return candidate.node().state() != initial.state(); });
     ASSERT_NE(successor, successors.end());
 
-    const auto target_repository = std::make_shared<tyr::planning::StateRepository<tyr::GroundTag>>(task);
-    const auto target = tyr::planning::materialize_state(successor->node.get_state(), *target_repository, *search_context->axiom_evaluator);
-    ASSERT_EQ(initial.get_state().pack().index(), target.pack().index());
-    ASSERT_NE(initial.get_state(), target);
-    EXPECT_TRUE(expander.matching_rule(initial.get_state(), target));
-    EXPECT_FALSE(expander.matching_rule(initial.get_state(), initial.get_state()));
+    const auto target_repository = tyr::planning::StateRepository<tyr::GroundTag>::create(task);
+    const auto source = initial.state().pack().unpack();
+    const auto target = tyr::planning::share(*target_repository, tyr::planning::register_extended_state(*target_repository, successor->node().state()));
+    ASSERT_EQ(source.pack().index(), target.pack().index());
+    ASSERT_NE(source, target);
+    EXPECT_TRUE(expander.matching_rule(source, target));
+    EXPECT_FALSE(expander.matching_rule(source, source));
 }
 
 TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
@@ -164,13 +167,13 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 
     auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
     auto& generator = *search_context->successor_generator;
-    const auto initial = generator.get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator);
-    const auto& state = initial.get_state();
-    const auto immediate = generator.get_labeled_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search_context);
+    const auto& state = initial.state();
+    const auto immediate = runir::datasets::labeled_successor_nodes(*search_context, initial);
     auto num_accepted = static_cast<uint64_t>(0);
     auto statistics = kr::ps::base::SketchSearchStatistics {};
     EXPECT_TRUE(expander.for_each_successor(
-        initial.get_state(),
+        initial.state(),
         statistics,
         [&](const auto&, auto)
         {
@@ -197,7 +200,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     for (const auto edge : universal.graph->out_edges(0))
     {
         const auto target_state = universal.graph->vertex_value(universal.graph->target(edge)).state.index();
-        EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().pack().index() == target_state; }),
+        EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node().state().pack().index() == target_state; }),
                   immediate.end());
     }
 
@@ -211,7 +214,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     EXPECT_FALSE(bounded.plan);
     ASSERT_TRUE(bounded.graph);
     EXPECT_EQ(bounded.graph->num_vertices(), 1);
-    EXPECT_EQ(bounded_search->state_repository->num_states(), 2);
+    EXPECT_EQ(tyr::planning::num_states(*bounded_search->state_repository), 2);
     EXPECT_EQ(bounded.statistics.num_expanded, 1);
     // The first move stays in the current room: it is generated but rejected by sketch matching.
     EXPECT_EQ(bounded.statistics.num_generated, 2);
@@ -226,7 +229,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto two_step_expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, two_step_only);
     auto rejected_statistics = kr::ps::base::SketchSearchStatistics {};
     EXPECT_TRUE(two_step_expander.for_each_successor(
-        initial.get_state(),
+        initial.state(),
         rejected_statistics,
         [](const auto&, auto)
         {
@@ -275,23 +278,24 @@ void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>&
     auto search = datasets::TaskSearchContext<Kind>::create(task, ygg::ExecutionContext::create(1));
     auto context = kr::TaskContext<Kind>::create(domain_context, search);
     auto expander = kr::ps::base::SuccessorExpander<Kind>(*context, sketch);
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    const auto& state = initial.get_state();
+    const auto initial = runir::datasets::initial_node(*search);
+    const auto& state = initial.state();
     const auto count_bindings = [&]
     {
         size_t count = 0;
-        for (const auto action : task->get_task().get_domain().get_actions())
+        for (const auto action : task->get_task().domain().actions())
             count += task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
         return count;
     };
     const auto initial_binding_count = count_bindings();
     auto num_bindings = static_cast<size_t>(0);
-    EXPECT_TRUE(search->successor_generator->for_each_borrowed_applicable_action_binding(initial,
-                                                                                         [&](auto)
-                                                                                         {
-                                                                                             ++num_bindings;
-                                                                                             return true;
-                                                                                         }));
+    EXPECT_TRUE(search->successor_generator->for_each_applicable_action_binding(runir::datasets::node_of<Kind>(state),
+                                                                                {},
+                                                                                [&](auto)
+                                                                                {
+                                                                                    ++num_bindings;
+                                                                                    return true;
+                                                                                }));
     ASSERT_GT(num_bindings, 2);
     EXPECT_EQ(count_bindings(), initial_binding_count);
     auto num_emitted = static_cast<uint64_t>(0);
@@ -300,45 +304,45 @@ void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>&
     {
         ++num_emitted;
         EXPECT_GT(statistics.num_generated, 0);
-        EXPECT_NE(successor.node.get_state().pack().index(), state.pack().index());
-        EXPECT_EQ(rule, sketch.get_rules().front());
+        EXPECT_NE(successor.node().state().pack().index(), state.pack().index());
+        EXPECT_EQ(rule, sketch.rules().front());
         return false;
     };
 
-    EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [] { return true; }));
+    EXPECT_FALSE(expander.for_each_successor(initial.state(), statistics, emit_one, [] { return true; }));
     EXPECT_EQ(statistics.num_generated, 0);
     EXPECT_EQ(num_emitted, 0);
-    EXPECT_EQ(search->state_repository->num_states(), 1);
+    EXPECT_EQ(tyr::planning::num_states(*search->state_repository), 1);
     EXPECT_EQ(count_bindings(), initial_binding_count);
 
     auto stop_polls = 0;
-    EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [&] { return ++stop_polls >= 2; }));
+    EXPECT_FALSE(expander.for_each_successor(initial.state(), statistics, emit_one, [&] { return ++stop_polls >= 2; }));
     EXPECT_EQ(statistics.num_generated, 0);
     EXPECT_EQ(num_emitted, 0);
-    EXPECT_EQ(search->state_repository->num_states(), 1);
+    EXPECT_EQ(tyr::planning::num_states(*search->state_repository), 1);
     EXPECT_EQ(count_bindings(), initial_binding_count);
 
     auto rejected_search = datasets::TaskSearchContext<Kind>::create(task, ygg::ExecutionContext::create(1));
     auto rejected_context = kr::TaskContext<Kind>::create(domain_context, rejected_search);
     auto rejecting_expander = kr::ps::base::SuccessorExpander<Kind>(*rejected_context, rejecting_sketch);
-    const auto rejected_initial = rejected_search->successor_generator->get_initial_node(*rejected_search->state_repository, *rejected_search->axiom_evaluator);
+    const auto rejected_initial = runir::datasets::initial_node(*rejected_search);
     auto rejected_statistics = kr::ps::base::SketchSearchStatistics {};
     EXPECT_FALSE(rejecting_expander.for_each_successor(
-        rejected_initial.get_state(),
+        rejected_initial.state(),
         rejected_statistics,
         [](const auto&, auto)
         {
             ADD_FAILURE() << "Unexpected accepted successor";
             return false;
         },
-        [&] { return rejected_search->state_repository->num_states() > 1; }));
+        [&] { return tyr::planning::num_states(*rejected_search->state_repository) > 1; }));
     EXPECT_GE(rejected_statistics.num_generated, 1);
     EXPECT_LT(rejected_statistics.num_generated, num_bindings);
-    EXPECT_EQ(rejected_search->state_repository->num_states(), 2);
+    EXPECT_EQ(tyr::planning::num_states(*rejected_search->state_repository), 2);
     EXPECT_EQ(count_bindings(), initial_binding_count);
     rejected_statistics = {};
     EXPECT_TRUE(rejecting_expander.for_each_successor(
-        rejected_initial.get_state(),
+        rejected_initial.state(),
         rejected_statistics,
         [](const auto&, auto)
         {
@@ -349,17 +353,17 @@ void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>&
     EXPECT_EQ(rejected_statistics.num_generated, num_bindings);
     EXPECT_EQ(count_bindings(), initial_binding_count);
 
-    EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [] { return false; }));
+    EXPECT_FALSE(expander.for_each_successor(initial.state(), statistics, emit_one, [] { return false; }));
     const auto generated = statistics.num_generated;
     EXPECT_EQ(num_emitted, 1);
     EXPECT_GE(generated, 1);
     EXPECT_LT(generated, num_bindings);
-    EXPECT_EQ(search->state_repository->num_states(), 2);
+    EXPECT_EQ(tyr::planning::num_states(*search->state_repository), 2);
     EXPECT_EQ(count_bindings(), initial_binding_count + (std::same_as<Kind, tyr::LiftedTag> ? 1 : 0));
 
     num_emitted = 0;
     EXPECT_TRUE(expander.for_each_successor(
-        initial.get_state(),
+        initial.state(),
         statistics,
         [&](const auto&, auto)
         {
@@ -421,28 +425,28 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
             return full;
         };
         auto& generator = *search->successor_generator;
-        const auto initial = generator.get_initial_node(*search->state_repository, *search->axiom_evaluator);
-        const auto& source = initial.get_state();
-        const auto successors = generator.get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
+        const auto initial = runir::datasets::initial_node(*search);
+        const auto& source = initial.state();
+        const auto successors = runir::datasets::labeled_successor_nodes(*search, initial);
         ASSERT_GT(successors.size(), 1);
-        ASSERT_TRUE(matches(source, successors.front().node.get_state()));
+        ASSERT_TRUE(matches(source, successors.front().node().state()));
 
         const auto static_queries = expander.get_environment().get_dl_caches().get_queries(true);
         ASSERT_EQ(static_queries.size(), 1);
-        const auto static_storage = std::vector(static_queries.front().get_rows().begin(), static_queries.front().get_rows().end());
-        EXPECT_EQ(static_queries.front().get_rows().size(), 2);
+        const auto static_storage = std::vector(static_queries.front().rows().begin(), static_queries.front().rows().end());
+        EXPECT_EQ(static_queries.front().rows().size(), 2);
 
-        EXPECT_TRUE(matches(source, successors.back().node.get_state()));
-        const auto target = successors.front().node.get_state();
+        EXPECT_TRUE(matches(source, successors.back().node().state()));
+        const auto target = successors.front().node().state();
         EXPECT_FALSE(matches(target, source));
-        const auto next = generator.get_labeled_successor_nodes(successors.front().node, *search->state_repository, *search->axiom_evaluator);
+        const auto next = runir::datasets::labeled_successor_nodes(*search, successors.front().node());
         ASSERT_FALSE(next.empty());
-        EXPECT_TRUE(matches(target, next.front().node.get_state()));
+        EXPECT_TRUE(matches(target, next.front().node().state()));
         EXPECT_TRUE(matches(source, target));
 
         const auto later_static_queries = expander.get_environment().get_dl_caches().get_queries(true);
         ASSERT_EQ(later_static_queries.size(), 1);
-        EXPECT_TRUE(std::ranges::equal(later_static_queries.front().get_rows(), static_storage));
+        EXPECT_TRUE(std::ranges::equal(later_static_queries.front().rows(), static_storage));
     };
     check.template operator()<tyr::GroundTag>();
     check.template operator()<tyr::LiftedTag>();

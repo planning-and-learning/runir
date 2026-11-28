@@ -22,10 +22,12 @@
 #include <memory>
 #include <tuple>
 #include <type_traits>
-#include <tyr/planning/axiom_evaluator.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <tyr/formalism/repository.hpp>
+#include <tyr/planning/axioms/axiom_evaluator.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -57,6 +59,9 @@ struct TaskSearchContext
     tyr::planning::AxiomEvaluatorPtr<Kind> axiom_evaluator;
     tyr::planning::StateRepositoryPtr<Kind> state_repository;
     tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
+    /// The scratch through which a borrowed action binding is interned: reused, so that interning one allocates nothing
+    /// once it is warm.
+    tyr::formalism::Builder builder;
 
     TaskSearchContext(const TaskSearchContext&) = delete;
     TaskSearchContext& operator=(const TaskSearchContext&) = delete;
@@ -76,7 +81,7 @@ private:
         task(std::move(task_)),
         execution_context(std::move(execution_context_)),
         axiom_evaluator(std::make_shared<tyr::planning::AxiomEvaluator<Kind>>(task, execution_context)),
-        state_repository(std::make_shared<tyr::planning::StateRepository<Kind>>(task)),
+        state_repository(tyr::planning::StateRepository<Kind>::create(task)),
         successor_generator(std::make_shared<tyr::planning::SuccessorGenerator<Kind>>(task, execution_context))
     {
     }

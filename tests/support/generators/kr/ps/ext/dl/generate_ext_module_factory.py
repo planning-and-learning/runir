@@ -48,20 +48,20 @@ def main() -> None:
     modules = dl.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
     suite["modules"] = [
         {
-            "name": module.get_symbol().get_name(),
-            "concept_features": len(module.get_concept_features()),
-            "role_features": len(module.get_role_features()),
-            "boolean_features": len(module.get_boolean_features()),
-            "numerical_features": len(module.get_numerical_features()),
-            "transitions": len(module.get_memory_transitions()),
+            "name": module.symbol().name(),
+            "concept_features": len(module.concept_features()),
+            "role_features": len(module.role_features()),
+            "boolean_features": len(module.boolean_features()),
+            "numerical_features": len(module.numerical_features()),
+            "transitions": len(module.memory_transitions()),
             "syntactic_complexity": module.syntactic_complexity(),
         }
         for module in modules
     ]
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
     suite["program"] = {
-        "entry": program.get_entry_mod().get_symbol().get_name(),
-        "modules": [module.get_symbol().get_name() for module in program.get_modules()],
+        "entry": program.entry_mod().symbol().name(),
+        "modules": [module.symbol().name() for module in program.modules()],
         "syntactic_complexity": program.syntactic_complexity(),
     }
     SUITE.write_text(json.dumps(suite, indent=2) + "\n", encoding="utf-8")

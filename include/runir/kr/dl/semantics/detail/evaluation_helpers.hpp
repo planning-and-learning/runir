@@ -25,10 +25,10 @@
 #include <tyr/formalism/conjunctive_condition_view.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/repository.hpp>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
-#include <tyr/planning/state_builder.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_builder.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
+#include <tyr/planning/tasks/lifted/task.hpp>
 #include <urd/elements/copy.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/slots/slots.hpp>
@@ -44,7 +44,7 @@ template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto num_objects(const Context& context) noexcept -> ygg::uint_t
 {
     const auto task = context.get_state().context().get_task()->get_task();
-    return static_cast<ygg::uint_t>(task.get_num_objects());
+    return static_cast<ygg::uint_t>(task.num_objects());
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
@@ -57,7 +57,7 @@ auto make_role_builder(Context& context)
 
 template<tyr::formalism::FactKind T>
 auto object_index(tyr::formalism::AtomView<::tyr::GroundTag, T> atom, size_t position) -> urd::index<tyr::formalism::Object>
-{ return atom.get_row().template get<urd::index<tyr::formalism::Object>>(position); }
+{ return atom.row().template get<urd::index<tyr::formalism::Object>>(position); }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 void evaluate_atomic_state_concept(urd::index_view<Concept<SemanticFamily, AtomicStateTag<T>>, C> constructor,
@@ -67,8 +67,8 @@ void evaluate_atomic_state_concept(urd::index_view<Concept<SemanticFamily, Atomi
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
 
-    const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().get_atoms(predicate))
+    const auto predicate = constructor.predicate();
+    for (const auto atom : context.get_state().atoms(predicate))
     {
         const auto object = detail::object_index(atom, 0);
         assert(ygg::uint_t(object.value) < num_objects);
@@ -84,8 +84,8 @@ void evaluate_atomic_goal_concept(urd::index_view<Concept<SemanticFamily, Atomic
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
 
-    const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().context().get_task()->get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), predicate))
+    const auto predicate = constructor.predicate();
+    for (const auto atom : context.get_state().context().get_task()->get_task().goal().template atoms<T>(constructor.polarity(), predicate))
     {
         const auto object = detail::object_index(atom, 0);
         assert(ygg::uint_t(object.value) < num_objects);
@@ -100,8 +100,8 @@ void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicState
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
-    const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().get_atoms(predicate))
+    const auto predicate = constructor.predicate();
+    for (const auto atom : context.get_state().atoms(predicate))
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
@@ -118,8 +118,8 @@ void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTa
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
-    const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().context().get_task()->get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), predicate))
+    const auto predicate = constructor.predicate();
+    for (const auto atom : context.get_state().context().get_task()->get_task().goal().template atoms<T>(constructor.polarity(), predicate))
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
@@ -132,36 +132,36 @@ void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTa
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 bool evaluate_atomic_state_boolean(urd::index_view<Boolean<SemanticFamily, AtomicStateTag<T>>, C> constructor, Context& context)
 {
-    auto atoms = context.get_state().get_atoms(constructor.get_predicate());
+    auto atoms = context.get_state().atoms(constructor.predicate());
     const auto value = atoms.begin() != atoms.end();
-    return constructor.get_polarity() ? value : !value;
+    return constructor.polarity() ? value : !value;
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 bool evaluate_atomic_goal_boolean(urd::index_view<Boolean<SemanticFamily, AtomicGoalTag<T>>, C> constructor, Context& context)
 {
-    auto atoms = context.get_state().context().get_task()->get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), constructor.get_predicate());
+    auto atoms = context.get_state().context().get_task()->get_task().goal().template atoms<T>(constructor.polarity(), constructor.predicate());
     return atoms.begin() != atoms.end();
 }
 
 inline bool nonempty(DenotationView<ConceptTag> value) { return value.value().any(); }
 
-inline bool nonempty(DenotationView<RoleTag> value) { return value.get_values().bits().storage_bits().any(); }
+inline bool nonempty(DenotationView<RoleTag> value) { return value.values().bits().storage_bits().any(); }
 
-inline bool nonempty(QueryDenotationView value) { return !value.get_rows().empty(); }
+inline bool nonempty(QueryDenotationView value) { return !value.rows().empty(); }
 
 inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.value().count()); }
 
-inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.get_values().bits().storage_bits().count()); }
+inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.values().bits().storage_bits().count()); }
 
-inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.get_rows().size()); }
+inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.rows().size()); }
 
 /// The least value in the one column of a relation, the largest uint_t (infinity) if it has no row.
 template<typename Rows>
 ygg::uint_t least_value(const Rows& rows)
 {
     auto result = std::numeric_limits<ygg::uint_t>::max();
-    for (const auto& held : rows.get_rows())
+    for (const auto& held : rows.rows())
         ygg::with_values(held, [&](const auto& values) { result = std::min(result, ygg::decode_value<ygg::uint_t>(*std::ranges::begin(values))); });
     return result;
 }

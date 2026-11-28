@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_PROGRAM_STEP_HPP_
 
 #include "runir/datasets/state_graph.hpp"
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
 
@@ -9,7 +10,8 @@
 #include <optional>
 #include <stdexcept>
 #include <string_view>
-#include <tyr/planning/node.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
 #include <utility>
 
 namespace runir::kr::ps
@@ -51,7 +53,8 @@ constexpr std::string_view to_string(ProgramOutcome outcome)
 /// the state repository. A successor that a storage only borrows (urd::borrowed_view) has none.
 template<typename Successor>
 concept PackableSuccessor = requires(const Successor& successor) { successor.pack(); };
-static_assert(PackableSuccessor<tyr::planning::LabeledNode<tyr::GroundTag>> && PackableSuccessor<tyr::planning::LabeledNode<tyr::LiftedTag>>);
+static_assert(PackableSuccessor<runir::datasets::LabeledPlanningNode<tyr::GroundTag>>
+              && PackableSuccessor<runir::datasets::LabeledPlanningNode<tyr::LiftedTag>>);
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind, typename Target = ProgramStateView<Family, Kind>>
 struct ProgramStep
@@ -63,7 +66,7 @@ struct ProgramStep
     std::optional<urd::data<datasets::StateGraphEdgeLabel>> state_transition = std::nullopt;
     std::optional<RuleView<Family>> rule = std::nullopt;
     /// The planning successor, packed; none where the storage only borrows its successors (PackableSuccessor).
-    std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
+    std::optional<tyr::planning::OwnedLabeledNodeRecordView<Kind>> planning_successor = std::nullopt;
 
     ProgramStep(ProgramOutcome status_, Target target_, runir::kr::TaskContextPtr<Kind> task_context_) :
         task_context(std::move(task_context_)),

@@ -6,8 +6,13 @@ import sys
 from collections import Counter
 
 from fixture_utils import read_fixture
+from planning_utils import planning_module
 from pytyr.formalism import PlanningDomain, RowActionLifted
-from pytyr.planning.ground import LabeledNode, Node, State
+from pytyr.planning.ground import (
+    OwnedLabeledNodeRecordView as PackedLabeledNode,
+    OwnedNodeBuilderView as Node,
+    State,
+)
 
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext
@@ -81,25 +86,26 @@ def test_base_sketch_exposes_declared_features(gripper_planning_domain: Planning
     sketch_repository = SketchRepository(dl_repository)
     sketch = parse_sketch(read_fixture("kr/ps/base/dl/declared_features.sketch"), planning_domain, sketch_repository)
 
-    assert [feature.get_variant().get_symbol() for feature in sketch.get_boolean_features()] == []
-    assert [feature.get_variant().get_symbol() for feature in sketch.get_numerical_features()] == ["n_balls", "n_held"]
+    assert [feature.variant().symbol() for feature in sketch.boolean_features()] == []
+    assert [feature.variant().symbol() for feature in sketch.numerical_features()] == ["n_balls", "n_held"]
 
 
 def _check_successor_callbacks(
     search: GroundTaskSearchContext, expander: SuccessorExpander, rejecting_expander: SuccessorExpander, node: Node
 ) -> None:
     """Check that successor callbacks of both expanders filter, count, and stop generation from ``node``."""
-    state = node.get_state()
-    expected = search.successor_generator.get_labeled_successor_nodes(
-        node, search.state_repository, search.axiom_evaluator
+    state = node.state()
+    expected = planning_module(search).deterministic.get_successors(
+        search.successor_generator, search.state_repository, search.axiom_evaluator, node
     )
-    accepted = [step for step in expected if step.node.get_state().pack().index() != state.pack().index()]
+    accepted = [step for step in expected if step.node().state().pack().index() != state.pack().index()]
     assert accepted
-    actual: list[tuple[LabeledNode, RuleBase]] = []
+    # An emitted successor is its record through the state repository.
+    actual: list[tuple[PackedLabeledNode, RuleBase]] = []
     statistics = SketchSearchStatistics()
     assert statistics.num_generated == 0
 
-    def emit(step: LabeledNode, rule: RuleBase) -> bool:
+    def emit(step: PackedLabeledNode, rule: RuleBase) -> bool:
         assert statistics.num_generated >= len(actual) + 1
         actual.append((step, rule))
         return True
@@ -107,12 +113,12 @@ def _check_successor_callbacks(
     assert expander.for_each_successor(state, statistics, emit, lambda: False) is True
     generated = len(expected)
     assert statistics.num_generated == generated
-    assert Counter((step.label, step.node.get_state()) for step, _ in actual) == Counter(
-        (step.label, step.node.get_state()) for step in accepted
+    assert Counter((str(step.label()), step.node().state().index()) for step, _ in actual) == Counter(
+        (str(step.label()), step.node().state().pack().index()) for step in accepted
     )
-    assert all(expander.matching_rule(state, step.node.get_state()) == rule for step, rule in actual)
+    assert all(expander.matching_rule(state, step.node().state().unpack()) == rule for step, rule in actual)
     first_accepted = next(
-        i for i, step in enumerate(expected) if step.node.get_state().pack().index() != state.pack().index()
+        i for i, step in enumerate(expected) if step.node().state().pack().index() != state.pack().index()
     )
     assert expander.for_each_successor(state, statistics, lambda _step, _rule: False, lambda: False) is False
     generated += first_accepted + 1
@@ -126,7 +132,7 @@ def _check_successor_callbacks(
     generated += len(expected)
     assert statistics.num_generated == generated
     assert actual == []
-    assert all(rejecting_expander.matching_rule(state, step.node.get_state()) is None for step in expected)
+    assert all(rejecting_expander.matching_rule(state, step.node().state()) is None for step in expected)
 
     assert (
         rejecting_expander.for_each_successor(state, statistics, emit, lambda: statistics.num_generated > generated)
@@ -148,13 +154,13 @@ def test_base_successor_callbacks_filter_and_stop_generation(
     )
     expander = SuccessorExpander(task_context, sketch)
     rejecting_expander = SuccessorExpander(task_context, SketchFactory.create_empty(sketch_repository))
-    initial = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
-    initial_successors = search.successor_generator.get_labeled_successor_nodes(
-        initial, search.state_repository, search.axiom_evaluator
+    initial = planning_module(search).get_initial_node(search.state_repository, search.axiom_evaluator)
+    initial_successors = planning_module(search).deterministic.get_successors(
+        search.successor_generator, search.state_repository, search.axiom_evaluator, initial
     )
     assert len(initial_successors) > 1
 
-    for node in (initial, initial_successors[0].node):
+    for node in (initial, initial_successors[0].node()):
         _check_successor_callbacks(search, expander, rejecting_expander, node)
 
 
@@ -183,14 +189,17 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert str(reparsed_sketch) == sketch_description
     assert sketch.syntactic_complexity() == 13
 
-    initial_node = search_context.successor_generator.get_initial_node(
+    initial_node = planning_module(search_context).get_initial_node(
         search_context.state_repository, search_context.axiom_evaluator
     )
-    labeled_successor = search_context.successor_generator.get_labeled_successor_nodes(
-        initial_node, search_context.state_repository, search_context.axiom_evaluator
+    labeled_successor = planning_module(search_context).deterministic.get_successors(
+        search_context.successor_generator,
+        search_context.state_repository,
+        search_context.axiom_evaluator,
+        initial_node,
     )[0]
-    source_state = initial_node.get_state()
-    target_state = labeled_successor.node.get_state()
+    source_state = initial_node.state()
+    target_state = labeled_successor.node().state()
     dl_builder = task_context.dl_builder
     dl_denotation_repository = task_context.dl_denotation_repository
     assert dl_builder is task_context.dl_builder
@@ -209,16 +218,16 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert LiftedStateEvaluationContext is not None
 
     assert isinstance(base.is_compatible_with(sketch, transition_context), bool)
-    rule = next(iter(sketch.get_rules()))
+    rule = next(iter(sketch.rules()))
     assert isinstance(base.is_compatible_with(rule, transition_context), bool)
-    condition = next(iter(rule.get_conditions()))
+    condition = next(iter(rule.conditions()))
     assert isinstance(base.dl.is_compatible_with(condition, transition_context), bool)
-    feature = condition.get_feature()
-    concrete_feature = feature.get_variant()
+    feature = condition.feature()
+    concrete_feature = feature.variant()
     assert isinstance(concrete_feature, ConcreteFeatureBaseBoolean)
-    dl_constructor = concrete_feature.get_feature()
+    dl_constructor = concrete_feature.feature()
     dl_denotation = semantics.evaluate(dl_constructor, state_context)
-    assert isinstance(base.dl.evaluate(feature, state_context).get_value(), bool)
+    assert isinstance(base.dl.evaluate(feature, state_context).value(), bool)
     assert base.dl.evaluate(concrete_feature, state_context) == dl_denotation
     assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
     assert dl_denotation.index() is not None
@@ -272,12 +281,12 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     classifier_dl_repository = task_context.domain_context.uns_repository.get_dl_repository()
     classifier_repository = task_context.domain_context.uns_repository
     classifier = parse_classifier(read_fixture("kr/uns/always.classifier"), planning_domain, classifier_repository)
-    classifier_feature = classifier.get_features()[0]
-    concrete_classifier_feature = classifier_feature.get_variant()
+    classifier_feature = classifier.features()[0]
+    concrete_classifier_feature = classifier_feature.variant()
     assert classifier_feature.syntactic_complexity() == concrete_classifier_feature.syntactic_complexity()
     assert (
         concrete_classifier_feature.syntactic_complexity()
-        == concrete_classifier_feature.get_feature().syntactic_complexity()
+        == concrete_classifier_feature.feature().syntactic_complexity()
     )
     assert classifier.syntactic_complexity() == 1
     assert ClassifierFactory.create_empty(classifier_repository).syntactic_complexity() == 0

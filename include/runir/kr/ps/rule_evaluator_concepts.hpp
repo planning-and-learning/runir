@@ -6,7 +6,7 @@
 #include "runir/kr/ps/family_traits.hpp"
 
 #include <concepts>
-#include <tyr/planning/state_view_concepts.hpp>
+#include <tyr/planning/states/state_view_concepts.hpp>
 #include <utility>
 
 namespace runir::kr::ps
@@ -17,7 +17,7 @@ namespace runir::kr::ps
 template<FamilyTag Family,
          tyr::TaskKind Kind,
          typename Storage = void,
-         tyr::planning::StateViewConcept<Kind> PlanningState = tyr::planning::StateView<Kind>,
+         tyr::planning::StateBuilderViewConcept<Kind> PlanningState = tyr::planning::SharedStateBuilderView<Kind>,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 struct RuleEvaluationContext;
 

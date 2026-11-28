@@ -91,18 +91,18 @@ private:
     template<ConceptOrRoleTag Category>
     RecordView<QueryProjection<Category>> rewrite(RecordView<QueryProjection<Category>> view)
     {
-        auto root = optimize_root(view.get_operand(), detail::query_labels(view.get_columns()));
+        auto root = optimize_root(view.operand(), detail::query_labels(view.columns()));
         root = std::visit(
             [&]<typename Tag>(QueryView<Tag> concrete) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, QueryProjectTag>)
-                    if (std::ranges::equal(concrete.get_columns(), view.get_columns()))
-                        return concrete.get_operand();
+                    if (std::ranges::equal(concrete.columns(), view.columns()))
+                        return concrete.operand();
                 return root;
             },
-            root.get_variant());
+            root.variant());
         auto data =
-            urd::make<QueryProjection<Category>>(root, view.get_columns(), urd::data<runir::kr::database::ProjectionPlan> {});  // the plan: derived on insert
+            urd::make<QueryProjection<Category>>(root, view.columns(), urd::data<runir::kr::database::ProjectionPlan> {});  // the plan: derived on insert
         return m_repository->insert(data).first;
     }
 

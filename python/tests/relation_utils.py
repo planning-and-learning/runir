@@ -26,7 +26,7 @@ def insert(builder: database.ScratchRelation, values: Sequence[Any]) -> int:
 # (RelationSchema); the bindings give them no common base.
 def values(row: Any) -> tuple[object, ...]:  # noqa: ANN401
     """The decoded values of `row`, each by its relation's column type, an object column as its index (an int)."""
-    return tuple(_plain(row.get(column)) for column in range(len(row.get_values())))
+    return tuple(_plain(row.get(column)) for column in range(len(row.values())))
 
 
 def _plain(value: object) -> object:
@@ -37,7 +37,7 @@ def _plain(value: object) -> object:
 # `relation` is a builder's view (RelationSchemaBuilderBorrowed) or an interned relation (RelationSchema).
 def tuples(relation: Any) -> list[tuple[object, ...]]:  # noqa: ANN401
     """The decoded rows of `relation`, in its order."""
-    return [values(row) for row in relation.get_rows()]
+    return [values(row) for row in relation.rows()]
 
 
 # `relation` is any of the forms the docstring names; the bindings give them no common base.
@@ -47,7 +47,7 @@ def intern(repository: formalism.RelationRepository, relation: Any) -> tuple[for
         relation = relation.view()
     columns = relation.columns()
     pool = repository.insert(formalism.SchemaData([column.type for column in columns]))[0].index()
-    rows = [repository.insert(formalism.RowSchemaData(pool, row.get_values()))[0] for row in relation.get_rows()]
+    rows = [repository.insert(formalism.RowSchemaData(pool, row.values()))[0] for row in relation.rows()]
     layout = repository.insert(formalism.ColumnsData(columns))[0]
     return repository.insert(formalism.RelationSchemaData(pool, layout.index(), [each.index() for each in rows]))
 
@@ -64,6 +64,6 @@ def rename(
     renamed = repository.insert(formalism.ColumnsData(layout))[0]
     return repository.insert(
         formalism.RelationSchemaData(
-            relation.get_pool().index(), renamed.index(), [each.index() for each in relation.get_rows()]
+            relation.pool().index(), renamed.index(), [each.index() for each in relation.rows()]
         )
     )[0]

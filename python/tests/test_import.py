@@ -20,9 +20,6 @@ def test_source_version_reads_project_table(tmp_path: Path, monkeypatch: pytest.
 
 
 def test_native_prefix_points_to_installed_cmake_package() -> None:
-    if not hasattr(pyrunir, "native_prefix"):
-        pytest.skip("native_prefix is only available through the installed pyrunir package wrapper")
-
     prefix = pyrunir.native_prefix()
 
     assert (prefix / "include" / "runir" / "runir.hpp").exists()

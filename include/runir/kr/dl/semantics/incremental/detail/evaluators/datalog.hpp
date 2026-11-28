@@ -29,7 +29,7 @@ struct QueryProgramEvaluator : QueryValue
         program(program_),
         feature(make_datalog_feature(graph.scratch(), program_))
     {
-        for (const auto input : program.get_inputs())
+        for (const auto input : program.inputs())
             inputs.push_back(graph.prepare(input, dependencies));
     }
 
@@ -57,9 +57,9 @@ struct QueryHeadEvaluator : QueryValue
                        QueryView<QueryHeadTag> expression,
                        GraphBuilder<Kind>& graph,
                        urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
-        QueryValue(scratch_, expression.get_schema()),
-        program(graph.prepare_program(expression.get_program(), dependencies)),
-        relation(expression.get_relation().index())
+        QueryValue(scratch_, expression.schema()),
+        program(graph.prepare_program(expression.program(), dependencies)),
+        relation(expression.relation().index())
     {
     }
 
@@ -67,7 +67,7 @@ struct QueryHeadEvaluator : QueryValue
     template<typename Relation, typename F>
     void for_each_row(const Relation& rows, const F& f)
     {
-        for (const auto& held : rows.get_rows())
+        for (const auto& held : rows.rows())
             ygg::with_values(held,
                              [&](const auto& stored)
                              {

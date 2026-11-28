@@ -11,8 +11,8 @@
 #include <cstddef>
 #include <optional>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
 #include <unordered_map>
 #include <urd/repr/queues/queue.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -35,8 +35,8 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
     result.task_context_owner = task;
     auto& planning = *task->search_context;
     auto expander = SuccessorExpander<Kind>(task, program);
-    const auto initial_node = planning.successor_generator->get_packed_initial_node(*planning.state_repository, *planning.axiom_evaluator);
-    const auto initial = expander.initial_state(initial_node.get_state().unpack());
+    const auto initial_node = runir::datasets::packed_initial_node(planning);
+    const auto initial = expander.initial_state(initial_node.state().unpack());
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*planning.task);
     const auto static_goal = goal_strategy.is_static_goal_satisfied(*planning.task);
     const auto watch = options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt;
@@ -56,8 +56,8 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
         if (nodes.size() >= options.max_num_states)
             return std::nullopt;
         const auto index = nodes.size();
-        const auto is_goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial.get_state(), state.get_state());
-        const auto unsolvable = !is_goal && classifier.is_unsolvable(state.get_state());
+        const auto is_goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial.state(), state.state());
+        const auto unsolvable = !is_goal && classifier.is_unsolvable(state.state());
         nodes.push_back({ state, parent, action, is_goal, unsolvable });
         positions.insert(ygg::uint_t(state.index().value));
         pending.push(index);

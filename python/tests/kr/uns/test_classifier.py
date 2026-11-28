@@ -39,16 +39,16 @@ def test_classifier_fixture(
         symbol = case.get("symbol")
         assert isinstance(symbol, str)
         classifier = parse_classifier(description, gripper_planning_domain, domain_context.uns_repository)
-        assert classifier.get_symbol() == symbol
-        for feature in classifier.get_features():
+        assert classifier.symbol() == symbol
+        for feature in classifier.features():
             assert isinstance(feature, FeatureUnsBoolean)
-            concrete = feature.get_variant()
+            concrete = feature.variant()
             assert isinstance(concrete, ConcreteFeatureUnsBoolean)
-            assert feature.get_variant().get_feature() == concrete.get_feature()
-            assert feature.get_variant().get_symbol() == concrete.get_symbol()
-        for clause in classifier.get_clauses():
-            for literal in clause.get_literals():
-                assert isinstance(literal.get_feature(), FeatureUnsBoolean)
+            assert feature.variant().feature() == concrete.feature()
+            assert feature.variant().symbol() == concrete.symbol()
+        for clause in classifier.clauses():
+            for literal in clause.literals():
+                assert isinstance(literal.feature(), FeatureUnsBoolean)
         assert str(parse_classifier(str(classifier), gripper_planning_domain, domain_context.uns_repository)) == str(
             classifier
         )
@@ -73,10 +73,10 @@ def test_classifier_and_features_use_the_context_cache(
     classifier = parse_classifier(
         read_fixture("kr/uns/always.classifier"), gripper_planning_domain, domain.uns_repository
     )
-    feature = classifier.get_features()[0]
+    feature = classifier.features()[0]
 
     assert classify(classifier, context) is True
-    assert uns.dl.evaluate(feature, context).get_value() is True
-    assert uns.dl.evaluate(feature.get_variant(), context).get_value() is True
+    assert uns.dl.evaluate(feature, context).value() is True
+    assert uns.dl.evaluate(feature.variant(), context).value() is True
     storage.reset_all()
     assert classify(classifier, context) is True

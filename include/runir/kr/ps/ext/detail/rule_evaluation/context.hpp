@@ -1,11 +1,13 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_CONTEXT_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_CONTEXT_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
-#include <tyr/planning/node.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -22,7 +24,7 @@ namespace runir::kr::ps
 /// Rule evaluators never own or refer back to an expander.
 template<tyr::TaskKind Kind,
          ext::ExecutionStorageConcept<Kind> Storage,
-         tyr::planning::StateViewConcept<Kind> PlanningState,
+         tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>
 {
@@ -39,27 +41,26 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
     auto make_dl_context(State state)
     {
         environment->select_source(state);
-        return urd::visit_view(state.get_module_state(),
-                               [&](const auto& module_)
-                               { return environment->make_dl_context(planning_state, module_.get_arguments(), module_.get_registers()); });
+        return urd::visit_view(state.module_state(),
+                               [&](const auto& module_) { return environment->make_dl_context(planning_state, module_.arguments(), module_.registers()); });
     }
 
     /// From this context's planning state to a candidate's (its storage's successor: of another state type, where this
     /// one is registered and the storage builds its successors).
     template<urd::ViewOf<ext::ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> Candidate,
+             tyr::planning::StateBuilderViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
-    auto make_dl_transition_context(State state, const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate)
+    auto make_dl_transition_context(State state, const runir::datasets::LabeledPlanningNode<Kind, Candidate, Binding>& candidate)
     {
         environment->select_source(state);
-        return urd::visit_view(state.get_module_state(),
+        return urd::visit_view(state.module_state(),
                                [&](const auto& module_)
                                {
                                    return environment->make_dl_transition_context(planning_state,
-                                                                                  candidate.node.get_state(),
-                                                                                  module_.get_arguments(),
-                                                                                  module_.get_registers(),
-                                                                                  module_.get_registers());
+                                                                                  candidate.node().state(),
+                                                                                  module_.arguments(),
+                                                                                  module_.registers(),
+                                                                                  module_.registers());
                                });
     }
 };

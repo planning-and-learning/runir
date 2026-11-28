@@ -23,7 +23,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_entry_mod() const noexcept { return self().template member<&urd::record_of<V>::entry_mod>(); }
+    auto entry_mod() const noexcept { return self().template member<&urd::record_of<V>::entry_mod>(); }
 
     static constexpr auto functions() noexcept
     { return urd::Functions<urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::ps::icp::syntactic_complexity)>> {}; }

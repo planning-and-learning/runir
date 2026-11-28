@@ -14,7 +14,7 @@ namespace
 template<typename View>
 std::size_t of_variant(View view)
 {
-    return std::visit([](auto child) { return syntactic_complexity(child); }, view.get_variant());
+    return std::visit([](auto child) { return syntactic_complexity(child); }, view.variant());
 }
 
 }  // namespace

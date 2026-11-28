@@ -78,7 +78,7 @@ struct GenerateResultsFor
 
 template<tyr::TaskKind Kind>
 GenerateResultsFor generate(GrammarView grammar,
-                            const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
+                            const urd::Store<urd::sequence<tyr::planning::StateView<Kind>>>& states,
                             runir::kr::dl::ConstructorRepository& output_repository,
                             runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                             const GenerateOptions& options);

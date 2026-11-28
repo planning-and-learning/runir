@@ -1,5 +1,6 @@
 #include "planning_fixtures.hpp"
 #include "record_copy.hpp"
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 
@@ -29,8 +30,9 @@
 #include <type_traits>
 #include <tyr/formalism/interning.hpp>
 #include <tyr/formalism/planning/parser.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <urd/elements/copy.hpp>
 #include <urd/elements/hash.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -58,7 +60,7 @@ template<typename D>
 concept OneSidedPlanRecord = requires(const D& data) { data.plan.position; };
 /// A distance: the numerical with an edges operand, which keeps a plan.
 template<typename V>
-concept DistanceView = requires(const V& view) { view.get_edges(); };
+concept DistanceView = requires(const V& view) { view.edges(); };
 using ObjectIndex = urd::index<tyr::formalism::Object>;
 using ColumnIndex = urd::index<ygg::Column>;
 
@@ -66,7 +68,7 @@ using ColumnIndex = urd::index<ygg::Column>;
 urd::Store<urd::sequence<ObjectIndex>> object_values(const auto& row)
 {
     auto result = urd::Store<urd::sequence<ObjectIndex>> {};
-    for (size_t i = 0; i < row.get_values().size(); ++i)
+    for (size_t i = 0; i < row.values().size(); ++i)
         result.push_back(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(i))));
     return result;
 }
@@ -97,8 +99,8 @@ auto parse_query(const std::string& expression, tyr::formalism::DomainView domai
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
     return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
-        std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
-            .get_operand());
+        std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.variant())
+            .operand());
 }
 
 template<typename Data, typename Check>
@@ -136,7 +138,7 @@ template<tyr::TaskKind Kind>
 void check_queries()
 {
     const auto search = query_search_context<Kind>();
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     const auto domain = search->task->get_domain().get_domain();
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
@@ -146,7 +148,7 @@ void check_queries()
     auto registers = urd::data<kr::dl::semantics::RegisterValues>();
     registers.concept_values.resize(1);
     registers.role_values.resize(1);
-    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
+    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(),
                                                                    builder,
                                                                    storage,
                                                                    denotations.insert(empty_arguments).first,
@@ -159,7 +161,7 @@ void check_queries()
     const auto count = [&](const std::string& query)
     {
         const auto expression = kr::ps::ext::dl::parse_numerical("(n_count " + query + ")", domain, *repository);
-        return kr::dl::semantics::evaluate<Kind>(expression, context).get_value();
+        return kr::dl::semantics::evaluate<Kind>(expression, context).value();
     };
     const urd::Store<urd::sequence<std::pair<std::string, ygg::uint_t>>> cases {
         { triple, 4 },
@@ -213,19 +215,19 @@ void check_queries()
         }
     }
 
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_boolean("(b_nonempty " + ready + ")", domain, *repository), context).get_value());
-    EXPECT_FALSE(kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_boolean("(b_nonempty " + missing + ")", domain, *repository), context).get_value());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_boolean("(b_nonempty " + ready + ")", domain, *repository), context).value());
+    EXPECT_FALSE(kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_boolean("(b_nonempty " + missing + ")", domain, *repository), context).value());
     const auto concept_ = kr::ps::ext::dl::parse_concept("(c_project z " + triple + ")", domain, *repository);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(concept_, context).value().count(), 3);
     const auto role = kr::ps::ext::dl::parse_role("(r_project y x " + triple + ")", domain, *repository);
     const auto reversed = kr::dl::semantics::evaluate<Kind>(role, context);
-    EXPECT_EQ(reversed.get_values().bits().storage_bits().count(), 3);
-    const auto a = domain.get_constants()[0];
-    const auto b = domain.get_constants()[1];
-    const auto c = domain.get_constants()[2];
-    ASSERT_EQ(a.get_name(), "a");
-    ASSERT_EQ(b.get_name(), "b");
-    ASSERT_EQ(c.get_name(), "c");
+    EXPECT_EQ(reversed.values().bits().storage_bits().count(), 3);
+    const auto a = domain.constants()[0];
+    const auto b = domain.constants()[1];
+    const auto c = domain.constants()[2];
+    ASSERT_EQ(a.name(), "a");
+    ASSERT_EQ(b.name(), "b");
+    ASSERT_EQ(c.name(), "c");
     EXPECT_TRUE(reversed.value(b.index())[ygg::uint_t(a.index().value)]);
     EXPECT_TRUE(reversed.value(c.index())[ygg::uint_t(b.index().value)]);
     EXPECT_FALSE(reversed.value(a.index())[ygg::uint_t(b.index().value)]);
@@ -242,7 +244,7 @@ void check_queries()
 
     const auto evaluate_register = [&](auto expression)
     {
-        auto updated = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
+        auto updated = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(),
                                                                        builder,
                                                                        storage,
                                                                        denotations.insert(empty_arguments).first,
@@ -250,24 +252,24 @@ void check_queries()
         return kr::dl::semantics::evaluate<Kind>(expression, updated);
     };
     const auto register_count = kr::ps::ext::dl::parse_numerical("(n_count (q_join " + triple + " (q_concept x (c_register 0))))", domain, *repository);
-    EXPECT_EQ(evaluate_register(register_count).get_value(), 0);
+    EXPECT_EQ(evaluate_register(register_count).value(), 0);
     registers.concept_values[0] = a.index();
     storage.reset_dynamic();
-    EXPECT_EQ(evaluate_register(register_count).get_value(), 2);
+    EXPECT_EQ(evaluate_register(register_count).value(), 2);
     registers.concept_values[0] = c.index();
     storage.reset_dynamic();
-    EXPECT_EQ(evaluate_register(register_count).get_value(), 0);
+    EXPECT_EQ(evaluate_register(register_count).value(), 0);
     registers.concept_values[0].reset();
     storage.reset_dynamic();
-    EXPECT_EQ(evaluate_register(register_count).get_value(), 0);
+    EXPECT_EQ(evaluate_register(register_count).value(), 0);
 
     const auto role_register_count = kr::ps::ext::dl::parse_numerical("(n_count (q_join " + triple + " (q_role (x y) (r_register 0))))", domain, *repository);
     registers.role_values[0] = ::cista::pair(a.index(), b.index());
     storage.reset_dynamic();
-    EXPECT_EQ(evaluate_register(role_register_count).get_value(), 2);
+    EXPECT_EQ(evaluate_register(role_register_count).value(), 2);
     registers.role_values[0] = ::cista::pair(b.index(), c.index());
     storage.reset_dynamic();
-    EXPECT_EQ(evaluate_register(role_register_count).get_value(), 1);
+    EXPECT_EQ(evaluate_register(role_register_count).value(), 1);
 
     urd::visit_view(context.registers(),
                     [](const auto& unbound)
@@ -282,7 +284,7 @@ void check_queries()
     const auto c_set = kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_concept(R"((c_nominal "c"))", domain, *repository), persistent);
     auto argument_values = urd::data<kr::dl::semantics::CallArguments>();
     argument_values.concept_arguments.push_back(a_set.index());
-    auto argument_context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
+    auto argument_context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(),
                                                                             builder,
                                                                             storage,
                                                                             denotations.insert(argument_values).first,
@@ -291,34 +293,34 @@ void check_queries()
     // An invalid Ext argument must propagate through DL/query variant dispatch, not terminate.
     EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(argument_count, context), std::invalid_argument);
     // A context that binds no arguments or registers rejects both.
-    auto unbound_context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(), builder, storage);
+    auto unbound_context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(), builder, storage);
     EXPECT_FALSE(unbound_context.has_arguments());
     EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(argument_count, unbound_context), std::invalid_argument);
     EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_concept("(c_register 0)", domain, *repository), unbound_context),
                  std::invalid_argument);
     // Ext programs also use the comparisons, constants and connectives.
     const auto parse_boolean = [&](const std::string& description) { return kr::ps::ext::dl::parse_boolean(description, domain, *repository); };
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_and (b_const true) (b_not (n_lt (n_const 2) (n_const 1))))"), unbound_context).get_value());
-    EXPECT_FALSE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_or (b_const false) (n_eq (n_add (n_const 1) (n_const 1)) (n_const 3)))"), unbound_context)
-                     .get_value());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_neq (b_nonempty (c_top)) (b_const false))"), unbound_context).get_value());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_and (b_const true) (b_not (n_lt (n_const 2) (n_const 1))))"), unbound_context).value());
+    EXPECT_FALSE(
+        kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_or (b_const false) (n_eq (n_add (n_const 1) (n_const 1)) (n_const 3)))"), unbound_context).value());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_neq (b_nonempty (c_top)) (b_const false))"), unbound_context).value());
     storage.reset_dynamic();
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument_count, argument_context).get_value(), 2);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument_count, argument_context).value(), 2);
     const auto argument = kr::ps::ext::dl::parse_concept("(c_argument 0)", domain, *repository);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, argument_context), a_set);
     argument_values.concept_arguments[0] = c_set.index();
-    auto other_argument_context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
+    auto other_argument_context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(),
                                                                                   builder,
                                                                                   storage,
                                                                                   denotations.insert(argument_values).first,
                                                                                   denotations.insert(registers).first);
     storage.reset_dynamic();
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument_count, other_argument_context).get_value(), 0);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument_count, other_argument_context).value(), 0);
     EXPECT_EQ(argument_context.arguments().template arguments<kr::dl::ConceptTag>()[0].index(), a_set.index());
 
-    const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
+    const auto successors = runir::datasets::successor_nodes(*search, initial);
     ASSERT_FALSE(successors.empty());
-    auto next = kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().get_state(),
+    auto next = kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().state(),
                                                                 builder,
                                                                 storage,
                                                                 denotations.insert(empty_arguments).first,
@@ -327,19 +329,19 @@ void check_queries()
     const auto derived_count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_atomic_state "copied" (x y z))))", domain, *repository);
     const auto ready_test = kr::ps::ext::dl::parse_boolean("(b_nonempty " + ready + ")", domain, *repository);
     storage.reset_dynamic();
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(triple_count, next).get_value(), 3);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived_count, next).get_value(), 3);
-    EXPECT_FALSE(kr::dl::semantics::evaluate<Kind>(ready_test, next).get_value());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(triple_count, next).value(), 3);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived_count, next).value(), 3);
+    EXPECT_FALSE(kr::dl::semantics::evaluate<Kind>(ready_test, next).value());
     storage.reset_dynamic();
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(triple_count, context).get_value(), 4);
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(ready_test, context).get_value());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(triple_count, context).value(), 4);
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(ready_test, context).value());
 
     // Borrowed state/register views use interned arguments, which survive feature-cache invalidation.
     {
         auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
         argument_data.concept_arguments.push_back(a_set.index());
         const auto arguments = denotations.insert(argument_data).first;
-        const auto& planning_state = initial.get_state();
+        const auto& planning_state = initial.state();
         auto planning_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
         planning_builder.assign(planning_state);
         auto borrowed_context =
@@ -378,7 +380,7 @@ void check_queries()
     EXPECT_EQ(retained_argument.value().count(), 1);
     EXPECT_TRUE(retained_argument.value()[ygg::uint_t(a.index().value)]);
     denotations.reset();
-    EXPECT_EQ(retained_distance.get_value(), 2);
+    EXPECT_EQ(retained_distance.value(), 2);
 }
 
 /// Distance arguments may be concepts/roles or queries; every form shares one evaluation.
@@ -386,7 +388,7 @@ template<tyr::TaskKind Kind>
 void check_distance_queries()
 {
     const auto search = query_search_context<Kind>();
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     const auto domain = search->task->get_domain().get_domain();
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
@@ -394,7 +396,7 @@ void check_distance_queries()
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto arguments = urd::data<kr::dl::semantics::CallArguments>();
     auto registers = urd::data<kr::dl::semantics::RegisterValues>();
-    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
+    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(),
                                                                    builder,
                                                                    storage,
                                                                    denotations.insert(arguments).first,
@@ -408,13 +410,13 @@ void check_distance_queries()
             {
                 if constexpr (DistanceView<Concrete>)
                 {
-                    const auto& plan = concrete.get_plan();
+                    const auto& plan = concrete.plan();
                     auto children = context.child_context();
                     const auto relation = [&](auto argument, auto columns)
                     { return std::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns, children); }, argument); };
-                    const auto sources = relation(concrete.get_sources(), plan.source_columns);
-                    const auto edges = relation(concrete.get_edges(), plan.edge_columns);
-                    const auto targets = relation(concrete.get_targets(), plan.target_columns);
+                    const auto sources = relation(concrete.sources(), plan.source_columns);
+                    const auto edges = relation(concrete.edges(), plan.edge_columns);
+                    const auto targets = relation(concrete.targets(), plan.target_columns);
                     auto scratch = ygg::FreeScratchRelations();
                     auto distances = scratch.draw(plan.output_columns);
                     auto workspace = runir::kr::database::DistanceWorkspace(plan);
@@ -423,11 +425,11 @@ void check_distance_queries()
                 else
                     throw std::logic_error("reference expects n_distance");
             },
-            numerical.get_variant());
+            numerical.variant());
     };
     const auto number = [&](const std::string& expression)
     {
-        const auto value = kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_numerical(expression, domain, *repository), context).get_value();
+        const auto value = kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_numerical(expression, domain, *repository), context).value();
         EXPECT_EQ(value, reference(expression)) << expression;
         return value;
     };
@@ -526,7 +528,7 @@ void check_distance_queries()
 void check_cached_queries()
 {
     const auto search = query_search_context<tyr::GroundTag>();
-    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    const auto state = tyr::planning::share(*search->state_repository, tyr::planning::get_initial_state(*search->state_repository, *search->axiom_evaluator));
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto other_repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto& repo = *repository;
@@ -579,11 +581,11 @@ void check_cached_queries()
                                  EXPECT_EQ(decoded.columns, expected_columns);
                                  if constexpr (SchemaRecord<std::remove_cvref_t<decltype(decoded)>>)
                                  {
-                                     EXPECT_TRUE(std::ranges::equal(decoded.schema, concrete.get_schema()));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.schema, concrete.schema()));
                                  }
                                  if constexpr (PlannedRecord<std::remove_cvref_t<decltype(data)>>)
                                  {
-                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.output_columns, concrete.get_schema()));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.output_columns, concrete.schema()));
                                  }
                                  if constexpr (KeyedPlanRecord<std::remove_cvref_t<decltype(data)>>)
                                  {
@@ -618,11 +620,11 @@ void check_cached_queries()
         EXPECT_EQ(stale.columns, expected_columns);
         if constexpr (SchemaRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_TRUE(std::ranges::equal(stale.schema, concrete.get_schema()));
+            EXPECT_TRUE(std::ranges::equal(stale.schema, concrete.schema()));
         }
         if constexpr (PlannedRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_TRUE(std::ranges::equal(stale.plan.output_columns, concrete.get_schema()));
+            EXPECT_TRUE(std::ranges::equal(stale.plan.output_columns, concrete.schema()));
         }
         if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
@@ -677,7 +679,7 @@ void check_cached_queries()
                              right_operand->insert(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
                              runir::kr::database::Workspace scratch;
                              runir::kr::database::join(left_operand->view(), right_operand->view(), decoded.plan, *result, scratch);
-                             EXPECT_EQ(result->view().get_rows().size(), 1);
+                             EXPECT_EQ(result->view().rows().size(), 1);
                              EXPECT_TRUE(result->view().contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(10)),
                                                                                              ygg::encode_value<ygg::uint_t>(ygg::uint_t(20)) }));
                          });
@@ -700,7 +702,7 @@ void check_cached_queries()
                                  input->insert(kr::dl::encode_object_row(row, bytes));
                                  runir::kr::database::Workspace scratch;
                                  runir::kr::database::project(input->view(), decoded.plan, *result, scratch);
-                                 ASSERT_EQ(result->view().get_rows().size(), 1);
+                                 ASSERT_EQ(result->view().rows().size(), 1);
                                  for (size_t i = 0; i < positions.size(); ++i)
                                      EXPECT_EQ(ObjectIndex(ygg::decode_value<ygg::uint_t>(ygg::value_of(result->view().row(0), i))),
                                                ObjectIndex(10 + positions[i]));
@@ -743,14 +745,14 @@ void check_cached_queries()
     auto value_data = urd::data<kr::dl::Query<kr::dl::QuerySelectValueTag>>();
     value_data.operand = joined.index();
     value_data.column = x;
-    value_data.object = search->task->get_domain().get_domain().get_constants()[0].index();
+    value_data.object = search->task->get_domain().get_domain().constants()[0].index();
     check_inferred_schema(value_data);
 
     auto count_data = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>>(renamed.index());
     auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(repo.insert(count_data).first.index(), false);
     const auto count = repo.insert(count_wrapper).first;
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).get_value(), 3);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).get_value(), 3);
+    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).value(), 3);
+    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).value(), 3);
     EXPECT_TRUE(caches.find(true, top).has_value());
 
     auto projection_data = urd::data<kr::dl::QueryProjection<kr::dl::ConceptTag>>();
@@ -762,20 +764,20 @@ void check_cached_queries()
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(projection, context).value().count(), 3);
 
     const auto held = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
-    const auto held_storage = std::vector(held.get_rows().begin(), held.get_rows().end());
+    const auto held_storage = std::vector(held.rows().begin(), held.rows().end());
     const auto* held_columns = held.columns().data();
     EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
     EXPECT_NE(held_columns, schema_of(renamed).data());
     EXPECT_TRUE(std::ranges::equal(held.columns(), schema_of(renamed)));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows(), held_storage));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).rows(), held_storage));
     auto nested_rename_data = runir::tests::copy_fields(rename_data);
     nested_rename_data.operand = renamed.index();
     nested_rename_data.columns[0] = x;
     query_data.variant = repo.insert(nested_rename_data).first.index();
     const auto nested = kr::dl::semantics::evaluate<tyr::GroundTag>(repo.insert(query_data).first, context);
     EXPECT_EQ(nested.columns()[0].label, ColumnIndex(ygg::uint_t(x.value)));
-    EXPECT_TRUE(std::ranges::equal(nested.get_rows(), held_storage));
-    EXPECT_EQ(nested.get_rows().size(), held.get_rows().size());
+    EXPECT_TRUE(std::ranges::equal(nested.rows(), held_storage));
+    EXPECT_EQ(nested.rows().size(), held.rows().size());
     EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
     // Owned labels and shared rows remain valid during repository/cache growth.
     for (int i = 0; i < 64; ++i)
@@ -786,8 +788,8 @@ void check_cached_queries()
         query_data.variant = repo.insert(rename_data).first.index();
         const auto extra_query = repo.insert(query_data).first;
         const auto other = kr::dl::semantics::evaluate<tyr::GroundTag>(extra_query, context);
-        EXPECT_TRUE(std::ranges::equal(other.get_rows(), held_storage));
-        EXPECT_EQ(held.get_rows().size(), 3);
+        EXPECT_TRUE(std::ranges::equal(other.rows(), held_storage));
+        EXPECT_EQ(held.rows().size(), 3);
         EXPECT_EQ(held.columns().data(), held_columns);
         EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
         EXPECT_EQ(other.columns()[0].label, ColumnIndex(ygg::uint_t(extra_column.value)));
@@ -811,21 +813,21 @@ void check_cached_queries()
     const auto other_cached = kr::dl::semantics::evaluate<tyr::GroundTag>(other_query, context);
     EXPECT_EQ(cached.columns()[0].label, ColumnIndex(ygg::uint_t(x.value)));
     EXPECT_EQ(other_cached.columns()[0].label, ColumnIndex(ygg::uint_t(other_column.value)));
-    EXPECT_EQ(cached.get_rows().size(), 3);
-    EXPECT_EQ(other_cached.get_rows().size(), 3);
+    EXPECT_EQ(cached.rows().size(), 3);
+    EXPECT_EQ(other_cached.rows().size(), 3);
     EXPECT_NE(cached, other_cached);
-    EXPECT_TRUE(std::ranges::equal(cached.get_rows(), other_cached.get_rows()));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows(), cached.get_rows()));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(other_query, context).get_rows(), other_cached.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(cached.rows(), other_cached.rows()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).rows(), cached.rows()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(other_query, context).rows(), other_cached.rows()));
 
     // Clear invalidates the borrowed views; reevaluation reconstructs rows and schemas.
     storage.reset_all();
     EXPECT_TRUE(caches.get_queries(true).empty());
     EXPECT_TRUE(caches.get_queries(false).empty());
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
-    EXPECT_EQ(rebuilt.get_rows().size(), 3);
+    EXPECT_EQ(rebuilt.rows().size(), 3);
     EXPECT_EQ(rebuilt.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
-    EXPECT_TRUE(std::ranges::equal(rebuilt.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
+    EXPECT_TRUE(std::ranges::equal(rebuilt.rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).rows()));
     storage.reset_all();
     repo.clear();
 }
@@ -834,7 +836,7 @@ template<tyr::TaskKind Kind>
 void check_query_cache_across_states()
 {
     const auto search = query_search_context<Kind>();
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     const auto domain = search->task->get_domain().get_domain();
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
@@ -845,7 +847,7 @@ void check_query_cache_across_states()
     auto registers = urd::data<kr::dl::semantics::RegisterValues>();
     registers.concept_values.resize(1);
     registers.role_values.resize(1);
-    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
+    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(),
                                                                    builder,
                                                                    storage,
                                                                    denotations.insert(empty_arguments).first,
@@ -860,16 +862,16 @@ void check_query_cache_across_states()
     const auto static_join = parse_query(R"((q_join (q_atomic_state "fixed" (x y z)) (q_atomic_state "fixed" (x y z))))", domain, *repository);
     const auto count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_atomic_state "triple" (x y z))))", domain, *repository);
     const auto fixed_count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_atomic_state "fixed" (x y z))))", domain, *repository);
-    const auto matching_row = std::array<ygg::Value, 3> { ygg::encode_value<ygg::uint_t>(domain.get_constants()[0].index().value),
-                                                          ygg::encode_value<ygg::uint_t>(domain.get_constants()[1].index().value),
-                                                          ygg::encode_value<ygg::uint_t>(domain.get_constants()[2].index().value) };
+    const auto matching_row = std::array<ygg::Value, 3> { ygg::encode_value<ygg::uint_t>(domain.constants()[0].index().value),
+                                                          ygg::encode_value<ygg::uint_t>(domain.constants()[1].index().value),
+                                                          ygg::encode_value<ygg::uint_t>(domain.constants()[2].index().value) };
     const auto check_mixed_joins = [&](auto& target)
     {
         const auto matches = kr::dl::semantics::evaluate<Kind>(triple, target).contains(matching_row);
         for (const auto query : { fixed_join, reversed_join })
         {
             const auto rows = kr::dl::semantics::evaluate<Kind>(query, target);
-            EXPECT_EQ(rows.get_rows().size(), matches ? 1 : 0);
+            EXPECT_EQ(rows.rows().size(), matches ? 1 : 0);
             EXPECT_EQ(rows.contains(matching_row), matches);
         }
         return matches;
@@ -877,30 +879,29 @@ void check_query_cache_across_states()
 
     const auto fixed_rows = kr::dl::semantics::evaluate<Kind>(fixed, context);
     const auto goal_rows = kr::dl::semantics::evaluate<Kind>(goal, context);
-    EXPECT_EQ(fixed_rows.get_rows().size(), 2);
-    EXPECT_EQ(goal_rows.get_rows().size(), 1);
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, context).get_rows(), fixed_rows.get_rows()));
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, context).get_rows().size(), 4);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(ready, context).get_rows().size(), 1);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, context).get_value(), 4);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(fixed_count, context).get_value(), 2);
+    EXPECT_EQ(fixed_rows.rows().size(), 2);
+    EXPECT_EQ(goal_rows.rows().size(), 1);
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, context).rows(), fixed_rows.rows()));
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, context).rows().size(), 4);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(ready, context).rows().size(), 1);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, context).value(), 4);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(fixed_count, context).value(), 2);
     // A fully static join caches its result.
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(static_join, context).get_rows().size(), fixed_rows.get_rows().size());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(static_join, context).rows().size(), fixed_rows.rows().size());
     EXPECT_TRUE(check_mixed_joins(context));
 
-    const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
+    const auto successors = runir::datasets::successor_nodes(*search, initial);
     ASSERT_FALSE(successors.empty());
     // Only removing (triple a b c) empties the join.
     auto empty_joins = size_t { 0 };
     for (const auto& successor : successors)
     {
-        auto successor_context =
-            kr::dl::semantics::StateEvaluationContext<Kind>(successor.get_state(), builder, storage, context.arguments(), context.registers());
+        auto successor_context = kr::dl::semantics::StateEvaluationContext<Kind>(successor.state(), builder, storage, context.arguments(), context.registers());
         storage.reset_dynamic();
         empty_joins += !check_mixed_joins(successor_context);
     }
     EXPECT_EQ(empty_joins, 1);
-    auto next = kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().get_state(),
+    auto next = kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().state(),
                                                                 builder,
                                                                 storage,
                                                                 denotations.insert(empty_arguments).first,
@@ -910,11 +911,11 @@ void check_query_cache_across_states()
     EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
     EXPECT_TRUE(caches.find_query(true, fixed).has_value());
     EXPECT_TRUE(caches.find(true, fixed_count).has_value());
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, next).get_rows(), fixed_rows.get_rows()));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(goal, next).get_rows(), goal_rows.get_rows()));
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, next).get_rows().size(), 3);
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(ready, next).get_rows().empty());
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, next).get_value(), 3);
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, next).rows(), fixed_rows.rows()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(goal, next).rows(), goal_rows.rows()));
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, next).rows().size(), 3);
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(ready, next).rows().empty());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, next).value(), 3);
 
     const auto dynamic_role = kr::ps::ext::dl::parse_role(R"((r_project x z (q_atomic_state "triple" (x y z))))", domain, *repository);
     const auto static_role = kr::ps::ext::dl::parse_role(R"((r_atomic_state "edge"))", domain, *repository);
@@ -923,9 +924,9 @@ void check_query_cache_across_states()
     {
         storage.reset_dynamic();
         EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
-        EXPECT_EQ(static_value.get_values().bits().storage_bits().count(), 2);
+        EXPECT_EQ(static_value.values().bits().storage_bits().count(), 2);
         const auto value = kr::dl::semantics::evaluate<Kind>(dynamic_role, i % 2 == 0 ? context : next);
-        EXPECT_EQ(value.get_values().bits().storage_bits().count(), i % 2 == 0 ? 4 : 3);
+        EXPECT_EQ(value.values().bits().storage_bits().count(), i % 2 == 0 ? 4 : 3);
         EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 1);
         EXPECT_EQ(denotations.template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
     }
@@ -942,13 +943,13 @@ void check_query_cache_across_states()
     EXPECT_NE(&target_storage.get_denotation_repository(false), &storage.get_denotation_repository(false));
     EXPECT_NE(&storage.get_denotation_repository(false), &storage.get_denotation_repository(true));
     auto target_context =
-        kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().get_state(), builder, target_storage, next.arguments(), next.registers());
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(dynamic_role, target_context).get_values().bits().storage_bits().count(), 3);
+        kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().state(), builder, target_storage, next.arguments(), next.registers());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(dynamic_role, target_context).values().bits().storage_bits().count(), 3);
     EXPECT_NE(kr::dl::semantics::evaluate<Kind>(static_role, target_context), static_value);
     target_storage.reset_all();
-    EXPECT_EQ(source_value.get_values().bits().storage_bits().count(), 4);
-    EXPECT_EQ(static_value.get_values().bits().storage_bits().count(), 2);
-    EXPECT_EQ(retained.get_values().bits().storage_bits().count(), 4);
+    EXPECT_EQ(source_value.values().bits().storage_bits().count(), 4);
+    EXPECT_EQ(static_value.values().bits().storage_bits().count(), 2);
+    EXPECT_EQ(retained.values().bits().storage_bits().count(), 4);
 
     storage.reset_all();
     EXPECT_TRUE(caches.get_queries(true).empty());
@@ -957,7 +958,7 @@ void check_query_cache_across_states()
     EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
     EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
     EXPECT_EQ(storage.get_denotation_repository(true).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
-    EXPECT_EQ(retained.get_values().bits().storage_bits().count(), 4);
+    EXPECT_EQ(retained.values().bits().storage_bits().count(), 4);
     // A full clear releases the cached rows as well; reevaluation rebuilds them.
     EXPECT_TRUE(check_mixed_joins(context));
     storage.reset_all();
@@ -969,7 +970,7 @@ template<tyr::TaskKind Kind>
 void check_query_cache_across_bindings()
 {
     const auto search = query_search_context<Kind>();
-    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    const auto state = tyr::planning::share(*search->state_repository, tyr::planning::get_initial_state(*search->state_repository, *search->axiom_evaluator));
     const auto domain = search->task->get_domain().get_domain();
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
@@ -985,9 +986,9 @@ void check_query_cache_across_bindings()
                                                                    storage,
                                                                    denotations.insert(empty_arguments).first,
                                                                    denotations.insert(registers).first);
-    const auto a = domain.get_constants()[0];
-    const auto b = domain.get_constants()[1];
-    const auto c = domain.get_constants()[2];
+    const auto a = domain.constants()[0];
+    const auto b = domain.constants()[1];
+    const auto c = domain.constants()[2];
     auto persistent_memo = kr::dl::semantics::DenotationCaches {};
     auto persistent = persistent_context(context, persistent_memo, denotations, storage);
     const auto a_set = kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", domain, *repository), persistent);
@@ -1014,29 +1015,29 @@ void check_query_cache_across_bindings()
     const auto role_register_rhs = parse_query(R"((q_join (q_role (x y) (r_register 0)) (q_atomic_state "fixed" (y x z))))", domain, *repository);
 
     const auto fixed_rows = kr::dl::semantics::evaluate<Kind>(fixed, bound);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, bound).get_value(), 1);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, bound).get_rows().size(), 1);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(role_register, bound).get_rows().size(), 1);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, bound).value(), 1);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, bound).rows().size(), 1);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(role_register, bound).rows().size(), 1);
     const auto rhs_rows = kr::dl::semantics::evaluate<Kind>(register_rhs, bound);
-    EXPECT_EQ(rhs_rows.get_rows().size(), 1);
+    EXPECT_EQ(rhs_rows.rows().size(), 1);
     EXPECT_TRUE(rhs_rows.contains(std::array<ygg::Value, 3> { ygg::encode_value<ygg::uint_t>(a.index().value),
                                                               ygg::encode_value<ygg::uint_t>(c.index().value),
                                                               ygg::encode_value<ygg::uint_t>(b.index().value) }));
     EXPECT_TRUE(std::ranges::equal(rhs_rows.columns(), schema_of(register_rhs)));
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, bound).get_rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, bound).rows().empty());
     registers.concept_values[0] = b.index();
     registers.role_values[0] = ::cista::pair(b.index(), c.index());
     argument_values.concept_arguments[0] = b_set.index();
     auto rebound = make_bound();
     storage.reset_dynamic();
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, rebound).get_rows(), fixed_rows.get_rows()));
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, rebound).get_value(), 0);
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(argument, rebound).get_rows().empty());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, rebound).get_rows().empty());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(register_rhs, rebound).get_rows().empty());
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, rebound).rows(), fixed_rows.rows()));
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, rebound).value(), 0);
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(argument, rebound).rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, rebound).rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(register_rhs, rebound).rows().empty());
     // Reordered shared columns are matched by label, not by their position in either operand.
     const auto rhs_role_rows = kr::dl::semantics::evaluate<Kind>(role_register_rhs, rebound);
-    EXPECT_EQ(rhs_role_rows.get_rows().size(), 1);
+    EXPECT_EQ(rhs_role_rows.rows().size(), 1);
     EXPECT_TRUE(rhs_role_rows.contains(std::array<ygg::Value, 3> { ygg::encode_value<ygg::uint_t>(b.index().value),
                                                                    ygg::encode_value<ygg::uint_t>(c.index().value),
                                                                    ygg::encode_value<ygg::uint_t>(a.index().value) }));
@@ -1049,11 +1050,11 @@ void check_query_cache_across_bindings()
     argument_values.concept_arguments[0] = a_set.index();
     auto cleared = make_bound();
     storage.reset_dynamic();
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, cleared).get_value(), 0);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, cleared).get_rows().size(), 1);
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, cleared).get_rows().empty());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(register_rhs, cleared).get_rows().empty());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, cleared).get_rows().empty());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, cleared).value(), 0);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, cleared).rows().size(), 1);
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, cleared).rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(register_rhs, cleared).rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, cleared).rows().empty());
     urd::visit_view(bound.registers(), [&](const auto& values) { EXPECT_EQ(values.template values<kr::dl::ConceptTag>()[0].value().index(), a.index()); });
     EXPECT_EQ(bound.arguments().template arguments<kr::dl::ConceptTag>()[0].index(), a_set.index());
     urd::visit_view(rebound.registers(), [&](const auto& values) { EXPECT_EQ(values.template values<kr::dl::ConceptTag>()[0].value().index(), b.index()); });
@@ -1090,17 +1091,17 @@ void check_predicate_repository_identity()
             return lifted;
     }();
     auto search = datasets::TaskSearchContext<Kind>::create(task, execution);
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     const auto& domain = task->get_domain();
     // Use one factory so repository identities differ even though predicate indices collide.
     const auto foreign = std::make_shared<tyr::formalism::Repository>();
     auto predicates = std::array<urd::index<Predicate>, 3> {};
-    ASSERT_EQ(domain.get_domain().template get_predicates<Fact>().size(), predicates.size());
-    for (const auto predicate : domain.get_domain().template get_predicates<Fact>())
+    ASSERT_EQ(domain.get_domain().template predicates<Fact>().size(), predicates.size());
+    for (const auto predicate : domain.get_domain().template predicates<Fact>())
     {
-        ASSERT_LT(predicate.get_arity(), predicates.size());
-        predicates[predicate.get_arity()] = predicate.index();
-        auto data = urd::data<Predicate>("foreign_" + predicate.get_name().str(), predicate.get_arity());
+        ASSERT_LT(predicate.arity(), predicates.size());
+        predicates[predicate.arity()] = predicate.index();
+        auto data = urd::data<Predicate>("foreign_" + predicate.name().str(), predicate.arity());
         const auto other = foreign->insert(data).first;
         ASSERT_EQ(other.index(), predicate.index());
         ASSERT_NE(other, predicate);
@@ -1114,7 +1115,7 @@ void check_predicate_repository_identity()
         auto builder = kr::dl::semantics::Builder();
         auto denotations = kr::dl::semantics::DenotationRepository(task->get_repository());
         auto storage = kr::dl::semantics::EvaluationStorage(denotations);
-        auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(), builder, storage);
+        auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(), builder, storage);
         const auto check = [&]<typename Tag>()
         {
             auto concept_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, Tag>>();
@@ -1129,12 +1130,12 @@ void check_predicate_repository_identity()
             if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
                 role_data.polarity = true;
             auto role_wrapper = urd::data<kr::dl::Constructor<kr::dl::RoleTag>>(repository->insert(role_data).first.index(), false);
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(role_wrapper).first, context).get_values().bits().storage_bits().count(),
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(role_wrapper).first, context).values().bits().storage_bits().count(),
                       size_t(expected));
 
             auto boolean_data = urd::data<kr::dl::Boolean<kr::dl::SemanticFamily, Tag>>(predicates[0], true);
             auto boolean_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(repository->insert(boolean_data).first.index(), false);
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(boolean_wrapper).first, context).get_value(), expected);
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(boolean_wrapper).first, context).value(), expected);
 
             auto column = urd::data<kr::dl::QueryColumn>();
             column.name = "x";
@@ -1145,7 +1146,7 @@ void check_predicate_repository_identity()
                 query_data.polarity = true;
             auto query_wrapper = urd::data<kr::dl::Query<>>();
             query_wrapper.variant = repository->insert(query_data).first.index();
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(query_wrapper).first, context).get_rows().size(), size_t(expected));
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(repository->insert(query_wrapper).first, context).rows().size(), size_t(expected));
         };
         check.template operator()<kr::dl::AtomicStateTag<Fact>>();
         check.template operator()<kr::dl::AtomicGoalTag<Fact>>();
@@ -1180,7 +1181,7 @@ void check_query_object_views()
     }();
     ASSERT_TRUE(task);
     const auto search = datasets::TaskSearchContext<Kind>::create(task, execution);
-    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    const auto state = tyr::planning::share(*search->state_repository, tyr::planning::get_initial_state(*search->state_repository, *search->axiom_evaluator));
     auto constructors = std::make_shared<kr::dl::ConstructorRepository>(task->get_repository());
     auto denotations = kr::dl::semantics::DenotationRepository(task->get_repository());
     auto builder = kr::dl::semantics::Builder {};
@@ -1190,12 +1191,12 @@ void check_query_object_views()
     auto context =
         kr::dl::semantics::StateEvaluationContext<Kind>(state, builder, storage, denotations.insert(arguments).first, denotations.insert(registers).first);
     const auto query = parse_query(R"((q_atomic_state "fixed" (x y)))", task->get_domain().get_domain(), *constructors);
-    const auto constant = task->get_task().get_domain().get_constants()[0];
-    const auto local = task->get_task().get_objects()[0];
+    const auto constant = task->get_task().domain().constants()[0];
+    const auto local = task->get_task().objects()[0];
     ASSERT_NE(&constant.context(), &local.context());
     const auto raw = std::vector { constant.index(), local.index() };
     const auto result = kr::dl::semantics::evaluate<Kind>(query, context);
-    ASSERT_EQ(result.get_rows().size(), 1);
+    ASSERT_EQ(result.rows().size(), 1);
     EXPECT_EQ(&result.context(), &storage.get_denotation_repository(true).get_relation_repository());
     // Rows hold raw object indices; the relation repository cannot resolve them.
     const auto row = result.row(0);
@@ -1209,7 +1210,7 @@ void check_query_object_views()
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(query, context), result);
     storage.reset_all();
     const auto rebuilt = kr::dl::semantics::evaluate<Kind>(query, context);
-    ASSERT_EQ(rebuilt.get_rows().size(), 1);
+    ASSERT_EQ(rebuilt.rows().size(), 1);
     EXPECT_TRUE(std::ranges::equal(object_values(rebuilt.row(0)), raw));
 }
 
@@ -1243,13 +1244,13 @@ void check_multiword_bit_evaluation()
             return lifted;
     }();
     auto search = datasets::TaskSearchContext<Kind>::create(task, execution);
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     const auto domain = task->get_domain().get_domain();
-    ASSERT_EQ(domain.get_constants().size(), num_objects);
+    ASSERT_EQ(domain.constants().size(), num_objects);
     for (const auto i : { static_cast<ygg::uint_t>(0), word_bits - 1, word_bits, last })
     {
-        ASSERT_EQ(domain.get_constants()[i].get_name(), name(i));
-        ASSERT_EQ(ygg::uint_t(domain.get_constants()[i].index().value), i);
+        ASSERT_EQ(domain.constants()[i].name(), name(i));
+        ASSERT_EQ(ygg::uint_t(domain.constants()[i].index().value), i);
     }
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(task->get_repository());
     kr::dl::semantics::Builder builder;
@@ -1257,7 +1258,7 @@ void check_multiword_bit_evaluation()
     kr::dl::semantics::EvaluationStorage storage(denotations);
     urd::data<kr::dl::semantics::CallArguments> arguments;
     urd::data<kr::dl::semantics::RegisterValues> registers;
-    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(),
+    auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.state(),
                                                                    builder,
                                                                    storage,
                                                                    denotations.insert(arguments).first,
@@ -1266,24 +1267,24 @@ void check_multiword_bit_evaluation()
     const auto concept_value = [&](const std::string& expression)
     { return kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_concept(expression, domain, *repository), context); };
     const auto number = [&](const std::string& expression)
-    { return kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_numerical(expression, domain, *repository), context).get_value(); };
+    { return kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_numerical(expression, domain, *repository), context).value(); };
     const auto marked = std::string(R"((c_atomic_state "marked"))");
     const auto edge = std::string(R"((r_atomic_state "edge"))");
 
     const auto selected = query("(q_concept x " + marked + ")");
-    ASSERT_EQ(selected.get_rows().size(), 4);
+    ASSERT_EQ(selected.rows().size(), 4);
     for (const auto i : { static_cast<ygg::uint_t>(0), word_bits - 1, word_bits, last })
         EXPECT_TRUE(selected.contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(i)) }));
-    EXPECT_EQ(query("(q_concept x (c_top))").get_rows().size(), num_objects);
-    EXPECT_TRUE(query("(q_concept x (c_bot))").get_rows().empty());
+    EXPECT_EQ(query("(q_concept x (c_top))").rows().size(), num_objects);
+    EXPECT_TRUE(query("(q_concept x (c_bot))").rows().empty());
     const auto identity = query("(q_role (x y) (r_identity (c_top)))");
-    EXPECT_EQ(identity.get_rows().size(), num_objects);
+    EXPECT_EQ(identity.rows().size(), num_objects);
     EXPECT_TRUE(
         identity.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(last)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(last)) }));
-    EXPECT_TRUE(query("(q_role (x y) (r_identity (c_bot)))").get_rows().empty());
+    EXPECT_TRUE(query("(q_role (x y) (r_identity (c_bot)))").rows().empty());
 
     const auto inverse = query("(q_role (x y) (r_inverse " + edge + "))");
-    ASSERT_EQ(inverse.get_rows().size(), 4);
+    ASSERT_EQ(inverse.rows().size(), 4);
     EXPECT_TRUE(inverse.contains(
         std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(word_bits - 1)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)) }));
     EXPECT_TRUE(
@@ -1293,10 +1294,10 @@ void check_multiword_bit_evaluation()
     EXPECT_TRUE(inverse.contains(
         std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(last)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(word_bits)) }));
     const auto composition = query("(q_role (x y) (r_composition " + edge + " " + edge + "))");
-    ASSERT_EQ(composition.get_rows().size(), 1);
+    ASSERT_EQ(composition.rows().size(), 1);
     EXPECT_TRUE(
         composition.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(last)) }));
-    EXPECT_TRUE(query("(q_role (x y) (r_composition " + edge + " (r_identity (c_bot))))").get_rows().empty());
+    EXPECT_TRUE(query("(q_role (x y) (r_composition " + edge + " (r_identity (c_bot))))").rows().empty());
 
     const auto at_least = concept_value("(c_at_least 2 " + edge + " " + marked + ")").value();
     EXPECT_EQ(at_least.count(), 1);
@@ -1345,13 +1346,13 @@ ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> num
         {
             if constexpr (DistanceView<Concrete>)
             {
-                const auto& plan = concrete.get_plan();
+                const auto& plan = concrete.plan();
                 auto children = context.child_context();
                 const auto relation = [&](auto argument, auto columns)
                 { return std::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns, children); }, argument); };
-                const auto sources = relation(concrete.get_sources(), plan.source_columns);
-                const auto edges = relation(concrete.get_edges(), plan.edge_columns);
-                const auto targets = relation(concrete.get_targets(), plan.target_columns);
+                const auto sources = relation(concrete.sources(), plan.source_columns);
+                const auto edges = relation(concrete.edges(), plan.edge_columns);
+                const auto targets = relation(concrete.targets(), plan.target_columns);
                 auto scratch = ygg::FreeScratchRelations();
                 auto distances = scratch.draw(plan.output_columns);
                 auto workspace = runir::kr::database::DistanceWorkspace(plan);
@@ -1360,7 +1361,7 @@ ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> num
             else
                 throw std::logic_error("reference_distance expects n_distance");
         },
-        numerical.get_variant());
+        numerical.variant());
 }
 
 /// Reuse across evaluations (the path tree) must stay exact while edges disappear and reappear between states:
@@ -1369,8 +1370,8 @@ template<tyr::TaskKind Kind>
 void check_distance_reuse_across_states()
 {
     const auto search = query_search_context<Kind>();
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    const auto successors = search->successor_generator->get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
+    const auto successors = runir::datasets::labeled_successor_nodes(*search, initial);
     ASSERT_FALSE(successors.empty());
     const auto domain = search->task->get_domain().get_domain();
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
@@ -1401,19 +1402,19 @@ void check_distance_reuse_across_states()
     for (const auto& expression : expressions)
         numericals.push_back(kr::ps::ext::dl::parse_numerical(expression, domain, *repository));
 
-    auto states = urd::Store<urd::sequence<tyr::planning::Node<Kind>>> { initial };
+    auto states = urd::Store<urd::sequence<runir::datasets::PlanningNode<Kind>>> { initial };
     for (const auto& successor : successors)
     {
-        states.push_back(successor.node);
+        states.push_back(successor.node());
         states.push_back(initial);
     }
     for (size_t round = 0; round < 2; ++round)
         for (const auto& node : states)
         {
             storage.reset_dynamic();
-            auto context = kr::dl::semantics::StateEvaluationContext<Kind>(node.get_state(), builder, storage, argument_view, register_view);
+            auto context = kr::dl::semantics::StateEvaluationContext<Kind>(node.state(), builder, storage, argument_view, register_view);
             for (size_t i = 0; i < numericals.size(); ++i)
-                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(numericals[i], context).get_value(), reference_distance<Kind>(numericals[i], context))
+                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(numericals[i], context).value(), reference_distance<Kind>(numericals[i], context))
                     << expressions[i];
         }
 }
@@ -1468,7 +1469,7 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
     };
     const auto check_metadata = [&](auto expression, bool expected)
     {
-        EXPECT_EQ(expression.get_is_static(), expected);
+        EXPECT_EQ(expression.is_static(), expected);
         check_relocated_data(*(*repository)[expression.index()], [&](const auto& decoded) { EXPECT_EQ(decoded.is_static, expected); });
         const auto& stored = *(*repository)[expression.index()];
         auto stale = std::remove_cvref_t<decltype(stored)>(stored.variant, !expected);
@@ -1488,23 +1489,21 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
         check_metadata(parse_query(description, domain, *repository), expected);
         check_metadata(kr::ps::ext::dl::parse_numerical("(n_count " + description + ")", domain, *repository), expected);
     }
-    EXPECT_TRUE(kr::ps::ext::dl::parse_concept("(c_project x " + fixed + ")", domain, *repository).get_is_static());
-    EXPECT_FALSE(kr::ps::ext::dl::parse_concept("(c_project x " + triple + ")", domain, *repository).get_is_static());
-    EXPECT_TRUE(kr::ps::ext::dl::parse_role(R"((r_reflexive_transitive_closure (r_atomic_state "edge")))", domain, *repository).get_is_static());
-    EXPECT_FALSE(kr::ps::ext::dl::parse_role(R"((r_reflexive_transitive_closure (r_register 0)))", domain, *repository).get_is_static());
-    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + fixed + ")", domain, *repository).get_is_static());
-    EXPECT_TRUE(
-        kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + fixed + "))", domain, *repository).get_is_static());
-    EXPECT_FALSE(
-        kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + triple + "))", domain, *repository).get_is_static());
-    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_empty (x)))", domain, *repository).get_is_static());
-    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + triple + ")", domain, *repository).get_is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_concept("(c_project x " + fixed + ")", domain, *repository).is_static());
+    EXPECT_FALSE(kr::ps::ext::dl::parse_concept("(c_project x " + triple + ")", domain, *repository).is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_role(R"((r_reflexive_transitive_closure (r_atomic_state "edge")))", domain, *repository).is_static());
+    EXPECT_FALSE(kr::ps::ext::dl::parse_role(R"((r_reflexive_transitive_closure (r_register 0)))", domain, *repository).is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + fixed + ")", domain, *repository).is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + fixed + "))", domain, *repository).is_static());
+    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + triple + "))", domain, *repository).is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_empty (x)))", domain, *repository).is_static());
+    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + triple + ")", domain, *repository).is_static());
 }
 
 TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullaryJoins)
 {
     const auto search = query_search_context<tyr::GroundTag>();
-    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    const auto state = tyr::planning::share(*search->state_repository, tyr::planning::get_initial_state(*search->state_repository, *search->axiom_evaluator));
     const auto domain = search->task->get_domain().get_domain();
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
@@ -1527,9 +1526,9 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto original_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(query, context);
     const auto renamed_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
     const auto nested_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(nested, context);
-    EXPECT_TRUE(std::ranges::equal(renamed_rows.get_rows(), original_rows.get_rows()));
-    EXPECT_TRUE(std::ranges::equal(nested_rows.get_rows(), original_rows.get_rows()));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context).get_rows(), original_rows.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(renamed_rows.rows(), original_rows.rows()));
+    EXPECT_TRUE(std::ranges::equal(nested_rows.rows(), original_rows.rows()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context).rows(), original_rows.rows()));
     EXPECT_TRUE(std::ranges::equal(original_rows.columns(), schema_of(query)));
     EXPECT_TRUE(std::ranges::equal(renamed_rows.columns(), schema_of(renamed)));
     EXPECT_TRUE(std::ranges::equal(nested_rows.columns(), schema_of(nested)));
@@ -1538,11 +1537,11 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto truth = parse_query("(q_project () " + description + ")", domain, *repository);
     const auto true_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(truth, context);
     EXPECT_TRUE(true_rows.columns().empty());
-    EXPECT_EQ(true_rows.get_rows().size(), 1);
+    EXPECT_EQ(true_rows.rows().size(), 1);
     const auto true_join = parse_query("(q_join " + description + " (q_project () " + description + "))", domain, *repository);
     const auto false_join = parse_query("(q_join " + description + " (q_atomic_state \"missing\" ()))", domain, *repository);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(true_join, context).get_rows().size(), original_rows.get_rows().size());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<tyr::GroundTag>(false_join, context).get_rows().empty());
+    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(true_join, context).rows().size(), original_rows.rows().size());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<tyr::GroundTag>(false_join, context).rows().empty());
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).columns(), schema_of(query)));
 
     auto raw_rename_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
@@ -1553,9 +1552,9 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     auto raw_wrapper = urd::data<kr::dl::Query<>>(repository->insert(raw_rename_data).first.index(), false);
     const auto raw = repository->insert(raw_wrapper).first;
     // is_static is derived by preparation from the static operand, whatever the hand-built record says.
-    EXPECT_TRUE(raw.get_is_static());
+    EXPECT_TRUE(raw.is_static());
     const auto raw_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
-    EXPECT_TRUE(std::ranges::equal(raw_rows.get_rows(), original_rows.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(raw_rows.rows(), original_rows.rows()));
     EXPECT_TRUE(caches.find_query(true, raw).has_value());
 
     auto raw_nested_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
@@ -1564,9 +1563,9 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
         raw_nested_data.columns.push_back(column.index());
     auto raw_nested_wrapper = urd::data<kr::dl::Query<>>(repository->insert(raw_nested_data).first.index(), false);
     const auto raw_nested = repository->insert(raw_nested_wrapper).first;
-    EXPECT_TRUE(raw_nested.get_is_static());
+    EXPECT_TRUE(raw_nested.is_static());
     const auto raw_nested_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
-    EXPECT_TRUE(std::ranges::equal(raw_nested_rows.get_rows(), original_rows.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(raw_nested_rows.rows(), original_rows.rows()));
     EXPECT_TRUE(std::ranges::equal(raw_nested_rows.columns(), schema_of(raw_nested)));
     EXPECT_TRUE(std::ranges::equal(raw_rows.columns(), schema_of(raw)));
     EXPECT_TRUE(std::ranges::equal(original_rows.columns(), schema_of(query)));
@@ -1577,14 +1576,14 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     EXPECT_FALSE(caches.find_query(true, raw_nested).has_value());
     EXPECT_FALSE(caches.find_query(true, query).has_value());
     const auto rebuilt_nested = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
-    EXPECT_EQ(rebuilt_nested.get_rows().size(), 2);
+    EXPECT_EQ(rebuilt_nested.rows().size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.columns(), schema_of(raw_nested)));
-    EXPECT_TRUE(std::ranges::equal(rebuilt_nested.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
+    EXPECT_TRUE(std::ranges::equal(rebuilt_nested.rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).rows()));
     EXPECT_TRUE(caches.find_query(true, raw_nested).has_value());
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
-    EXPECT_EQ(rebuilt.get_rows().size(), 2);
+    EXPECT_EQ(rebuilt.rows().size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), schema_of(raw)));
-    EXPECT_TRUE(std::ranges::equal(rebuilt.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
+    EXPECT_TRUE(std::ranges::equal(rebuilt.rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).rows()));
     EXPECT_TRUE(caches.find_query(true, raw).has_value());
 }
 
@@ -1617,7 +1616,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     const auto renamed = kr::dl::semantics::rename(denotations, first, renamed_columns, dl_builder);
     renamed_columns[0].label = ColumnIndex(99);
     EXPECT_EQ(renamed.columns()[0].label, ColumnIndex(6));
-    EXPECT_TRUE(std::ranges::equal(renamed.get_rows(), first.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(renamed.rows(), first.rows()));
     EXPECT_NE(renamed, first);
     EXPECT_EQ(kr::dl::semantics::rename(denotations,
                                         renamed,
@@ -1630,7 +1629,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
 TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorRelease)
 {
     const auto search = query_search_context<tyr::GroundTag>();
-    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    const auto state = tyr::planning::share(*search->state_repository, tyr::planning::get_initial_state(*search->state_repository, *search->axiom_evaluator));
     const auto domain = search->task->get_domain().get_domain();
     auto constructors = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder {};
@@ -1648,14 +1647,14 @@ TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorReleas
                                                                              denotations.insert(registers).first);
     const auto expression = parse_query(R"((q_rename (a b c) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto result = kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context);
-    ASSERT_EQ(result.get_rows().size(), 4);
+    ASSERT_EQ(result.rows().size(), 4);
     const auto schema = column_labels(result.columns());
     const auto first = object_values(result.row(0));
     intermediates.reset_all();
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context), result);
     output_memo.reset_all();
     constructors->clear();
-    EXPECT_EQ(result.get_rows().size(), 4);
+    EXPECT_EQ(result.rows().size(), 4);
     EXPECT_EQ(column_labels(result.columns()), schema);
     EXPECT_EQ(object_values(result.row(0)), first);
 }

@@ -16,13 +16,13 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_mod() const noexcept { return self().template member<&urd::record_of<V>::mod>(); }
+    auto mod() const noexcept { return self().template member<&urd::record_of<V>::mod>(); }
 
-    auto get_memory_state() const noexcept { return self().template member<&urd::record_of<V>::memory_state>(); }
+    auto memory_state() const noexcept { return self().template member<&urd::record_of<V>::memory_state>(); }
 
-    auto get_registers() const noexcept { return self().template member<&urd::record_of<V>::registers>(); }
+    auto registers() const noexcept { return self().template member<&urd::record_of<V>::registers>(); }
 
-    auto get_arguments() const noexcept { return self().template member<&urd::record_of<V>::arguments>(); }
+    auto arguments() const noexcept { return self().template member<&urd::record_of<V>::arguments>(); }
 };
 
 /// Getters shared by the views of a call stack frame: the suspended activation (its memory state the one to return to)
@@ -34,9 +34,9 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_module_state() const noexcept { return self().template member<&urd::record_of<V>::module_state>(); }
+    auto module_state() const noexcept { return self().template member<&urd::record_of<V>::module_state>(); }
 
-    auto get_caller() const { return self().template member<&urd::record_of<V>::caller>(); }
+    auto caller() const { return self().template member<&urd::record_of<V>::caller>(); }
 };
 
 #endif

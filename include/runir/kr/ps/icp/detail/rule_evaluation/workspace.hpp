@@ -11,7 +11,7 @@
 #include "runir/kr/ps/program_step.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
 #include "runir/kr/ps/rule_variant_view.hpp"
-#include "tyr/planning/successor_generator_concepts.hpp"
+#include "tyr/planning/successors/successor_generator_concepts.hpp"
 
 #include <cstddef>
 #include <unordered_map>
@@ -46,18 +46,18 @@ public:
         if (&program.context() != m_task->domain_context->icp_repository.get())
             throw std::invalid_argument("ICP requires a program from the domain context repository.");
         const auto planning_task = m_task->search_context->task->get_task();
-        auto empty = m_task->dl_builder.template get_builder<Denotation>(static_cast<ygg::uint_t>(planning_task.get_num_objects()));
+        auto empty = m_task->dl_builder.template get_builder<Denotation>(static_cast<ygg::uint_t>(planning_task.num_objects()));
         m_empty = m_task->dl_denotation_repository->insert(*empty, m_task->dl_builder.records()).first.index();
-        const auto module = program.get_entry_mod();
-        const auto features = module.template get_features<Concept>();
+        const auto module = program.entry_mod();
+        const auto features = module.template features<Concept>();
         m_reset_predecessors.resize(features.size());
         m_changed.reserve(features.size());
         auto slots = urd::Store<urd::map<ygg::uint_t, std::size_t>, urd::stable_refs> {};
         for (std::size_t i = 0; i < features.size(); ++i)
             slots.emplace(static_cast<ygg::uint_t>(features[static_cast<std::ptrdiff_t>(i)].index().value), i);
-        for (const auto& pair : module.get_reset_pairs())
-            m_reset_predecessors.at(slots.at(static_cast<ygg::uint_t>(pair.get_after().index().value)))
-                .push_back(slots.at(static_cast<ygg::uint_t>(pair.get_before().index().value)));
+        for (const auto& pair : module.reset_pairs())
+            m_reset_predecessors.at(slots.at(static_cast<ygg::uint_t>(pair.after().index().value)))
+                .push_back(slots.at(static_cast<ygg::uint_t>(pair.before().index().value)));
     }
 
     [[nodiscard]] const auto& get_task_context() const noexcept { return m_task; }
@@ -68,20 +68,20 @@ public:
 
     auto intern(urd::data<ProgramState<Kind>>& data) { return m_task->icp_execution_repository->insert(data).first; }
 
-    ProgramStateView<Kind> initial_state(tyr::planning::StateView<Kind> state)
+    ProgramStateView<Kind> initial_state(tyr::planning::StateBuilderView<Kind> state)
     {
-        const auto module = m_program.get_entry_mod();
+        const auto module = m_program.entry_mod();
         auto registers = m_task->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
-        registers->concept_values.resize(module.template get_registers<Concept>().size());
-        registers->role_values.resize(module.template get_registers<runir::kr::dl::RoleTag>().size());
+        registers->concept_values.resize(module.template registers<Concept>().size());
+        registers->role_values.resize(module.template registers<runir::kr::dl::RoleTag>().size());
         const auto stored_registers = m_task->dl_denotation_repository->insert(*registers).first;
         auto histories = checkout<Histories>(m_task->icp_control_builder);
-        for (std::size_t i = 0; i < module.template get_features<Concept>().size(); ++i)
+        for (std::size_t i = 0; i < module.template features<Concept>().size(); ++i)
             urd::append(histories->concepts, m_task->dl_denotation_repository->view(m_empty));
         auto data = urd::data<ProgramState<Kind>> {};
         data.program = m_program.index();
         data.state = state.pack().index();
-        data.memory_state = module.get_entry_memory_state().index();
+        data.memory_state = module.entry_memory_state().index();
         data.registers = stored_registers.index();
         data.histories = m_task->icp_control_repository->insert(*histories, m_task->icp_control_builder).first.index();
         return intern(data);
@@ -92,11 +92,11 @@ public:
     update_histories(ProgramStateView<Kind> state, Transition& transition, std::optional<tyr::planning::ActionBindingView<Kind>> binding, const Stop& stop)
     {
         auto histories = checkout<Histories>(m_task->icp_control_builder);
-        const auto previous = state.get_histories().get_concepts();
+        const auto previous = state.histories().concepts();
         histories->concepts.clear();
         for (const auto concept_ : previous)
             urd::append(histories->concepts, concept_);
-        const auto features = m_program.get_entry_mod().template get_features<Concept>();
+        const auto features = m_program.entry_mod().template features<Concept>();
         m_changed.clear();
         bool progress = !binding;
         for (std::size_t i = 0; i < features.size(); ++i)
@@ -105,7 +105,7 @@ public:
                 return std::nullopt;
             const auto before = evaluate<Kind>(features[static_cast<std::ptrdiff_t>(i)], transition.get_source_context());
             const auto after = evaluate<Kind>(features[static_cast<std::ptrdiff_t>(i)], transition.get_target_context());
-            auto entered = m_task->dl_builder.template get_builder<Denotation>(before.get_num_objects());
+            auto entered = m_task->dl_builder.template get_builder<Denotation>(before.num_objects());
             entered->get().copy_from(after.value());
             entered->get() -= before.value();
             if (entered->get().intersects(previous[i].value()))
@@ -115,7 +115,7 @@ public:
             if (entered->get().any())
             {
                 if (binding && !progress)
-                    for (std::size_t j = 0; j < urd::visit_view(binding->get_relation(), [](const auto& action) { return action.get_original_arity(); }); ++j)
+                    for (std::size_t j = 0; j < urd::visit_view(binding->relation(), [](const auto& action) { return action.original_arity(); }); ++j)
                         if (entered->get().test(static_cast<ygg::uint_t>(binding->value(j))))  // object columns: the objects' indices
                         {
                             progress = true;

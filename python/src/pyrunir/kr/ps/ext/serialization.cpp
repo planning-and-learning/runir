@@ -9,8 +9,7 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/program_proof_graph.hpp>
 #include <tyr/formalism/planning/formatter.hpp>
-#include <tyr/planning/formatter.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/states/state_view.hpp>
 
 namespace runir::kr::ps::ext
 {

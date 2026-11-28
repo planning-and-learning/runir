@@ -22,7 +22,7 @@
 #include <runir/kr/ps/feature_data.hpp>
 #include <runir/kr/ps/formatter.hpp>
 #include <runir/kr/ps/syntactic_complexity.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/python/bindings.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>

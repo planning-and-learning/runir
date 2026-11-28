@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -31,8 +32,9 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -54,7 +56,7 @@ auto& built_of(urd::child<T, C, K>& child)
 template<typename S>
 auto memory_state_of(const S& state)
 {
-    return urd::visit_view(state.get_module_state(), [](const auto& activation) { return urd::interned_view(activation.get_memory_state()); });
+    return urd::visit_view(state.module_state(), [](const auto& activation) { return urd::interned_view(activation.memory_state()); });
 }
 
 /// A stored program state's planning state, as built.
@@ -109,14 +111,14 @@ void expect_initial_program_state_uses_expander_repository()
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
-    const auto state = expander.initial_state(planning_node.get_state());
+    const auto state = expander.initial_state(planning_node.state());
 
     task_context.reset();
     repository.reset();
     dl_repository.reset();
-    EXPECT_EQ(state.get_module_state().get_mod().get_symbol().get_name(), "module");
-    EXPECT_EQ(state.get_module_state().get_memory_state().get_name(), "entry");
-    EXPECT_FALSE(state.get_call_stack());
+    EXPECT_EQ(state.module_state().mod().symbol().name(), "module");
+    EXPECT_EQ(state.module_state().memory_state().name(), "entry");
+    EXPECT_FALSE(state.call_stack());
 }
 
 template<tyr::TaskKind Kind>
@@ -151,56 +153,56 @@ void expect_module_return_preserves_callee_planning_state()
                                                         *context->domain_context->ext_repository);
     auto expander = kr::ps::ext::SuccessorExpander<Kind>(context, program);
     const auto planning_node = initial_planning_node(expander);
-    const auto initial = expander.initial_state(planning_node.get_state());
-    EXPECT_FALSE(initial.get_call_stack());
+    const auto initial = expander.initial_state(planning_node.state());
+    EXPECT_FALSE(initial.call_stack());
     const auto loads = collect_steps(expander, initial);
     ASSERT_EQ(loads.size(), 1);
     const auto calls = collect_steps(expander, loads.front().get_target());
     ASSERT_EQ(calls.size(), 1);
     const auto callee = calls.front().get_target();
-    const auto suspended = callee.get_call_stack();
+    const auto suspended = callee.call_stack();
     ASSERT_TRUE(suspended);
-    EXPECT_FALSE(suspended->get_caller());
+    EXPECT_FALSE(suspended->caller());
     const auto nested_calls = collect_steps(expander, callee);
     ASSERT_EQ(nested_calls.size(), 1);
     const auto leaf = nested_calls.front().get_target();
-    const auto suspended_callee = leaf.get_call_stack();
+    const auto suspended_callee = leaf.call_stack();
     ASSERT_TRUE(suspended_callee);
-    EXPECT_EQ(suspended_callee->get_caller(), suspended);
-    EXPECT_NE(leaf.get_module_state().get_arguments(), callee.get_module_state().get_arguments());
+    EXPECT_EQ(suspended_callee->caller(), suspended);
+    EXPECT_NE(leaf.module_state().arguments(), callee.module_state().arguments());
     const auto moves = collect_steps(expander, leaf);
     ASSERT_EQ(moves.size(), 2);
     for (const auto& move : moves)
     {
         const auto moved = move.get_target();
         ASSERT_TRUE(move.planning_successor);
-        ASSERT_NE(moved.get_state().index(), initial.get_state().index());
-        EXPECT_EQ(move.planning_successor->node.get_state(), kr::ps::ext::planning_state(moved).pack());
+        ASSERT_NE(moved.state().index(), initial.state().index());
+        EXPECT_EQ(move.planning_successor->node().state(), kr::ps::ext::planning_state(moved).pack());
         const auto returns = collect_steps(expander, moved);
         ASSERT_EQ(returns.size(), 1);
         EXPECT_EQ(returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(returns.front().planning_successor);
         const auto returned = returns.front().get_target();
-        EXPECT_EQ(returned.get_state().index(), moved.get_state().index());
-        EXPECT_EQ(returned.get_module_state().get_mod(), suspended_callee->get_module_state().get_mod());
-        EXPECT_EQ(returned.get_module_state().get_memory_state(), suspended_callee->get_module_state().get_memory_state());
-        EXPECT_EQ(returned.get_module_state().get_registers(), suspended_callee->get_module_state().get_registers());
-        EXPECT_EQ(returned.get_module_state().get_arguments(), callee.get_module_state().get_arguments());
-        EXPECT_EQ(returned.get_call_stack(), suspended);
+        EXPECT_EQ(returned.state().index(), moved.state().index());
+        EXPECT_EQ(returned.module_state().mod(), suspended_callee->module_state().mod());
+        EXPECT_EQ(returned.module_state().memory_state(), suspended_callee->module_state().memory_state());
+        EXPECT_EQ(returned.module_state().registers(), suspended_callee->module_state().registers());
+        EXPECT_EQ(returned.module_state().arguments(), callee.module_state().arguments());
+        EXPECT_EQ(returned.call_stack(), suspended);
 
         const auto outer_returns = collect_steps(expander, returned);
         ASSERT_EQ(outer_returns.size(), 1);
         EXPECT_EQ(outer_returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(outer_returns.front().planning_successor);
         const auto caller = outer_returns.front().get_target();
-        EXPECT_EQ(caller.get_state().index(), moved.get_state().index());
-        EXPECT_EQ(caller.get_module_state().get_mod(), suspended->get_module_state().get_mod());
-        EXPECT_EQ(caller.get_module_state().get_memory_state(), suspended->get_module_state().get_memory_state());
-        EXPECT_EQ(caller.get_module_state().get_registers(), suspended->get_module_state().get_registers());
-        EXPECT_EQ(caller.get_module_state().get_arguments(), suspended->get_module_state().get_arguments());
-        EXPECT_FALSE(caller.get_call_stack());
+        EXPECT_EQ(caller.state().index(), moved.state().index());
+        EXPECT_EQ(caller.module_state().mod(), suspended->module_state().mod());
+        EXPECT_EQ(caller.module_state().memory_state(), suspended->module_state().memory_state());
+        EXPECT_EQ(caller.module_state().registers(), suspended->module_state().registers());
+        EXPECT_EQ(caller.module_state().arguments(), suspended->module_state().arguments());
+        EXPECT_FALSE(caller.call_stack());
     }
-    EXPECT_EQ(callee.get_state().index(), initial.get_state().index());
+    EXPECT_EQ(callee.state().index(), initial.state().index());
 }
 
 template<tyr::TaskKind Kind>
@@ -218,43 +220,43 @@ void expect_borrowed_query_evaluation()
         search.task->get_domain().get_domain(),
         repository);
     const auto program = create_program(repository, module_, { module_ });
-    const auto initial = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(search);
     auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
-    const auto state = expander.initial_state(planning_node.get_state());
+    const auto state = expander.initial_state(planning_node.state());
     auto environment = kr::ps::ext::EvaluationEnvironment<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(*task_context, program);
     auto state_context = environment.make_dl_context(state);
-    const auto feature = module_.get_query_features()[0];
-    const auto query = std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant());
+    const auto feature = module_.query_features()[0];
+    const auto query = std::visit([](auto concrete) { return concrete.feature(); }, feature.variant());
     {
         const auto rows = kr::ps::evaluate<Kind>(feature, state_context);
-        ASSERT_EQ(rows.get_rows().size(), 1);
-        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).get_rows(), rows.get_rows()));
+        ASSERT_EQ(rows.rows().size(), 1);
+        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).rows(), rows.rows()));
         const auto cached = environment.get_dl_caches().find_query(false, query).value();
-        EXPECT_TRUE(std::ranges::equal(rows.get_rows(), cached.get_rows()));
+        EXPECT_TRUE(std::ranges::equal(rows.rows(), cached.rows()));
         EXPECT_EQ(rows.columns().data(), cached.columns().data());
         EXPECT_TRUE(std::ranges::equal(rows.columns(), schema_of(query)));
 
-        const auto successors = search.successor_generator->get_labeled_successor_nodes(initial, *search.state_repository, *search.axiom_evaluator);
+        const auto successors = runir::datasets::labeled_successor_nodes(search, initial);
         ASSERT_FALSE(successors.empty());
-        const auto stack = state.get_module_state();
+        const auto stack = state.module_state();
         auto transition = environment.make_dl_transition_context(kr::ps::ext::planning_state(state),
-                                                                 successors.front().node.get_state(),
-                                                                 stack.get_arguments(),
-                                                                 stack.get_registers(),
-                                                                 stack.get_registers());
+                                                                 successors.front().node().state(),
+                                                                 stack.arguments(),
+                                                                 stack.registers(),
+                                                                 stack.registers());
         {
             const auto target_rows = kr::ps::evaluate<Kind>(feature, transition.get_target_context());
-            ASSERT_EQ(target_rows.get_rows().size(), 1);
+            ASSERT_EQ(target_rows.rows().size(), 1);
             EXPECT_NE(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).value(0))),
                       urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
             EXPECT_NE(&target_rows.context(), &rows.context());  // independent caches: other layers
 
             // The indexed program state supplies bindings; its prepared planning view may use builder storage.
             auto source_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
-            source_builder.assign(planning_node.get_state());
+            source_builder.assign(planning_node.state());
             auto target_builder = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
-            target_builder.assign(successors.front().node.get_state());
+            target_builder.assign(successors.front().node().state());
             const auto prepared_source = urd::resolve(source_builder, *search.state_repository);
             const auto prepared_target = urd::resolve(target_builder, *search.state_repository);
             auto storage = kr::ps::ext::InternedExecutionStorage<Kind>(task_context, program);
@@ -263,16 +265,16 @@ void expect_borrowed_query_evaluation()
             auto prepared_context = context.make_dl_context(state);
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::StateBuilderView<Kind>>);
             const auto prepared_rows = kr::ps::evaluate<Kind>(feature, prepared_context);
-            ASSERT_EQ(prepared_rows.get_rows().size(), rows.get_rows().size());
+            ASSERT_EQ(prepared_rows.rows().size(), rows.rows().size());
             EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_rows.row(0).value(0))),
                       urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
-            const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::StateBuilderView<Kind>> {
-                successors.front().label,
-                tyr::planning::Node<Kind, tyr::planning::StateBuilderView<Kind>>(prepared_target, successors.front().node.get_metric())
+            const auto candidate = runir::datasets::LabeledPlanningNode<Kind, tyr::planning::StateBuilderView<Kind>> {
+                successors.front().label(),
+                runir::datasets::PlanningNode<Kind, tyr::planning::StateBuilderView<Kind>>(prepared_target, successors.front().node().metric())
             };
             auto prepared_transition = context.make_dl_transition_context(state, candidate);
             const auto prepared_target_rows = kr::ps::evaluate<Kind>(feature, prepared_transition.get_target_context());
-            ASSERT_EQ(prepared_target_rows.get_rows().size(), target_rows.get_rows().size());
+            ASSERT_EQ(prepared_target_rows.rows().size(), target_rows.rows().size());
             EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_target_rows.row(0).value(0))),
                       urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).value(0))));
             EXPECT_EQ(urd::index<tyr::formalism::Object>(
@@ -282,13 +284,13 @@ void expect_borrowed_query_evaluation()
         EXPECT_TRUE(environment.get_dl_target_caches().find_query(false, query).has_value());
         environment.reset_target();
         EXPECT_TRUE(environment.get_dl_caches().find_query(false, query).has_value());
-        EXPECT_EQ(rows.get_rows().size(), 1);
-        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).get_rows(), rows.get_rows()));
+        EXPECT_EQ(rows.rows().size(), 1);
+        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).rows(), rows.rows()));
     }
     environment.reset_source();
     EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());
     const auto rebuilt = kr::ps::evaluate<Kind>(feature, state_context);
-    EXPECT_EQ(rebuilt.get_rows().size(), 1);
+    EXPECT_EQ(rebuilt.rows().size(), 1);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), schema_of(query)));
 }
 
@@ -334,7 +336,7 @@ void expect_binding_effects_and_empty_choices()
                 const auto program = create_program(repository, module_, { module_ });
                 auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
                 const auto planning_node = initial_planning_node(expander);
-                const auto initial = expander.initial_state(planning_node.get_state());
+                const auto initial = expander.initial_state(planning_node.state());
                 const auto steps = collect_steps(expander, initial);
                 const auto successful = scenario < 2;
                 if (successful)
@@ -344,19 +346,19 @@ void expect_binding_effects_and_empty_choices()
                     {
                         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
                         const auto target = step.get_target();
-                        EXPECT_EQ(target.get_state().index(), initial.get_state().index());
-                        EXPECT_EQ(target.get_module_state().get_memory_state().get_name(), "target");
+                        EXPECT_EQ(target.state().index(), initial.state().index());
+                        EXPECT_EQ(target.module_state().memory_state().name(), "target");
                         EXPECT_FALSE(step.planning_successor.has_value());
                         ASSERT_TRUE(step.rule);
-                        const auto values = target.get_module_state().get_registers();
+                        const auto values = target.module_state().registers();
                         if (role)
                         {
                             ASSERT_TRUE(values.template values<kr::dl::RoleTag>()[0]);
                             const auto pair = values.template values<kr::dl::RoleTag>()[0].value();
-                            EXPECT_EQ(pair.second.get_name(), "rooma");
+                            EXPECT_EQ(pair.second.name(), "rooma");
                             if (scenario == 1)
                             {
-                                EXPECT_EQ(pair.first.get_name(), "ball2");
+                                EXPECT_EQ(pair.first.name(), "ball2");
                             }
                         }
                         else
@@ -364,7 +366,7 @@ void expect_binding_effects_and_empty_choices()
                             ASSERT_TRUE(values.template values<kr::dl::ConceptTag>()[0]);
                             if (scenario == 1)
                             {
-                                EXPECT_EQ(values.template values<kr::dl::ConceptTag>()[0].value().get_name(), "ball2");
+                                EXPECT_EQ(values.template values<kr::dl::ConceptTag>()[0].value().name(), "ball2");
                             }
                         }
                     }
@@ -384,11 +386,11 @@ void expect_binding_effects_and_empty_choices()
                     ASSERT_EQ(steps.size(), 1);
                     EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
                 }
-                for (const auto value : initial.get_module_state().get_registers().template values<kr::dl::ConceptTag>())
+                for (const auto value : initial.module_state().registers().template values<kr::dl::ConceptTag>())
                     EXPECT_FALSE(value);
-                for (const auto value : initial.get_module_state().get_registers().template values<kr::dl::RoleTag>())
+                for (const auto value : initial.module_state().registers().template values<kr::dl::RoleTag>())
                     EXPECT_FALSE(value);
-                EXPECT_EQ(initial.get_module_state().get_memory_state().get_name(), "source");
+                EXPECT_EQ(initial.module_state().memory_state().name(), "source");
                 EXPECT_TRUE(collect_steps(expander, initial, false, [] { return true; }).empty());
             }
 }
@@ -434,18 +436,18 @@ void expect_lazy_do_successors()
         const auto program = create_program(repository, module_, { module_ });
         auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
         const auto planning_node = initial_planning_node(expander);
-        const auto initial = expander.initial_state(planning_node.get_state());
-        ASSERT_EQ(states.num_states(), 1);
+        const auto initial = expander.initial_state(planning_node.state());
+        ASSERT_EQ(tyr::planning::num_states(states), 1);
         const auto count_bindings = [&]
         {
             size_t count = 0;
-            for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
+            for (const auto action : task_context->search_context->task->get_task().domain().actions())
                 count += task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
             return count;
         };
         const auto initial_binding_count = count_bindings();
         EXPECT_TRUE(collect_steps(expander, initial, false, [] { return true; }).empty());
-        EXPECT_EQ(states.num_states(), 1);
+        EXPECT_EQ(tyr::planning::num_states(states), 1);
 
         const auto steps = collect_steps(expander, initial);
         if constexpr (std::same_as<Kind, tyr::LiftedTag>)
@@ -456,12 +458,12 @@ void expect_lazy_do_successors()
         {
             // Only ball2's two pick bindings construct states. Other balls and
             // the unrelated move schema must not be expanded before filtering.
-            EXPECT_EQ(states.num_states(), 3);
+            EXPECT_EQ(tyr::planning::num_states(states), 3);
         }
         else if (scenario < 4 || scenario == 5)
         {
             // A nonempty argument denotation can still reject every candidate.
-            EXPECT_EQ(states.num_states(), 1);
+            EXPECT_EQ(tyr::planning::num_states(states), 1);
         }
         if (scenario == 0 || scenario == 4)
         {
@@ -471,16 +473,16 @@ void expect_lazy_do_successors()
             {
                 EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
                 ASSERT_TRUE(step.planning_successor.has_value());
-                const auto action = step.planning_successor->label;
-                if (action.get_relation().get_name() == "pick")
+                const auto action = step.planning_successor->label();
+                if (action.relation().name() == "pick")
                 {
-                    EXPECT_EQ(action.template resolve<tyr::formalism::Object>()[0].get_name(), "ball2");
-                    EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "do-target");
+                    EXPECT_EQ(action.template resolve<tyr::formalism::Object>()[0].name(), "ball2");
+                    EXPECT_EQ(step.get_target().module_state().memory_state().name(), "do-target");
                 }
                 else
                 {
-                    EXPECT_EQ(action.get_relation().get_name(), "move");
-                    EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "sketch-target");
+                    EXPECT_EQ(action.relation().name(), "move");
+                    EXPECT_EQ(step.get_target().module_state().memory_state().name(), "sketch-target");
                     ++moves;
                 }
             }
@@ -496,7 +498,7 @@ void expect_lazy_do_successors()
         {
             return left.status == right.status && left.get_target().index() == right.get_target().index() && left.rule.has_value() == right.rule.has_value()
                    && (!left.rule || left.rule->index() == right.rule->index()) && left.planning_successor.has_value() == right.planning_successor.has_value()
-                   && (!left.planning_successor.has_value() || left.planning_successor->label == right.planning_successor->label);
+                   && (!left.planning_successor.has_value() || left.planning_successor->label() == right.planning_successor->label());
         };
         const auto repeated = collect_steps(expander, initial);
         EXPECT_TRUE(std::ranges::equal(steps, repeated, same_step));
@@ -542,34 +544,34 @@ void expect_control_only_steps_do_not_generate_planning_successors()
                                                         repository);
     auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
-    const auto initial = expander.initial_state(planning_node.get_state());
-    ASSERT_EQ(states.num_states(), 1);
+    const auto initial = expander.initial_state(planning_node.state());
+    ASSERT_EQ(tyr::planning::num_states(states), 1);
     const auto steps = collect_steps(expander, initial);
     ASSERT_EQ(steps.size(), 4);
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
-        EXPECT_EQ(step.get_target().get_state().index(), initial.get_state().index());
+        EXPECT_EQ(step.get_target().state().index(), initial.state().index());
         EXPECT_FALSE(step.planning_successor.has_value());
         ASSERT_TRUE(step.rule);
         const auto applied = expander.apply(initial, step.rule.value());
         ASSERT_TRUE(applied);
         EXPECT_EQ(applied.value().get_target().index(), step.get_target().index());
-        if (step.get_target().get_module_state().get_memory_state().get_name() == "skipped")
+        if (step.get_target().module_state().memory_state().name() == "skipped")
         {
             EXPECT_FALSE(expander.apply(step.get_target(), step.rule.value()));
         }
     }
-    EXPECT_EQ(states.num_states(), 1);
+    EXPECT_EQ(tyr::planning::num_states(states), 1);
     for (const auto universal : { false, true })
     {
         auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
         options.universal = universal;
         EXPECT_EQ(kr::ps::ext::find_solution(task_context, program, options).status, kr::ps::ProofStatus::FAILURE);
-        EXPECT_EQ(states.num_states(), 1);
+        EXPECT_EQ(tyr::planning::num_states(states), 1);
     }
     auto& search = *task_context->search_context;
-    const auto successors = search.successor_generator->get_labeled_successor_nodes(planning_node, states, *search.axiom_evaluator);
+    const auto successors = runir::datasets::labeled_successor_nodes(search, planning_node);
     ASSERT_FALSE(successors.empty());
     EXPECT_FALSE(expander.matching_rule(initial, successors.front()));
 }
@@ -588,44 +590,44 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto module_ = create_module(repository, "module", entry, { entry, outer_return, inner_return });
     const auto program = create_program(repository, module_, { module_ });
     auto storage = kr::ps::ext::TransientExecutionStorage<Kind>(context, program);
-    const auto initial_node = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
-    const auto initial = storage.initial_state(initial_node.get_state());
-    EXPECT_FALSE(storage.view(initial).get_call_stack());
+    const auto initial_node = runir::datasets::initial_node(search);
+    const auto initial = storage.initial_state(initial_node.state());
+    EXPECT_FALSE(storage.view(initial).call_stack());
     EXPECT_EQ(controls.template size<kr::ps::ext::CallStack>(), 0);
     // A transient storage's state holds its planning state and its activation built.
-    const auto source = std::get<tyr::planning::StateBuilderView<Kind>>(storage.view(initial).get_state());
-    const auto bindings = search.successor_generator->get_applicable_action_bindings(initial_node);
+    const auto source = urd::built_view(storage.view(initial).state());
+    const auto bindings = runir::datasets::applicable_action_bindings(search, initial_node);
     ASSERT_EQ(bindings.size(), 2);
 
     const auto outer_caller = storage.save_caller(storage.view(initial), outer_return);
     EXPECT_EQ(storage.save_caller(storage.view(initial), outer_return).index(), outer_caller.index());
     EXPECT_EQ(controls.template size<kr::ps::ext::CallStack>(), 1);
-    const auto initial_module = std::get<kr::ps::ext::ModuleStateBuilderView>(storage.view(initial).get_module_state());
-    const auto callee = storage.store(source, module_, entry, initial_module.get_registers(), initial_module.get_arguments(), std::optional(outer_caller));
+    const auto initial_module = urd::built_view(storage.view(initial).module_state());
+    const auto callee = storage.store(source, module_, entry, initial_module.registers(), initial_module.arguments(), std::optional(outer_caller));
     const auto inner_caller = storage.save_caller(storage.view(callee), inner_return);
     EXPECT_EQ(storage.save_caller(storage.view(callee), inner_return).index(), inner_caller.index());
     EXPECT_EQ(controls.template size<kr::ps::ext::CallStack>(), 2);
-    ASSERT_TRUE(inner_caller.get_caller());
-    EXPECT_EQ(inner_caller.get_caller().value().index(), outer_caller.index());
-    EXPECT_FALSE(outer_caller.get_caller());
+    ASSERT_TRUE(inner_caller.caller());
+    EXPECT_EQ(inner_caller.caller().value().index(), outer_caller.index());
+    EXPECT_FALSE(outer_caller.caller());
 
-    const auto first = storage.successor(source, bindings.front());
-    const auto* scratch = &first.get_state().get_numeric_storage().get_values();
+    const auto source_node = runir::datasets::node_of<Kind>(source);
+    const auto first = storage.successor(source_node, bindings.front());
+    const auto* scratch = &first.state().numeric_storage().values();
     auto expected = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
-    expected.assign(first.get_state());
-    const auto retained =
-        storage.store(first.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), std::optional(inner_caller));
+    expected.assign(first.state());
+    const auto retained = storage.store(first.state(), module_, entry, initial_module.registers(), initial_module.arguments(), std::optional(inner_caller));
     const auto& retained_call_stack = retained->call_stack;
     ASSERT_TRUE(retained_call_stack.has_value());
     EXPECT_EQ(retained_call_stack.has_value() ? std::get<0>(*retained_call_stack) : urd::index<kr::ps::ext::CallStack>(), inner_caller.index());
 
     // Generating another candidate overwrites scratch, but not the accepted program state.
-    const auto second = storage.successor(source, bindings.back());
-    EXPECT_EQ(&second.get_state().get_numeric_storage().get_values(), scratch);
+    const auto second = storage.successor(source_node, bindings.back());
+    EXPECT_EQ(&second.state().numeric_storage().values(), scratch);
     auto second_values = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
-    second_values.assign(second.get_state());
+    second_values.assign(second.state());
     auto initial_values = urd::builder<tyr::planning::State<Kind>, tyr::planning::StateRepository<Kind>>();
-    initial_values.assign(initial_node.get_state());
+    initial_values.assign(initial_node.state());
     EXPECT_TRUE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*retained), expected));
     EXPECT_FALSE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*retained), second_values));
     EXPECT_TRUE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*initial), initial_values));
@@ -634,66 +636,66 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto& copy_call_stack = copy->call_stack;
     ASSERT_TRUE(copy_call_stack.has_value());
     EXPECT_EQ(copy_call_stack.has_value() ? std::get<0>(*copy_call_stack) : urd::index<kr::ps::ext::CallStack>(), inner_caller.index());
-    const auto caller = storage.view(copy).get_call_stack();
+    const auto caller = storage.view(copy).call_stack();
     ASSERT_TRUE(caller);
     const auto frame = urd::interned_view(caller.value());  // a frame is interned
     EXPECT_EQ(frame.index(), inner_caller.index());
     // Return: the frame's activation and caller over the current planning state.
-    const auto returned = storage.store(kr::ps::ext::planning_state(storage.view(copy)), frame.get_module_state(), frame.get_caller());
+    const auto returned = storage.store(kr::ps::ext::planning_state(storage.view(copy)), frame.module_state(), frame.caller());
     const auto& returned_call_stack = returned->call_stack;
     ASSERT_TRUE(returned_call_stack.has_value());
     EXPECT_EQ(returned_call_stack.has_value() ? std::get<0>(*returned_call_stack) : urd::index<kr::ps::ext::CallStack>(), outer_caller.index());
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(memory_state_of(storage.view(returned)), inner_return));
 
     const auto materialized = storage.materialize(storage.view(retained));
-    const auto materialized_inner = materialized.get_call_stack();
+    const auto materialized_inner = materialized.call_stack();
     ASSERT_TRUE(materialized_inner);
     EXPECT_EQ(materialized_inner.value().index(), inner_caller.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_inner.value().get_module_state().get_memory_state(), inner_return));
-    const auto materialized_outer = materialized_inner.value().get_caller();
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_inner.value().module_state().memory_state(), inner_return));
+    const auto materialized_outer = materialized_inner.value().caller();
     ASSERT_TRUE(materialized_outer);
     EXPECT_EQ(materialized_outer.value().index(), outer_caller.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_outer.value().get_module_state().get_memory_state(), outer_return));
-    EXPECT_FALSE(materialized_outer.value().get_caller());
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_outer.value().module_state().memory_state(), outer_return));
+    EXPECT_FALSE(materialized_outer.value().caller());
     EXPECT_EQ(controls.template size<kr::ps::ext::CallStack>(), 2);
 
     // Reusing a released slot must replace its values without replacing its buffers.
-    auto planning_values = expected;
-    planning_values.numeric_storage.values = { 3.0 };
+    auto planning_values = urd::clone(expected);
+    planning_values.numeric_storage->values = { 3.0 };
     const auto planning = urd::resolve(planning_values, *search.state_repository);
     auto register_values = urd::data<kr::dl::semantics::RegisterValues>();
     register_values.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
     register_values.role_values.emplace_back(::cista::pair { urd::index<tyr::formalism::Object>(0), urd::index<tyr::formalism::Object>(1) });
     const auto registers = storage.registers(register_values);
-    auto recycled = storage.store(planning, module_, inner_return, registers, initial_module.get_arguments(), std::optional(inner_caller));
+    auto recycled = storage.store(planning, module_, inner_return, registers, initial_module.arguments(), std::optional(inner_caller));
     const auto* slot = recycled.get();
-    const auto numeric_buffer = std::ranges::data(built_state(*recycled).numeric_storage.values);
-    const auto numeric_capacity = built_state(*recycled).numeric_storage.values.capacity();
+    const auto numeric_buffer = std::ranges::data(built_state(*recycled).numeric_storage->values);
+    const auto numeric_capacity = built_state(*recycled).numeric_storage->values.capacity();
     const auto concept_buffer = built_registers(*recycled).concept_values.data();
     const auto concept_capacity = built_registers(*recycled).concept_values.capacity();
     const auto role_buffer = built_registers(*recycled).role_values.data();
     const auto role_capacity = built_registers(*recycled).role_values.capacity();
     recycled = {};
-    planning_values.assign(initial_node.get_state());
-    planning_values.numeric_storage.values = { 4.0 };
+    planning_values.assign(initial_node.state());
+    planning_values.numeric_storage->values = { 4.0 };
     register_values.concept_values.front() = urd::index<tyr::formalism::Object>(1);
     register_values.role_values.front().value().first = urd::index<tyr::formalism::Object>(1);
     register_values.role_values.front().value().second = urd::index<tyr::formalism::Object>(0);
-    const auto reused = storage.store(planning, module_, entry, registers, initial_module.get_arguments(), std::optional<kr::ps::ext::CallStackView>());
+    const auto reused = storage.store(planning, module_, entry, registers, initial_module.arguments(), std::optional<kr::ps::ext::CallStackView>());
     EXPECT_EQ(reused.get(), slot);
-    EXPECT_EQ(std::ranges::data(built_state(*reused).numeric_storage.values), numeric_buffer);
-    EXPECT_EQ(built_state(*reused).numeric_storage.values.capacity(), numeric_capacity);
+    EXPECT_EQ(std::ranges::data(built_state(*reused).numeric_storage->values), numeric_buffer);
+    EXPECT_EQ(built_state(*reused).numeric_storage->values.capacity(), numeric_capacity);
     EXPECT_EQ(built_registers(*reused).concept_values.data(), concept_buffer);
     EXPECT_EQ(built_registers(*reused).concept_values.capacity(), concept_capacity);
     EXPECT_EQ(built_registers(*reused).role_values.data(), role_buffer);
     EXPECT_EQ(built_registers(*reused).role_values.capacity(), role_capacity);
-    EXPECT_EQ(built_state(*reused).numeric_storage.values.front(), 4.0);
+    EXPECT_EQ(built_state(*reused).numeric_storage->values.front(), 4.0);
     auto reused_registers = urd::data<kr::dl::semantics::RegisterValues>();
-    urd::visit_view(storage.view(reused).get_module_state(),
+    urd::visit_view(storage.view(reused).module_state(),
                     [&](const auto& activation)
-                    { urd::visit_view(activation.get_registers(), [&](const auto& values) { kr::dl::semantics::assign(reused_registers, values); }); });
+                    { urd::visit_view(activation.registers(), [&](const auto& values) { kr::dl::semantics::assign(reused_registers, values); }); });
     EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(reused_registers, register_values));
-    EXPECT_FALSE(storage.view(reused).get_call_stack());
+    EXPECT_FALSE(storage.view(reused).call_stack());
     EXPECT_EQ(memory_state_of(storage.view(reused)).index(), entry.index());
     EXPECT_TRUE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*reused), planning_values));
     EXPECT_TRUE(urd::EqualTo<StateBuilder<Kind>> {}(built_state(*retained), expected));
@@ -717,10 +719,10 @@ void expect_unknown_action_rejected_during_preparation()
     // unreachable rule must have its action resolved when preparing the program.
     auto action_data = urd::data<kr::ps::ext::Rule<Tag>> {};
     action_data.source = create_memory_state(repository, "unreachable").index();
-    action_data.target = parsed.get_entry_memory_state().index();
+    action_data.target = parsed.entry_memory_state().index();
     action_data.action_name = "missing-action";
     if constexpr (std::same_as<Tag, kr::ps::ext::ActionTag>)
-        action_data.query_feature = parsed.get_query_features()[0].index();
+        action_data.query_feature = parsed.query_features()[0].index();
     const auto action_rule = repository.insert(action_data).first;
     auto variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("missing-schema"), action_rule.index());
     const auto variant = repository.insert(variant_data).first;
@@ -731,7 +733,7 @@ void expect_unknown_action_rejected_during_preparation()
     kr::ps::ext::canonicalize(module_data);
     const auto module_ = repository.insert(module_data).first;
     const auto program = create_program(repository, module_, { module_ });
-    const auto num_states = task_context->search_context->state_repository->num_states();
+    const auto num_states = tyr::planning::num_states(*task_context->search_context->state_repository);
     try
     {
         auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
@@ -744,7 +746,7 @@ void expect_unknown_action_rejected_during_preparation()
         else
             EXPECT_EQ(std::string(error.what()), "Do rule: action schema does not exist in the domain.");
     }
-    EXPECT_EQ(task_context->search_context->state_repository->num_states(), num_states);
+    EXPECT_EQ(tyr::planning::num_states(*task_context->search_context->state_repository), num_states);
 }
 
 template<tyr::TaskKind Kind>
@@ -777,8 +779,8 @@ void expect_query_action_contracts()
         const auto program = create_program(repository, module_, { module_ });
         auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
         const auto planning_node = initial_planning_node(expander);
-        const auto initial = expander.initial_state(planning_node.get_state());
-        const auto rule = module_.get_memory_transitions()[0][0];
+        const auto initial = expander.initial_state(planning_node.state());
+        const auto rule = module_.memory_transitions()[0][0];
         auto lazy = urd::Store<urd::sequence<kr::ps::ProgramStep<kr::ExtFamilyTag, Kind>>> {};
         if (scenario == 2)
         {
@@ -790,7 +792,7 @@ void expect_query_action_contracts()
                 EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
             }
             auto& search = *task_context->search_context;
-            const auto successors = search.successor_generator->get_labeled_successor_nodes(planning_node, *search.state_repository, *search.axiom_evaluator);
+            const auto successors = runir::datasets::labeled_successor_nodes(search, planning_node);
             ASSERT_FALSE(successors.empty());
             EXPECT_FALSE(expander.matching_rule(initial, successors.front()).has_value());
             continue;
@@ -817,32 +819,35 @@ void expect_query_action_contracts()
         {
             auto storage = kr::ps::ext::InternedExecutionStorage<Kind>(task_context, program);
             auto evaluators = kr::ps::ext::detail::RuleEvaluators<Kind>(task_context, program);
-            auto context = evaluators.make_context(storage, planning_node.get_state());
+            auto context = evaluators.make_context(storage, planning_node.state());
             auto& generator = *task_context->search_context->successor_generator;
             std::visit(
                 [&]<kr::ps::ext::RuleKind Tag>(kr::ps::ext::RuleView<Tag> concrete)
                 {
                     if constexpr (std::same_as<Tag, kr::ps::ext::ActionTag>)
-                        for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
-                            if (action.get_name().str() == concrete.get_action_name())
+                        for (const auto action : task_context->search_context->task->get_task().domain().actions())
+                            if (action.name().str() == concrete.action_name())
                             {
                                 const auto evaluator = kr::ps::ext::detail::ActionRuleEvaluator<Kind>(concrete, rule, action);
                                 const auto count =
                                     task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(
                                         action.index());
                                 auto matched = static_cast<size_t>(0);
-                                EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
-                                    planning_node,
-                                    action,
+                                const auto source_node = runir::datasets::node_of<Kind>(planning_node.state());
+                                auto filter = tyr::planning::ActionBindingFilter<Kind> {};
+                                filter.action = action;
+                                EXPECT_TRUE(generator.for_each_applicable_action_binding(
+                                    source_node,
+                                    filter,
                                     [&](tyr::planning::ActionBindingView<Kind> binding)
                                     {
-                                        const auto target = storage.successor(planning_node.get_state(), binding);
+                                        const auto target = storage.successor(source_node, binding);
                                         EXPECT_TRUE(evaluator.matches(
                                             context,
                                             initial,
-                                            tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::ActionBindingView<Kind>> {
-                                                binding,
-                                                target }));
+                                            runir::datasets::LabeledPlanningNode<Kind,
+                                                                                 tyr::planning::SharedStateBuilderView<Kind>,
+                                                                                 tyr::planning::ActionBindingView<Kind>> { binding, target }));
                                         ++matched;
                                         return true;
                                     }));
@@ -852,23 +857,23 @@ void expect_query_action_contracts()
                                           count);
                             }
                 },
-                rule.get_variant());
+                rule.variant());
         }
         const auto steps = collect_steps(expander, initial);
         if (scenario == 1)
         {
             ASSERT_EQ(steps.size(), 1);
             EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
-            EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
+            EXPECT_EQ(tyr::planning::num_states(*task_context->search_context->state_repository), 1);
             continue;
         }
         ASSERT_EQ(steps.size(), 2);
         for (const auto& step : steps)
         {
             ASSERT_TRUE(step.planning_successor.has_value());
-            const auto candidate = step.planning_successor.value().unpack();
-            EXPECT_EQ(candidate.label.template resolve<tyr::formalism::Object>()[0].get_name(), "start");
-            EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "target");
+            const auto candidate = runir::datasets::unpacked(step.planning_successor.value());
+            EXPECT_EQ(candidate.label().template resolve<tyr::formalism::Object>()[0].name(), "start");
+            EXPECT_EQ(step.get_target().module_state().memory_state().name(), "target");
             const auto matching = expander.matching_rule(initial, candidate);
             ASSERT_TRUE(matching);
             EXPECT_EQ(matching.value().index(), rule.index());
@@ -905,12 +910,12 @@ void expect_callback_selection_stops_after_selected_rule()
         const auto program = create_program(repository, module_, { module_ });
         auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
         const auto planning_node = initial_planning_node(expander);
-        const auto initial = expander.initial_state(planning_node.get_state());
+        const auto initial = expander.initial_state(planning_node.state());
         const auto steps = collect_steps(expander, initial, true);
         ASSERT_EQ(steps.size(), choose ? 2 : 1);
         for (const auto& step : steps)
-            EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "selected");
-        EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
+            EXPECT_EQ(step.get_target().module_state().memory_state().name(), "selected");
+        EXPECT_EQ(tyr::planning::num_states(*task_context->search_context->state_repository), 1);
         EXPECT_THROW(collect_steps(expander, initial), std::logic_error);
     }
 }
@@ -954,10 +959,10 @@ void expect_rule_occurrence_order()
     const auto program = create_program(repository, module_, { module_, other, module_ });
     auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
-    const auto initial = expander.initial_state(planning_node.get_state());
+    const auto initial = expander.initial_state(planning_node.state());
     const auto steps = collect_steps(expander, initial);
     ASSERT_EQ(steps.size(), 3);
-    const auto expected = std::array { parsed.get_memory_transitions()[1][0], parsed.get_memory_transitions()[0][0], parsed.get_memory_transitions()[1][0] };
+    const auto expected = std::array { parsed.memory_transitions()[1][0], parsed.memory_transitions()[0][0], parsed.memory_transitions()[1][0] };
     for (size_t i = 0; i < steps.size(); ++i)
     {
         ASSERT_TRUE(steps[i].rule);
@@ -993,11 +998,11 @@ void expect_callback_sketch_order_and_cancellation()
         const auto program = create_program(repository, module_, { module_ });
         auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
         const auto planning_node = initial_planning_node(expander);
-        const auto initial = expander.initial_state(planning_node.get_state());
+        const auto initial = expander.initial_state(planning_node.state());
         const auto count_bindings = [&]
         {
             size_t count = 0;
-            for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
+            for (const auto action : task_context->search_context->task->get_task().domain().actions())
                 count += task_context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
             return count;
         };
@@ -1017,14 +1022,14 @@ void expect_callback_sketch_order_and_cancellation()
         EXPECT_FALSE(expander.for_each_successor(initial, statistics, emit, [] { return true; }));
         EXPECT_TRUE(selected.empty());
         EXPECT_EQ(statistics.num_generated, 0);
-        EXPECT_EQ(states.num_states(), 1);
+        EXPECT_EQ(tyr::planning::num_states(states), 1);
         EXPECT_EQ(count_bindings(), initial_binding_count);
-        const auto stop = [&] { return cancelled && states.num_states() > 1; };
+        const auto stop = [&] { return cancelled && tyr::planning::num_states(states) > 1; };
         EXPECT_FALSE(expander.for_each_successor(initial, statistics, emit, stop));
         if (cancelled)
         {
             EXPECT_TRUE(selected.empty());
-            EXPECT_EQ(states.num_states(), 2);
+            EXPECT_EQ(tyr::planning::num_states(states), 2);
             EXPECT_EQ(count_bindings(), initial_binding_count);
             continue;
         }
@@ -1045,7 +1050,7 @@ void expect_callback_sketch_order_and_cancellation()
             [] { return false; }));
         ASSERT_GT(complete.size(), 1);
         EXPECT_EQ(selected.front().get_target().index(), complete.front().get_target().index());
-        EXPECT_EQ(selected.front().planning_successor.value().label, complete.front().planning_successor.value().label);
+        EXPECT_EQ(selected.front().planning_successor.value().label(), complete.front().planning_successor.value().label());
         EXPECT_EQ(statistics.num_expanded, 0);
     }
 }
@@ -1057,9 +1062,9 @@ void expect_query_action_existential_binding()
     const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
     auto& repository = *task_context->domain_context->ext_repository;
     const auto domain = task_context->search_context->task->get_domain().get_domain();
-    ASSERT_EQ(domain.get_actions().size(), 1);
-    const auto action = domain.get_actions()[0];
-    ASSERT_EQ(action.get_arity(), 2);
+    ASSERT_EQ(domain.actions().size(), 1);
+    const auto action = domain.actions()[0];
+    ASSERT_EQ(action.arity(), 2);
     const auto module_ = kr::ps::ext::dl::parse_module(R"(
 (:module (:symbol witness) (:arguments) (:registers)
   (:entry source) (:memory source target)
@@ -1073,13 +1078,13 @@ void expect_query_action_existential_binding()
     const auto program = create_program(repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
-    const auto steps = collect_steps(expander, expander.initial_state(planning_node.get_state()));
+    const auto steps = collect_steps(expander, expander.initial_state(planning_node.state()));
     ASSERT_EQ(steps.size(), 1);
     ASSERT_TRUE(steps.front().planning_successor.has_value());
-    const auto objects = steps.front().planning_successor.value().label.template resolve<tyr::formalism::Object>();
+    const auto objects = steps.front().planning_successor.value().label().template resolve<tyr::formalism::Object>();
     ASSERT_EQ(objects.size(), 2);
-    EXPECT_EQ(objects[0].get_name(), "start");
-    EXPECT_EQ(objects[1].get_name(), "proof");
+    EXPECT_EQ(objects[0].name(), "start");
+    EXPECT_EQ(objects[1].name(), "proof");
     EXPECT_TRUE(is_planning_goal(expander, kr::ps::ext::planning_state(steps.front().get_target())));
     EXPECT_TRUE(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}).is_successful());
 }
@@ -1107,19 +1112,19 @@ void expect_query_action_nullary_binding()
         const auto program = create_program(repository, module_, { module_ });
         auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
         const auto planning_node = initial_planning_node(expander);
-        const auto initial = expander.initial_state(planning_node.get_state());
+        const auto initial = expander.initial_state(planning_node.state());
         const auto steps = collect_steps(expander, initial);
         ASSERT_EQ(steps.size(), 1);
         if (empty)
         {
             EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
-            EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
+            EXPECT_EQ(tyr::planning::num_states(*task_context->search_context->state_repository), 1);
         }
         else
         {
             EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
             ASSERT_TRUE(steps.front().planning_successor.has_value());
-            EXPECT_TRUE(steps.front().planning_successor.value().label.template resolve<tyr::formalism::Object>().empty());
+            EXPECT_TRUE(steps.front().planning_successor.value().label().template resolve<tyr::formalism::Object>().empty());
             EXPECT_TRUE(is_planning_goal(expander, kr::ps::ext::planning_state(steps.front().get_target())));
             EXPECT_THROW(collect_steps(expander, steps.front().get_target()), std::logic_error);
             EXPECT_THROW(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}), std::invalid_argument);
@@ -1162,15 +1167,15 @@ void expect_callback_expansion_counts()
             const auto program = create_program(repository, module_, { module_ });
             auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
             const auto planning_node = initial_planning_node(expander);
-            const auto initial = expander.initial_state(planning_node.get_state());
+            const auto initial = expander.initial_state(planning_node.state());
             const auto steps = collect_steps(expander, initial, !complete);
             counts.push_back(steps.size());
-            state_counts.push_back(task_context->search_context->state_repository->num_states() - 1);
+            state_counts.push_back(tyr::planning::num_states(*task_context->search_context->state_repository) - 1);
             if constexpr (std::same_as<Kind, tyr::LiftedTag>)
             {
                 const auto& task = task_context->search_context->task;
                 size_t count = 0;
-                for (const auto action : task->get_domain().get_domain().get_actions())
+                for (const auto action : task->get_domain().get_domain().actions())
                     count += task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
                 binding_counts.push_back(count);
             }
@@ -1178,11 +1183,11 @@ void expect_callback_expansion_counts()
             EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
             auto first = urd::Store<urd::sequence<std::string>> {};
             if (binding)
-                first.push_back(std::string(
-                    steps.front().get_target().get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0].value().get_name().str()));
+                first.push_back(
+                    std::string(steps.front().get_target().module_state().registers().template values<kr::dl::ConceptTag>()[0].value().name().str()));
             else
-                for (const auto object : steps.front().planning_successor->label.template resolve<tyr::formalism::Object>())
-                    first.push_back(std::string(object.get_name().str()));
+                for (const auto object : steps.front().planning_successor->label().template resolve<tyr::formalism::Object>())
+                    first.push_back(std::string(object.name().str()));
             first_bindings.push_back(std::move(first));
         }
         EXPECT_EQ(first_bindings[0], first_bindings[1]);

@@ -191,10 +191,10 @@ void bind_scratch_relations(nb::module_& m)
         .def("columns",
              [](const ScratchRelation& relation)
              { return std::vector<urd::data<ygg::ColumnLayout>>(relation.view().columns().begin(), relation.view().columns().end()); })
-        .def("size", [](const ScratchRelation& relation) { return relation.view().get_rows().size(); })
+        .def("size", [](const ScratchRelation& relation) { return relation.view().rows().size(); })
         .def("arity", [](const ScratchRelation& relation) { return relation.view().columns().size(); })
-        .def("empty", [](const ScratchRelation& relation) { return relation.view().get_rows().size() == 0; })
-        .def("__len__", [](const ScratchRelation& relation) { return relation.view().get_rows().size(); })
+        .def("empty", [](const ScratchRelation& relation) { return relation.view().rows().size() == 0; })
+        .def("__len__", [](const ScratchRelation& relation) { return relation.view().rows().size(); })
         .def(
             "contains",
             [](const ScratchRelation& relation, std::span<const ygg::Value> values) { return relation.view().contains(values); },

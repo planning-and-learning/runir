@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STEP_HPP_
 
 #include "runir/datasets/state_graph.hpp"
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/ps/ext/execution_storage.hpp"
@@ -14,7 +15,8 @@
 #include <cstddef>
 #include <optional>
 #include <ranges>
-#include <tyr/planning/node.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -37,28 +39,22 @@ applied(StorageStoredState<Storage> state, RuleVariantView rule, const runir::kr
     return step;
 }
 
-template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage, urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateViewConcept<Kind> PS>
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage, urd::ViewOf<ProgramState<Kind>> S, tyr::planning::StateBuilderViewConcept<Kind> PS>
 auto planning_step(Storage& storage,
                    S state,
-                   const tyr::planning::LabeledNode<Kind, PS>& successor,
+                   const runir::datasets::LabeledPlanningNode<Kind, PS>& successor,
                    RuleVariantView rule,
                    MemoryStateView memory_state,
                    const runir::kr::TaskContextPtr<Kind>& task_context)
 {
-    auto target = urd::visit_view(state.get_module_state(),
-                                  [&](const auto& module_)
-                                  {
-                                      return storage.store(successor.node.get_state(),
-                                                           module_.get_mod(),
-                                                           memory_state,
-                                                           module_.get_registers(),
-                                                           module_.get_arguments(),
-                                                           call_stack(state));
-                                  });
+    auto target = urd::visit_view(
+        state.module_state(),
+        [&](const auto& module_)
+        { return storage.store(successor.node().state(), module_.mod(), memory_state, module_.registers(), module_.arguments(), call_stack(state)); });
     auto step = applied<Kind, Storage>(std::move(target), rule, task_context);
-    if constexpr (PackableSuccessor<tyr::planning::LabeledNode<Kind, PS>>)
+    if constexpr (PackableSuccessor<runir::datasets::LabeledPlanningNode<Kind, PS>>)
         step.planning_successor = successor.pack();
-    step.state_transition = urd::data<datasets::StateGraphEdgeLabel> { successor.label, static_cast<ygg::float_t>(1) };
+    step.state_transition = urd::data<datasets::StateGraphEdgeLabel> { successor.label(), static_cast<ygg::float_t>(1) };
     return step;
 }
 

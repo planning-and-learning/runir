@@ -112,16 +112,16 @@ def _state_context(
     arguments: CallArguments,
     registers: RegisterValues,
 ) -> DlContext:
-    if isinstance(state, ground.StateBuilderShared):
+    if isinstance(state, ground.StateBuilderView):
         return semantics.GroundStateEvaluationContext(state, builder, storage, arguments, registers)
     return semantics.LiftedStateEvaluationContext(state, builder, storage, arguments, registers)
 
 
 def _same_state(first: PlanningState, second: PlanningState) -> bool:
-    if isinstance(first, ground.StateBuilderShared):
-        assert isinstance(second, ground.StateBuilderShared)
+    if isinstance(first, ground.StateBuilderView):
+        assert isinstance(second, ground.StateBuilderView)
         return first == second
-    assert isinstance(second, lifted.StateBuilderShared)
+    assert isinstance(second, lifted.StateBuilderView)
     return first == second
 
 
@@ -186,7 +186,7 @@ def _loaded_frame(
         task_context.domain_context.ext_repository,
     )
     expander = make_expander(task_context, program)
-    initial = initial_program_state(expander, initial_node(task_context).get_state())
+    initial = initial_program_state(expander, initial_node(task_context).state())
     child = collect_steps(expander, initial)[0].target
     with_concept = collect_steps(expander, child)[0].target
     loaded = collect_steps(expander, with_concept)[0].target
@@ -203,52 +203,52 @@ def test_nested_borrowed_values_retain_owner_after_container_scope(
     def extract() -> tuple[Object | DenotationBoolean, str | bool]:
         _task, _program, _expander, loaded = _loaded_frame(kind)
         if value_kind.endswith("register"):
-            registers = loaded.get_module_state().get_registers()
+            registers = loaded.module_state().registers()
             before = sys.getrefcount(registers)
             if value_kind == "concept_register":
-                value = next(value for value in registers.get_concept_values() if value is not None)
+                value = next(value for value in registers.concept_values() if value is not None)
             else:
-                value = next(value for value in registers.get_role_values() if value is not None)[0]
+                value = next(value for value in registers.role_values() if value is not None)[0]
             assert sys.getrefcount(registers) > before
-            return value, value.get_name()
-        arguments = loaded.get_module_state().get_arguments()
+            return value, value.name()
+        arguments = loaded.module_state().arguments()
         if value_kind == "argument":
             before = sys.getrefcount(arguments)
-            boolean = arguments.get_boolean_arguments()[0]
+            boolean = arguments.boolean_arguments()[0]
             assert sys.getrefcount(arguments) > before
-            return boolean, boolean.get_value()
+            return boolean, boolean.value()
         if value_kind == "concept_iterator":
-            concepts = arguments.get_concept_arguments()[0]
+            concepts = arguments.concept_arguments()[0]
             before = sys.getrefcount(concepts)
             concept_views = concepts.views()
             value = concept_views[0]
             del concept_views
             assert sys.getrefcount(concepts) > before
-            return value, value.get_name()
-        roles = arguments.get_role_arguments()[0]
+            return value, value.name()
+        roles = arguments.role_arguments()[0]
         before = sys.getrefcount(roles)
         role_views = roles.views()
         value = role_views[0][0]
         del role_views
         assert sys.getrefcount(roles) > before
-        return value, value.get_name()
+        return value, value.name()
 
     value, expected = extract()
     gc.collect()
-    assert (value.get_value() if isinstance(value, DenotationBoolean) else value.get_name()) == expected
+    assert (value.value() if isinstance(value, DenotationBoolean) else value.name()) == expected
 
 
 def test_call_rule_arguments_preserve_feature_views_and_order() -> None:
     _task_context, program, _expander, _loaded = _loaded_frame("lifted")
-    module = program.get_entry_mod()
-    rule = module.get_memory_transitions()[0][0].get_variant()
+    module = program.entry_mod()
+    rule = module.memory_transitions()[0][0].variant()
     assert isinstance(rule, ext.RuleCall)
-    arguments = rule.get_arguments()
+    arguments = rule.arguments()
     assert arguments == [
-        module.get_concept_features()[0],
-        module.get_role_features()[0],
-        module.get_boolean_features()[0],
-        module.get_numerical_features()[0],
+        module.concept_features()[0],
+        module.role_features()[0],
+        module.boolean_features()[0],
+        module.numerical_features()[0],
     ]
 
 
@@ -256,24 +256,24 @@ def test_call_rule_arguments_preserve_feature_views_and_order() -> None:
 def test_module_state_and_suspended_caller_preserve_fields_and_dependencies(kind: Literal["ground", "lifted"]) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
     references = sys.getrefcount(loaded)
-    module_state = loaded.get_module_state()
+    module_state = loaded.module_state()
     assert isinstance(module_state, ext.ModuleState)
     assert sys.getrefcount(loaded) > references
-    assert len({module_state, loaded.get_module_state()}) == 1
-    assert module_state.get_memory_state().get_name() == "m2"
-    caller = loaded.get_call_stack()
+    assert len({module_state, loaded.module_state()}) == 1
+    assert module_state.memory_state().name() == "m2"
+    caller = loaded.call_stack()
     assert isinstance(caller, ext.CallStack)
-    assert caller.get_module_state().get_mod() == program.get_entry_mod()
-    assert caller.get_module_state().get_memory_state().get_name() == "m1"
-    assert caller.get_caller() is None
-    assert caller.get_module_state().get_registers().get_concept_values() == []
-    assert caller.get_module_state().get_arguments().get_concept_arguments() == []
+    assert caller.module_state().mod() == program.entry_mod()
+    assert caller.module_state().memory_state().name() == "m1"
+    assert caller.caller() is None
+    assert caller.module_state().registers().concept_values() == []
+    assert caller.module_state().arguments().concept_arguments() == []
     del task_context, program, expander, loaded
     gc.collect()
-    assert len(module_state.get_arguments().get_concept_arguments()) == 1
-    assert module_state.get_registers().get_concept_values()[0] is not None
-    assert module_state.get_registers().get_role_values()[0] is not None
-    assert caller.get_module_state().get_memory_state().get_name() == "m1"
+    assert len(module_state.arguments().concept_arguments()) == 1
+    assert module_state.registers().concept_values()[0] is not None
+    assert module_state.registers().role_values()[0] is not None
+    assert caller.module_state().memory_state().name() == "m1"
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -281,13 +281,13 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
-    frame = loaded.get_module_state()
-    assert len(frame.get_arguments().get_concept_arguments()) == 1
-    assert len(frame.get_arguments().get_role_arguments()) == 1
-    assert len(frame.get_arguments().get_boolean_arguments()) == 1
-    assert len(frame.get_arguments().get_numerical_arguments()) == 1
-    assert frame.get_registers().get_concept_values()[0] is not None
-    assert frame.get_registers().get_role_values()[0] is not None
+    frame = loaded.module_state()
+    assert len(frame.arguments().concept_arguments()) == 1
+    assert len(frame.arguments().role_arguments()) == 1
+    assert len(frame.arguments().boolean_arguments()) == 1
+    assert len(frame.arguments().numerical_arguments()) == 1
+    assert frame.registers().concept_values()[0] is not None
+    assert frame.registers().role_values()[0] is not None
 
     environment = make_environment(task_context, program)
     references = sys.getrefcount(environment)
@@ -297,8 +297,8 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     assert sys.getrefcount(environment) > references
     del storage, target_storage
     dl_context = make_dl_context(environment, loaded)
-    booleans = {feature.get_variant().get_symbol(): feature for feature in frame.get_mod().get_boolean_features()}
-    numericals = {feature.get_variant().get_symbol(): feature for feature in frame.get_mod().get_numerical_features()}
+    booleans = {feature.variant().symbol(): feature for feature in frame.mod().boolean_features()}
+    numericals = {feature.variant().symbol(): feature for feature in frame.mod().numerical_features()}
     expected = {
         "argument_count": 2,
         "argument_size": 2,
@@ -312,63 +312,57 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         "role_match": True,
         "selected_goal_ball": False,
     }
-    assert {
-        name: ext.evaluate(feature, dl_context).get_value() for name, feature in booleans.items()
-    } == expected_booleans
-    assert {name: ext.evaluate(feature, dl_context).get_value() for name, feature in numericals.items()} == expected
-    concept = ext.evaluate(frame.get_mod().get_concept_features()[0], dl_context)
-    role = ext.evaluate(frame.get_mod().get_role_features()[0], dl_context)
+    assert {name: ext.evaluate(feature, dl_context).value() for name, feature in booleans.items()} == expected_booleans
+    assert {name: ext.evaluate(feature, dl_context).value() for name, feature in numericals.items()} == expected
+    concept = ext.evaluate(frame.mod().concept_features()[0], dl_context)
+    role = ext.evaluate(frame.mod().role_features()[0], dl_context)
     boolean = ext.evaluate(booleans["argument_flag"], dl_context)
     numerical = ext.evaluate(numericals["argument_count"], dl_context)
-    assert concept == frame.get_arguments().get_concept_arguments()[0]
-    assert role == frame.get_arguments().get_role_arguments()[0]
-    assert boolean == frame.get_arguments().get_boolean_arguments()[0]
-    assert numerical == frame.get_arguments().get_numerical_arguments()[0]
-    child = collect_steps(expander, initial_program_state(expander, initial_node(task_context).get_state()))[0].target
+    assert concept == frame.arguments().concept_arguments()[0]
+    assert role == frame.arguments().role_arguments()[0]
+    assert boolean == frame.arguments().boolean_arguments()[0]
+    assert numerical == frame.arguments().numerical_arguments()[0]
+    child = collect_steps(expander, initial_program_state(expander, initial_node(task_context).state()))[0].target
     other_concept = collect_steps(expander, child)[1].target
     other_frame = collect_steps(expander, other_concept)[0].target
-    assert _same_state(other_frame.get_state().unpack(), loaded.get_state().unpack())
+    assert _same_state(other_frame.state().unpack(), loaded.state().unpack())
     environment.reset_source()
     other_dl_context = make_dl_context(environment, other_frame)
-    assert ext.evaluate(booleans["selected_goal_ball"], other_dl_context).get_value() is True
+    assert ext.evaluate(booleans["selected_goal_ball"], other_dl_context).value() is True
     environment.reset_source()
-    assert ext.evaluate(booleans["selected_goal_ball"], dl_context).get_value() is False
+    assert ext.evaluate(booleans["selected_goal_ball"], dl_context).value() is False
     del child, other_concept, other_frame, other_dl_context
 
     def moves_to_roomb(step: ExecutionStep) -> bool:
         transition = step.state_transition
         assert transition is not None
         action = transition.action
-        return action.get_relation().get_name() == "move" and action.resolve_objects()[-1].get_name() == "roomb"
+        return action.relation().name() == "move" and action.resolve_objects()[-1].name() == "roomb"
 
     moved = next(step.target for step in collect_steps(expander, loaded) if moves_to_roomb(step))
     environment.reset_source()
     dl_context = make_dl_context(environment, moved)
-    assert ext.evaluate(numericals["nearby_balls"], dl_context).get_value() == 0
-    assert ext.evaluate(numericals["argument_count"], dl_context).get_value() == 2
-    assert {
-        name: ext.evaluate(feature, dl_context).get_value() for name, feature in booleans.items()
-    } == expected_booleans
+    assert ext.evaluate(numericals["nearby_balls"], dl_context).value() == 0
+    assert ext.evaluate(numericals["argument_count"], dl_context).value() == 2
+    assert {name: ext.evaluate(feature, dl_context).value() for name, feature in booleans.items()} == expected_booleans
     environment.reset_source()
     dl_context = make_dl_context(environment, loaded)
-    assert ext.evaluate(numericals["nearby_balls"], dl_context).get_value() == 2
+    assert ext.evaluate(numericals["nearby_balls"], dl_context).value() == 2
 
     del task_context, program, expander, loaded, frame
     del moved
     gc.collect()
-    assert {name: ext.evaluate(feature, dl_context).get_value() for name, feature in numericals.items()} == expected
-    assert {
-        name: ext.evaluate(feature, dl_context).get_value() for name, feature in booleans.items()
-    } == expected_booleans
+    assert {name: ext.evaluate(feature, dl_context).value() for name, feature in numericals.items()} == expected
+    assert {name: ext.evaluate(feature, dl_context).value() for name, feature in booleans.items()} == expected_booleans
     del dl_context, environment, booleans, numericals
     gc.collect()
-    assert {obj.get_name() for obj in concept.views()} == {"ball1", "ball2"}
-    assert {(first.get_name(), second.get_name()) for first, second in role.views()} == {
+    assert {obj.name() for obj in concept.views()} == {"ball1", "ball2"}
+    assert {(first.name(), second.name()) for first, second in role.views()} == {
         ("ball1", "rooma"),
         ("ball2", "rooma"),
     }
-    assert boolean.get_value() is True
-    assert numerical.get_value() == 2
+    assert boolean.value() is True
+    assert numerical.value() == 2
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -383,12 +377,12 @@ def test_state_evaluation_context_retains_program_state_and_environment(
     context = make_dl_context(environment, loaded)
     assert sys.getrefcount(loaded) > state_references
     assert sys.getrefcount(environment) > environment_references
-    boolean = loaded.get_module_state().get_mod().get_boolean_features()[0]
-    numerical = loaded.get_module_state().get_mod().get_numerical_features()[0]
+    boolean = loaded.module_state().mod().boolean_features()[0]
+    numerical = loaded.module_state().mod().numerical_features()[0]
     del task_context, program, expander, loaded, environment
     gc.collect()
-    assert ext.evaluate(boolean, context).get_value() is True
-    assert ext.evaluate(numerical, context).get_value() == 2
+    assert ext.evaluate(boolean, context).value() is True
+    assert ext.evaluate(numerical, context).value() == 2
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -396,21 +390,21 @@ def test_state_evaluation_contexts_borrow_distinct_call_arguments(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
-    initial = initial_program_state(expander, initial_node(task_context).get_state())
+    initial = initial_program_state(expander, initial_node(task_context).state())
     environment = make_environment(task_context, program)
     contexts = [
         make_dl_context(environment, loaded),
         make_dl_context(environment, initial),
     ]
     features = [
-        loaded.get_module_state().get_mod().get_numerical_features()[0],
-        initial.get_module_state().get_mod().get_numerical_features()[0],
+        loaded.module_state().mod().numerical_features()[0],
+        initial.module_state().mod().numerical_features()[0],
     ]
     del loaded, initial
     gc.collect()
     for position in (0, 1, 0):
         environment.reset_source()
-        assert ext.evaluate(features[position], contexts[position]).get_value() == 2
+        assert ext.evaluate(features[position], contexts[position]).value() == 2
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -421,27 +415,24 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
         f"(:registers {declarations} (:concept selected) (:role location))",
     )
     task_context, program, _expander, loaded = _loaded_frame(kind, source)
-    concept_values = loaded.get_module_state().get_registers().get_concept_values()
-    role_values = loaded.get_module_state().get_registers().get_role_values()
+    concept_values = loaded.module_state().registers().concept_values()
+    role_values = loaded.module_state().registers().role_values()
     assert len(concept_values) == len(role_values) == 6
     assert concept_values[:5] == role_values[:5] == [None] * 5
     assert concept_values[5] is not None
     assert role_values[5] is not None
-    features = {
-        feature.get_variant().get_symbol(): feature
-        for feature in loaded.get_module_state().get_mod().get_numerical_features()
-    }
+    features = {feature.variant().symbol(): feature for feature in loaded.module_state().mod().numerical_features()}
     environment = make_environment(task_context, program)
     context = make_dl_context(environment, loaded)
-    assert ext.evaluate(features["concept_register_size"], context).get_value() == 1
-    assert ext.evaluate(features["role_register_size"], context).get_value() == 1
+    assert ext.evaluate(features["concept_register_size"], context).value() == 1
+    assert ext.evaluate(features["role_register_size"], context).value() == 1
 
     arguments = CallArgumentsData()
-    module_arguments = loaded.get_module_state().get_arguments()
-    arguments.concept_arguments = [value.index() for value in module_arguments.get_concept_arguments()]
-    arguments.role_arguments = [value.index() for value in module_arguments.get_role_arguments()]
-    arguments.boolean_arguments = [value.index() for value in module_arguments.get_boolean_arguments()]
-    arguments.numerical_arguments = [value.index() for value in module_arguments.get_numerical_arguments()]
+    module_arguments = loaded.module_state().arguments()
+    arguments.concept_arguments = [value.index() for value in module_arguments.concept_arguments()]
+    arguments.role_arguments = [value.index() for value in module_arguments.role_arguments()]
+    arguments.boolean_arguments = [value.index() for value in module_arguments.boolean_arguments()]
+    arguments.numerical_arguments = [value.index() for value in module_arguments.numerical_arguments()]
     registers = RegisterValuesData()
     registers.concept_values = [None] * 5 + [concept_values[5].index()]
     first, second = role_values[5]
@@ -453,38 +444,36 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     register_view = repository.insert(registers)[0]
     assert isinstance(argument_view, CallArguments)
     assert isinstance(register_view, RegisterValues)
-    assert repository.insert(arguments)[0] == argument_view == loaded.get_module_state().get_arguments()
-    assert repository.insert(registers)[0] == register_view == loaded.get_module_state().get_registers()
-    assert len({argument_view, loaded.get_module_state().get_arguments()}) == 1
-    assert len({register_view, loaded.get_module_state().get_registers()}) == 1
+    assert repository.insert(arguments)[0] == argument_view == loaded.module_state().arguments()
+    assert repository.insert(registers)[0] == register_view == loaded.module_state().registers()
+    assert len({argument_view, loaded.module_state().arguments()}) == 1
+    assert len({register_view, loaded.module_state().registers()}) == 1
     storage = semantics.EvaluationStorage(repository)
-    context = _state_context(
-        loaded.get_state().unpack(), task_context.dl_builder, storage, argument_view, register_view
-    )
-    assert ext.evaluate(features["argument_count"], context).get_value() == 2
-    assert ext.evaluate(features["concept_register_size"], context).get_value() == 1
-    assert ext.evaluate(features["role_register_size"], context).get_value() == 1
+    context = _state_context(loaded.state().unpack(), task_context.dl_builder, storage, argument_view, register_view)
+    assert ext.evaluate(features["argument_count"], context).value() == 2
+    assert ext.evaluate(features["concept_register_size"], context).value() == 1
+    assert ext.evaluate(features["role_register_size"], context).value() == 1
     registers.concept_values = [None] * 6
     registers.role_values = [None] * 6
     empty_register_view = repository.insert(registers)[0]
     assert empty_register_view != register_view
     storage.reset_dynamic()
-    assert ext.evaluate(features["concept_register_size"], context).get_value() == 1
-    assert ext.evaluate(features["role_register_size"], context).get_value() == 1
+    assert ext.evaluate(features["concept_register_size"], context).value() == 1
+    assert ext.evaluate(features["role_register_size"], context).value() == 1
     context = _state_context(
-        loaded.get_state().unpack(),
+        loaded.state().unpack(),
         task_context.dl_builder,
         storage,
         argument_view,
         empty_register_view,
     )
     storage.reset_dynamic()
-    assert ext.evaluate(features["concept_register_size"], context).get_value() == 0
-    assert ext.evaluate(features["role_register_size"], context).get_value() == 0
+    assert ext.evaluate(features["concept_register_size"], context).value() == 0
+    assert ext.evaluate(features["role_register_size"], context).value() == 0
     del arguments, registers, argument_view, register_view, empty_register_view
     gc.collect()
     storage.reset_dynamic()
-    assert ext.evaluate(features["argument_count"], context).get_value() == 2
+    assert ext.evaluate(features["argument_count"], context).value() == 2
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -503,7 +492,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
     )
     program = parse_program(source, domain, task_context.domain_context.ext_repository)
     expander = make_expander(task_context, program)
-    child = collect_steps(expander, initial_program_state(expander, initial_node(task_context).get_state()))[0].target
+    child = collect_steps(expander, initial_program_state(expander, initial_node(task_context).state()))[0].target
     statistics = ext.ProgramSearchStatistics()
 
     def bindings(state: ProgramState, choice_type: type[ext.ConceptChoice | ext.RoleChoice]) -> list[ExecutionStep]:
@@ -538,20 +527,20 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
 
     concept_steps = bindings(child, ext.ConceptChoice)
     assert len(concept_steps) == 2
-    assert child.get_module_state().get_registers().get_concept_values()[0] is None
+    assert child.module_state().registers().concept_values()[0] is None
     selected: set[str] = set()
     for step in concept_steps:
-        value = step.target.get_module_state().get_registers().get_concept_values()[0]
+        value = step.target.module_state().registers().concept_values()[0]
         assert value is not None
-        selected.add(value.get_name())
+        selected.add(value.name())
     assert selected == {"ball1", "ball2"}
     for step in concept_steps:
         role_steps = bindings(step.target, ext.RoleChoice)
         assert len(role_steps) == 2
-        assert step.target.get_module_state().get_registers().get_role_values()[0] is None
+        assert step.target.module_state().registers().role_values()[0] is None
         for role_step in role_steps:
-            assert _same_state(role_step.target.get_state().unpack(), child.get_state().unpack())
-            assert role_step.target.get_module_state().get_registers().get_role_values()[0] is not None
+            assert _same_state(role_step.target.state().unpack(), child.state().unpack())
+            assert role_step.target.module_state().registers().role_values()[0] is not None
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -559,7 +548,7 @@ def test_choice_bindings_keep_pool_and_repositories_alive(kind: Literal["ground"
     task_context, domain = _task_context(kind)
     program = parse_program(PROGRAM.replace("(:load", "(:choose"), domain, task_context.domain_context.ext_repository)
     expander = make_expander(task_context, program)
-    child = collect_steps(expander, initial_program_state(expander, initial_node(task_context).get_state()))[0].target
+    child = collect_steps(expander, initial_program_state(expander, initial_node(task_context).state()))[0].target
     statistics = ext.ProgramSearchStatistics()
     choices: list[Outcome] = []
 
@@ -581,7 +570,7 @@ def test_choice_bindings_keep_pool_and_repositories_alive(kind: Literal["ground"
     role = _object_pair(role_choice.current())
     concepts = concept_choice.bindings
     roles = role_choice.bindings
-    names = concept.get_name(), tuple(value.get_name() for value in role)
+    names = concept.name(), tuple(value.name() for value in role)
 
     choices.clear()
     del expander, with_concept, child, program, task_context, domain
@@ -590,7 +579,7 @@ def test_choice_bindings_keep_pool_and_repositories_alive(kind: Literal["ground"
     assert role_choice.current() == role
     del concept_choice, role_choice
     gc.collect()
-    assert (concept.get_name(), tuple(value.get_name() for value in role)) == names
+    assert (concept.name(), tuple(value.name() for value in role)) == names
     assert concept in concepts
     assert role in roles
 
@@ -661,7 +650,7 @@ def test_state_memorization_preserves_axiom_closure(
     result = _find_solution(context, program, options)
     assert result.is_successful()
     assert result.plan is not None
-    assert result.plan.get_length() == 2
+    assert result.plan.length() == 2
     assert result.statistics.choice_depth == 1
     assert result.statistics.choice_width == 2
     assert bool(result.deadend_states) == (mode == ext.StateMemorization.ALL)
@@ -731,14 +720,15 @@ def test_initial_goal_classifier_and_zero_time_results(
     if initial_goal_satisfied and not universal:
         assert result.plan is not None
         assert result.plan.empty()
-        start = result.plan.get_start_node()
-        initial = initial_node(context).pack()
-        if isinstance(start, ground.PackedNode):
-            assert isinstance(initial, ground.PackedNode)
-            assert start == initial
+        start = result.plan.start_node()
+        initial = initial_node(context)
+        if isinstance(start, ground.NodeRecordView):
+            assert isinstance(initial, ground.OwnedNodeBuilderView)
+            assert start.state() == initial.state().pack()
         else:
-            assert isinstance(initial, lifted.PackedNode)
-            assert start == initial
+            assert isinstance(initial, lifted.OwnedNodeBuilderView)
+            assert start.state() == initial.state().pack()
+        assert start.metric() == initial.metric()
     else:
         assert result.plan is None
 
@@ -911,10 +901,7 @@ def test_ext_arithmetic_values_and_round_trip(kind: Literal["ground", "lifted"])
     program = parse_program(source, domain, repository)
     assert str(parse_program(str(program), domain, repository)) == str(program)
     expander = make_expander(task_context, program)
-    state = initial_program_state(expander, initial_node(task_context).get_state())
+    state = initial_program_state(expander, initial_node(task_context).state())
     context = make_dl_context(make_environment(task_context, program), state)
-    values = {
-        f.get_variant().get_symbol(): ext.evaluate(f, context).get_value()
-        for f in program.get_entry_mod().get_numerical_features()
-    }
+    values = {f.variant().symbol(): ext.evaluate(f, context).value() for f in program.entry_mod().numerical_features()}
     assert values == {f"f{i}": expected for i, (_, expected) in enumerate(cases)}

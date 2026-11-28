@@ -15,8 +15,8 @@ namespace ru = runir::kr::uns;
 fmt::format_context::iterator fmt::formatter<ru::ClassifierLiteralView>::format(const ru::ClassifierLiteralView& value, fmt::format_context& context) const
 {
     const auto symbol =
-        std::visit([](auto feature) { return std::visit([](auto concrete) { return concrete.get_symbol(); }, feature.get_variant()); }, value.get_feature());
-    if (value.get_polarity())
+        std::visit([](auto feature) { return std::visit([](auto concrete) { return concrete.symbol(); }, feature.variant()); }, value.feature());
+    if (value.polarity())
         return fmt::format_to(context.out(), "{}", symbol.str());
     return fmt::format_to(context.out(), "(not {})", symbol.str());
 }
@@ -24,7 +24,7 @@ fmt::format_context::iterator fmt::formatter<ru::ClassifierLiteralView>::format(
 fmt::format_context::iterator fmt::formatter<ru::ClassifierClauseView>::format(const ru::ClassifierClauseView& value, fmt::format_context& context) const
 {
     auto out = fmt::format_to(context.out(), "(and");
-    for (auto literal : value.get_literals())
+    for (auto literal : value.literals())
         out = fmt::format_to(out, " {}", literal);
     return fmt::format_to(out, ")");
 }
@@ -34,15 +34,15 @@ fmt::format_context::iterator fmt::formatter<ru::ClassifierView>::format(const r
     auto out = fmt::format_to(context.out(), "(:classifier");
     {
         const auto deeper = urd::scoped_indent();
-        out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), value.get_symbol());
+        out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), value.symbol());
         out = fmt::format_to(out, "{}(:features", urd::new_line());
         {
             const auto features = urd::scoped_indent();
-            for (auto feature : value.get_features())
+            for (auto feature : value.features())
                 out = fmt::format_to(out, "{}{}", urd::new_line(), feature);
         }
         out = fmt::format_to(out, "{})", urd::new_line());
-        if (value.get_clauses().empty())
+        if (value.clauses().empty())
             out = fmt::format_to(out, "{}(:expression (or))", urd::new_line());
         else
         {
@@ -52,7 +52,7 @@ fmt::format_context::iterator fmt::formatter<ru::ClassifierView>::format(const r
                 out = fmt::format_to(out, "{}(or", urd::new_line());
                 {
                     const auto clauses = urd::scoped_indent();
-                    for (auto clause : value.get_clauses())
+                    for (auto clause : value.clauses())
                         out = fmt::format_to(out, "{}{}", urd::new_line(), clause);
                 }
                 out = fmt::format_to(out, "{})", urd::new_line());

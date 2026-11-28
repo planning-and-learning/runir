@@ -78,12 +78,12 @@ fmt::format_context::iterator fmt::formatter<std::pair<urd::index_view<dl::Conce
     const auto write = [&out]<typename T>(const T& component)
     {
         if constexpr (is_planning_symbol<T>)
-            out = fmt::format_to(out, " {:?}", component.get_name().view());
+            out = fmt::format_to(out, " {:?}", component.name().view());
         else if constexpr (std::same_as<T, bool>)
             out = fmt::format_to(out, " {}", component ? dl::TrueTag::keyword : dl::FalseTag::keyword);
         else if constexpr (SymbolList<T>)
             for (auto symbol : component)
-                out = fmt::format_to(out, " {:?}", symbol.get_name().view());
+                out = fmt::format_to(out, " {:?}", symbol.name().view());
         else
             out = fmt::format_to(out, " {}", component);
     };
@@ -106,12 +106,12 @@ fmt::format_context::iterator fmt::formatter<std::pair<urd::index_view<dl::Role<
     const auto write = [&out]<typename T>(const T& component)
     {
         if constexpr (is_planning_symbol<T>)
-            out = fmt::format_to(out, " {:?}", component.get_name().view());
+            out = fmt::format_to(out, " {:?}", component.name().view());
         else if constexpr (std::same_as<T, bool>)
             out = fmt::format_to(out, " {}", component ? dl::TrueTag::keyword : dl::FalseTag::keyword);
         else if constexpr (SymbolList<T>)
             for (auto symbol : component)
-                out = fmt::format_to(out, " {:?}", symbol.get_name().view());
+                out = fmt::format_to(out, " {:?}", symbol.name().view());
         else
             out = fmt::format_to(out, " {}", component);
     };
@@ -134,12 +134,12 @@ fmt::format_context::iterator fmt::formatter<std::pair<urd::index_view<dl::Boole
     const auto write = [&out]<typename T>(const T& component)
     {
         if constexpr (is_planning_symbol<T>)
-            out = fmt::format_to(out, " {:?}", component.get_name().view());
+            out = fmt::format_to(out, " {:?}", component.name().view());
         else if constexpr (std::same_as<T, bool>)
             out = fmt::format_to(out, " {}", component ? dl::TrueTag::keyword : dl::FalseTag::keyword);
         else if constexpr (SymbolList<T>)
             for (auto symbol : component)
-                out = fmt::format_to(out, " {:?}", symbol.get_name().view());
+                out = fmt::format_to(out, " {:?}", symbol.name().view());
         else
             out = fmt::format_to(out, " {}", component);
     };
@@ -162,12 +162,12 @@ fmt::format_context::iterator fmt::formatter<std::pair<urd::index_view<dl::Numer
     const auto write = [&out]<typename T>(const T& component)
     {
         if constexpr (is_planning_symbol<T>)
-            out = fmt::format_to(out, " {:?}", component.get_name().view());
+            out = fmt::format_to(out, " {:?}", component.name().view());
         else if constexpr (std::same_as<T, bool>)
             out = fmt::format_to(out, " {}", component ? dl::TrueTag::keyword : dl::FalseTag::keyword);
         else if constexpr (SymbolList<T>)
             for (auto symbol : component)
-                out = fmt::format_to(out, " {:?}", symbol.get_name().view());
+                out = fmt::format_to(out, " {:?}", symbol.name().view());
         else
             out = fmt::format_to(out, " {}", component);
     };

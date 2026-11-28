@@ -19,10 +19,10 @@
 
 #include <cstddef>
 #include <stdexcept>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
-#include <tyr/planning/state_builder.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_builder.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
+#include <tyr/planning/tasks/lifted/task.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/indexed.hpp>
@@ -80,7 +80,7 @@ public:
     template<PredicateContext Context, tyr::formalism::FactKind T>
     void add_atom(tyr::formalism::AtomView<::tyr::GroundTag, T> atom)
     {
-        const auto objects = atom.get_row().template resolve<tyr::formalism::Object>();
+        const auto objects = atom.row().template resolve<tyr::formalism::Object>();
         auto vertices = VertexIndexList {};
         vertices.reserve(objects.size());
 
@@ -89,7 +89,7 @@ public:
             const auto vertex = get_or_create_vertex(objects[i]);
             vertices.push_back(vertex);
 
-            auto predicate_color_data = urd::data<PredicateColor<T>>(atom.get_predicate().index(), static_cast<ygg::uint_t>(i), Context);
+            auto predicate_color_data = urd::data<PredicateColor<T>>(atom.predicate().index(), static_cast<ygg::uint_t>(i), Context);
             const auto predicate_color = m_repository->insert(predicate_color_data).first;
             m_vertex_colors[vertex].emplace_back(predicate_color.index());
         }
@@ -122,49 +122,49 @@ public:
 };
 
 template<tyr::TaskKind Kind>
-void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
+void add_objects(tyr::planning::StateBuilderView<Kind> state, ObjectGraphConstructionContext& context)
 {
     const auto task = state.context().get_task()->get_task();
 
-    for (auto object : task.get_domain().get_constants())
+    for (auto object : task.domain().constants())
         context.add_object(object);
 
-    for (auto object : task.get_objects())
+    for (auto object : task.objects())
         context.add_object(object);
 }
 
 template<tyr::TaskKind Kind>
-void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
+void add_atoms(tyr::planning::StateBuilderView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    for (auto atom : state.template get_atoms<tyr::formalism::StaticTag>())
+    for (auto atom : state.template atoms<tyr::formalism::StaticTag>())
         context.template add_atom<PredicateContext::STATE>(atom);
 
-    for (auto fact : state.get_fluent_facts())
-        if (const auto atom = fact.get_atom())
+    for (const auto& fact : state.fluent_facts())
+        if (const auto atom = fact.atom())
             context.template add_atom<PredicateContext::STATE>(*atom);
 }
 
 template<tyr::TaskKind Kind>
-void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
+void add_goal_atoms(tyr::planning::StateBuilderView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    const auto goal = state.context().get_task()->get_task().get_goal();
+    const auto goal = state.context().get_task()->get_task().goal();
 
-    for (auto literal : goal.template get_literals<tyr::formalism::StaticTag>())
-        context.template add_atom<PredicateContext::GOAL>(literal.get_atom());
+    for (auto literal : goal.template literals<tyr::formalism::StaticTag>())
+        context.template add_atom<PredicateContext::GOAL>(literal.atom());
 
-    for (auto fact : goal.template get_facts<tyr::formalism::PositiveTag>())
-        if (const auto atom = fact.get_atom())
+    for (auto fact : goal.template facts<tyr::formalism::PositiveTag>())
+        if (const auto atom = fact.atom())
             context.template add_atom<PredicateContext::GOAL>(*atom);
 
-    for (auto fact : goal.template get_facts<tyr::formalism::NegativeTag>())
-        if (const auto atom = fact.get_atom())
+    for (auto fact : goal.template facts<tyr::formalism::NegativeTag>())
+        if (const auto atom = fact.atom())
             context.template add_atom<PredicateContext::GOAL>(*atom);
 }
 
 }  // namespace
 
 template<tyr::TaskKind Kind>
-auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>
+auto create_object_graph(tyr::planning::StateBuilderView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>
 {
     const auto root = [](const tyr::formalism::Repository* layer)
     {
@@ -172,7 +172,7 @@ auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& 
             layer = layer->parent();
         return layer;
     };
-    if (root(state.get_formalism_repository().get()) != root(&repository.get<tyr::formalism::Repository>()))
+    if (root(state.formalism_repository().get()) != root(&repository.get<tyr::formalism::Repository>()))
         throw std::invalid_argument("State and ColorRepository use different planning repositories.");
 
     auto context = ObjectGraphConstructionContext(repository);
@@ -182,9 +182,9 @@ auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& 
     return std::move(context).release();
 }
 
-template auto create_object_graph<tyr::GroundTag>(tyr::planning::StateView<tyr::GroundTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
+template auto create_object_graph<tyr::GroundTag>(tyr::planning::StateBuilderView<tyr::GroundTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
 
-template auto create_object_graph<tyr::LiftedTag>(tyr::planning::StateView<tyr::LiftedTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
+template auto create_object_graph<tyr::LiftedTag>(tyr::planning::StateBuilderView<tyr::LiftedTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
 
 }  // namespace runir::datasets
 

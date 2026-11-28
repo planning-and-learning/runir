@@ -18,27 +18,27 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_concept_start() const noexcept { return self().template member<&urd::record_of<V>::concept_start>(); }
+    auto concept_start() const noexcept { return self().template member<&urd::record_of<V>::concept_start>(); }
 
-    auto get_role_start() const noexcept { return self().template member<&urd::record_of<V>::role_start>(); }
+    auto role_start() const noexcept { return self().template member<&urd::record_of<V>::role_start>(); }
 
-    auto get_boolean_start() const noexcept { return self().template member<&urd::record_of<V>::boolean_start>(); }
+    auto boolean_start() const noexcept { return self().template member<&urd::record_of<V>::boolean_start>(); }
 
-    auto get_numerical_start() const noexcept { return self().template member<&urd::record_of<V>::numerical_start>(); }
+    auto numerical_start() const noexcept { return self().template member<&urd::record_of<V>::numerical_start>(); }
 
-    auto get_concept_derivation_rules() const noexcept { return self().template member<&urd::record_of<V>::concept_derivation_rules>(); }
+    auto concept_derivation_rules() const noexcept { return self().template member<&urd::record_of<V>::concept_derivation_rules>(); }
 
-    auto get_role_derivation_rules() const noexcept { return self().template member<&urd::record_of<V>::role_derivation_rules>(); }
+    auto role_derivation_rules() const noexcept { return self().template member<&urd::record_of<V>::role_derivation_rules>(); }
 
-    auto get_boolean_derivation_rules() const noexcept { return self().template member<&urd::record_of<V>::boolean_derivation_rules>(); }
+    auto boolean_derivation_rules() const noexcept { return self().template member<&urd::record_of<V>::boolean_derivation_rules>(); }
 
-    auto get_numerical_derivation_rules() const noexcept { return self().template member<&urd::record_of<V>::numerical_derivation_rules>(); }
+    auto numerical_derivation_rules() const noexcept { return self().template member<&urd::record_of<V>::numerical_derivation_rules>(); }
 
-    auto get_domain() const noexcept { return self().template member<&urd::record_of<V>::domain>(); }
+    auto domain() const noexcept { return self().template member<&urd::record_of<V>::domain>(); }
 
     // user: one getter templated on the tag over the fields it chooses (next to the record), besides the plain getters.
     template<runir::kr::dl::CategoryTag Category>
-    auto get_start() const noexcept
+    auto start() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return self().template member<&urd::record_of<V>::concept_start>();
@@ -50,13 +50,13 @@ public:
             return self().template member<&urd::record_of<V>::numerical_start>();
         else
         {
-            static_assert(false, "unhandled DL category in get_start");
+            static_assert(false, "unhandled DL category in start");
         }
     }
 
     // user: one getter templated on the tag over the fields it chooses (next to the record), besides the plain getters.
     template<runir::kr::dl::CategoryTag Category>
-    auto get_derivation_rules() const noexcept
+    auto derivation_rules() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return self().template member<&urd::record_of<V>::concept_derivation_rules>();
@@ -68,7 +68,7 @@ public:
             return self().template member<&urd::record_of<V>::numerical_derivation_rules>();
         else
         {
-            static_assert(false, "unhandled DL category in get_derivation_rules");
+            static_assert(false, "unhandled DL category in derivation_rules");
         }
     }
 };

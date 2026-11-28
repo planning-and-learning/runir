@@ -42,22 +42,22 @@ static_assert(requires(Data& data) {
 });
 static_assert(requires(const View& view) {
     view.index();
-    view.get_symbol();
-    view.template get_arguments<kr::dl::ConceptTag>();
-    view.template get_arguments<kr::dl::RoleTag>();
-    view.template get_arguments<kr::dl::BooleanTag>();
-    view.template get_arguments<kr::dl::NumericalTag>();
-    view.template get_registers<kr::dl::ConceptTag>();
-    view.template get_registers<kr::dl::RoleTag>();
-    view.template get_features<kr::dl::ConceptTag>();
-    view.template get_features<kr::dl::RoleTag>();
-    view.template get_features<kr::dl::BooleanTag>();
-    view.template get_features<kr::dl::NumericalTag>();
-    view.template get_features<kr::ps::dl::QueryFeature>();
-    view.get_query_features();
-    view.get_entry_memory_state();
-    view.get_memory_states();
-    view.get_memory_transitions();
+    view.symbol();
+    view.template arguments<kr::dl::ConceptTag>();
+    view.template arguments<kr::dl::RoleTag>();
+    view.template arguments<kr::dl::BooleanTag>();
+    view.template arguments<kr::dl::NumericalTag>();
+    view.template registers<kr::dl::ConceptTag>();
+    view.template registers<kr::dl::RoleTag>();
+    view.template features<kr::dl::ConceptTag>();
+    view.template features<kr::dl::RoleTag>();
+    view.template features<kr::dl::BooleanTag>();
+    view.template features<kr::dl::NumericalTag>();
+    view.template features<kr::ps::dl::QueryFeature>();
+    view.query_features();
+    view.entry_memory_state();
+    view.memory_states();
+    view.memory_transitions();
 });
 
 }

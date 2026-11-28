@@ -7,6 +7,7 @@
 #include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/icp/detail/rule_evaluation/context.hpp>
@@ -14,8 +15,9 @@
 #include <runir/kr/ps/icp/program_executor.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -88,7 +90,9 @@ template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<Kind> Ev
 auto initial(kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>& expander)
 {
     auto& search = *expander.get_task_context()->search_context;
-    return expander.initial_state(search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator).get_state());
+    const auto node = runir::datasets::initial_node(search);
+    const tyr::planning::StateBuilderView<Kind>& state = node.state();  // read as the borrowed view
+    return expander.initial_state(state);
 }
 
 template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
@@ -138,24 +142,24 @@ void check_evaluation_policies()
                 EXPECT_EQ(actual[i].planning_successor.has_value(), expected[i].planning_successor.has_value());
                 if (actual[i].planning_successor && expected[i].planning_successor)
                 {
-                    EXPECT_EQ(actual[i].planning_successor->label, expected[i].planning_successor->label);
+                    EXPECT_EQ(actual[i].planning_successor->label(), expected[i].planning_successor->label());
                 }
             }
             return expected;
         };
         const auto loaded = compare(source);
         ASSERT_EQ(loaded.size(), 2);
-        EXPECT_NE(loaded.front().target.get_registers(), loaded.back().target.get_registers());
+        EXPECT_NE(loaded.front().target.registers(), loaded.back().target.registers());
         auto finishes = 0;
         for (const auto& step : loaded)
         {
             ASSERT_EQ(step.status, Outcome::APPLIED);
-            EXPECT_EQ(step.target.get_state(), source.get_state());
-            EXPECT_NE(step.target.get_registers(), source.get_registers());
+            EXPECT_EQ(step.target.state(), source.state());
+            EXPECT_NE(step.target.registers(), source.registers());
             const auto moved = compare(step.target);
             ASSERT_EQ(moved.size(), 1);
             ASSERT_EQ(moved.front().status, Outcome::APPLIED);
-            EXPECT_NE(moved.front().target.get_state(), source.get_state());
+            EXPECT_NE(moved.front().target.state(), source.state());
             const auto finished = compare(moved.front().target);
             ASSERT_EQ(finished.size(), 1);
             finishes += finished.front().status == Outcome::APPLIED;
@@ -182,7 +186,7 @@ void check_executor()
         EXPECT_EQ(result.plan.has_value(), !universal);
         if (result.plan)
         {
-            EXPECT_EQ(result.plan->get_length(), 2);
+            EXPECT_EQ(result.plan->length(), 2);
         }
     }
 
@@ -271,15 +275,15 @@ void check_histories()
     for (const auto& step : role_steps)
     {
         EXPECT_EQ(step.status, Outcome::APPLIED);
-        EXPECT_EQ(step.target.get_state(), role_initial.get_state());
-        EXPECT_NE(step.target.get_registers(), role_initial.get_registers());
+        EXPECT_EQ(step.target.state(), role_initial.state());
+        EXPECT_NE(step.target.registers(), role_initial.registers());
     }
 
     const auto prefix = rule("load-good", "m0", "m1", load("Good")) + rule("load-start", "m1", "m2", load("Here"));
     const auto policy = program(context, module(prefix + rule("reload-good", "m2", "m3", load("Good"))));
     auto expander = kr::ps::icp::SuccessorExpander<Kind>(context, policy);
     const auto source = initial(expander);
-    for (const auto history : source.get_histories().get_concepts())
+    for (const auto history : source.histories().concepts())
         EXPECT_EQ(history.value().count(), 0);
     const auto step1 = successors(expander, source);
     ASSERT_EQ(step1.size(), 1);
@@ -290,12 +294,12 @@ void check_histories()
     const auto repeated = successors(expander, step2.front().target);
     ASSERT_EQ(repeated.size(), 1);
     EXPECT_EQ(repeated.front().status, Outcome::NO_APPLICABLE_ACTION);
-    EXPECT_EQ(source.get_state(), step2.front().target.get_state());
+    EXPECT_EQ(source.state(), step2.front().target.state());
 
     // Equal planning state, memory, and registers with different histories must have distinct identities.
     const auto cleared_view = step2.front().target;
     auto cleared = runir::tests::copy_fields(*cleared_view.context()[cleared_view.index()]);
-    cleared.histories = source.get_histories().index();
+    cleared.histories = source.histories().index();
     const auto unvisited = context->icp_execution_repository->insert(cleared).first;
     EXPECT_NE(unvisited, step2.front().target);
     const auto allowed = successors(expander, unvisited);
@@ -314,7 +318,7 @@ void check_histories()
         current = next.front().target;
     }
 
-    EXPECT_EQ(current.get_memory_state().get_name(), "m4");
+    EXPECT_EQ(current.memory_state().name(), "m4");
 
     // A reset concept losing its last member also clears predecessor histories.
     const auto exit_policy = program(context,
@@ -332,7 +336,7 @@ void check_histories()
         current = next.front().target;
     }
 
-    EXPECT_EQ(current.get_memory_state().get_name(), "m5");
+    EXPECT_EQ(current.memory_state().name(), "m5");
 
     // Re-entry is checked against the source history even if this very transition would reset it.
     const auto same_step = program(
@@ -376,7 +380,7 @@ void check_normalized_arguments()
         if (!universal)
         {
             ASSERT_TRUE(progress.plan);
-            EXPECT_EQ(progress.plan.value().get_length(), 1);
+            EXPECT_EQ(progress.plan.value().length(), 1);
         }
     }
 }
@@ -406,7 +410,7 @@ void check_rejected_bindings_stay_unpublished()
         const auto count_bindings = [&]
         {
             size_t count = 0;
-            for (const auto action : context->search_context->task->get_task().get_domain().get_actions())
+            for (const auto action : context->search_context->task->get_task().domain().actions())
                 count += context->search_context->task->get_repository()->template size<ygg::Row<tyr::formalism::Action<tyr::LiftedTag>>>(action.index());
             return count;
         };
@@ -425,11 +429,11 @@ void check_rejected_bindings_stay_unpublished()
         // Direct matching also checks conditions, argument filters, and memory before effects.
         // Scenario 2 passes the rule itself and is rejected separately by history admission.
         ASSERT_TRUE(accepted_steps.front().planning_successor);
-        const auto candidate = accepted_steps.front().planning_successor.value().unpack();
+        const auto candidate = runir::datasets::unpacked(accepted_steps.front().planning_successor.value());
         auto workspace = kr::ps::icp::detail::RuleEvaluationWorkspace<Kind>(context, rejected);
-        auto evaluation_context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { &workspace, state.get_state() };
+        auto evaluation_context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { &workspace, state.state() };
         const auto published_before_matching = count_bindings();
-        for (const auto rules : rejected.get_entry_mod().get_memory_transitions())
+        for (const auto rules : rejected.entry_mod().memory_transitions())
             for (const auto variant : rules)
                 std::visit(
                     [&]<kr::ps::icp::RuleKind Tag>(kr::ps::icp::RuleView<Tag> concrete)
@@ -443,15 +447,15 @@ void check_rejected_bindings_stay_unpublished()
                         else
                             ADD_FAILURE() << "Expected a crule";
                     },
-                    variant.get_variant());
+                    variant.variant());
         EXPECT_EQ(count_bindings(), published_before_matching);
         const auto repeated = successors(accepted_expander, accepted_state);
         ASSERT_EQ(repeated.size(), accepted_steps.size());
         for (size_t i = 0; i < accepted_steps.size(); ++i)
         {
             ASSERT_TRUE(accepted_steps[i].planning_successor);
-            EXPECT_EQ(accepted_steps[i].planning_successor.value().label, repeated[i].planning_successor.value().label);
-            EXPECT_EQ(accepted_steps[i].planning_successor.value().unpack().label.template resolve<tyr::formalism::Object>().size(), 2);
+            EXPECT_EQ(accepted_steps[i].planning_successor.value().label(), repeated[i].planning_successor.value().label());
+            EXPECT_EQ(accepted_steps[i].planning_successor.value().label().template resolve<tyr::formalism::Object>().size(), 2);
         }
     }
 }
@@ -469,14 +473,15 @@ void check_load_evaluator_entry_checks()
         const auto policy = program(task, module(rule("load", scenario == 1 ? "m1" : "m0", "m2", body)));
         auto workspace = kr::ps::icp::detail::RuleEvaluationWorkspace<Kind>(task, policy);
         auto& search = *task->search_context;
-        const auto planning_state = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator).get_state();
+        const auto node = runir::datasets::initial_node(search);
+        const tyr::planning::StateBuilderView<Kind>& planning_state = node.state();  // read as the borrowed view
         const auto source = workspace.initial_state(planning_state);
-        auto context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { &workspace, planning_state };
+        auto context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { &workspace, node.state() };
         const auto states_before = task->icp_execution_repository->template size<kr::ps::icp::ProgramState<Kind>>();
         const auto histories_before = task->icp_control_repository->template size<kr::ps::icp::Histories>();
         const auto registers_before = task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>();
         auto steps = urd::Store<urd::sequence<kr::ps::ProgramStep<kr::IcpFamilyTag, Kind>>> {};
-        for (const auto rules : policy.get_entry_mod().get_memory_transitions())
+        for (const auto rules : policy.entry_mod().memory_transitions())
             for (const auto variant : rules)
                 std::visit(
                     [&]<kr::ps::icp::RuleKind Tag>(kr::ps::icp::RuleView<Tag> concrete)
@@ -498,7 +503,7 @@ void check_load_evaluator_entry_checks()
                         else
                             ADD_FAILURE() << "Expected a concept load rule";
                     },
-                    variant.get_variant());
+                    variant.variant());
         if (scenario == 3)
         {
             ASSERT_EQ(steps.size(), 2);
@@ -545,7 +550,7 @@ void check_rule_evaluator_scheduling()
 
     {
         auto data = urd::data<kr::ps::icp::Histories>();
-        const auto source_histories = source.get_histories();
+        const auto source_histories = source.histories();
         data.concepts = source_histories.context()[source_histories.index()]->concepts;
         ASSERT_FALSE(data.concepts.empty());
         data.concepts.push_back(data.concepts.front());
@@ -581,10 +586,10 @@ void check_rule_evaluator_scheduling()
         EXPECT_EQ(grouped[1].rule, natural[2].rule);
         EXPECT_EQ(grouped[2].rule, natural[0].rule);
         EXPECT_EQ(grouped[3].rule, natural[2].rule);
-        EXPECT_EQ(grouped[0].target.get_state(), grouped[1].target.get_state());
-        EXPECT_EQ(grouped[0].target.get_histories(), grouped[1].target.get_histories());
-        EXPECT_EQ(grouped[2].target.get_state(), grouped[3].target.get_state());
-        EXPECT_EQ(grouped[2].target.get_histories(), grouped[3].target.get_histories());
+        EXPECT_EQ(grouped[0].target.state(), grouped[1].target.state());
+        EXPECT_EQ(grouped[0].target.histories(), grouped[1].target.histories());
+        EXPECT_EQ(grouped[2].target.state(), grouped[3].target.state());
+        EXPECT_EQ(grouped[2].target.histories(), grouped[3].target.histories());
         EXPECT_EQ(history_buffer(), reused_history_buffer);
 
         auto accepted = 0;
@@ -605,7 +610,7 @@ void check_rule_evaluator_scheduling()
 
     // Repeated occurrences keep module order in both natural and grouped expansion.
     auto& repository = *context->domain_context->icp_repository;
-    const auto module_data_view = policy.get_entry_mod();
+    const auto module_data_view = policy.entry_mod();
     auto module_data = runir::tests::copy_fields(*module_data_view.context()[module_data_view.index()]);
     module_data.memory_transitions.clear();
     for (const auto row : { 1, 0, 1 })

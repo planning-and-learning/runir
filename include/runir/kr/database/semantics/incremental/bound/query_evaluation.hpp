@@ -122,7 +122,7 @@ public:
                 continue;
             auto& change = m_changes[slot];
             diff(input(slot), change);
-            if (change.added->view().get_rows().empty() && change.removed->view().get_rows().empty())
+            if (change.added->view().rows().empty() && change.removed->view().rows().empty())
                 continue;
             apply(slot, change.added->view(), change.removed->view());
             m_changed.push_back(slot);
@@ -186,7 +186,7 @@ private:
     void apply(size_t slot, const A& added, const R& removed)
     {
         m_base.replace(slot, added, removed);
-        if ((m_positive.contains(slot) && !removed.get_rows().empty()) || (m_negative.contains(slot) && !added.get_rows().empty()))
+        if ((m_positive.contains(slot) && !removed.rows().empty()) || (m_negative.contains(slot) && !added.rows().empty()))
             ++m_version;
     }
 
@@ -221,12 +221,12 @@ private:
             top_vars.insert(atom.vars.begin(), atom.vars.end());
         const auto seed_atom = [&](const database::bound::ConjunctiveAtom& atom, const auto& rows) -> bool
         {
-            if (atom.slot != slot || rows.get_rows().empty())
+            if (atom.slot != slot || rows.rows().empty())
                 return true;
             if (!std::ranges::all_of(atom.vars, [&](uint32_t var) { return top_vars.contains(var); }))
                 return false;
             const auto& plan = seed_plan(b, atom);
-            for (const auto& held : rows.get_rows())
+            for (const auto& held : rows.rows())
                 ygg::with_values(held,
                                  [&](const auto& values)
                                  {

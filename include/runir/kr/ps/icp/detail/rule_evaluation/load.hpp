@@ -21,15 +21,15 @@ public:
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy, EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
-    bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
+    bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::SharedStateBuilderView<Kind>, EvaluationPolicy>& context,
               ProgramStateView<Kind> source,
               const Emit& output,
               const Stop& stop) const
     {
         if (stop())
             return false;
-        const auto memory = source.get_memory_state();
-        const auto required_memory = m_rule.get_source();
+        const auto memory = source.memory_state();
+        const auto required_memory = m_rule.source();
         if (&memory.context() != &required_memory.context() || memory != required_memory)
             return true;
         using Registers = runir::kr::dl::semantics::RegisterValues;
@@ -37,9 +37,9 @@ public:
         const auto& task = workspace.get_task_context();
         auto& environment = workspace.get_environment();
         auto source_context = context.make_dl_context(source);
-        if (!runir::kr::ps::all_compatible<Kind, IcpFamilyTag>(m_rule.get_conditions(), source_context))
+        if (!runir::kr::ps::all_compatible<Kind, IcpFamilyTag>(m_rule.conditions(), source_context))
             return true;
-        const auto denotation = evaluate<Kind>(m_rule.get_feature(), source_context);
+        const auto denotation = evaluate<Kind>(m_rule.feature(), source_context);
         if (std::ranges::empty(denotation.views()))
         {
             auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::FAILURE, source, task);
@@ -51,21 +51,21 @@ public:
         {
             if (stop())
                 return false;
-            runir::kr::dl::semantics::assign(*registers, source.get_registers());
-            runir::kr::dl::semantics::assign_register(*registers, m_rule.get_slot().get_identifier(), value);
+            runir::kr::dl::semantics::assign(*registers, source.registers());
+            runir::kr::dl::semantics::assign_register(*registers, m_rule.slot().identifier(), value);
             const auto target_registers = task->dl_denotation_repository->insert(*registers).first;
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, target_registers);
-            if (!runir::kr::ps::all_compatible<Kind, IcpFamilyTag>(m_rule.get_effects(), transition))
+            if (!runir::kr::ps::all_compatible<Kind, IcpFamilyTag>(m_rule.effects(), transition))
                 continue;
             const auto histories = workspace.update_histories(source, transition, std::nullopt, stop);
             if (!histories)
                 continue;
-            auto target = urd::data<ProgramState<Kind>>(source.get_program().index(),
-                                                        m_rule.get_target().index(),
+            auto target = urd::data<ProgramState<Kind>>(source.program().index(),
+                                                        m_rule.target().index(),
                                                         target_registers.index(),
                                                         histories->index(),
-                                                        source.get_state().pack().index());
+                                                        source.state().pack().index());
             auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), task);
             step.rule = m_variant;
             if (!output(std::move(step)))

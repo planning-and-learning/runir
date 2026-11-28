@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
+from planning_utils import planning_module
 from pypddl.formalism import ParserOptions
 from pytyr.formalism import Parser, PlanningDomain
 from pytyr.planning.ground import State
@@ -64,7 +65,7 @@ def _concept_vector(
     for state in states:
         storage.reset_dynamic()
         context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
-        result.append(tuple(sorted(object_.get_name() for object_ in semantics.evaluate(concept, context).views())))
+        result.append(tuple(sorted(object_.name() for object_ in semantics.evaluate(concept, context).views())))
     return tuple(result)
 
 
@@ -88,8 +89,8 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir: Path) -> None:
     context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
     assert len(semantics.evaluate(result.concepts[0], context).views()) == 6
     assert len(semantics.evaluate(result.roles[0], context).views()) == 36
-    assert semantics.evaluate(result.booleans[0], context).get_value() is True
-    assert semantics.evaluate(result.numericals[0], context).get_value() == 6
+    assert semantics.evaluate(result.booleans[0], context).value() is True
+    assert semantics.evaluate(result.numericals[0], context).value() == 6
 
 
 def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_data_dir: Path) -> None:
@@ -113,7 +114,7 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
     context = semantics.LiftedStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
     assert len(semantics.evaluate(result.concepts[0], context).views()) == 6
-    assert semantics.evaluate(result.numericals[0], context).get_value() == 6
+    assert semantics.evaluate(result.numericals[0], context).value() == 6
 
     other_task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions()))
     other_search = LiftedTaskSearchContext(other_task, execution)
@@ -156,9 +157,9 @@ def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir
 
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
     context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
-    values = [semantics.evaluate(feature, context).get_value() for feature in result.numericals]
+    values = [semantics.evaluate(feature, context).value() for feature in result.numericals]
     storage.reset_all()
-    refreshed_values = [semantics.evaluate(feature, context).get_value() for feature in result.numericals]
+    refreshed_values = [semantics.evaluate(feature, context).value() for feature in result.numericals]
 
     assert values == [1, 0, 2**32 - 1]
     assert refreshed_values == values
@@ -166,18 +167,21 @@ def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir
 
 def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_dir: Path) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
-    initial_node = search_context.successor_generator.get_initial_node(
+    initial_node = planning_module(search_context).get_initial_node(
         search_context.state_repository, search_context.axiom_evaluator
     )
     move_to_roomb = next(
         successor
-        for successor in search_context.successor_generator.get_labeled_successor_nodes(
-            initial_node, search_context.state_repository, search_context.axiom_evaluator
+        for successor in planning_module(search_context).deterministic.get_successors(
+            search_context.successor_generator,
+            search_context.state_repository,
+            search_context.axiom_evaluator,
+            initial_node,
         )
-        if successor.label.get_relation().get_name() == "move"
-        and [object_.get_name() for object_ in successor.label.resolve_objects()] == ["rooma", "roomb"]
+        if successor.label().relation().name() == "move"
+        and [object_.name() for object_ in successor.label().resolve_objects()] == ["rooma", "roomb"]
     )
-    states = [initial_node.get_state().pack(), move_to_roomb.node.get_state().pack()]
+    states = [initial_node.state().pack(), move_to_roomb.node().state().pack()]
 
     result = _generate(
         '((c_0 (c_atomic_state "room"))(c_0 (c_atomic_state "at-robby"))(c_0 (c_not c_0))(c_0 (c_and c_0 c_0)))',

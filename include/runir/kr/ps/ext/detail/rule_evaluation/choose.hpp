@@ -46,7 +46,7 @@ public:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     auto
     choice_step(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Choice<Category>& choice) const
     {
@@ -58,17 +58,17 @@ public:
         }
         const auto rule = m_rule;
         auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
-        auto target = urd::visit_view(state.get_module_state(),
-                                      [&](const auto& module_)
-                                      {
-                                          return context.storage->store(
-                                              context.planning_state,
-                                              module_.get_mod(),
-                                              rule.get_target(),
-                                              bound_registers<Kind>(rule, module_.get_registers(), choice.current(), *registers, *context.storage),
-                                              module_.get_arguments(),
-                                              call_stack(state));
-                                      });
+        auto target =
+            urd::visit_view(state.module_state(),
+                            [&](const auto& module_)
+                            {
+                                return context.storage->store(context.planning_state,
+                                                              module_.mod(),
+                                                              rule.target(),
+                                                              bound_registers<Kind>(rule, module_.registers(), choice.current(), *registers, *context.storage),
+                                                              module_.arguments(),
+                                                              call_stack(state));
+                            });
         return detail::applied<Kind, Storage>(std::move(target), choice.get_rule(), *context.task_context);
     }
 
@@ -90,7 +90,7 @@ private:
              EmitConcept<Choice<Category>> Emit,
              StopConcept Stop,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState,
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
              typename Denotation>
         requires std::ranges::input_range<Denotation>
                  && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
@@ -107,7 +107,7 @@ private:
         auto choice = make_choice(workspace, rule_variant, denotation);
         if (stop())
             return false;
-        if (!rule.get_effects().empty())
+        if (!rule.effects().empty())
         {
             auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
             auto& bindings = choice.bindings();
@@ -116,9 +116,9 @@ private:
             {
                 if (stop())
                     return false;
-                const auto target_registers = urd::visit_view(
-                    state.get_module_state(),
-                    [&](const auto& module_) { return bound_registers<Kind>(rule, module_.get_registers(), value, *registers, *context.storage); });
+                const auto target_registers =
+                    urd::visit_view(state.module_state(),
+                                    [&](const auto& module_) { return bound_registers<Kind>(rule, module_.registers(), value, *registers, *context.storage); });
                 if (binding_effects_match(rule, state, planning_state, target_registers, *context.environment))
                     *admitted++ = value;
             }
@@ -126,38 +126,37 @@ private:
             if (stop())
                 return false;
         }
-        if (rule.get_order().empty() || !choice.has_alternatives())
+        if (rule.order().empty() || !choice.has_alternatives())
             return emit(std::move(choice));
 
         // Flat scratch buffers are reused across choices; only ordered values survive in the DFS frame.
         workspace.order_scores.clear();
         workspace.order_indices.clear();
-        const auto width = rule.get_order().size();
+        const auto width = rule.order().size();
         auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
         for (const auto& value : choice.bindings())
         {
             if (stop())
                 return false;
-            const auto target_registers = urd::visit_view(
-                state.get_module_state(),
-                [&](const auto& activation) { return bound_registers<Kind>(rule, activation.get_registers(), value, *registers, *context.storage); });
+            const auto target_registers = urd::visit_view(state.module_state(),
+                                                          [&](const auto& activation)
+                                                          { return bound_registers<Kind>(rule, activation.registers(), value, *registers, *context.storage); });
             context.environment->reset_target();
-            auto transition = urd::visit_view(state.get_module_state(),
+            auto transition = urd::visit_view(state.module_state(),
                                               [&](const auto& activation)
                                               {
                                                   return context.environment->make_dl_transition_context(planning_state,
                                                                                                          planning_state,
-                                                                                                         activation.get_arguments(),
-                                                                                                         activation.get_registers(),
+                                                                                                         activation.arguments(),
+                                                                                                         activation.registers(),
                                                                                                          target_registers);
                                               });
-            for (auto term : rule.get_order())
+            for (auto term : rule.order())
             {
                 if (stop())
                     return false;
-                workspace.order_scores.push_back(std::visit([&](auto feature)
-                                                            { return ygg::uint_t(evaluate<Kind>(feature, transition.get_target_context()).get_value()); },
-                                                            term.get_feature()));
+                workspace.order_scores.push_back(
+                    std::visit([&](auto feature) { return ygg::uint_t(evaluate<Kind>(feature, transition.get_target_context()).value()); }, term.feature()));
             }
             workspace.order_indices.push_back(workspace.order_indices.size());
         }
@@ -169,12 +168,12 @@ private:
                   [&](size_t lhs, size_t rhs)
                   {
                       size_t column = 0;
-                      for (auto term : rule.get_order())
+                      for (auto term : rule.order())
                       {
                           const auto left = workspace.order_scores[lhs * width + column];
                           const auto right = workspace.order_scores[rhs * width + column++];
                           if (left != right)
-                              return term.get_direction() == OrderDirection::MIN ? left < right : left > right;
+                              return term.direction() == OrderDirection::MIN ? left < right : left > right;
                       }
                       return lhs < rhs;
                   });
@@ -202,7 +201,7 @@ public:
              EmitConcept<Choice<Category>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     bool
     emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
@@ -213,7 +212,7 @@ public:
         if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment))
             return true;
         auto state_context = context.make_dl_context(state);
-        const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);
+        const auto denotation = evaluate<Kind>(rule.feature(), state_context);
         return emit_choice(context, workspace, rule, rule_variant, state, planning_state, denotation.views(), emit, stop);
     }
 };

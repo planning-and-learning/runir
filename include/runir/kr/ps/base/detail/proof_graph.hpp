@@ -21,7 +21,7 @@ template<tyr::TaskKind Kind>
 void build_proof_graph(SketchProofResults<Kind>& result,
                        const SearchNodes<Kind>& nodes,
                        std::span<const Predecessor<Kind>> predecessors,
-                       std::optional<tyr::planning::PackedStateView<Kind>> initial)
+                       std::optional<tyr::planning::StateView<Kind>> initial)
 {
     using VertexLabel = urd::data<SketchProofVertexLabel<Kind>>;
     using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<SketchProofEdgeLabel>>;
@@ -31,7 +31,7 @@ void build_proof_graph(SketchProofResults<Kind>& result,
     auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     result.deadend_states.clear();
     result.open_states.clear();
-    const auto add_vertex = [&](const tyr::planning::PackedStateView<Kind>& state)
+    const auto add_vertex = [&](const tyr::planning::StateView<Kind>& state)
     {
         const auto [entry, inserted] = graph_indices.try_emplace(state.index(), static_cast<VertexIndex>(vertices.size()));
         const auto vertex = entry->second;

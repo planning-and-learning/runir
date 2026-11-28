@@ -27,7 +27,7 @@ void analyze_modules(ProgramView program,
                      bool use_incomplete_preprocessing,
                      bool use_memory_scc_scope)
 {
-    for (auto module_ : program.get_modules())
+    for (auto module_ : program.modules())
     {
         auto module_result = structural_termination(module_, max_features, use_incomplete_preprocessing, use_memory_scc_scope);
         if (!module_result.is_terminating())
@@ -45,22 +45,22 @@ struct ModuleCallGraph
 
 std::optional<std::size_t> find_module(ProgramView program, ModuleSymbolView symbol)
 {
-    const auto modules = program.get_modules();
+    const auto modules = program.modules();
     for (std::size_t position = 0; position < modules.size(); ++position)
-        if (modules[static_cast<std::ptrdiff_t>(position)].get_symbol() == symbol)
+        if (modules[static_cast<std::ptrdiff_t>(position)].symbol() == symbol)
             return position;
     return std::nullopt;
 }
 
 ModuleCallGraph build_module_call_graph(ProgramView program)
 {
-    const auto modules = program.get_modules();
+    const auto modules = program.modules();
     auto graph = decltype(ModuleCallGraph::graph)(urd::graph_data<std::tuple<VertexIndex, VertexIndex, RuleVariantView>> { modules.size(), {}, {} });
 
     auto unresolved_rules = urd::Store<urd::sequence<RuleVariantView>> {};
     for (std::size_t source_module = 0; source_module < modules.size(); ++source_module)
     {
-        for (auto transition : modules[static_cast<std::ptrdiff_t>(source_module)].get_memory_transitions())
+        for (auto transition : modules[static_cast<std::ptrdiff_t>(source_module)].memory_transitions())
         {
             for (auto rule_variant : transition)
             {
@@ -69,7 +69,7 @@ ModuleCallGraph build_module_call_graph(ProgramView program)
                     {
                         if constexpr (std::same_as<RuleViewT, urd::index_view<Rule<CallTag>, Repository>>)
                         {
-                            const auto target_module = find_module(program, rule.get_callee());
+                            const auto target_module = find_module(program, rule.callee());
                             if (!target_module)
                             {
                                 unresolved_rules.push_back(rule_variant);
@@ -78,7 +78,7 @@ ModuleCallGraph build_module_call_graph(ProgramView program)
                             graph.add_edge(static_cast<VertexIndex>(source_module), static_cast<VertexIndex>(*target_module), rule_variant);
                         }
                     },
-                    rule_variant.get_variant());
+                    rule_variant.variant());
             }
         }
     }

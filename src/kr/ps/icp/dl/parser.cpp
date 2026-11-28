@@ -217,17 +217,17 @@ lower_module(const ast::Module& module, tyr::formalism::DomainView domain, Repos
                         auto rule = checkout<Rule<CruleTag>>(builder);
                         initialize_rule(*rule, concrete, entry);
                         auto action = std::optional<tyr::formalism::ActionView<tyr::LiftedTag>> {};
-                        for (const auto candidate : domain.get_actions())
-                            if (candidate.get_name() == concrete.action.text)
+                        for (const auto candidate : domain.actions())
+                            if (candidate.name() == concrete.action.text)
                             {
                                 action = candidate;
                                 break;
                             }
                         if (!action)
                             diagnostics.throw_at(concrete.action, UndefinedSymbolError("action", concrete.action.text));
-                        if (concrete.arguments.size() != action->get_original_arity())
+                        if (concrete.arguments.size() != action->original_arity())
                             diagnostics.throw_at(concrete.action,
-                                                 ArityMismatchError("action " + concrete.action.text, action->get_original_arity(), concrete.arguments.size()));
+                                                 ArityMismatchError("action " + concrete.action.text, action->original_arity(), concrete.arguments.size()));
                         rule->action_name = concrete.action.text;
                         /// The action's argument names: a name's position is its argument's.
                         auto arguments = urd::Store<urd::set<std::string>, urd::positional>(urd::layer { 0 });

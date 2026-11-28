@@ -243,7 +243,7 @@ namespace runir::kr::database::incremental
 {
 void SourceMinDistance::count(ygg::FreeRelationBuilderView rows, bool add)
 {
-    for (const auto& held : rows.get_rows())
+    for (const auto& held : rows.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          {

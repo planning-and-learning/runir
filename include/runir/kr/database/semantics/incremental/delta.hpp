@@ -81,7 +81,7 @@ void require_delta(const A& added, const R& removed, [[maybe_unused]] std::span<
 {
     assert(std::ranges::equal(added.columns(), columns));
     assert(std::ranges::equal(removed.columns(), columns));
-    for (const auto& held : added.get_rows())
+    for (const auto& held : added.rows())
         if (ygg::with_values(held, [&](const auto& values) { return removed.contains(values); }))
             throw std::invalid_argument("Incremental evaluation: added and removed rows overlap.");
 }

@@ -158,21 +158,21 @@ void DistanceWorkspace::append_distances(const S& sources,
 {
     m_graph.clear();
     m_targets.clear();
-    if (sources.get_rows().empty() || targets.get_rows().empty())
+    if (sources.rows().empty() || targets.rows().empty())
         return;
-    m_graph.outgoing.reserve(edges.get_rows().size());
-    for (size_t i = 0; i < edges.get_rows().size(); ++i)
+    m_graph.outgoing.reserve(edges.rows().size());
+    for (size_t i = 0; i < edges.rows().size(); ++i)
     {
         const auto [from, to] = m_graph.insert_endpoints(edges.row(i));
         m_graph.outgoing.insert({ from, to });
     }
-    for (size_t i = 0; i < sources.get_rows().size(); ++i)
+    for (size_t i = 0; i < sources.rows().size(); ++i)
         m_graph.insert_vertex(sources.row(i));
-    m_targets.reserve(targets.get_rows().size());
-    for (size_t i = 0; i < targets.get_rows().size(); ++i)
+    m_targets.reserve(targets.rows().size());
+    for (size_t i = 0; i < targets.rows().size(); ++i)
         m_targets.push_back(m_graph.insert_vertex(targets.row(i)));
 
-    for (size_t i = 0; i < sources.get_rows().size(); ++i)
+    for (size_t i = 0; i < sources.rows().size(); ++i)
     {
         const auto from = m_graph.find_vertex(sources.row(i));
         URD_ASSUME(!from.is_none());  // every source was inserted above
@@ -211,7 +211,7 @@ ygg::uint_t min_distance(const S& sources,
     const auto view = result.view();
     const auto position = static_cast<std::ptrdiff_t>(view.arity() - 1);  // The distance column follows the edge columns.
     auto best = std::numeric_limits<ygg::uint_t>::max();
-    for (const auto& held : view.get_rows())
+    for (const auto& held : view.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          { best = std::min(best, ygg::decode_value<ygg::uint_t>(*std::ranges::next(std::ranges::begin(values), position))); });

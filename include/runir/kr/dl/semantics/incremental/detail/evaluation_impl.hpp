@@ -94,7 +94,7 @@ EvaluationGraph<Kind>::EvaluationGraph(const tyr::planning::Task<Kind>& task, st
     m_denotations(std::make_unique<DenotationRepository>(task.get_repository())),
     m_task(&task)
 {
-    m_set_workspace.initialize(ygg::to_uint_t(task.get_task().get_num_objects()), *m_records, *m_denotations);
+    m_set_workspace.initialize(ygg::to_uint_t(task.get_task().num_objects()), *m_records, *m_denotations);
     for (const auto& root : roots)
         std::visit([&](auto expression) { prepare(expression); }, root);
 }

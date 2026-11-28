@@ -56,7 +56,7 @@ struct QueryStaticEvaluator : QueryValue
         {
             auto& result_rows = this->clear();
             auto output = context.for_result(true);
-            std::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result_rows); }, expression.get_variant());
+            std::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result_rows); }, expression.variant());
             initialized = true;
         }
         this->delta.clear();
@@ -207,7 +207,7 @@ struct QueryFromScalarEvaluator : QueryValue
     /// The value as a row: Booleans are rows only when true.
     std::optional<ygg::uint_t> read(EvaluationGraph<Kind>& graph) const
     {
-        const auto value = graph.result(argument).get_value();
+        const auto value = graph.result(argument).value();
         if constexpr (std::same_as<Category, BooleanTag>)
             return value ? std::optional<ygg::uint_t>(0) : std::nullopt;
         else
@@ -267,7 +267,7 @@ struct QuerySetCombinationEvaluator : QueryValue
     {
         const auto left_operand = graph.result(lhs);
         const auto right_operand = graph.result(rhs);
-        for (size_t i = 0; i < rows.get_rows().size(); ++i)
+        for (size_t i = 0; i < rows.rows().size(); ++i)
         {
             const auto row = rows.row(i);
             const auto present = ygg::with_values(row,
@@ -317,7 +317,7 @@ struct QuerySelectionEvaluator : QueryValue
     QueryView<Tag> expression;
 
     QuerySelectionEvaluator(ygg::FreeScratchRelations& scratch_, QueryEvaluationIndex argument_, QueryView<Tag> expression_) :
-        QueryValue(scratch_, expression_.get_schema()),
+        QueryValue(scratch_, expression_.schema()),
         argument(argument_),
         expression(expression_)
     {
@@ -326,18 +326,18 @@ struct QuerySelectionEvaluator : QueryValue
     template<ygg::RelationViewConcept<ygg::Schema> Rows, std::invocable<decltype(std::declval<const Rows&>().row(0))> Emit>
     void evaluate_rows(const Rows& rows, Emit emit)
     {
-        for (size_t i = 0; i < rows.get_rows().size(); ++i)
+        for (size_t i = 0; i < rows.rows().size(); ++i)
         {
             const auto row = rows.row(i);
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
             {
-                const auto& plan = expression.get_plan();
+                const auto& plan = expression.plan();
                 if (ygg::value_of(row, plan.left_position) != ygg::value_of(row, plan.right_position))
                     continue;
             }
             else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
             {
-                const auto& plan = expression.get_plan();
+                const auto& plan = expression.plan();
                 if (ygg::value_of(row, plan.position) != plan.value)
                     continue;
             }

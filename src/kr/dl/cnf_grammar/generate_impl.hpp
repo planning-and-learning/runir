@@ -10,8 +10,8 @@
 #include <stdexcept>
 #include <tyr/formalism/repository.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/state_repository.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/states/state_view.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -22,7 +22,7 @@ namespace runir::kr::dl::cnf_grammar
 /// its kind.
 template<tyr::TaskKind Kind>
 GenerateResultsFor generate(GrammarView grammar,
-                            const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
+                            const urd::Store<urd::sequence<tyr::planning::StateView<Kind>>>& states,
                             runir::kr::dl::ConstructorRepository& output_repository,
                             runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                             const GenerateOptions& options)

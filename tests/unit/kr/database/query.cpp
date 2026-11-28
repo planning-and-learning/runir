@@ -29,8 +29,8 @@ const Column x(0), y(1), z(2);
 auto rows(const auto& relation)
 {
     urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::Value>>>> result;
-    result.reserve(relation.get_rows().size());
-    for (const auto& row : relation.get_rows())
+    result.reserve(relation.rows().size());
+    for (const auto& row : relation.rows())
     {
         auto& values = result.emplace_back();
         for (const auto value : values_of(row))
@@ -50,20 +50,20 @@ auto minus(const auto& left_operand, const auto& right_operand)
 void apply(Relation& relation, const Delta& change)
 {
     const auto [added, removed] = change.change();
-    for (const auto& row : removed.get_rows())
+    for (const auto& row : removed.rows())
         EXPECT_TRUE(relation.erase(values_of(row)));
-    for (const auto& row : added.get_rows())
+    for (const auto& row : added.rows())
         relation.insert(values_of(row));
 }
 
 void reverse(Delta& change) { std::swap(change.added, change.removed); }
 
 template<typename T>
-concept HasArgument = requires(T view) { view.get_operand(); };
+concept HasArgument = requires(T view) { view.operand(); };
 template<typename T>
 concept HasOperands = requires(T view) {
-    view.get_left_operand();
-    view.get_right_operand();
+    view.left_operand();
+    view.right_operand();
 };
 using JoinView = runir::kr::database::QueryView<runir::kr::database::QueryJoinTag>;
 using ProjectView = runir::kr::database::QueryView<runir::kr::database::QueryProjectTag>;
@@ -88,19 +88,19 @@ TEST(DatabaseQuery, TypedLogicalAlternativesKeepOperandsAndRootProvenance)
     const auto united = runir::tests::qb::union_(repository, a, empty);
     const auto difference = runir::tests::qb::difference(repository, a, empty);
     const auto roots = std::array { a, empty, joined, projected, renamed, equal, selected, united, difference };
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryInputTag>(a).get_input_slot(), 0);
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryInputTag>(a).input_slot(), 0);
     EXPECT_TRUE(std::ranges::equal(runir::kr::database::as<runir::kr::database::QueryEmptyTag>(empty).columns(), columns_of(a)));
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryJoinTag>(joined).get_left_operand().index(), a.index());
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryJoinTag>(joined).get_right_operand().index(), b.index());
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryProjectTag>(projected).get_operand().index(), a.index());
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryProjectTag>(projected).get_labels().front(), x);
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryRenameTag>(renamed).get_labels().front(), y);
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QuerySelectEqualTag>(equal).get_left_column(), x);
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QuerySelectEqualTag>(equal).get_right_column(), y);
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QuerySelectValueTag>(selected).get_column(), x);
-    EXPECT_EQ(ygg::decode_value<ygg::uint_t>(runir::kr::database::as<runir::kr::database::QuerySelectValueTag>(selected).get_constant()), 7);
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryUnionTag>(united).get_right_operand().index(), empty.index());
-    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryDifferenceTag>(difference).get_left_operand().index(), a.index());
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryJoinTag>(joined).left_operand().index(), a.index());
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryJoinTag>(joined).right_operand().index(), b.index());
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryProjectTag>(projected).operand().index(), a.index());
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryProjectTag>(projected).labels().front(), x);
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryRenameTag>(renamed).labels().front(), y);
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QuerySelectEqualTag>(equal).left_column(), x);
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QuerySelectEqualTag>(equal).right_column(), y);
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QuerySelectValueTag>(selected).column(), x);
+    EXPECT_EQ(ygg::decode_value<ygg::uint_t>(runir::kr::database::as<runir::kr::database::QuerySelectValueTag>(selected).constant()), 7);
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryUnionTag>(united).right_operand().index(), empty.index());
+    EXPECT_EQ(runir::kr::database::as<runir::kr::database::QueryDifferenceTag>(difference).left_operand().index(), a.index());
     const auto count = repository.size();
     EXPECT_EQ(count, 10);
     const auto duplicate = runir::tests::qb::join(repository, a, b);
@@ -114,7 +114,7 @@ TEST(DatabaseQuery, TypedLogicalAlternativesKeepOperandsAndRootProvenance)
     const auto plan = runir::kr::database::compile_plan(roots);
     for (size_t i = 0; i < roots.size(); ++i)
     {
-        std::visit([&](auto operation) { EXPECT_TRUE(std::ranges::equal(operation.columns(), columns_of(roots[i]))); }, roots[i].get_variant());
+        std::visit([&](auto operation) { EXPECT_TRUE(std::ranges::equal(operation.columns(), columns_of(roots[i]))); }, roots[i].variant());
         EXPECT_TRUE(std::ranges::equal(columns_of(plan[plan.roots()[i]]), columns_of(roots[i])));
     }
 }
@@ -196,12 +196,12 @@ TEST(DatabaseQuery, InternsValidatedNodesAndCompilesIndependentReachablePlan)
     runir::kr::database::QueryEvaluator evaluator(scratch(), plan);
     EXPECT_THROW((void) evaluator.get_result(), std::logic_error);
     evaluator.evaluate(std::array { borrow(input) });
-    EXPECT_EQ(evaluator.get_result(0).get_rows().size(), 1);
+    EXPECT_EQ(evaluator.get_result(0).rows().size(), 1);
     EXPECT_EQ(evaluator.get_result(1).columns()[0].label, z);
     input.clear();
-    EXPECT_EQ(evaluator.get_result().get_rows().size(), 1);
+    EXPECT_EQ(evaluator.get_result().rows().size(), 1);
     EXPECT_THROW(evaluator.evaluate(std::array { evaluator.get_result() }), std::invalid_argument);
-    EXPECT_EQ(evaluator.get_result().get_rows().size(), 1);
+    EXPECT_EQ(evaluator.get_result().rows().size(), 1);
 }
 
 TEST(DatabaseQuery, IncrementalDagMatchesFullAndExactDeltasForwardBackward)
@@ -277,8 +277,8 @@ TEST(DatabaseQuery, IncrementalDagMatchesFullAndExactDeltasForwardBackward)
         reverse(dc);
     }
     // A replaced projection witness keeps membership and must emit no change.
-    EXPECT_TRUE(incremental.get_delta(1).added->view().get_rows().empty());
-    EXPECT_TRUE(incremental.get_delta(1).removed->view().get_rows().empty());
+    EXPECT_TRUE(incremental.get_delta(1).added->view().rows().empty());
+    EXPECT_TRUE(incremental.get_delta(1).removed->view().rows().empty());
     EXPECT_GT(incremental.memory_usage(), 0);
     EXPECT_GT(full.memory_usage(), 0);
 }
@@ -292,8 +292,8 @@ TEST(DatabaseQuery, MixedTypesAndConstants)
     EXPECT_THROW(runir::tests::qb::select_equal(mixed, input, x, y), std::invalid_argument);
     EXPECT_THROW(runir::tests::qb::select_value(mixed, input, y, std::uint32_t(1)), std::invalid_argument);
     auto selected = runir::tests::qb::select_value(mixed, input, y, -0.0);
-    const auto selected_view = std::get<runir::kr::database::QueryView<runir::kr::database::QuerySelectValueTag>>(selected.get_variant());
-    EXPECT_EQ(selected_view.get_plan().position, 1);
+    const auto selected_view = std::get<runir::kr::database::QueryView<runir::kr::database::QuerySelectValueTag>>(selected.variant());
+    EXPECT_EQ(selected_view.plan().position, 1);
     EXPECT_EQ(selected.index(), runir::tests::qb::select_value(mixed, input, y, 0.0).index());
     TypedRelation relation(schema);
     relation.insert(std::array { ygg::encode_value(static_cast<std::uint32_t>(4)), ygg::encode_value(0.0) });
@@ -322,7 +322,7 @@ TEST(DatabaseQuery, RejectsInvalidBatchesBeforeMutatingAndSupportsOtherTypeFamil
     EXPECT_THROW(incremental.update(changes), std::invalid_argument);
     EXPECT_EQ(rows(incremental.get_result()), rows(full.get_result()));
     EXPECT_THROW(incremental.update(std::span<const Change> {}), std::invalid_argument);
-    EXPECT_EQ(incremental.get_result().get_rows().size(), 1);
+    EXPECT_EQ(incremental.get_result().rows().size(), 1);
 }
 
 TEST(DatabaseQuery, RandomizedSharedSetDagMaintainsExactNetChanges)
@@ -443,15 +443,15 @@ TEST(DatabaseQuery, GenericJoinPlanExecutesInBothModesAndPrunesAlternatives)
     const auto inputs = std::array { borrow(ar), borrow(br), borrow(cr) };
     full.evaluate(inputs);
     incremental.initialize(inputs);
-    ASSERT_EQ(incremental.get_result().get_rows().size(), 1);
+    ASSERT_EQ(incremental.get_result().rows().size(), 1);
     EXPECT_EQ(rows(full.get_result()), rows(incremental.get_result()));
     Delta da(ar.columns()), dbb(br.columns()), dc(cr.columns());
     dc.removed.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(3)), ygg::encode_value(static_cast<ygg::uint_t>(1)) });
     incremental.update(std::array { std::pair { borrow(da.added), borrow(da.removed) },
                                     std::pair { borrow(dbb.added), borrow(dbb.removed) },
                                     std::pair { borrow(dc.added), borrow(dc.removed) } });
-    EXPECT_TRUE(incremental.get_result().get_rows().empty());
-    EXPECT_EQ(incremental.get_delta().removed->view().get_rows().size(), 1);
+    EXPECT_TRUE(incremental.get_result().rows().empty());
+    EXPECT_EQ(incremental.get_delta().removed->view().rows().size(), 1);
     apply(cr, dc);
     full.evaluate(inputs);
     EXPECT_EQ(rows(full.get_result()), rows(incremental.get_result()));
@@ -469,13 +469,13 @@ TEST(DatabaseQuery, NullaryGenericJoinIsIdentityInBothModes)
     const std::array<ygg::FreeRelationBuilderView, 0> no_inputs;
     full.evaluate(no_inputs);
     incremental.initialize(no_inputs);
-    ASSERT_EQ(full.get_result().get_rows().size(), 1);
+    ASSERT_EQ(full.get_result().rows().size(), 1);
     EXPECT_TRUE(full.get_result().contains(std::array<ygg::Value, 0> {}));
     EXPECT_EQ(rows(full.get_result()), rows(incremental.get_result()));
     incremental.update(std::array<Change, 0> {});
     EXPECT_EQ(rows(full.get_result()), rows(incremental.get_result(1)));
-    EXPECT_TRUE(incremental.get_delta().added->view().get_rows().empty());
-    EXPECT_TRUE(incremental.get_delta().removed->view().get_rows().empty());
+    EXPECT_TRUE(incremental.get_delta().added->view().rows().empty());
+    EXPECT_TRUE(incremental.get_delta().removed->view().rows().empty());
 }
 
 TEST(DatabaseQuery, InterningUsesArgumentsAndCanonicalOrders)
@@ -503,11 +503,11 @@ TEST(DatabaseQuery, CachedPlansSurviveRepositoryGrowthAndCistaRelocation)
     const auto projected = runir::tests::qb::project(repository, joined, { z, x });
     const auto generic = runir::tests::qb::generic_join(repository, { a, b }, { z, y, x }, { x, z, y });
     const auto view = runir::kr::database::as<runir::kr::database::QueryJoinTag>(joined);
-    const auto* original = &view.get_plan();
+    const auto* original = &view.plan();
     for (size_t slot = 2; slot < 260; ++slot)
         runir::tests::qb::join(repository, runir::tests::qb::input(repository, slot, { x, y }), b);
-    EXPECT_EQ(&view.get_plan(), original);
-    EXPECT_TRUE(std::ranges::equal(view.get_plan().output_columns, columns_of(joined)));
+    EXPECT_EQ(&view.plan(), original);
+    EXPECT_TRUE(std::ranges::equal(view.plan().output_columns, columns_of(joined)));
 
     const auto round_trip = []<typename Concrete>(Concrete query)
     {
@@ -520,7 +520,7 @@ TEST(DatabaseQuery, CachedPlansSurviveRepositoryGrowthAndCistaRelocation)
         EXPECT_TRUE(std::ranges::equal(restored->plan.output_columns, query.columns()));
         if constexpr (std::same_as<Concrete, runir::kr::database::QueryView<runir::kr::database::QueryGenericJoinTag>>)
         {
-            const auto& expected = query.get_plan();
+            const auto& expected = query.plan();
             EXPECT_TRUE(std::ranges::equal(restored->plan.variable_order, expected.variable_order));
             for (size_t input = 0; input < expected.input_columns.size(); ++input)
             {

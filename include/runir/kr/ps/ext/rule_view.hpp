@@ -24,44 +24,44 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_source() const noexcept { return self().template member<&urd::record_of<V>::source>(); }
+    auto source() const noexcept { return self().template member<&urd::record_of<V>::source>(); }
 
-    auto get_target() const noexcept
+    auto target() const noexcept
         requires runir::kr::ps::ext::TransitionRuleKind<Kind>
     { return self().template member<&urd::record_of<V>::target>(); }
 
-    auto get_conditions() const noexcept { return self().template member<&urd::record_of<V>::conditions>(); }
+    auto conditions() const noexcept { return self().template member<&urd::record_of<V>::conditions>(); }
 
-    auto get_feature() const noexcept
+    auto feature() const noexcept
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
     { return self().template member<&urd::record_of<V>::feature>(); }
 
-    auto get_slot() const noexcept
+    auto slot() const noexcept
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
     { return self().template member<&urd::record_of<V>::slot>(); }
 
-    auto get_effects() const noexcept
+    auto effects() const noexcept
         requires runir::kr::ps::ext::EffectRuleKind<Kind>
     { return self().template member<&urd::record_of<V>::effects>(); }
 
-    auto get_order() const noexcept
+    auto order() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::ConceptTag>>
                  || std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::RoleTag>>)
     { return self().template member<&urd::record_of<V>::order>(); }
 
-    const auto& get_action_name() const noexcept
+    const auto& action_name() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
     { return self().template member<&urd::record_of<V>::action_name>(); }
 
-    auto get_query_feature() const noexcept
+    auto query_feature() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::ActionTag>
     { return self().template member<&urd::record_of<V>::query_feature>(); }
 
-    auto get_callee() const noexcept
+    auto callee() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
     { return self().template member<&urd::record_of<V>::callee>(); }
 
-    auto get_arguments() const noexcept
+    auto arguments() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::CallTag>)
     { return self().template member<&urd::record_of<V>::arguments>(); }
 };

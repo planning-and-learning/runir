@@ -13,8 +13,8 @@
 
 #include <cstddef>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/state_repository.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/states/state_view.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -26,7 +26,7 @@ template<tyr::TaskKind Kind>
 class Pruning
 {
 private:
-    const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>* m_states;
+    const urd::Store<urd::sequence<tyr::planning::StateView<Kind>>>* m_states;
     runir::kr::dl::semantics::Builder m_builder;
     runir::kr::dl::semantics::DenotationRepository* m_denotation_repository;
     urd::Store<urd::sequence<runir::kr::dl::semantics::EvaluationStorage>, urd::stable_refs> m_intermediate_storage;
@@ -34,8 +34,7 @@ private:
     SeenDenotations m_seen_denotations;
 
 public:
-    Pruning(const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
-            runir::kr::dl::semantics::DenotationRepository& denotation_repository) :
+    Pruning(const urd::Store<urd::sequence<tyr::planning::StateView<Kind>>>& states, runir::kr::dl::semantics::DenotationRepository& denotation_repository) :
         m_states(&states),
         m_builder(),
         m_denotation_repository(&denotation_repository),
@@ -54,7 +53,7 @@ public:
         if (m_states->empty())
             return !seen.constructors.insert(std::pair(lhs, constructor)).second;
 
-        const auto was_cached = m_denotation_caches.front().find(constructor.get_is_static(), constructor).has_value();
+        const auto was_cached = m_denotation_caches.front().find(constructor.is_static(), constructor).has_value();
         seen.scratch.clear();
 
         for (size_t i = 0; i < m_states->size(); ++i)
@@ -77,7 +76,7 @@ public:
 
         if (!is_novel && !was_cached)
             for (auto& caches : m_denotation_caches)
-                caches.erase(constructor.get_is_static(), constructor);
+                caches.erase(constructor.is_static(), constructor);
 
         return !is_novel;
     }

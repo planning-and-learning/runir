@@ -32,11 +32,11 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+    auto predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
 
-    auto get_argument_position() const noexcept { return self().template member<&urd::record_of<V>::argument_position>(); }
+    auto argument_position() const noexcept { return self().template member<&urd::record_of<V>::argument_position>(); }
 
-    auto get_context() const noexcept { return self().template member<&urd::record_of<V>::context>(); }
+    auto predicate_context() const noexcept { return self().template member<&urd::record_of<V>::predicate_context>(); }
 };
 }  // namespace urd
 

@@ -26,8 +26,8 @@
 #include <stdexcept>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
+#include <tyr/planning/tasks/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/execution/onetbb.hpp>
 

@@ -66,7 +66,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+    [[nodiscard]] decltype(auto) predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -86,9 +86,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+    [[nodiscard]] decltype(auto) predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
 
-    [[nodiscard]] decltype(auto) get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
+    [[nodiscard]] decltype(auto) polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -107,9 +107,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+    [[nodiscard]] decltype(auto) left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
 
-    [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
+    [[nodiscard]] decltype(auto) right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -128,7 +128,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+    [[nodiscard]] decltype(auto) operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -147,9 +147,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+    [[nodiscard]] decltype(auto) role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
 
-    [[nodiscard]] decltype(auto) get_qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
+    [[nodiscard]] decltype(auto) qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -168,9 +168,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_n() const noexcept { return self().template member<&urd::record_of<V>::n>(); }
+    [[nodiscard]] decltype(auto) n() const noexcept { return self().template member<&urd::record_of<V>::n>(); }
 
-    [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+    [[nodiscard]] decltype(auto) role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -189,11 +189,11 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_n() const noexcept { return self().template member<&urd::record_of<V>::n>(); }
+    [[nodiscard]] decltype(auto) n() const noexcept { return self().template member<&urd::record_of<V>::n>(); }
 
-    [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+    [[nodiscard]] decltype(auto) role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
 
-    [[nodiscard]] decltype(auto) get_qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
+    [[nodiscard]] decltype(auto) qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -212,9 +212,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+    [[nodiscard]] decltype(auto) left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
 
-    [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
+    [[nodiscard]] decltype(auto) right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -233,9 +233,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+    [[nodiscard]] decltype(auto) role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
 
-    [[nodiscard]] decltype(auto) get_objects() const noexcept { return self().template member<&urd::record_of<V>::objects>(); }
+    [[nodiscard]] decltype(auto) objects() const noexcept { return self().template member<&urd::record_of<V>::objects>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -254,7 +254,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_objects() const noexcept { return self().template member<&urd::record_of<V>::objects>(); }
+    [[nodiscard]] decltype(auto) objects() const noexcept { return self().template member<&urd::record_of<V>::objects>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -273,7 +273,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_object() const noexcept { return self().template member<&urd::record_of<V>::object>(); }
+    [[nodiscard]] decltype(auto) object() const noexcept { return self().template member<&urd::record_of<V>::object>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -292,7 +292,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_slot() const noexcept { return self().template member<&urd::record_of<V>::slot>(); }
+    [[nodiscard]] decltype(auto) slot() const noexcept { return self().template member<&urd::record_of<V>::slot>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -311,7 +311,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_argument() const noexcept { return self().template member<&urd::record_of<V>::argument>(); }
+    [[nodiscard]] decltype(auto) argument() const noexcept { return self().template member<&urd::record_of<V>::argument>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -348,7 +348,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+    [[nodiscard]] decltype(auto) predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -368,9 +368,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+    [[nodiscard]] decltype(auto) predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
 
-    [[nodiscard]] decltype(auto) get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
+    [[nodiscard]] decltype(auto) polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -389,9 +389,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+    [[nodiscard]] decltype(auto) left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
 
-    [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
+    [[nodiscard]] decltype(auto) right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -410,7 +410,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+    [[nodiscard]] decltype(auto) operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -429,9 +429,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+    [[nodiscard]] decltype(auto) role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
 
-    [[nodiscard]] decltype(auto) get_qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
+    [[nodiscard]] decltype(auto) qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -450,7 +450,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+    [[nodiscard]] decltype(auto) operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -469,7 +469,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_slot() const noexcept { return self().template member<&urd::record_of<V>::slot>(); }
+    [[nodiscard]] decltype(auto) slot() const noexcept { return self().template member<&urd::record_of<V>::slot>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -488,7 +488,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_argument() const noexcept { return self().template member<&urd::record_of<V>::argument>(); }
+    [[nodiscard]] decltype(auto) argument() const noexcept { return self().template member<&urd::record_of<V>::argument>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -507,9 +507,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+    [[nodiscard]] decltype(auto) predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
 
-    [[nodiscard]] decltype(auto) get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
+    [[nodiscard]] decltype(auto) polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -528,7 +528,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+    [[nodiscard]] decltype(auto) operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -547,7 +547,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_argument() const noexcept { return self().template member<&urd::record_of<V>::argument>(); }
+    [[nodiscard]] decltype(auto) argument() const noexcept { return self().template member<&urd::record_of<V>::argument>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -566,9 +566,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+    [[nodiscard]] decltype(auto) left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
 
-    [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
+    [[nodiscard]] decltype(auto) right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -587,7 +587,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_value() const noexcept { return self().template member<&urd::record_of<V>::value>(); }
+    [[nodiscard]] decltype(auto) value() const noexcept { return self().template member<&urd::record_of<V>::value>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -606,9 +606,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+    [[nodiscard]] decltype(auto) left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
 
-    [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
+    [[nodiscard]] decltype(auto) right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -627,7 +627,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+    [[nodiscard]] decltype(auto) operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -646,7 +646,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+    [[nodiscard]] decltype(auto) operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -665,7 +665,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+    [[nodiscard]] decltype(auto) operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -684,11 +684,11 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_sources() const noexcept { return self().template member<&urd::record_of<V>::sources>(); }
+    [[nodiscard]] decltype(auto) sources() const noexcept { return self().template member<&urd::record_of<V>::sources>(); }
 
-    [[nodiscard]] decltype(auto) get_edges() const noexcept { return self().template member<&urd::record_of<V>::edges>(); }
+    [[nodiscard]] decltype(auto) edges() const noexcept { return self().template member<&urd::record_of<V>::edges>(); }
 
-    [[nodiscard]] decltype(auto) get_targets() const noexcept { return self().template member<&urd::record_of<V>::targets>(); }
+    [[nodiscard]] decltype(auto) targets() const noexcept { return self().template member<&urd::record_of<V>::targets>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -707,13 +707,13 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_sources() const noexcept { return self().template member<&urd::record_of<V>::sources>(); }
+    [[nodiscard]] decltype(auto) sources() const noexcept { return self().template member<&urd::record_of<V>::sources>(); }
 
-    [[nodiscard]] decltype(auto) get_edges() const noexcept { return self().template member<&urd::record_of<V>::edges>(); }
+    [[nodiscard]] decltype(auto) edges() const noexcept { return self().template member<&urd::record_of<V>::edges>(); }
 
-    [[nodiscard]] decltype(auto) get_targets() const noexcept { return self().template member<&urd::record_of<V>::targets>(); }
+    [[nodiscard]] decltype(auto) targets() const noexcept { return self().template member<&urd::record_of<V>::targets>(); }
 
-    [[nodiscard]] decltype(auto) get_plan() const noexcept { return self().template member<&urd::record_of<V>::plan>(); }
+    [[nodiscard]] decltype(auto) plan() const noexcept { return self().template member<&urd::record_of<V>::plan>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -732,7 +732,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_argument() const noexcept { return self().template member<&urd::record_of<V>::argument>(); }
+    [[nodiscard]] decltype(auto) argument() const noexcept { return self().template member<&urd::record_of<V>::argument>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -751,7 +751,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_value() const noexcept { return self().template member<&urd::record_of<V>::value>(); }
+    [[nodiscard]] decltype(auto) value() const noexcept { return self().template member<&urd::record_of<V>::value>(); }
 
     static constexpr auto functions() noexcept
     {
@@ -770,9 +770,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+    [[nodiscard]] decltype(auto) left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
 
-    [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
+    [[nodiscard]] decltype(auto) right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 
     static constexpr auto functions() noexcept
     {

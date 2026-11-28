@@ -16,7 +16,7 @@
 #include <memory>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/plan.hpp>
+#include <tyr/planning/plans/plan_view.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -76,7 +76,7 @@ struct ProgramProofResults
     /// solution or diagnostic path after search, with owned states independent of search memorization.
     /// CHOICE may also retain interned choice sources in the task repository outside this graph.
     std::shared_ptr<ProgramProofGraph<ExtFamilyTag, Kind>> graph;
-    std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
+    std::optional<tyr::planning::OwnedPlanRecordView<tyr::planning::DeterministicTag, Kind>> plan = std::nullopt;
     runir::VertexIndexList deadend_states;
     runir::VertexIndexList open_states;
     runir::VertexIndexList cycle;

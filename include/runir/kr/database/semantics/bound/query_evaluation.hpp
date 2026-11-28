@@ -100,7 +100,7 @@ public:
         assert(std::ranges::equal(rows.columns(), m_query.input_columns[slot]));
         auto& snapshot = *m_inputs[slot];
         snapshot.clear();
-        for (const auto& held : rows.get_rows())
+        for (const auto& held : rows.rows())
             ygg::with_values(held, [&](const auto& values) { snapshot.insert(values); });
         m_bound.insert(slot);
         invalidate(slot);
@@ -112,18 +112,18 @@ public:
     template<ygg::RelationViewConcept<ygg::Schema> A, ygg::RelationViewConcept<ygg::Schema> R>
     void replace(size_t slot, const A& added, const R& removed)
     {
-        if (added.get_rows().empty() && removed.get_rows().empty())
+        if (added.rows().empty() && removed.rows().empty())
             return;
         auto& snapshot = *m_inputs[slot];
         const auto current = snapshot.view();
         const auto held_in = [&](const auto& held) { return ygg::with_values(held, [&](const auto& values) { return current.contains(values); }); };
-        for (const auto& held : removed.get_rows())
+        for (const auto& held : removed.rows())
             if (!held_in(held))
                 throw std::invalid_argument("bound::QueryEvaluator: removed row is absent from the input.");
-        for (const auto& held : added.get_rows())
+        for (const auto& held : added.rows())
             if (held_in(held))
                 throw std::invalid_argument("bound::QueryEvaluator: added row is already present in the input.");
-        for (const auto& held : removed.get_rows())
+        for (const auto& held : removed.rows())
             ygg::with_values(held,
                              [&](const auto& values)
                              {
@@ -139,7 +139,7 @@ public:
                                                 });
                                  snapshot.erase(values);
                              });
-        for (const auto& held : added.get_rows())
+        for (const auto& held : added.rows())
             ygg::with_values(held,
                              [&](const auto& values)
                              {
@@ -318,7 +318,7 @@ private:
         auto& entry = m_indexes[lookup.index];
         if (entry.positions.empty())
         {
-            for (const auto& held : snapshot.view().get_rows())
+            for (const auto& held : snapshot.view().rows())
                 if (!ygg::with_values(held, visit))
                     return proceed;
             return true;
@@ -326,8 +326,8 @@ private:
         if (!entry.built)
         {
             entry.rows.clear();
-            entry.rows.reserve(snapshot.view().get_rows().size());
-            for (const auto& held : snapshot.view().get_rows())
+            entry.rows.reserve(snapshot.view().rows().size());
+            for (const auto& held : snapshot.view().rows())
                 ygg::with_values(held,
                                  [&](const auto& values)
                                  { entry.rows.insert({ database::detail::join_key_hash(values, entry.keys), snapshot.slot(values) }); });

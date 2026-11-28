@@ -50,7 +50,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
     auto evaluator = runir::kr::database::QueryEvaluator(scratch(), runir::kr::database::compile_plan({ edges }));
     evaluator.evaluate(borrow_all(maximal));
     auto supergraph = Relation(evaluator.get_result().columns());
-    for (size_t i = 0; i < evaluator.get_result().get_rows().size(); ++i)
+    for (size_t i = 0; i < evaluator.get_result().rows().size(); ++i)
         supergraph.insert(values_of(evaluator.get_result().row(i)));
     auto heuristic = HalfDistance {};
     heuristic.columns = sources.columns();
@@ -64,7 +64,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
         evaluator.evaluate(views);
         const auto materialized = evaluator.get_result();
         auto edge_relation = Relation(materialized.columns());
-        for (size_t i = 0; i < materialized.get_rows().size(); ++i)
+        for (size_t i = 0; i < materialized.rows().size(); ++i)
             edge_relation.insert(values_of(materialized.row(i)));
         const auto expected = runir::kr::database::min_distance(borrow(sources), borrow(edge_relation), borrow(targets), plan, result, workspace);
         const auto input = [&](size_t slot) { return views[slot]; };
@@ -299,11 +299,11 @@ struct ListGraph
 
 struct ListVertices
 {
-    urd::Store<urd::sequence<ListGraph::Bytes>> rows;
+    urd::Store<urd::sequence<ListGraph::Bytes>> stored_rows;
 
-    [[nodiscard]] const urd::Store<urd::sequence<ListGraph::Bytes>>& get_rows() const noexcept { return rows; }
+    [[nodiscard]] const urd::Store<urd::sequence<ListGraph::Bytes>>& rows() const noexcept { return stored_rows; }
 
-    [[nodiscard]] std::span<const ygg::Value> row(size_t i) const { return rows[i]; }
+    [[nodiscard]] std::span<const ygg::Value> row(size_t i) const { return stored_rows[i]; }
 };
 
 /// AStar::path() visits a shortest path from a source to a target, whether the search ends at a target or on a stored
@@ -338,7 +338,7 @@ TEST_P(DatabaseMinDistance, AStarPathIsAShortestPath)
         auto ids = urd::Store<urd::sequence<runir::kr::database::VertexSet::handle_type>>();
         for (size_t i = 0; i < 2; ++i)
         {
-            sources.rows.push_back(ListGraph::bytes(static_cast<ygg::uint_t>(rng() % n)));
+            sources.stored_rows.push_back(ListGraph::bytes(static_cast<ygg::uint_t>(rng() % n)));
             const auto target = ListGraph::bytes(static_cast<ygg::uint_t>(rng() % n));
             if (targets.insert(std::span<const ygg::Value>(target)).second)
                 ids.push_back(tree.ensure(target, heuristic));
@@ -352,7 +352,7 @@ TEST_P(DatabaseMinDistance, AStarPathIsAShortestPath)
         search.path([&](std::span<const ygg::Value> vertex) { path.push_back(ListGraph::id(vertex)); });
         // Visited: where the search ended back to its source (the only source on the path, as sources have g = 0),
         // then the stored chain from where it ended to a target.
-        const auto is_source = [&](ygg::uint_t v) { return std::ranges::any_of(sources.rows, [&](const auto& row) { return ListGraph::id(row) == v; }); };
+        const auto is_source = [&](ygg::uint_t v) { return std::ranges::any_of(sources.rows(), [&](const auto& row) { return ListGraph::id(row) == v; }); };
         const auto edge = [&](ygg::uint_t u, ygg::uint_t v) { return graph.edge_exists(ListGraph::bytes(u), ListGraph::bytes(v)); };
         const auto source = static_cast<size_t>(std::ranges::find_if(path, is_source) - path.begin());
         ASSERT_LT(source, path.size()) << "trial " << trial;

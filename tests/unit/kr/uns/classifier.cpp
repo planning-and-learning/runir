@@ -40,15 +40,15 @@ static_assert(IndexedDataView<Literal> && std::same_as<View<Literal>, kr::uns::C
                      data.feature;
                      data.polarity;
                      view.index();
-                     view.get_feature();
-                     view.get_polarity();
+                     view.feature();
+                     view.polarity();
                  });
 static_assert(IndexedDataView<Clause> && std::same_as<View<Clause>, kr::uns::ClassifierClauseView>
               && requires(urd::data<Clause>& data, const View<Clause>& view) {
                      data.index;
                      data.literals;
                      view.index();
-                     view.get_literals();
+                     view.literals();
                  });
 static_assert(IndexedDataView<Classifier> && std::same_as<View<Classifier>, kr::uns::ClassifierView>
               && requires(urd::data<Classifier>& data, const View<Classifier>& view) {
@@ -57,9 +57,9 @@ static_assert(IndexedDataView<Classifier> && std::same_as<View<Classifier>, kr::
                      data.features;
                      data.clauses;
                      view.index();
-                     view.get_symbol();
-                     view.get_features();
-                     view.get_clauses();
+                     view.symbol();
+                     view.features();
+                     view.clauses();
                  });
 
 struct Fixture
@@ -87,29 +87,27 @@ TEST(RunirTests, UnsClassifierParsesAndFormats)
     const auto description = read_fixture("kr/uns/positive.classifier");
     auto classifier = kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
 
-    EXPECT_EQ(classifier.get_symbol(), "c0");
+    EXPECT_EQ(classifier.symbol(), "c0");
 
     std::size_t num_features = 0;
-    for (auto feature : classifier.get_features())
+    for (auto feature : classifier.features())
     {
         (void) feature;
         ++num_features;
     }
     EXPECT_EQ(num_features, 3u);
-    EXPECT_EQ(fmt::format("{}", classifier.get_features().front()),
+    EXPECT_EQ(fmt::format("{}", classifier.features().front()),
               "(:boolean\n"
               "    (:symbol some_ball)\n"
               "    (:expression (b_nonempty (c_top)))\n"
               ")");
-    EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[0]), "some_ball");
-    EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[1]), "(not no_object)");
+    EXPECT_EQ(fmt::format("{}", classifier.clauses().front().literals()[0]), "some_ball");
+    EXPECT_EQ(fmt::format("{}", classifier.clauses().front().literals()[1]), "(not no_object)");
 
-    const auto feature = classifier.get_features().front();
-    const auto concrete_complexity =
-        std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
+    const auto feature = classifier.features().front();
+    const auto concrete_complexity = std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.feature()); }, feature.variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
-    EXPECT_EQ(concrete_complexity,
-              kr::dl::semantics::syntactic_complexity(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant())));
+    EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(std::visit([](auto concrete) { return concrete.feature(); }, feature.variant())));
     EXPECT_EQ(kr::uns::syntactic_complexity(classifier), 7);
     auto empty_data = urd::data<kr::uns::Classifier>(std::string("empty"), {}, {});
     EXPECT_EQ(kr::uns::syntactic_complexity(fixture.repository->insert(empty_data).first), 0);

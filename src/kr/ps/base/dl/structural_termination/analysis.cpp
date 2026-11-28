@@ -11,10 +11,10 @@ namespace
 
 ps::dl::RuleProfile make_rule_profile(SketchView sketch, RuleView rule)
 {
-    auto profile = ps::dl::RuleProfile(sketch.get_features<runir::kr::dl::BooleanTag>().size(), sketch.get_features<runir::kr::dl::NumericalTag>().size());
-    for (auto condition : rule.get_conditions())
+    auto profile = ps::dl::RuleProfile(sketch.features<runir::kr::dl::BooleanTag>().size(), sketch.features<runir::kr::dl::NumericalTag>().size());
+    for (auto condition : rule.conditions())
         std::visit([&](auto concrete) { ps::detail::record_condition(sketch, profile, concrete); }, condition);
-    for (auto effect : rule.get_effects())
+    for (auto effect : rule.effects())
         std::visit([&](auto concrete) { ps::detail::record_effect(sketch, profile, concrete); }, effect);
     return profile;
 }
@@ -23,12 +23,12 @@ ps::dl::RuleProfile make_rule_profile(SketchView sketch, RuleView rule)
 
 Analysis analyze_sketch(SketchView sketch)
 {
-    auto analysis = Analysis { {},
-                               runir::kr::ps::detail::QualitativePolicy(1,
-                                                                        sketch.get_features<runir::kr::dl::BooleanTag>().size(),
-                                                                        sketch.get_features<runir::kr::dl::NumericalTag>().size()) };
+    auto analysis = Analysis {
+        {},
+        runir::kr::ps::detail::QualitativePolicy(1, sketch.features<runir::kr::dl::BooleanTag>().size(), sketch.features<runir::kr::dl::NumericalTag>().size())
+    };
 
-    for (auto rule : sketch.get_rules())
+    for (auto rule : sketch.rules())
     {
         analysis.rules.push_back(rule);
         analysis.policy.rule_profiles.push_back(make_rule_profile(sketch, rule));

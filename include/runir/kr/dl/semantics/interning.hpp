@@ -18,12 +18,12 @@ DenotationBuilder<Category>& assign(DenotationBuilder<Category>& destination, So
 {
     if constexpr (ConceptOrRoleTag<Category>)
     {
-        const auto bits = source.get_values().bits();
+        const auto bits = source.values().bits();
         destination.num_objects = bits.num_objects();
         destination.values.assign(bits);
     }
     else
-        destination.value = source.get_value();
+        destination.value = source.value();
     destination.index = {};
     return destination;
 }
@@ -36,12 +36,12 @@ rename(DenotationRepository& repository, QueryDenotationView source, std::span<c
     auto& relations = repository.get_relation_repository();
     auto& storage = builder.relations();
     auto relation = storage.template scratch<ygg::Relation<ygg::Schema>>();
-    urd::store(relation->pool, source.get_pool());
-    for (const auto row : source.get_rows())
+    urd::store(relation->pool, source.pool());
+    for (const auto row : source.rows())
         urd::append(relation->rows, row);
     auto columns = storage.template scratch<ygg::Columns>();
     columns->values.set(labels.begin(), labels.end());
-    relation->columns = relations.insert(*columns).first.index();
+    relation->layout = relations.insert(*columns).first.index();
     return relations.insert(*relation).first;
 }
 

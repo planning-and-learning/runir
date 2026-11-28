@@ -23,77 +23,72 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    [[nodiscard]] auto get_variant() const
+    [[nodiscard]] auto variant() const
         requires std::same_as<Tag, void>
     { return self().template member<&urd::record_of<V>::variant>(); }
 
-    [[nodiscard]] auto get_operand() const
+    [[nodiscard]] auto operand() const
         requires boost::mp11::mp_contains<runir::kr::database::QueryUnaryTags, Tag>::value
     { return self().template member<&urd::record_of<V>::operand>(); }
 
-    [[nodiscard]] auto get_left_operand() const
+    [[nodiscard]] auto left_operand() const
         requires boost::mp11::mp_contains<runir::kr::database::QueryBinaryTags, Tag>::value
     { return self().template member<&urd::record_of<V>::left_operand>(); }
 
-    [[nodiscard]] auto get_right_operand() const
+    [[nodiscard]] auto right_operand() const
         requires boost::mp11::mp_contains<runir::kr::database::QueryBinaryTags, Tag>::value
     { return self().template member<&urd::record_of<V>::right_operand>(); }
 
-    [[nodiscard]] auto get_input_slot() const
+    [[nodiscard]] auto input_slot() const
         requires std::same_as<Tag, runir::kr::database::QueryInputTag>
     { return self().template member<&urd::record_of<V>::input_slot>(); }
 
-    [[nodiscard]] auto get_labels() const
+    [[nodiscard]] auto labels() const
         requires(std::same_as<Tag, runir::kr::database::QueryProjectTag> || std::same_as<Tag, runir::kr::database::QueryRenameTag>)
     {
         return std::span<const urd::index<ygg::Column>>(self().template member<&urd::record_of<V>::labels>().data(),
                                                         self().template member<&urd::record_of<V>::labels>().size());
     }
 
-    [[nodiscard]] std::span<const urd::data<ygg::ColumnLayout>> get_columns() const
-        requires(std::same_as<Tag, runir::kr::database::QueryInputTag> || std::same_as<Tag, runir::kr::database::QueryEmptyTag>
-                 || std::same_as<Tag, runir::kr::database::QueryRenameTag>)
-    { return { self().template member<&urd::record_of<V>::columns>().data(), self().template member<&urd::record_of<V>::columns>().size() }; }
-
-    [[nodiscard]] auto get_left_column() const
+    [[nodiscard]] auto left_column() const
         requires std::same_as<Tag, runir::kr::database::QuerySelectEqualTag>
     { return self().template member<&urd::record_of<V>::left_column>(); }
 
-    [[nodiscard]] auto get_right_column() const
+    [[nodiscard]] auto right_column() const
         requires std::same_as<Tag, runir::kr::database::QuerySelectEqualTag>
     { return self().template member<&urd::record_of<V>::right_column>(); }
 
-    [[nodiscard]] auto get_column() const
+    [[nodiscard]] auto column() const
         requires std::same_as<Tag, runir::kr::database::QuerySelectValueTag>
     { return self().template member<&urd::record_of<V>::column>(); }
 
-    [[nodiscard]] auto get_constant() const
+    [[nodiscard]] auto constant() const
         requires std::same_as<Tag, runir::kr::database::QuerySelectValueTag>
     { return self().template member<&urd::record_of<V>::constant>(); }
 
-    [[nodiscard]] auto get_constant_type() const
+    [[nodiscard]] auto constant_type() const
         requires std::same_as<Tag, runir::kr::database::QuerySelectValueTag>
     { return self().template member<&urd::record_of<V>::constant_type>(); }
 
-    [[nodiscard]] auto get_inputs() const
+    [[nodiscard]] auto inputs() const
         requires std::same_as<Tag, runir::kr::database::QueryGenericJoinTag>
     { return self().template member<&urd::record_of<V>::inputs>(); }
 
-    [[nodiscard]] auto get_variable_order() const
+    [[nodiscard]] auto variable_order() const
         requires std::same_as<Tag, runir::kr::database::QueryGenericJoinTag>
     {
         return std::span<const urd::index<ygg::Column>>(self().template member<&urd::record_of<V>::variable_order>().data(),
                                                         self().template member<&urd::record_of<V>::variable_order>().size());
     }
 
-    [[nodiscard]] auto get_output_order() const
+    [[nodiscard]] auto output_order() const
         requires std::same_as<Tag, runir::kr::database::QueryGenericJoinTag>
     {
         return std::span<const urd::index<ygg::Column>>(self().template member<&urd::record_of<V>::output_order>().data(),
                                                         self().template member<&urd::record_of<V>::output_order>().size());
     }
 
-    [[nodiscard]] const auto& get_plan() const
+    [[nodiscard]] const auto& plan() const
         requires boost::mp11::mp_contains<runir::kr::database::QueryPlannedTags, Tag>::value
     { return self().template member<&urd::record_of<V>::plan>(); }
 
@@ -101,16 +96,22 @@ public:
         requires(!std::same_as<Tag, void>)
     {
         if constexpr (std::same_as<Tag, runir::kr::database::QuerySemijoinTag> || std::same_as<Tag, runir::kr::database::QueryAntijoinTag>)
-            return get_plan().left_columns;
+            return plan().left_columns;
         else if constexpr (boost::mp11::mp_contains<runir::kr::database::QueryPlannedTags, Tag>::value)
-            return get_plan().output_columns;
+            return plan().output_columns;
         else
-            return get_columns();
+        {
+            // An input, an empty query and a rename store their columns.
+            const auto& stored = self().template member<&urd::record_of<V>::columns>();
+            return { stored.data(), stored.size() };
+        }
     }
 
     static constexpr auto functions() noexcept
     {
-        if constexpr (std::same_as<Tag, void>)
+        // A query that stores its columns reads them by its field's getter.
+        if constexpr (std::same_as<Tag, void> || std::same_as<Tag, runir::kr::database::QueryInputTag> || std::same_as<Tag, runir::kr::database::QueryEmptyTag>
+                      || std::same_as<Tag, runir::kr::database::QueryRenameTag>)
             return urd::Functions<> {};
         else
             return urd::Functions<urd::function<"columns", &view_mixin::columns>> {};
@@ -125,7 +126,7 @@ template<typename Tag, std::invocable<QueryView<>> F>
 void for_each_child(QueryView<Tag> view, F f)
 {
     if constexpr (std::same_as<Tag, void>)
-        std::visit([&](auto concrete) { for_each_child(concrete, f); }, view.get_variant());
+        std::visit([&](auto concrete) { for_each_child(concrete, f); }, view.variant());
     else
         urd::for_each_child<boost::mp11::mp_list<Query<>>, Query<Tag>>(view, f);
 }
@@ -135,7 +136,7 @@ template<typename Tag>
 [[nodiscard]] std::span<const urd::data<ygg::ColumnLayout>> columns_of(QueryView<Tag> view)
 {
     if constexpr (std::same_as<Tag, void>)
-        return std::visit([](auto concrete) { return concrete.columns(); }, view.get_variant());
+        return std::visit([](auto concrete) { return concrete.columns(); }, view.variant());
     else
         return view.columns();
 }

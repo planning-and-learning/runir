@@ -57,17 +57,17 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_concept_values() const noexcept { return self().template member<&urd::record_of<V>::concept_values>(); }
+    auto concept_values() const noexcept { return self().template member<&urd::record_of<V>::concept_values>(); }
 
-    auto get_role_values() const noexcept { return self().template member<&urd::record_of<V>::role_values>(); }
+    auto role_values() const noexcept { return self().template member<&urd::record_of<V>::role_values>(); }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto values() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return get_concept_values();
+            return concept_values();
         else
-            return get_role_values();
+            return role_values();
     }
 
     /// The value of register `reg` (std::out_of_range beyond its registers).
@@ -97,14 +97,14 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_concept_values() const noexcept
+    auto concept_values() const noexcept
     {
         return urd::transform(urd::detail::view_access::record(self()).concept_values,
                               &self().context().template get<tyr::formalism::Repository>(),
                               runir::kr::dl::semantics::detail::concept_value_of {});
     }
 
-    auto get_role_values() const noexcept
+    auto role_values() const noexcept
     {
         return urd::transform(urd::detail::view_access::record(self()).role_values,
                               &self().context().template get<tyr::formalism::Repository>(),
@@ -115,9 +115,9 @@ public:
     auto values() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return get_concept_values();
+            return concept_values();
         else
-            return get_role_values();
+            return role_values();
     }
 
     /// The value of register `reg` (std::out_of_range beyond its registers).

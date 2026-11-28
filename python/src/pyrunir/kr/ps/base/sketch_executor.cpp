@@ -8,6 +8,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/ps/base/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
@@ -40,7 +41,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
     nb::class_<Results>(m, (std::string(prefix) + "SketchProofResults").c_str())
         .def_ro("status", &Results::status)
         .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
-        .def_ro("plan", &Results::plan, nb::rv_policy::copy, nb::keep_alive<0, 1>())
+        .def_ro("plan", &Results::plan, nb::rv_policy::reference_internal)
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
@@ -86,25 +87,31 @@ void bind_sketch_executor(nb::module_& m)
         .def(
             "for_each_successor",
             [](Expander& self,
-               tyr::planning::StateView<Kind> state,
+               const tyr::planning::StateBuilderView<Kind>& state,
                SketchSearchStatistics& statistics,
-               const nb::typed<nb::callable, bool(tyr::planning::LabeledNode<Kind>, RuleView)>& emit,
+               const nb::typed<nb::callable, bool(tyr::planning::OwnedLabeledNodeRecordView<Kind>, RuleView)>& emit,
                const std::function<bool()>& stop)
             {
                 // The successors borrow the expander's state repository: each keeps the expander alive.
                 const auto owner = nb::cast(&self, nb::rv_policy::reference);
                 return self.for_each_successor(
-                    state,
+                    runir::datasets::shared_state<Kind>(state),
                     statistics,
-                    [&](tyr::planning::LabeledNode<Kind> node, RuleView rule)
-                    { return nb::cast<bool>(emit(nb::cast(std::move(node), nb::rv_policy::move, owner), rule)); },
+                    // A successor is handed to Python as its record through the state repository (its state is registered).
+                    [&](const runir::datasets::LabeledPlanningNode<Kind>& node, RuleView rule)
+                    { return nb::cast<bool>(emit(nb::cast(node.pack(), nb::rv_policy::move, owner), rule)); },
                     stop);
             },
             "state"_a,
             "statistics"_a,
             "emit"_a,
             "stop"_a)
-        .def("matching_rule", &Expander::matching_rule, "source_state"_a, "target_state"_a);
+        .def(
+            "matching_rule",
+            [](Expander& self, const tyr::planning::StateBuilderView<Kind>& source_state, const tyr::planning::StateBuilderView<Kind>& target_state)
+            { return self.matching_rule(runir::datasets::shared_state<Kind>(source_state), runir::datasets::shared_state<Kind>(target_state)); },
+            "source_state"_a,
+            "target_state"_a);
 
     m.def(
         "find_ground_solution",

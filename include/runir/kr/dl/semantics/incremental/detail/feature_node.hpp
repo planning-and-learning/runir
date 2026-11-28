@@ -134,7 +134,7 @@ private:
 
     template<ConceptOrRoleTag Projected, typename C>
     Evaluators prepare(urd::index_view<QueryProjection<Projected>, C> expression, GraphBuilder<Kind>& graph)
-    { return ProjectionEvaluator<Kind, Category>(graph.scratch(), graph.prepare(expression.get_operand(), m_dependencies), expression.get_plan()); }
+    { return ProjectionEvaluator<Kind, Category>(graph.scratch(), graph.prepare(expression.operand(), m_dependencies), expression.plan()); }
 
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
     { return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies); }
@@ -148,9 +148,9 @@ private:
     static AtomicEvaluator<Kind, Category, Fact> atomic(View expression)
     {
         if constexpr (std::same_as<Category, BooleanTag>)
-            return AtomicEvaluator<Kind, Category, Fact>(expression.get_predicate(), expression.get_polarity());
+            return AtomicEvaluator<Kind, Category, Fact>(expression.predicate(), expression.polarity());
         else
-            return AtomicEvaluator<Kind, Category, Fact>(expression.get_predicate());
+            return AtomicEvaluator<Kind, Category, Fact>(expression.predicate());
     }
 
     template<template<typename, typename> typename Expression, typename Tag, typename C>
@@ -161,53 +161,52 @@ private:
         else if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::DerivedTag>>)
             return atomic<tyr::formalism::DerivedTag>(expression);
         else if constexpr (std::same_as<Tag, RegisterTag>)
-            return RegisterEvaluator<Kind, Category>(expression.get_slot().get_identifier());
+            return RegisterEvaluator<Kind, Category>(expression.slot().identifier());
         else if constexpr (std::same_as<Tag, ArgumentTag<Category>>)
-            return ArgumentEvaluator<Kind, Category>(expression.get_argument().get_identifier());
+            return ArgumentEvaluator<Kind, Category>(expression.argument().identifier());
         else if constexpr (std::same_as<Tag, DistanceTag>)
-            return std::visit([&](auto edges) { return prepare_distance(expression, edges, graph); }, expression.get_edges());
+            return std::visit([&](auto edges) { return prepare_distance(expression, edges, graph); }, expression.edges());
         else if constexpr (std::same_as<Tag, ValueTag>)
-            return ValueEvaluator<Kind>(graph.prepare(expression.get_operand(), m_dependencies));
+            return ValueEvaluator<Kind>(graph.prepare(expression.operand(), m_dependencies));
         else if constexpr (std::same_as<Tag, CountTag>)
-            return std::visit([&](auto child) -> Evaluators { return CountEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_operand());
+            return std::visit([&](auto child) -> Evaluators { return CountEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.operand());
         else if constexpr (std::same_as<Tag, NonemptyTag>)
-            return std::visit([&](auto child) -> Evaluators { return NonemptyEvaluator<Kind>(graph.prepare(child, m_dependencies)); },
-                              expression.get_operand());
+            return std::visit([&](auto child) -> Evaluators { return NonemptyEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.operand());
         else if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>
                            || std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
-            return QualifiedNumberRestrictionEvaluator<Kind, Tag>(graph.prepare(expression.get_role(), m_dependencies),
-                                                                  graph.prepare(expression.get_qualifier(), m_dependencies),
-                                                                  expression.get_n());
+            return QualifiedNumberRestrictionEvaluator<Kind, Tag>(graph.prepare(expression.role(), m_dependencies),
+                                                                  graph.prepare(expression.qualifier(), m_dependencies),
+                                                                  expression.n());
         else if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag> || std::same_as<Tag, AtMostNumberRestrictionTag>
                            || std::same_as<Tag, ExactNumberRestrictionTag>)
-            return NumberRestrictionEvaluator<Kind, Tag>(graph.prepare(expression.get_role(), m_dependencies), expression.get_n());
+            return NumberRestrictionEvaluator<Kind, Tag>(graph.prepare(expression.role(), m_dependencies), expression.n());
         else if constexpr (std::same_as<Tag, RoleFillersTag>)
-            return FillersEvaluator<Kind>(graph.prepare(expression.get_role(), m_dependencies), expression);
+            return FillersEvaluator<Kind>(graph.prepare(expression.role(), m_dependencies), expression);
         else if constexpr (NumericalBinaryTag<Tag>)
-            return ScalarBinaryEvaluator<Kind, Category, Tag, NumericalTag>(graph.prepare(expression.get_left_operand(), m_dependencies),
-                                                                            graph.prepare(expression.get_right_operand(), m_dependencies));
+            return ScalarBinaryEvaluator<Kind, Category, Tag, NumericalTag>(graph.prepare(expression.left_operand(), m_dependencies),
+                                                                            graph.prepare(expression.right_operand(), m_dependencies));
         else if constexpr (LogicalBinaryTag<Tag>)
-            return ScalarBinaryEvaluator<Kind, Category, Tag, BooleanTag>(graph.prepare(expression.get_left_operand(), m_dependencies),
-                                                                          graph.prepare(expression.get_right_operand(), m_dependencies));
+            return ScalarBinaryEvaluator<Kind, Category, Tag, BooleanTag>(graph.prepare(expression.left_operand(), m_dependencies),
+                                                                          graph.prepare(expression.right_operand(), m_dependencies));
         else if constexpr (ComparisonTag<Tag>)
-            return ScalarBinaryEvaluator<Kind, Category, Tag, comparison_operand_t<Tag>>(graph.prepare(expression.get_left_operand(), m_dependencies),
-                                                                                         graph.prepare(expression.get_right_operand(), m_dependencies));
+            return ScalarBinaryEvaluator<Kind, Category, Tag, comparison_operand_t<Tag>>(graph.prepare(expression.left_operand(), m_dependencies),
+                                                                                         graph.prepare(expression.right_operand(), m_dependencies));
         else if constexpr (std::same_as<Tag, NotTag>)
-            return LogicalNotEvaluator<Kind>(graph.prepare(expression.get_operand(), m_dependencies));
+            return LogicalNotEvaluator<Kind>(graph.prepare(expression.operand(), m_dependencies));
         else if constexpr (std::same_as<Tag, IntersectionTag> || std::same_as<Tag, UnionTag>)
-            return BinarySetEvaluator<Kind, Category, Tag, Category, Category>(graph.prepare(expression.get_left_operand(), m_dependencies),
-                                                                               graph.prepare(expression.get_right_operand(), m_dependencies));
+            return BinarySetEvaluator<Kind, Category, Tag, Category, Category>(graph.prepare(expression.left_operand(), m_dependencies),
+                                                                               graph.prepare(expression.right_operand(), m_dependencies));
         else if constexpr (std::same_as<Tag, NegationTag> || std::same_as<Tag, ComplementTag> || std::same_as<Tag, InverseTag>
                            || std::same_as<Tag, TransitiveClosureTag> || std::same_as<Tag, ReflexiveTransitiveClosureTag>)
-            return UnarySetEvaluator<Kind, Category, Tag, Category>(graph.prepare(expression.get_operand(), m_dependencies));
+            return UnarySetEvaluator<Kind, Category, Tag, Category>(graph.prepare(expression.operand(), m_dependencies));
         else if constexpr (std::same_as<Tag, IdentityTag>)
-            return UnarySetEvaluator<Kind, Category, Tag, ConceptTag>(graph.prepare(expression.get_operand(), m_dependencies));
+            return UnarySetEvaluator<Kind, Category, Tag, ConceptTag>(graph.prepare(expression.operand(), m_dependencies));
         else if constexpr (std::same_as<Tag, RestrictionTag> || std::same_as<Tag, ValueRestrictionTag> || std::same_as<Tag, ExistentialQuantificationTag>)
-            return BinarySetEvaluator<Kind, Category, Tag, RoleTag, ConceptTag>(graph.prepare(expression.get_role(), m_dependencies),
-                                                                                graph.prepare(expression.get_qualifier(), m_dependencies));
+            return BinarySetEvaluator<Kind, Category, Tag, RoleTag, ConceptTag>(graph.prepare(expression.role(), m_dependencies),
+                                                                                graph.prepare(expression.qualifier(), m_dependencies));
         else if constexpr (std::same_as<Tag, CompositionTag> || std::same_as<Tag, RoleValueMapTag> || std::same_as<Tag, AgreementTag>)
-            return BinarySetEvaluator<Kind, Category, Tag, RoleTag, RoleTag>(graph.prepare(expression.get_left_operand(), m_dependencies),
-                                                                             graph.prepare(expression.get_right_operand(), m_dependencies));
+            return BinarySetEvaluator<Kind, Category, Tag, RoleTag, RoleTag>(graph.prepare(expression.left_operand(), m_dependencies),
+                                                                             graph.prepare(expression.right_operand(), m_dependencies));
         else
             throw std::logic_error("Incremental evaluation: static constructor reached dynamic preparation.");
     }
@@ -221,8 +220,8 @@ private:
 template<tyr::TaskKind Kind, CategoryTag Category>
 FeatureNode<Kind, Category>::FeatureNode(ConstructorView<Category> expression, GraphBuilder<Kind>& graph) :
     m_expression(expression),
-    m_evaluator(expression.get_is_static() ? Evaluators(StaticEvaluator<Kind, Category>(expression)) :
-                                             std::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))
+    m_evaluator(expression.is_static() ? Evaluators(StaticEvaluator<Kind, Category>(expression)) :
+                                         std::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.variant()))
 {
 }
 

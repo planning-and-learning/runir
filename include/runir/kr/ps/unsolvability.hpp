@@ -8,7 +8,7 @@
 #include "runir/kr/uns/repository.hpp"
 
 #include <concepts>
-#include <tyr/planning/state_view_concepts.hpp>
+#include <tyr/planning/states/state_view_concepts.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
@@ -18,14 +18,14 @@ namespace runir::kr::ps
 
 /// A dead-end detector: `u.is_unsolvable(state)` yields whether the planning state is provably unsolvable.
 template<typename U, typename Kind>
-concept UnsolvabilityConcept = tyr::TaskKind<Kind> && requires(U& u, const tyr::planning::StateView<Kind>& state) {
+concept UnsolvabilityConcept = tyr::TaskKind<Kind> && requires(U& u, const tyr::planning::SharedStateBuilderView<Kind>& state) {
     { u.is_unsolvable(state) } -> std::same_as<bool>;
 };
 
 template<tyr::TaskKind Kind>
 struct NoUnsolvability
 {
-    template<tyr::planning::StateViewConcept<Kind> State>
+    template<tyr::planning::StateBuilderViewConcept<Kind> State>
     [[nodiscard]] bool is_unsolvable(const State&) const noexcept
     { return false; }
 };
@@ -48,14 +48,14 @@ public:
                  [&]
                  {
                      auto roots = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
-                     for (const auto feature : classifier.get_features())
-                         roots.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
+                     for (const auto feature : classifier.features())
+                         roots.emplace_back(std::visit([](auto concrete) { return concrete.feature(); }, feature.variant()));
                      return roots;
                  }())
     {
     }
 
-    template<tyr::planning::StateViewConcept<Kind> State>
+    template<tyr::planning::StateBuilderViewConcept<Kind> State>
     bool is_unsolvable(const State& state)
     {
         m_storage.reset_dynamic();

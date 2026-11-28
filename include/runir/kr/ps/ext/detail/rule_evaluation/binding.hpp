@@ -19,14 +19,14 @@ auto bound_registers(RuleView<Tag> rule,
                      Storage& storage)
 {
     urd::visit_view(source, [&registers](const auto& values) { runir::kr::dl::semantics::assign(registers, values); });
-    runir::kr::dl::semantics::assign_register(registers, rule.get_slot().get_identifier(), value);
+    runir::kr::dl::semantics::assign_register(registers, rule.slot().identifier(), value);
     return storage.registers(registers);
 }
 
 template<tyr::TaskKind Kind,
          BindingRuleKind Tag,
          urd::ViewOf<ProgramState<Kind>> S,
-         tyr::planning::StateViewConcept<Kind> PS,
+         tyr::planning::StateBuilderViewConcept<Kind> PS,
          urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 bool binding_effects_match(RuleView<Tag> rule,
@@ -35,17 +35,16 @@ bool binding_effects_match(RuleView<Tag> rule,
                            const R& registers,
                            EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
 {
-    if (rule.get_effects().empty())
+    if (rule.effects().empty())
         return true;
     environment.reset_target();
-    return urd::visit_view(
-        state.get_module_state(),
-        [&](const auto& module_)
-        {
-            auto transition =
-                environment.make_dl_transition_context(planning_state, planning_state, module_.get_arguments(), module_.get_registers(), registers);
-            return is_compatible_with<Kind>(rule, transition);
-        });
+    return urd::visit_view(state.module_state(),
+                           [&](const auto& module_)
+                           {
+                               auto transition =
+                                   environment.make_dl_transition_context(planning_state, planning_state, module_.arguments(), module_.registers(), registers);
+                               return is_compatible_with<Kind>(rule, transition);
+                           });
 }
 
 }  // namespace runir::kr::ps::ext::detail

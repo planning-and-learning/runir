@@ -34,9 +34,9 @@ RULE_TYPES = {
 
 def _set_common_fields(data: BindingRuleData, rule: BindingRule, effects: Sequence[EffectIndex] | None) -> None:
     """Copy the fields every binding rule shares; ``effects=None`` leaves the data's effects untouched."""
-    data.source = rule.get_source().index()
-    data.target = rule.get_target().index()
-    data.conditions = [condition.index() for condition in rule.get_conditions()]
+    data.source = rule.source().index()
+    data.target = rule.target().index()
+    data.conditions = [condition.index() for condition in rule.conditions()]
     if effects is not None:
         data.effects = effects
 
@@ -51,27 +51,27 @@ def _interns_to(
     if isinstance(rule, ext.RuleLoadConcept):
         concept_load = ext.RuleLoadConceptData()
         _set_common_fields(concept_load, rule, effects)
-        concept_load.feature = rule.get_feature().index()
-        concept_load.slot = rule.get_slot().index()
+        concept_load.feature = rule.feature().index()
+        concept_load.slot = rule.slot().index()
         return repository.insert(concept_load)[0] == rule
     if isinstance(rule, ext.RuleLoadRole):
         role_load = ext.RuleLoadRoleData()
         _set_common_fields(role_load, rule, effects)
-        role_load.feature = rule.get_feature().index()
-        role_load.slot = rule.get_slot().index()
+        role_load.feature = rule.feature().index()
+        role_load.slot = rule.slot().index()
         return repository.insert(role_load)[0] == rule
     if isinstance(rule, ext.RuleChooseConcept):
         concept_choose = ext.RuleChooseConceptData()
         _set_common_fields(concept_choose, rule, effects)
-        concept_choose.feature = rule.get_feature().index()
-        concept_choose.slot = rule.get_slot().index()
+        concept_choose.feature = rule.feature().index()
+        concept_choose.slot = rule.slot().index()
         if order is not None:
             concept_choose.order = order
         return repository.insert(concept_choose)[0] == rule
     role_choose = ext.RuleChooseRoleData()
     _set_common_fields(role_choose, rule, effects)
-    role_choose.feature = rule.get_feature().index()
-    role_choose.slot = rule.get_slot().index()
+    role_choose.feature = rule.feature().index()
+    role_choose.slot = rule.slot().index()
     if order is not None:
         role_choose.order = order
     return repository.insert(role_choose)[0] == rule
@@ -93,16 +93,16 @@ def test_binding_rules_parse_construct_and_serialize(
         (:{kind} (:conditions) (:{category} candidates)
           (:register (:{category} selected)) {effects})))))"""
     module = parse_module(source, gripper_planning_domain, repository)
-    variant = module.get_memory_transitions()[0][0]
-    rule = variant.get_variant()
+    variant = module.memory_transitions()[0][0]
+    rule = variant.variant()
     rule_type = RULE_TYPES[category, kind]
     assert isinstance(rule, rule_type)
-    assert len(rule.get_effects()) == int("increases" in effects)
+    assert len(rule.effects()) == int("increases" in effects)
     assert ("(:effects" in str(module)) == ("increases" in effects)
     assert str(parse_module(str(module), gripper_planning_domain, repository)) == str(module)
 
-    assert _interns_to(repository, rule, [effect.index() for effect in rule.get_effects()])
-    assert _interns_to(repository, rule, []) == (not rule.get_effects())
+    assert _interns_to(repository, rule, [effect.index() for effect in rule.effects()])
+    assert _interns_to(repository, rule, []) == (not rule.effects())
 
     assert list(rule_type.Fields.__members__) == [
         "source",
@@ -128,10 +128,10 @@ def test_binding_rules_parse_construct_and_serialize(
         {
             "source": "m0",
             "target": "m1",
-            "effects": [f"e{i}" for i in range(len(rule.get_effects()))],
+            "effects": [f"e{i}" for i in range(len(rule.effects()))],
         }
     ]
-    effects_table = [{"text": str(effect)} for effect in rule.get_effects()]
+    effects_table = [{"text": str(effect)} for effect in rule.effects()]
     assert dictionaries.table(ext.dl.ConcreteEffectExtNumericalIncreases) == effects_table
 
 
@@ -149,21 +149,21 @@ def test_choose_order_data_and_serialization(
         (:choose (:conditions) (:{category} candidates) (:register (:{category} selected))
           (:order (max flag) (min n) (max flag)))))))"""
     module = parse_module(source, gripper_planning_domain, repository)
-    rule = module.get_memory_transitions()[0][0].get_variant()
+    rule = module.memory_transitions()[0][0].variant()
     assert isinstance(rule, (ext.RuleChooseConcept, ext.RuleChooseRole))
-    terms = rule.get_order()
+    terms = rule.order()
     assert terms[0].index() == terms[2].index()
-    assert [t.get_direction() for t in terms] == [
+    assert [t.direction() for t in terms] == [
         ext.OrderDirection.MAX,
         ext.OrderDirection.MIN,
         ext.OrderDirection.MAX,
     ]
-    assert [t.get_feature().get_variant().get_symbol() for t in terms] == ["flag", "n", "flag"]
+    assert [t.feature().variant().symbol() for t in terms] == ["flag", "n", "flag"]
     assert str(parse_module(str(module), gripper_planning_domain, repository)) == str(module)
     values: list[ext.OrderTermIndex] = []
     for term in terms:
         value = ext.OrderTermData()
-        value.direction, value.feature = term.get_direction(), term.get_feature().index()
+        value.direction, value.feature = term.direction(), term.feature().index()
         interned = repository.insert(value)[0]
         assert interned == term
         values.append(interned.index())
@@ -174,13 +174,13 @@ def test_choose_order_data_and_serialization(
         ext.dl.FeatureExtBoolean,
         "booleans",
         "b",
-        project=lambda f: {"symbol": f.get_variant().get_symbol()},
+        project=lambda f: {"symbol": f.variant().symbol()},
     )
     dictionaries.register_table(
         ext.dl.FeatureExtNumerical,
         "numericals",
         "n",
-        project=lambda f: {"symbol": f.get_variant().get_symbol()},
+        project=lambda f: {"symbol": f.variant().symbol()},
     )
     dictionaries.register_table(ext.OrderTerm, "ordering", "o")
     dictionaries.register_table(type(rule), "rules", "r", fields=("order",))

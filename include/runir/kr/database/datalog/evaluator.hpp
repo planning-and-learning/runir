@@ -69,7 +69,7 @@ class Evaluator
                 throw std::invalid_argument("Datalog evaluator: input columns must be uint_t or objects.");
         auto& row = m_row;
         row.resize(arity);
-        for (const auto& held : relation.get_rows())
+        for (const auto& held : relation.rows())
             ygg::with_values(held,
                              [&](const auto& values)
                              {

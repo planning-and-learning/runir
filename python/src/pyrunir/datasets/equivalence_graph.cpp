@@ -9,8 +9,8 @@
 #include <stdexcept>
 #include <string>
 #include <tyr/formalism/planning/planning_domain.hpp>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
+#include <tyr/planning/tasks/lifted/task.hpp>
 #include <urd/dot.hpp>
 #include <urd/python/bindings.hpp>
 #include <urd/python/graphs.hpp>

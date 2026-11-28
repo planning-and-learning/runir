@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_SUCCESSOR_EXPANDER_DECL_HPP_
 #define RUNIR_KR_PS_BASE_SUCCESSOR_EXPANDER_DECL_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/base/detail/rule_evaluators.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
@@ -9,7 +10,8 @@
 #include <concepts>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/node.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
 
 namespace runir::kr::ps::base
 {
@@ -22,7 +24,7 @@ private:
     detail::RuleEvaluators<Kind, EvaluationPolicy> m_rules;
 
 public:
-    using LabeledNode = tyr::planning::LabeledNode<Kind>;
+    using LabeledNode = runir::datasets::LabeledPlanningNode<Kind>;
 
     SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) : m_task_context(&task_context), m_rules(task_context, sketch) {}
 
@@ -34,9 +36,10 @@ public:
     /// Return true if enumeration completed, false if stopped.
     /// Callbacks must not reenter this expander or its generator.
     template<std::predicate<LabeledNode, RuleView> Emit, StopConcept Stop>
-    bool for_each_successor(const tyr::planning::StateView<Kind>& state, SketchSearchStatistics& statistics, const Emit& emit, const Stop& stop);
+    bool for_each_successor(const tyr::planning::SharedStateBuilderView<Kind>& state, SketchSearchStatistics& statistics, const Emit& emit, const Stop& stop);
 
-    std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source_state, const tyr::planning::StateView<Kind>& target_state);
+    std::optional<RuleView> matching_rule(const tyr::planning::SharedStateBuilderView<Kind>& source_state,
+                                          const tyr::planning::SharedStateBuilderView<Kind>& target_state);
 };
 
 #ifndef RUNIR_HEADER_INSTANTIATION

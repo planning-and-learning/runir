@@ -18,8 +18,8 @@
 #include <runir/kr/dl/semantics/register_values_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
+#include <tyr/planning/tasks/lifted/task.hpp>
 #include <urd/python/bindings.hpp>
 #include <urd/python/sequences/sequence.hpp>
 #include <urd/repr/sequences/sequence.hpp>

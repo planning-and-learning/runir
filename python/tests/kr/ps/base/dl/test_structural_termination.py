@@ -127,8 +127,8 @@ def test_structural_termination_feature_mask_boundary(
         else ""
     )
     sketch = parse_sketch(f"(:sketch (:features {features}) (:rules {rule}))", gripper_planning_domain, repository)
-    assert len(sketch.get_boolean_features()) == num_booleans
-    assert len(sketch.get_numerical_features()) == num_numericals
+    assert len(sketch.boolean_features()) == num_booleans
+    assert len(sketch.numerical_features()) == num_numericals
 
     if num_booleans + num_numericals > 64:
         with pytest.raises(ValueError, match="64"):
@@ -187,7 +187,7 @@ def test_structural_termination_tpp_sketch_is_terminating(gripper_planning_domai
     sketch = parse_sketch(TPP, gripper_planning_domain, repository)
 
     result = structural_termination(sketch)
-    numericals = sketch.get_numerical_features()
+    numericals = sketch.numerical_features()
     without_incomplete = structural_termination(sketch, max_features=3, use_incomplete_preprocessing=False)
 
     assert result.is_terminating()
@@ -229,7 +229,7 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     assert counterexample.num_vertices == 2
     assert counterexample.num_edges == 2
 
-    (feature,) = sketch.get_boolean_features()
+    (feature,) = sketch.boolean_features()
     assert isinstance(feature, FeatureBaseBoolean)
     assert [item.index() for item in scc_result.booleans] == [feature.index()]
     assert scc_result.numericals == []
@@ -249,7 +249,7 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
 
     # The two-cycle uses both rules; each edge flips b1.
     rules = {counterexample.edge_value(edge).index() for edge in range(counterexample.num_edges)}
-    assert rules == {rule.index() for rule in sketch.get_rules()}
+    assert rules == {rule.index() for rule in sketch.rules()}
     for edge in range(counterexample.num_edges):
         source = counterexample.vertex_value(counterexample.source(edge)).boolean_values & 1
         target = counterexample.vertex_value(counterexample.target(edge)).boolean_values & 1
@@ -266,14 +266,14 @@ def test_structural_termination_numerical_cycle_counterexample_uses_both_rules(
     result = structural_termination(sketch, use_incomplete_preprocessing=use_incomplete_preprocessing)
 
     assert not result.is_terminating()
-    assert len(sketch.get_numerical_features()) == 1
+    assert len(sketch.numerical_features()) == 1
     sieve_result = result.sieve_result
     assert sieve_result is not None
     assert not sieve_result.is_terminating()
     counterexample = sieve_result.counterexample
     assert counterexample is not None
     rules = {counterexample.edge_value(edge).index() for edge in range(counterexample.num_edges)}
-    assert rules == {rule.index() for rule in sketch.get_rules()}
+    assert rules == {rule.index() for rule in sketch.rules()}
     surviving_rules = sieve_result.surviving_rules
     assert len(surviving_rules) == len(rules)
     assert {rule.index() for rule in surviving_rules} == rules
@@ -295,9 +295,7 @@ def test_incomplete_structural_termination_reports_blocking_reasons(gripper_plan
 
     assert not result.is_terminating()
     assert len(result.surviving_rules) == 2
-    assert {surviving.rule.index() for surviving in result.surviving_rules} == {
-        rule.index() for rule in sketch.get_rules()
-    }
+    assert {surviving.rule.index() for surviving in result.surviving_rules} == {rule.index() for rule in sketch.rules()}
     for surviving in result.surviving_rules:
         (reason,) = surviving.blocking_reasons
         assert isinstance(reason.feature, FeatureBaseBoolean)

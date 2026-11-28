@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_SKETCH_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_SKETCH_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
@@ -8,7 +9,8 @@
 
 #include <cassert>
 #include <concepts>
-#include <tyr/planning/node.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
 #include <utility>
 
 namespace runir::kr::ps::ext::detail
@@ -35,23 +37,23 @@ public:
              EmitConcept<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     bool
     emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
-        assert(m_rule.get_effects().empty() && "Effectful Sketch rules require the shared successor batch.");
+        assert(m_rule.effects().empty() && "Effectful Sketch rules require the shared successor batch.");
         if (!ext::rule_is_applicable(m_rule, state, context.planning_state, *context.environment))
             return true;
         if (stop())
             return false;
-        auto target = urd::visit_view(state.get_module_state(),
+        auto target = urd::visit_view(state.module_state(),
                                       [&](const auto& activation)
                                       {
                                           return context.storage->store(context.planning_state,
-                                                                        activation.get_mod(),
-                                                                        m_rule.get_target(),
-                                                                        activation.get_registers(),
-                                                                        activation.get_arguments(),
+                                                                        activation.mod(),
+                                                                        m_rule.target(),
+                                                                        activation.registers(),
+                                                                        activation.arguments(),
                                                                         call_stack(state));
                                       });
         return emit(detail::applied<Kind, Storage>(std::move(target), m_variant, *context.task_context));
@@ -60,14 +62,14 @@ public:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState,
-             tyr::planning::StateViewConcept<Kind> Candidate,
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
+             tyr::planning::StateBuilderViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
-                 const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate) const
+                 const runir::datasets::LabeledPlanningNode<Kind, Candidate, Binding>& candidate) const
     {
-        if (m_rule.get_effects().empty() || !ext::has_current_source<Kind>(m_rule, state))
+        if (m_rule.effects().empty() || !ext::has_current_source<Kind>(m_rule, state))
             return false;
         auto transition = context.make_dl_transition_context(state, candidate);
         return is_compatible_with<Kind>(m_rule, transition);

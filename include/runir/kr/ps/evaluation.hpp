@@ -17,7 +17,7 @@ template<tyr::TaskKind Kind,
          runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
 auto evaluate(urd::index_view<Feature<Family, FeatureTag>, C> feature, Context& context)
 {
-    return std::visit([&](auto child) { return evaluate<Kind>(child, context); }, feature.get_variant());
+    return std::visit([&](auto child) { return evaluate<Kind>(child, context); }, feature.variant());
 }
 
 }  // namespace runir::kr::ps

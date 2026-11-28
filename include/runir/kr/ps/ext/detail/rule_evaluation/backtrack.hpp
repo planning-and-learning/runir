@@ -31,7 +31,7 @@ public:
              EmitConcept<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     bool
     emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {

@@ -201,7 +201,7 @@ public:
         {
             auto& trie = m_tries[input];
             trie.clear();
-            for (const auto& held : inputs[input].get_rows())
+            for (const auto& held : inputs[input].rows())
                 ygg::with_values(held, [&](const auto& values) { trie.insert(values, m_plan.input_keys[input]); });
         }
         append(out);

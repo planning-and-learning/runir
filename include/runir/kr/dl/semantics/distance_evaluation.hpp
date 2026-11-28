@@ -38,8 +38,8 @@ DistanceFeature<Distance>
 make_distance_feature(ygg::FreeScratchRelations& scratch, const urd::data<runir::kr::database::DistancePlan>& plan, ConstructorView<RoleTag> edges)
 {
     const auto& columns = plan.edge_columns;
-    return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.get_is_static() } },
-             Distance(scratch, plan, edges.get_is_static()),
+    return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.is_static() } },
+             Distance(scratch, plan, edges.is_static()),
              std::nullopt };
 }
 
@@ -76,17 +76,17 @@ heuristics::ProjectionHeuristic make_heuristic(ygg::FreeScratchRelations& scratc
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& context)
 {
-    const auto& plan = constructor.get_plan();
+    const auto& plan = constructor.plan();
     auto children = context.child_context();
     const auto relation = [&](auto argument, auto columns)
     { return std::visit([&](auto child) { return evaluate_relation<Kind>(child, columns, children); }, argument); };
-    const auto sources = relation(constructor.get_sources(), plan.source_columns);
-    const auto targets = relation(constructor.get_targets(), plan.target_columns);
+    const auto sources = relation(constructor.sources(), plan.source_columns);
+    const auto targets = relation(constructor.targets(), plan.target_columns);
     return std::visit(
         [&]<typename Edges>(Edges edges) -> ygg::uint_t
         {
             auto& feature = context.get_workspace().get_distance_feature(
-                context.get_state().get_formalism_repository(),
+                context.get_state().formalism_repository(),
                 constructor.context(),
                 static_cast<ygg::uint_t>(constructor.index().value),
                 [&]
@@ -104,7 +104,7 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
             const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.edges.slots[slot], edges.context(), children); };
             return feature.edges.distance.min_distance(input, sources, targets, feature.heuristic);
         },
-        constructor.get_edges());
+        constructor.edges());
 }
 
 }  // namespace runir::kr::dl::semantics::detail

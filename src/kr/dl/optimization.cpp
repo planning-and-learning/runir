@@ -47,56 +47,56 @@ urd::Store<urd::sequence<QueryView<>>> lower(const runir::kr::database::QueryPla
             [&]<typename Tag>(runir::kr::database::QueryView<Tag> node) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, runir::kr::database::QueryInputTag>)
-                    return leaves[node.get_input_slot()];
+                    return leaves[node.input_slot()];
                 else if constexpr (std::same_as<Tag, runir::kr::database::QueryJoinTag>)
                 {
-                    auto data = urd::data<Query<QueryJoinTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
+                    auto data = urd::data<Query<QueryJoinTag>>(child(node.left_operand()).index(), child(node.right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, runir::kr::database::QueryUnionTag>)
                 {
-                    auto data = urd::data<Query<QueryUnionTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
+                    auto data = urd::data<Query<QueryUnionTag>>(child(node.left_operand()).index(), child(node.right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, runir::kr::database::QueryDifferenceTag>)
                 {
-                    auto data = urd::data<Query<QueryDifferenceTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
+                    auto data = urd::data<Query<QueryDifferenceTag>>(child(node.left_operand()).index(), child(node.right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, runir::kr::database::QueryProjectTag>)
                 {
-                    auto data = urd::data<Query<QueryProjectTag>>(child(node.get_operand()).index(), query_columns_from_labels(node.get_labels()), {});
+                    auto data = urd::data<Query<QueryProjectTag>>(child(node.operand()).index(), query_columns_from_labels(node.labels()), {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, runir::kr::database::QueryRenameTag>)
                 {
-                    auto data = urd::data<Query<QueryRenameTag>>(child(node.get_operand()).index(), query_columns_from_labels(node.get_labels()), {});
+                    auto data = urd::data<Query<QueryRenameTag>>(child(node.operand()).index(), query_columns_from_labels(node.labels()), {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, runir::kr::database::QuerySelectEqualTag>)
                 {
-                    auto data = urd::data<Query<QuerySelectEqualTag>>(child(node.get_operand()).index(),
-                                                                      urd::index<QueryColumn>(node.get_left_column().value),
-                                                                      urd::index<QueryColumn>(node.get_right_column().value),
+                    auto data = urd::data<Query<QuerySelectEqualTag>>(child(node.operand()).index(),
+                                                                      urd::index<QueryColumn>(node.left_column().value),
+                                                                      urd::index<QueryColumn>(node.right_column().value),
                                                                       {},
                                                                       {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, runir::kr::database::QuerySelectValueTag>)
                 {
-                    auto data = urd::data<Query<QuerySelectValueTag>>(child(node.get_operand()).index(),
-                                                                      urd::index<QueryColumn>(node.get_column().value),
-                                                                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(node.get_constant())),
+                    auto data = urd::data<Query<QuerySelectValueTag>>(child(node.operand()).index(),
+                                                                      urd::index<QueryColumn>(node.column().value),
+                                                                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(node.constant())),
                                                                       {},
                                                                       {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, runir::kr::database::QueryGenericJoinTag>)
                 {
-                    const auto inputs = node.get_inputs();
+                    const auto inputs = node.inputs();
                     if (inputs.empty())
                         throw std::logic_error("Query optimization: a generic join without inputs has no runir counterpart.");
-                    const auto output_order = query_columns_from_labels(node.get_output_order());
+                    const auto output_order = query_columns_from_labels(node.output_order());
                     if (inputs.size() == 1)
                     {
                         // A single input only reorders its columns.
@@ -109,8 +109,7 @@ urd::Store<urd::sequence<QueryView<>>> lower(const runir::kr::database::QueryPla
                     urd::flat_vector<urd::index<Query<>>> args;
                     for (const auto input : inputs)
                         args.push_back(child(input).index());
-                    auto data =
-                        urd::data<Query<QueryGenericJoinTag>>(std::move(args), query_columns_from_labels(node.get_variable_order()), output_order, {}, {});
+                    auto data = urd::data<Query<QueryGenericJoinTag>>(std::move(args), query_columns_from_labels(node.variable_order()), output_order, {}, {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, runir::kr::database::QueryEmptyTag>)
@@ -128,7 +127,7 @@ urd::Store<urd::sequence<QueryView<>>> lower(const runir::kr::database::QueryPla
                 else
                     throw std::logic_error("Query optimization: runir queries have no distance relations.");
             },
-            plan[index].get_variant());
+            plan[index].variant());
         lowered.insert_or_assign(index, query);
     }
     urd::Store<urd::sequence<QueryView<>>> roots;
@@ -214,29 +213,29 @@ RecordView<Boolean<SemanticFamily, NonemptyTag>> QueryOptimizer::rewrite(RecordV
             else
                 return rewrite<Boolean<SemanticFamily, NonemptyTag>>(view);
         },
-        view.get_operand());
+        view.operand());
 }
 
 RecordView<Numerical<SemanticFamily, DistanceTag>> QueryOptimizer::rewrite(RecordView<Numerical<SemanticFamily, DistanceTag>> view)
 {
     using Data = urd::data<Numerical<SemanticFamily, DistanceTag>>;
     auto data = Data();
-    data.sources = optimize_argument<decltype(Data::sources)>(view.get_sources(), runir::kr::database::Evaluation::full);
-    data.edges = optimize_argument<decltype(Data::edges)>(view.get_edges(), runir::kr::database::Evaluation::bound);
-    data.targets = optimize_argument<decltype(Data::targets)>(view.get_targets(), runir::kr::database::Evaluation::full);
+    data.sources = optimize_argument<decltype(Data::sources)>(view.sources(), runir::kr::database::Evaluation::full);
+    data.edges = optimize_argument<decltype(Data::edges)>(view.edges(), runir::kr::database::Evaluation::bound);
+    data.targets = optimize_argument<decltype(Data::targets)>(view.targets(), runir::kr::database::Evaluation::full);
     return m_repository->insert(data).first;
 }
 
 RecordView<DatalogProgram> QueryOptimizer::rewrite(RecordView<DatalogProgram> view)
 {
     auto data = urd::data<DatalogProgram>();
-    data.program = view.get_program().index().value;
-    for (const auto input : view.get_inputs())
+    data.program = view.program().index().value;
+    for (const auto input : view.inputs())
     {
         const auto optimized = optimize_root(input, std::nullopt);
         data.inputs.push_back(std::ranges::equal(schema_of(optimized), schema_of(input)) ? optimized.index() : input.index());
     }
-    for (const auto output : view.get_outputs())
+    for (const auto output : view.outputs())
         data.outputs.push_back(output.index().value);
     return m_repository->insert(data).first;
 }

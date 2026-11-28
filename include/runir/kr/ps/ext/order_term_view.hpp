@@ -15,9 +15,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_direction() const noexcept { return self().template member<&urd::record_of<V>::direction>(); }
+    auto direction() const noexcept { return self().template member<&urd::record_of<V>::direction>(); }
 
-    auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
+    auto feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
 };
 }  // namespace urd
 

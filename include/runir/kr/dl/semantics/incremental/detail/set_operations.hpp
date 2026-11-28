@@ -40,7 +40,7 @@ inline void mark_sources(SetOperationWorkspace& workspace, const DenotationDelta
 inline void mark_predecessors(SetOperationWorkspace& workspace, DenotationBuilderView<RoleTag> role, urd::index<tyr::formalism::Object> target)
 {
     const auto index = static_cast<ygg::uint_t>(target.value);
-    for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
+    for (ygg::uint_t source = 0; source < role.num_objects(); ++source)
         if (!workspace.is_marked(urd::index<tyr::formalism::Object>(source)) && role.value(urd::index<tyr::formalism::Object>(source)).test(index))
             workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
@@ -70,7 +70,7 @@ void mark_predecessors(SetOperationWorkspace& workspace, DenotationBuilderView<R
         mark_predecessors(workspace, role, urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(first)));
         return;
     }
-    for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
+    for (ygg::uint_t source = 0; source < role.num_objects(); ++source)
         if (!workspace.is_marked(urd::index<tyr::formalism::Object>(source)) && role.value(urd::index<tyr::formalism::Object>(source)).intersects(targets))
             workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
@@ -196,10 +196,10 @@ void initialize_set(IntersectionTag,
                     const DenotationDelta<Category>&,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(lhs.num_objects(), *workspace.records, *workspace.denotations);
     auto bits = result.storage_bits();
-    bits.copy_from(lhs.get_values().bits().storage_bits());
-    bits &= rhs.get_values().bits().storage_bits();
+    bits.copy_from(lhs.values().bits().storage_bits());
+    bits &= rhs.values().bits().storage_bits();
 }
 
 template<ConceptOrRoleTag Category>
@@ -226,10 +226,10 @@ void initialize_set(UnionTag,
                     const DenotationDelta<Category>&,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(lhs.num_objects(), *workspace.records, *workspace.denotations);
     auto bits = result.storage_bits();
-    bits.copy_from(lhs.get_values().bits().storage_bits());
-    bits |= rhs.get_values().bits().storage_bits();
+    bits.copy_from(lhs.values().bits().storage_bits());
+    bits |= rhs.values().bits().storage_bits();
 }
 
 template<ConceptOrRoleTag Category>
@@ -287,7 +287,7 @@ inline void initialize_set(InverseTag,
                            const DenotationDelta<RoleTag>&,
                            SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(input.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(input.num_objects(), *workspace.records, *workspace.denotations);
     for (const auto [source, target] : input.indices())
         result.set(target, source, true);
 }
@@ -308,7 +308,7 @@ inline void initialize_set(IdentityTag,
                            const DenotationDelta<ConceptTag>&,
                            SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(input.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(input.num_objects(), *workspace.records, *workspace.denotations);
     for (const auto object : input.indices())
         result.set(object, object, true);
 }
@@ -331,7 +331,7 @@ inline void initialize_set(RestrictionTag,
                            const DenotationDelta<ConceptTag>&,
                            SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(role.num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(RestrictionTag {}, role, concept_, workspace, [&](auto source, auto row) { semantics::assign_row(result, source, row); });
 }
@@ -364,7 +364,7 @@ void initialize_set(Tag,
                     const DenotationDelta<ConceptTag>&,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(role.num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, role, concept_, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -397,7 +397,7 @@ void initialize_set(Tag,
                     ygg::uint_t threshold,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(role.num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, role, threshold, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -430,7 +430,7 @@ void initialize_set(Tag,
                     ygg::uint_t threshold,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(role.num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, role, concept_, threshold, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -466,7 +466,7 @@ void initialize_set(Tag,
                     const DenotationDelta<RoleTag>&,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(lhs.num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, lhs, rhs, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -502,7 +502,7 @@ void initialize_set(RoleFillersTag,
                     const Objects& fillers,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(role.num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(RoleFillersTag {}, role, fillers, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
@@ -536,7 +536,7 @@ inline void initialize_set(CompositionTag,
                            const DenotationDelta<RoleTag>&,
                            SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(lhs.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(lhs.num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { semantics::assign_row(result, source, row); });
 }
@@ -568,7 +568,7 @@ void initialize_set(Tag,
                     const DenotationDelta<RoleTag>&,
                     SetOperationWorkspace& workspace)
 {
-    auto& result = output.initialize(role.get_num_objects(), *workspace.records, *workspace.denotations);
+    auto& result = output.initialize(role.num_objects(), *workspace.records, *workspace.denotations);
     workspace.mark_all();
     evaluate_rows(Tag {}, result, role, workspace, [&](auto source, auto row) { semantics::assign_row(result, source, row); });
 }

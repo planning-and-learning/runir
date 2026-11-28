@@ -79,7 +79,7 @@ take only views. It draws its number (``layer()``, the context number of its row
 process-wide counter of the repository layers.
 
 **Views.** An interned ``urd::index_view<Relation<F>, Context>`` and a ``RelationBuilderView`` give ``columns()``,
-``size()``, ``row(i)``, ``get_rows()`` and ``contains(row)``; a ``RelationBuilderView`` also gives the builder it reads
+``size()``, ``row(i)``, ``rows()`` and ``contains(row)``; a ``RelationBuilderView`` also gives the builder it reads
 (``get_builder()``). An interned relation is immutable, so only a builder's view can read an operation's output:
 ``reads_builder(view, builder)`` is what alias checks ask, and an interned view reads no builder. Interned views are
 told apart as urd views are, by their index and layer. An interned view reads its row set over its pool through
@@ -469,7 +469,7 @@ input relation.
   identity. Derived output columns and prepared plans (of join, projection, distance and Generic Join; the resolved
   positions of selections) are cached and are not.
 - **Views.** ``insert_query`` returns a ``QueryView``; ``get_variant()`` gives the concrete view with its getters
-  (``get_left_operand()``, ``get_operand()``, ``get_constant()``). Every concrete view has ``columns()``; a
+  (``left_operand()``, ``operand()``, ``constant()``). Every concrete view has ``columns()``; a
   ``QueryView``'s are its concrete view's, ``columns_of(view)``. Every view borrows its repository.
   ``size()`` counts the root queries.
 - **Generic Join** is a query constructor with input queries, a variable order and an independent output order; an

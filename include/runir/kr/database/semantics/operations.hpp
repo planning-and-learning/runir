@@ -140,7 +140,7 @@ void project(const V& input, const urd::data<ProjectionPlan>& plan, ygg::FreeScr
     detail::prepare_output(out, input);
     const auto& positions = plan.positions;
     auto& row = workspace.row;
-    for (const auto& held : input.get_rows())
+    for (const auto& held : input.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          {
@@ -156,7 +156,7 @@ ygg::FreeScratchRelation& assign(ygg::FreeScratchRelation& destination, const V&
     if (reads(source, destination))
         return destination;
     destination.initialize(source.columns());
-    for (const auto& held : source.get_rows())
+    for (const auto& held : source.rows())
         ygg::with_values(held, [&](const auto& values) { detail::insert(destination, values); });
     return destination;
 }
@@ -166,12 +166,12 @@ void select(const V& input, Predicate predicate, ygg::FreeScratchRelation& out)
 {
     assert(std::ranges::equal(input.columns(), out.view().columns()));
     detail::prepare_output(out, input);
-    for (const auto& held : input.get_rows())
+    for (const auto& held : input.rows())
         urd::visit_view(held,
                         [&](const auto& row)
                         {
                             if (std::invoke(predicate, row))
-                                detail::insert(out, row.get_values());
+                                detail::insert(out, row.values());
                         });
 }
 
@@ -207,7 +207,7 @@ void join_rows(const L& left_operand,
                ygg::FreeScratchRelation& out,
                Workspace& workspace)
 {
-    if (left_operand.get_rows().empty() || right_operand.get_rows().empty())
+    if (left_operand.rows().empty() || right_operand.rows().empty())
         return;
 
     auto& row = workspace.row;
@@ -220,11 +220,11 @@ void join_rows(const L& left_operand,
 
     if (plan.left_keys.empty())
     {
-        for (const auto& left_held : left_operand.get_rows())
+        for (const auto& left_held : left_operand.rows())
             ygg::with_values(left_held,
                              [&](const auto& left_row)
                              {
-                                 for (const auto& right_held : right_operand.get_rows())
+                                 for (const auto& right_held : right_operand.rows())
                                      ygg::with_values(right_held, [&](const auto& right_row) { emit(left_row, right_row); });
                              });
         return;
@@ -235,7 +235,7 @@ void join_rows(const L& left_operand,
                                 std::span<const ColumnSlice> build_keys,
                                 std::span<const ColumnSlice> probe_keys)
     {
-        for (const auto& probe_held : probe.get_rows())
+        for (const auto& probe_held : probe.rows())
             ygg::with_values(probe_held,
                              [&](const auto& probe_row)
                              {
@@ -276,8 +276,8 @@ void join(const L& left_operand, const R& right_operand, const urd::data<JoinPla
     detail::assert_planned(left_operand, right_operand, plan);
     assert(std::ranges::equal(out.view().columns(), plan.output_columns));
     detail::prepare_output(out, left_operand, right_operand);
-    const bool build_left = left_operand.get_rows().size() <= right_operand.get_rows().size();
-    if (!plan.left_keys.empty() && !left_operand.get_rows().empty() && !right_operand.get_rows().empty())
+    const bool build_left = left_operand.rows().size() <= right_operand.rows().size();
+    if (!plan.left_keys.empty() && !left_operand.rows().empty() && !right_operand.rows().empty())
     {
         if (build_left)
             detail::build_join_index(left_operand, plan.left_keys, workspace.join_index);
@@ -292,9 +292,9 @@ void union_(const L& left_operand, const R& right_operand, [[maybe_unused]] cons
 {
     assert(std::ranges::equal(left_operand.columns(), plan.output_columns) && std::ranges::equal(right_operand.columns(), plan.output_columns));
     detail::prepare_output(out, left_operand, right_operand);
-    for (const auto& held : left_operand.get_rows())
+    for (const auto& held : left_operand.rows())
         ygg::with_values(held, [&](const auto& values) { detail::insert(out, values); });
-    for (const auto& held : right_operand.get_rows())
+    for (const auto& held : right_operand.rows())
         ygg::with_values(held, [&](const auto& values) { detail::insert(out, values); });
 }
 
@@ -303,7 +303,7 @@ void difference(const L& left_operand, const R& right_operand, [[maybe_unused]] 
 {
     assert(std::ranges::equal(left_operand.columns(), plan.output_columns) && std::ranges::equal(right_operand.columns(), plan.output_columns));
     detail::prepare_output(out, left_operand, right_operand);
-    for (const auto& held : left_operand.get_rows())
+    for (const auto& held : left_operand.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          {
@@ -328,19 +328,19 @@ void filter_matches(const L& left_operand,
     prepare_output(out, left_operand, right_operand);
     const auto& left_keys = plan.left_keys;
     const auto& right_keys = plan.right_keys;
-    if (!left_keys.empty() && !right_operand.get_rows().empty())
+    if (!left_keys.empty() && !right_operand.rows().empty())
         build_join_index(right_operand, right_keys, workspace.join_index);
     const auto matched = [&](const auto& row)
     {
-        if (right_operand.get_rows().empty() || left_keys.empty())
-            return !right_operand.get_rows().empty();
+        if (right_operand.rows().empty() || left_keys.empty())
+            return !right_operand.rows().empty();
         for (const auto [first, last] = workspace.join_index.equal_range(join_key_hash(row, left_keys));
              const auto match : std::ranges::subrange(first, last) | std::views::values)
             if (ygg::with_values(right_operand.row(match), [&](const auto& right_row) { return join_keys_equal(right_row, right_keys, row, left_keys); }))
                 return true;
         return false;
     };
-    for (const auto& held : left_operand.get_rows())
+    for (const auto& held : left_operand.rows())
         ygg::with_values(held,
                          [&](const auto& row)
                          {

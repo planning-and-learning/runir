@@ -36,8 +36,8 @@ const Column w(3), x(0), y(1), z(2);
 auto rows(const auto& relation)
 {
     urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::Value>>>> result;
-    result.reserve(relation.get_rows().size());
-    for (const auto& row : relation.get_rows())
+    result.reserve(relation.rows().size());
+    for (const auto& row : relation.rows())
     {
         auto& values = result.emplace_back();
         for (const auto value : values_of(row))
@@ -176,9 +176,9 @@ TEST(DatabaseOptimization, YannakakisBoundsIntermediatesByInputTimesOutput)
     optimized.evaluate(refs);
     EXPECT_EQ(rows(optimized.get_result()), rows(reference.get_result()));
     // Yannakakis' bound for projected acyclic joins: O(|input| · |output|).
-    const auto bound = (inputs[0].size() + inputs[1].size() + inputs[2].size()) * reference.get_result().get_rows().size();
+    const auto bound = (inputs[0].size() + inputs[1].size() + inputs[2].size()) * reference.get_result().rows().size();
     for (size_t position = 0; position < nodes.size(); ++position)
-        EXPECT_LE(evaluator.get_result(position).get_rows().size(), bound);
+        EXPECT_LE(evaluator.get_result(position).rows().size(), bound);
 }
 
 TEST(DatabaseOptimization, BoundRootsKeepTheirJoinStructure)
@@ -274,19 +274,19 @@ TEST(DatabaseOptimization, CostBasedPlanChoosesTheSelectiveSubjoin)
                 if constexpr (std::same_as<Concrete, runir::kr::database::QueryView<runir::kr::database::QueryJoinTag>>)
                 {
                     std::set<size_t> slots;
-                    for (const auto child : { query.get_left_operand(), query.get_right_operand() })
+                    for (const auto child : { query.left_operand(), query.right_operand() })
                         for (const auto node : runir::kr::database::reachable(std::span<const runir::kr::database::QueryView<>>(&child, 1)))
                             std::visit(
                                 [&]<typename Leaf>(Leaf leaf)
                                 {
                                     if constexpr (std::same_as<Leaf, runir::kr::database::QueryView<runir::kr::database::QueryInputTag>>)
-                                        slots.insert(leaf.get_input_slot());
+                                        slots.insert(leaf.input_slot());
                                 },
-                                node.get_variant());
+                                node.variant());
                     found |= slots == std::set<size_t> { 1, 2 };
                 }
             },
-            plan[PlanId(ygg::to_uint_t(position))].get_variant());
+            plan[PlanId(ygg::to_uint_t(position))].variant());
     EXPECT_TRUE(found);
 }
 
@@ -318,7 +318,7 @@ TEST(DatabaseOptimization, NullaryGenericJoinHasOneRow)
     {
         runir::kr::database::QueryEvaluator evaluator(scratch(), plan);
         evaluator.evaluate(std::array<ygg::FreeRelationBuilderView, 0> {});
-        EXPECT_EQ(evaluator.get_result().get_rows().size(), 1);
+        EXPECT_EQ(evaluator.get_result().rows().size(), 1);
     }
 }
 
@@ -354,9 +354,9 @@ TEST(DatabaseOptimization, BothModesPreserveDifferencesRenamesAndExistentialVari
     const auto measured = runir::kr::database::optimize(std::span<const runir::kr::database::QueryView<>>(roots), statistics);
     runir::kr::database::QueryEvaluator reference(scratch(), runir::kr::database::compile_plan(roots));
     reference.evaluate(refs);
-    EXPECT_EQ(reference.get_result(0).get_rows().size(), 1);
-    EXPECT_EQ(reference.get_result(1).get_rows().size(), 1);
-    EXPECT_TRUE(reference.get_result(2).get_rows().empty());
+    EXPECT_EQ(reference.get_result(0).rows().size(), 1);
+    EXPECT_EQ(reference.get_result(1).rows().size(), 1);
+    EXPECT_TRUE(reference.get_result(2).rows().empty());
     for (const auto* chosen : { &unmeasured, &measured })
     {
         EXPECT_EQ(chosen->roots()[8], chosen->roots()[9]);
@@ -558,8 +558,8 @@ TEST(DatabaseOptimization, BothModesPreserveFactoredUnionsAndFilteredDifferences
     runir::kr::database::QueryEvaluator reference(scratch(), original);
     reference.evaluate(inputs);
     EXPECT_EQ(rows(reference.get_result(0)), rows(reference.get_result(1)));
-    EXPECT_EQ(reference.get_result(2).get_rows().size(), 1);
-    EXPECT_EQ(reference.get_result(3).get_rows().size(), 1);
+    EXPECT_EQ(reference.get_result(2).rows().size(), 1);
+    EXPECT_EQ(reference.get_result(3).rows().size(), 1);
     EXPECT_EQ(rows(reference.get_result(4)), rows(borrow(ar)));
     EXPECT_EQ(rows(reference.get_result(5)), rows(borrow(ar)));
     for (const auto* chosen : { &unmeasured, &measured })

@@ -204,29 +204,25 @@ void add_predicate_primitives(tyr::formalism::DomainView domain,
                               size_t& next_role,
                               size_t& next_boolean)
 {
-    for (const auto predicate : domain.template get_predicates<FactKind>())
+    for (const auto predicate : domain.template predicates<FactKind>())
     {
-        if (predicate.get_arity() == 0)
+        if (predicate.arity() == 0)
         {
-            add_boolean_atomic_state(out, boolean_heads, next_boolean, predicate.get_name());
+            add_boolean_atomic_state(out, boolean_heads, next_boolean, predicate.name());
         }
-        else if (predicate.get_arity() == 1)
+        else if (predicate.arity() == 1)
         {
             add_atomic_state<runir::kr::dl::ConceptTag>(out,
                                                         concept_heads,
                                                         next_concept,
                                                         runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword,
-                                                        predicate.get_name());
-            add_atomic_goal<runir::kr::dl::ConceptTag>(out,
-                                                       concept_heads,
-                                                       next_concept,
-                                                       runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword,
-                                                       predicate.get_name());
+                                                        predicate.name());
+            add_atomic_goal<runir::kr::dl::ConceptTag>(out, concept_heads, next_concept, runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword, predicate.name());
         }
-        else if (predicate.get_arity() == 2)
+        else if (predicate.arity() == 2)
         {
-            add_atomic_state<runir::kr::dl::RoleTag>(out, role_heads, next_role, runir::kr::dl::RoleAtomicStateSyntaxTag::keyword, predicate.get_name());
-            add_atomic_goal<runir::kr::dl::RoleTag>(out, role_heads, next_role, runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword, predicate.get_name());
+            add_atomic_state<runir::kr::dl::RoleTag>(out, role_heads, next_role, runir::kr::dl::RoleAtomicStateSyntaxTag::keyword, predicate.name());
+            add_atomic_goal<runir::kr::dl::RoleTag>(out, role_heads, next_role, runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword, predicate.name());
         }
     }
 }
@@ -309,8 +305,8 @@ std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formal
     add_concept_bot(rule_out, primitive_concept_heads, next_concept);
     add_concept_top(rule_out, primitive_concept_heads, next_concept);
 
-    for (const auto object : domain.get_constants())
-        add_concept_nominal(rule_out, primitive_concept_heads, next_concept, object.get_name());
+    for (const auto object : domain.constants())
+        add_concept_nominal(rule_out, primitive_concept_heads, next_concept, object.name());
 
     add_predicate_primitives<tyr::formalism::StaticTag>(domain,
                                                         rule_out,

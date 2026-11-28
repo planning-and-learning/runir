@@ -39,7 +39,7 @@ def test_counterexample_properties_keep_the_graph_alive(
     read_property: Callable[[], str]
     if vertex_property:
         label = graph.vertex_value(next(iter(graph.vertices())))
-        read_property = label.memory_state.get_name
+        read_property = label.memory_state.name
     else:
         label = graph.edge_value(next(iter(range(graph.num_edges))))
 
@@ -127,8 +127,8 @@ def test_ext_structural_termination_feature_mask_boundary(
         gripper_planning_domain,
         repository,
     )
-    assert len(module.get_boolean_features()) == num_booleans
-    assert len(module.get_numerical_features()) == num_numericals
+    assert len(module.boolean_features()) == num_booleans
+    assert len(module.numerical_features()) == num_numericals
 
     if num_booleans + num_numericals > 64:
         with pytest.raises(ValueError, match="64"):
@@ -193,7 +193,7 @@ def test_ext_structural_termination_is_terminating(gripper_planning_domain: Plan
     without_incomplete = dl.structural_termination(module, max_features=1, use_incomplete_preprocessing=False)
 
     assert result.is_terminating()
-    assert len(module.get_boolean_features()) == 1
+    assert len(module.boolean_features()) == 1
     assert result.incomplete_result is not None
     assert result.incomplete_result.status == incomplete_result.status
     assert incomplete_result.surviving_rules == []
@@ -209,7 +209,7 @@ def test_ext_structural_termination_is_terminating(gripper_planning_domain: Plan
     assert isinstance(scc_result, dl.SccStructuralTerminationResult)
     assert scc_result.booleans == []
     assert [feature.index() for feature in scc_result.numericals] == [
-        feature.index() for feature in module.get_numerical_features()
+        feature.index() for feature in module.numerical_features()
     ]
 
 
@@ -218,8 +218,8 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
     module = dl.parse_module(NON_TERMINATING_MODULE, gripper_planning_domain, repository)
 
     result = dl.structural_termination(module)
-    booleans = module.get_boolean_features()
-    numericals = module.get_numerical_features()
+    booleans = module.boolean_features()
+    numericals = module.numerical_features()
     assert not result.is_terminating()
     sieve_result = result.sieve_result
     assert sieve_result is not None
@@ -227,7 +227,7 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
     counterexample = sieve_result.counterexample
     assert counterexample is not None
     vertices = [counterexample.vertex_value(vertex) for vertex in counterexample.vertices()]
-    assert {vertex.memory_state.get_name() for vertex in vertices} == {"m0", "m1"}
+    assert {vertex.memory_state.name() for vertex in vertices} == {"m0", "m1"}
     assert vertices[0] == vertices[0]
     assert vertices[0] <= vertices[0]
     with pytest.raises(TypeError):
@@ -253,8 +253,8 @@ def test_ext_structural_termination_lifts_projected_components(
     module = dl.parse_module(PROJECTED_COMPONENTS_MODULE, gripper_planning_domain, repository)
 
     result = dl.structural_termination(module, use_incomplete_preprocessing=use_incomplete_preprocessing)
-    booleans = module.get_boolean_features()
-    numericals = module.get_numerical_features()
+    booleans = module.boolean_features()
+    numericals = module.numerical_features()
     assert not result.is_terminating()
     sieve_result = result.sieve_result
     assert sieve_result is not None
@@ -277,15 +277,15 @@ def test_ext_structural_termination_lifts_projected_components(
     }
 
     vertices = [counterexample.vertex_value(vertex) for vertex in counterexample.vertices()]
-    assert {vertex.memory_state.get_name() for vertex in vertices} == {"m0", "m1", "m2"}
+    assert {vertex.memory_state.name() for vertex in vertices} == {"m0", "m1", "m2"}
     positive_n0 = False
     positive_n1 = False
     for vertex in vertices:
         assert 0 <= vertex.boolean_values < 1 << len(booleans)
         assert 0 <= vertex.numerical_values < 1 << len(numericals)
-        if vertex.memory_state.get_name() == "m0":
+        if vertex.memory_state.name() == "m0":
             assert vertex.numerical_values == 0
-        elif vertex.memory_state.get_name() == "m1":
+        elif vertex.memory_state.name() == "m1":
             assert vertex.boolean_values == 0
             assert not (vertex.numerical_values & 1)
             positive_n1 |= bool(vertex.numerical_values & 2)
@@ -297,7 +297,7 @@ def test_ext_structural_termination_lifts_projected_components(
     assert positive_n1
 
     edges = [counterexample.edge_value(edge) for edge in range(counterexample.num_edges)]
-    assert {edge.get_symbol() for edge in edges} == {"keep_n0", "keep_n1", "to_false", "to_true"}
+    assert {edge.symbol() for edge in edges} == {"keep_n0", "keep_n1", "to_false", "to_true"}
     surviving_rules = sieve_result.surviving_rules
     surviving_rule_ids = {rule.index() for rule in surviving_rules}
     assert len(surviving_rules) == len(surviving_rule_ids) == 4
@@ -319,8 +319,8 @@ def test_ext_incomplete_structural_termination_uses_memory_components(gripper_pl
     result = dl.incomplete_structural_termination(module)
     assert result.is_terminating()
     assert result.status == IncompleteStructuralTerminationStatus.TERMINATING
-    assert len(module.get_boolean_features()) == 1
-    assert module.get_numerical_features() == []
+    assert len(module.boolean_features()) == 1
+    assert module.numerical_features() == []
     assert result.surviving_rules == []
 
     global_result = dl.incomplete_structural_termination(module, use_memory_scc_scope=False)

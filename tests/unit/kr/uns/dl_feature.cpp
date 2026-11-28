@@ -10,7 +10,7 @@
 #include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/uns/repository.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
@@ -42,8 +42,8 @@ static_assert(requires(Data& data) {
 });
 static_assert(requires(const View& view) {
     view.index();
-    view.get_feature();
-    view.get_symbol();
+    view.feature();
+    view.symbol();
 });
 
 static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>& context) {

@@ -27,20 +27,20 @@ concept RuleContract = kr::ps::ext::RuleKind<Kind> && std::constructible_from<ur
                               data.source;
                               data.conditions;
                               view.index();
-                              view.get_source();
-                              view.get_conditions();
+                              view.source();
+                              view.conditions();
                           };
 
 template<typename Kind>
 concept TransitionRuleContract = RuleContract<Kind> && requires(urd::data<Entity<Kind>>& data, const View<Kind>& view) {
     data.target;
-    view.get_target();
+    view.target();
 };
 
 template<typename Kind>
 concept HasEffects = requires(urd::data<Entity<Kind>>& data, const View<Kind>& view) {
     data.effects;
-    view.get_effects();
+    view.effects();
 };
 
 template<kr::dl::CategoryTag Category>
@@ -52,9 +52,9 @@ concept BindingRuleContract =
         data.feature;
         data.slot;
         data.effects;
-        view.get_feature();
-        view.get_slot();
-        view.get_effects();
+        view.feature();
+        view.slot();
+        view.effects();
     };
 
 using Sketch = kr::ps::ext::SketchTag;
@@ -75,29 +75,29 @@ static_assert(kr::ps::ext::ChooseRuleView<View<kr::ps::ext::ChooseTag<kr::dl::Co
 static_assert(!kr::ps::ext::LoadRuleView<View<kr::ps::ext::ChooseTag<kr::dl::RoleTag>>>);
 static_assert(TransitionRuleContract<Sketch> && requires(urd::data<Entity<Sketch>>& data, const View<Sketch>& view) {
     data.effects;
-    view.get_effects();
+    view.effects();
 });
 static_assert(TransitionRuleContract<Do> && requires(urd::data<Entity<Do>>& data, const View<Do>& view) {
     data.effects;
     data.action_name;
     data.arguments;
-    view.get_effects();
-    view.get_action_name();
-    view.get_arguments();
+    view.effects();
+    view.action_name();
+    view.arguments();
 });
 static_assert(TransitionRuleContract<Action> && requires(urd::data<Entity<Action>>& data, const View<Action>& view) {
     data.effects;
     data.action_name;
     data.query_feature;
-    view.get_effects();
-    view.get_action_name();
-    view.get_query_feature();
+    view.effects();
+    view.action_name();
+    view.query_feature();
 });
 static_assert(TransitionRuleContract<Call> && requires(urd::data<Entity<Call>>& data, const View<Call>& view) {
     data.callee;
     data.arguments;
-    view.get_callee();
-    view.get_arguments();
+    view.callee();
+    view.arguments();
 });
 
 }  // namespace

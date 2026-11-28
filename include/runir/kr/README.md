@@ -134,7 +134,7 @@ or feature-language dimension.
 | Parameter | Purpose |
 | --- | --- |
 | `tyr::TaskKind Kind` | Selects ground or lifted planning (`GroundTag`, `LiftedTag`), independently of the policy family. |
-| `tyr::formalism::FactKind` | Selects static, fluent, or derived facts for atomic state/goal constructors. Compound-expression staticness is tracked by `get_is_static()`, not by a separate template family. |
+| `tyr::formalism::FactKind` | Selects static, fluent, or derived facts for atomic state/goal constructors. Compound-expression staticness is tracked by `is_static()`, not by a separate template family. |
 | `ObservationTag` | Selects Boolean or numerical conditions/effects, such as `Positive`, `EqualZero`, or `Decreases`. Valid pairs depend on the feature category and condition/effect inventory. |
 | Rule tag | Selects a family's concrete rule body. Shared feature types do not imply shared rule semantics. |
 

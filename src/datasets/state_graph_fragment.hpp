@@ -19,6 +19,7 @@
 #define RUNIR_SRC_DATASETS_STATE_GRAPH_FRAGMENT_HPP_
 
 #include "runir/datasets/state_graph.hpp"
+#include "runir/datasets/successors.hpp"
 
 #include <cassert>
 #include <memory>
@@ -26,7 +27,7 @@
 #include <stdexcept>
 #include <tuple>
 #include <tyr/planning/algorithms/astar_eager/event_handler.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -45,8 +46,8 @@ using StateGraphEdgeKey = std::tuple<VertexIndex, VertexIndex, tyr::formalism::A
 template<tyr::TaskKind Kind>
 struct StateGraphTransition
 {
-    tyr::planning::PackedStateView<Kind> source;
-    tyr::planning::PackedStateView<Kind> target;
+    tyr::planning::StateView<Kind> source;
+    tyr::planning::StateView<Kind> target;
     tyr::formalism::ActionRowView action;
     ygg::float_t cost = 0;
 };
@@ -55,18 +56,22 @@ template<tyr::TaskKind Kind>
 class StateGraphFragment
 {
 public:
-    void record(const tyr::planning::Node<Kind>& source, const tyr::planning::LabeledNode<Kind>& target)
+    /// A transition a search generated: its binding, borrowed during the event, is interned.
+    void record(const tyr::planning::NodeBuilderView<Kind>& source,
+                tyr::planning::ActionBindingView<Kind> binding,
+                const tyr::planning::NodeBuilderView<Kind>& target)
     {
-        m_transitions.push_back(StateGraphTransition<Kind> { source.get_state().pack(),
-                                                             target.node.get_state().pack(),
-                                                             target.label,
-                                                             target.node.get_metric() - source.get_metric() });
+        m_transitions.push_back(StateGraphTransition<Kind> { source.state().pack(),
+                                                             target.state().pack(),
+                                                             interned_binding<Kind>(target.context(), m_builder, binding),
+                                                             target.metric() - source.metric() });
     }
 
     const auto& get_transitions() const noexcept { return m_transitions; }
 
 private:
     urd::Store<urd::sequence<StateGraphTransition<Kind>>> m_transitions;
+    tyr::formalism::Builder m_builder;
 };
 
 template<tyr::TaskKind Kind>
@@ -75,9 +80,11 @@ class StateGraphWorkerEventHandler final : public tyr::planning::astar_eager::Wo
 public:
     explicit StateGraphWorkerEventHandler(StateGraphFragment<Kind>& fragment) : m_fragment(&fragment) {}
 
-    void
-    on_generate_transition(const tyr::planning::Node<Kind>& source, const tyr::planning::LabeledNode<Kind>& target, tyr::planning::TransitionOutcome) override
-    { m_fragment->record(source, target); }
+    void on_generate_transition(const tyr::planning::NodeBuilderView<Kind>& source,
+                                tyr::planning::ActionBindingView<Kind> binding,
+                                const tyr::planning::NodeBuilderView<Kind>& target,
+                                tyr::planning::TransitionOutcome /*outcome*/) override
+    { m_fragment->record(source, binding, target); }
 
 private:
     StateGraphFragment<Kind>* m_fragment;
@@ -87,13 +94,14 @@ template<tyr::TaskKind Kind>
 class StateGraphEventHandler final : public tyr::planning::astar_eager::EventHandler<Kind>
 {
 public:
-    explicit StateGraphEventHandler(const tyr::planning::StateView<Kind>& start) : m_workers(1), m_start(start.pack()) {}
+    explicit StateGraphEventHandler(const tyr::planning::StateBuilderView<Kind>& start) : m_workers(1), m_start(start.pack()) {}
 
-    void on_start_search([[maybe_unused]] const tyr::planning::Node<Kind>& node, ygg::float_t) override { assert(m_start == node.get_state().pack()); }
+    void on_start_search([[maybe_unused]] const tyr::planning::NodeBuilderView<Kind>& node, ygg::float_t /*f_value*/) override
+    { assert(m_start == node.state().pack()); }
 
     void on_end_search(tyr::planning::SearchStatus, const tyr::planning::Statistics&) override {}
 
-    void on_solved(const tyr::planning::Plan<Kind>&) override {}
+    void on_solved(const tyr::planning::PlanBuilderView<tyr::planning::DeterministicTag, Kind>& /*plan*/) override {}
 
     auto make_worker(urd::index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override
     {
@@ -109,13 +117,11 @@ public:
 
 private:
     urd::Store<urd::sequence<StateGraphFragment<Kind>>> m_workers;
-    std::optional<tyr::planning::PackedStateView<Kind>> m_start;
+    std::optional<tyr::planning::StateView<Kind>> m_start;
 };
 
 template<tyr::TaskKind Kind>
-std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler<Kind>& events,
-                                                    tyr::planning::StateRepository<Kind>& target_repository,
-                                                    tyr::planning::AxiomEvaluator<Kind>& axiom_evaluator)
+std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler<Kind>& events, tyr::planning::StateRepository<Kind>& target_repository)
 {
     if (!events.get_start())
         throw std::logic_error("State graph search did not report its initial state.");
@@ -124,16 +130,17 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
     using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<StateGraphEdgeLabel>>;
     auto vertices = urd::Store<urd::sequence<urd::data<StateGraphVertexLabel<Kind>>, VertexIndex>> {};
     auto graph_edges = urd::Store<urd::sequence<Edge>> {};
-    auto packed_to_vertex = urd::Store<urd::map<tyr::planning::PackedStateView<Kind>, VertexIndex>> {};
+    auto packed_to_vertex = urd::Store<urd::map<tyr::planning::StateView<Kind>, VertexIndex>> {};
     /// The materialized states by vertex: a state's vertex is its position.
-    auto states = urd::Store<urd::set<tyr::planning::PackedStateView<Kind>>, urd::positional>(urd::layer { 0 });
+    auto states = urd::Store<urd::set<tyr::planning::StateView<Kind>>, urd::positional>(urd::layer { 0 });
     auto edges = urd::Store<urd::set<StateGraphEdgeKey>> {};
-    auto get_or_create_vertex = [&](const tyr::planning::PackedStateView<Kind>& packed)
+    auto get_or_create_vertex = [&](const tyr::planning::StateView<Kind>& packed)
     {
         if (const auto it = packed_to_vertex.find(packed); it != packed_to_vertex.end())
             return it->second;
 
-        auto state = tyr::planning::materialize_state(packed.unpack(), target_repository, axiom_evaluator).pack();
+        // The state, which holds its axiom closure, registered in the target repository.
+        auto state = urd::resolve(*tyr::planning::register_extended_state(target_repository, packed.unpack()), target_repository).pack();
         const auto [it, inserted] = states.insert(state);
         const auto vertex = static_cast<VertexIndex>(states.position(it));
         if (inserted)

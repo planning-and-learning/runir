@@ -22,7 +22,7 @@ def test_value_and_view_constructors_build_equal_data(gripper_planning_domain: P
     assert repository.insert(by_index)[0] == repository.insert(by_view)[0]
 
     column = repository.insert(record(semantics.QueryColumnData, name="x"))[0]
-    assert column.get_name() == "x"
+    assert column.name() == "x"
     query_by_index = record(semantics.QueryConceptData, operand=concept.index(), columns=[column.index()])
     query_by_view = record(semantics.QueryConceptData, operand=concept, columns=[column])
     assert query_by_index == query_by_view

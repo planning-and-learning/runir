@@ -35,15 +35,15 @@ class GenericJoinEvaluator
         // Added and removed views may have different types, so never select one with ?:.
         const auto apply_input = [&](size_t input, const auto& changed, bool removing)
         {
-            if (changed.get_rows().empty())
+            if (changed.rows().empty())
                 return;
             const auto& keys = m_plan->input_keys[input];
             auto& current = m_workspace.trie(input);
             m_changed.clear();
-            for (const auto& held : changed.get_rows())
+            for (const auto& held : changed.rows())
                 ygg::with_values(held, [&](const auto& values) { m_changed.insert(values, keys); });
             m_workspace.append(removing ? *m_delta.removed : *m_delta.added, input, m_changed);
-            for (const auto& held : changed.get_rows())
+            for (const auto& held : changed.rows())
                 ygg::with_values(held,
                                  [&](const auto& values)
                                  {
@@ -116,7 +116,7 @@ public:
             const auto& current = m_workspace.trie(input);
             const auto require_actual = [&](const auto& changed, bool removing)
             {
-                for (const auto& held : changed.get_rows())
+                for (const auto& held : changed.rows())
                     if (ygg::with_values(held, [&](const auto& values) { return current.contains(values, keys); }) != removing)
                         throw std::invalid_argument("Incremental generic join: change does not describe an actual input set change.");
             };

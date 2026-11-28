@@ -19,15 +19,15 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_program() const { return self().template member<&urd::record_of<V>::program>(); }
+    auto program() const { return self().template member<&urd::record_of<V>::program>(); }
 
-    auto get_memory_state() const { return self().template member<&urd::record_of<V>::memory_state>(); }
+    auto memory_state() const { return self().template member<&urd::record_of<V>::memory_state>(); }
 
-    auto get_registers() const { return self().template member<&urd::record_of<V>::registers>(); }
+    auto registers() const { return self().template member<&urd::record_of<V>::registers>(); }
 
-    auto get_histories() const { return self().template member<&urd::record_of<V>::histories>(); }
+    auto histories() const { return self().template member<&urd::record_of<V>::histories>(); }
 
-    auto get_state() const { return self().template member<&urd::record_of<V>::state>().unpack(); }
+    auto state() const { return self().template member<&urd::record_of<V>::state>().unpack(); }
 };
 }  // namespace urd
 

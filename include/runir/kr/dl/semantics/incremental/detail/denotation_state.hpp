@@ -41,7 +41,7 @@ public:
 
     [[nodiscard]] const auto& get_delta() const noexcept { return m_delta; }
 
-    [[nodiscard]] size_t size() const { return result().get_values().bits().storage_bits().count(); }
+    [[nodiscard]] size_t size() const { return result().values().bits().storage_bits().count(); }
 
     /// Copy a complete result while retaining storage and clearing previous changes.
     template<typename Source>
@@ -131,7 +131,7 @@ public:
 
     [[nodiscard]] bool changed() const noexcept { return m_changed; }
 
-    void assign(DenotationView<Category> source, RecordStorage&, const DenotationRepository&) { initialize(source.get_value()); }
+    void assign(DenotationView<Category> source, RecordStorage&, const DenotationRepository&) { initialize(source.value()); }
 
     void assign(DenotationBuilderView<Category> source, RecordStorage&, const DenotationRepository&) { initialize(source.value()); }
 

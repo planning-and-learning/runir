@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_DETAIL_PROOF_SEARCH_HPP_
 #define RUNIR_KR_PS_BASE_DETAIL_PROOF_SEARCH_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/base/detail/proof_graph.hpp"
 #include "runir/kr/ps/base/detail/search_node.hpp"
 #include "runir/kr/ps/base/detail/successor_expander_impl.hpp"
@@ -12,8 +13,8 @@
 
 #include <optional>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
 #include <urd/repr/queues/queue.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -32,13 +33,13 @@ namespace detail
 template<tyr::TaskKind Kind, UnsolvabilityConcept<Kind> Unsolvability>
 ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                                SuccessorExpander<Kind>& expander,
-                               const tyr::planning::PackedStateView<Kind>& initial,
+                               const tyr::planning::StateView<Kind>& initial,
                                const SketchSearchOptions<Kind>& options,
                                Unsolvability& classifier,
                                SearchNodes<Kind>& nodes,
                                urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
                                SketchSearchStatistics& statistics,
-                               std::optional<tyr::planning::PackedStateView<Kind>>& goal)
+                               std::optional<tyr::planning::StateView<Kind>>& goal)
 {
     const auto& search_context = *task_context.search_context;
     auto num_reached = static_cast<std::size_t>(0);
@@ -49,10 +50,10 @@ ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
     const auto out_of_time = [&]() { return stopwatch && stopwatch->has_finished(); };
 
-    const auto is_goal = [&](const tyr::planning::StateView<Kind>& state)
+    const auto is_goal = [&](const tyr::planning::SharedStateBuilderView<Kind>& state)
     { return static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state); };
 
-    const auto get_or_create_state = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<bool>
+    const auto get_or_create_state = [&](const tyr::planning::SharedStateBuilderView<Kind>& state) -> std::optional<bool>
     {
         const auto found = nodes.find(state.pack().index());
         if ((num_reached > 0 && state == initial_state) || (found != nodes.end() && found->second.parent_state))
@@ -69,7 +70,7 @@ ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
     const auto admitted = get_or_create_state(initial_state);
     if (!admitted)
         return ProofStatus::OUT_OF_STATES;
-    auto open = urd::Store<urd::queue<tyr::planning::PackedStateView<Kind>>, urd::lifo> {};
+    auto open = urd::Store<urd::queue<tyr::planning::StateView<Kind>>, urd::lifo> {};
     open.push(initial);
 
     while (!open.empty())
@@ -99,26 +100,26 @@ ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
         const auto state = source.unpack();
         auto expansion_status = ProofStatus::SUCCESS;
         bool is_open = true;
-        const auto accept_successor = [&](const tyr::planning::LabeledNode<Kind>& successor, RuleView rule)
+        const auto accept_successor = [&](const runir::datasets::LabeledPlanningNode<Kind>& successor, RuleView rule)
         {
             if (out_of_time())
             {
                 expansion_status = ProofStatus::OUT_OF_TIME;
                 return false;
             }
-            const auto target_result = get_or_create_state(successor.node.get_state());
+            const auto target_result = get_or_create_state(successor.node().state());
             if (!target_result)
             {
                 expansion_status = ProofStatus::OUT_OF_STATES;
                 return false;
             }
-            const auto target = successor.node.get_state().pack();
-            predecessors.push_back({ source, target, successor.label, rule });
+            const auto target = successor.node().state().pack();
+            predecessors.push_back({ source, target, successor.label(), rule });
             if (*target_result)
             {
                 auto& target_node = detail::get_or_create_search_node(target, nodes);
                 target_node.parent_state = source;
-                target_node.action = successor.label;
+                target_node.action = successor.label();
                 open.push(target);
             }
             is_open = false;
@@ -146,20 +147,20 @@ auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
     auto& task_context = *task_context_owner;
     const auto& search_context = *task_context.search_context;
     auto expander = SuccessorExpander<Kind>(task_context, sketch);
-    const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
+    const auto initial_node = runir::datasets::packed_initial_node(search_context);
     auto nodes = SearchNodes<Kind> {};
     auto predecessors = urd::Store<urd::sequence<Predecessor<Kind>>> {};
     auto statistics = SketchSearchStatistics {};
-    auto goal = std::optional<tyr::planning::PackedStateView<Kind>> {};
+    auto goal = std::optional<tyr::planning::StateView<Kind>> {};
 
-    const auto status = depth_first_search(task_context, expander, initial_node.get_state(), options, classifier, nodes, predecessors, statistics, goal);
+    const auto status = depth_first_search(task_context, expander, initial_node.state(), options, classifier, nodes, predecessors, statistics, goal);
 
     auto result = SketchProofResults<Kind> {};
     result.task_context_owner = task_context_owner;
     result.status = status;
     result.statistics = statistics;
     // Nodes remain empty only when the state limit prevents admitting the initial state.
-    build_proof_graph<Kind>(result, nodes, predecessors, nodes.empty() ? std::nullopt : std::optional(initial_node.get_state()));
+    build_proof_graph<Kind>(result, nodes, predecessors, nodes.empty() ? std::nullopt : std::optional(initial_node.state()));
     if (result.status == ProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
         result.status = ProofStatus::FAILURE;
     if (goal && result.is_successful())

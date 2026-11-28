@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/elements/concepts.hpp>
 #include <urd/repr/graphs/csr_graph.hpp>
 #include <utility>
@@ -22,7 +22,7 @@ namespace urd
 template<tyr::TaskKind Kind>
 struct data<runir::kr::ps::base::SketchProofVertexLabel<Kind>>
 {
-    tyr::planning::PackedStateView<Kind> state;
+    tyr::planning::StateView<Kind> state;
     bool is_initial {};
     bool is_goal {};
     bool is_alive {};
@@ -30,7 +30,7 @@ struct data<runir::kr::ps::base::SketchProofVertexLabel<Kind>>
 
     data() = default;
 
-    data(tyr::planning::PackedStateView<Kind> state_, bool is_initial_, bool is_goal_, bool is_alive_, bool is_unsolvable_) noexcept :
+    data(tyr::planning::StateView<Kind> state_, bool is_initial_, bool is_goal_, bool is_alive_, bool is_unsolvable_) noexcept :
         state(state_),
         is_initial(is_initial_),
         is_goal(is_goal_),

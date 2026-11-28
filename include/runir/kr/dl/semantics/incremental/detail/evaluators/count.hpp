@@ -60,7 +60,7 @@ struct ValueEvaluator
     void update(EvaluationGraph<Kind>& graph, const Delta&, runir::kr::database::Workspace&)
     {
         const auto [added, removed] = graph.change(child).change();
-        if (!added.get_rows().empty() || !removed.get_rows().empty())
+        if (!added.rows().empty() || !removed.rows().empty())
             value.set(semantics::detail::least_value(graph.result(child)));
     }
 };

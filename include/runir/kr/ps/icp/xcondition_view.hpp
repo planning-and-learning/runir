@@ -13,11 +13,11 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_operation() const noexcept { return self().template member<&urd::record_of<V>::operation>(); }
+    auto operation() const noexcept { return self().template member<&urd::record_of<V>::operation>(); }
 
-    auto get_object() const noexcept { return self().template member<&urd::record_of<V>::object>(); }
+    auto object() const noexcept { return self().template member<&urd::record_of<V>::object>(); }
 
-    auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
+    auto feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
 };
 }  // namespace urd
 

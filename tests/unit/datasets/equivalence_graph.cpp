@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>

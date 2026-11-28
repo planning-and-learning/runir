@@ -17,8 +17,8 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
                                  data.name;
                                  data.identifier;
                                  view.index();
-                                 view.get_name();
-                                 view.get_identifier();
+                                 view.name();
+                                 view.identifier();
                              };
 
 template<typename Repository, typename... Ts>
@@ -49,7 +49,7 @@ TEST(RunirKrDlRegister, ExposesNameAndUnboundedIdentifier)
     auto data = urd::data<kr::dl::Register<kr::dl::RoleTag>>(std::string("target"), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
     const auto reg = repository->insert(data).first;
 
-    EXPECT_EQ(reg.get_name(), "target");
-    EXPECT_EQ(reg.get_identifier(), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
+    EXPECT_EQ(reg.name(), "target");
+    EXPECT_EQ(reg.identifier(), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
 }
 }

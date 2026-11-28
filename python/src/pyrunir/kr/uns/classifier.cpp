@@ -14,7 +14,7 @@
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/syntactic_complexity.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>

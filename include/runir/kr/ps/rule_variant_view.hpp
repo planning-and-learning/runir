@@ -16,9 +16,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    const auto& get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
+    const auto& symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
 
-    auto get_variant() const noexcept { return self().template member<&urd::record_of<V>::variant>(); }
+    auto variant() const noexcept { return self().template member<&urd::record_of<V>::variant>(); }
 };
 }  // namespace urd
 

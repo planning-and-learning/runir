@@ -13,7 +13,8 @@
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <string>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/successors/successors.hpp>
 
 namespace runir::tests
 {
@@ -84,7 +85,7 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
 {
     auto search = make_gripper_ground_context();
     const auto& task = search->task;
-    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    const auto state = tyr::planning::share(*search->state_repository, tyr::planning::get_initial_state(*search->state_repository, *search->axiom_evaluator));
 
     auto repository = std::make_shared<runir::kr::dl::ConstructorRepository>(task->get_repository());
     auto& repo = *repository;
@@ -106,7 +107,7 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
     auto context = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state, builder, storage);
 
     // |c_top| is the number of objects; build n_const with exactly that value.
-    const auto num_objects = runir::kr::dl::semantics::evaluate<tyr::GroundTag>(count_ctor, context).get_value();
+    const auto num_objects = runir::kr::dl::semantics::evaluate<tyr::GroundTag>(count_ctor, context).value();
     EXPECT_GT(num_objects, 0u);
 
     auto n_const_eq = numerical_constant(repo, num_objects);
@@ -116,42 +117,42 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
     EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                     numerical_comparison<runir::kr::dl::EqTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                     context)
-                    .get_value());
+                    .value());
     EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                      numerical_comparison<runir::kr::dl::NeqTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                      context)
-                     .get_value());
+                     .value());
     EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                      numerical_comparison<runir::kr::dl::LtTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                      context)
-                     .get_value());
+                     .value());
     EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                     numerical_comparison<runir::kr::dl::LeTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                     context)
-                    .get_value());
+                    .value());
     EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                     numerical_comparison<runir::kr::dl::GtTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_zero),
                     context)
-                    .get_value());
+                    .value());
     EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                     numerical_comparison<runir::kr::dl::GeTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                     context)
-                    .get_value());
+                    .value());
 
     // Boolean constants and comparisons.
     auto b_true = boolean_constant(repo, true);
     auto b_false = boolean_constant(repo, false);
-    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(b_true, context).get_value());
-    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(b_false, context).get_value());
+    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(b_true, context).value());
+    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(b_false, context).value());
     EXPECT_TRUE(
         runir::kr::dl::semantics::evaluate<tyr::GroundTag>(boolean_comparison<runir::kr::dl::EqTag<runir::kr::dl::BooleanTag>>(repo, b_true, b_true), context)
-            .get_value());
+            .value());
     EXPECT_FALSE(
         runir::kr::dl::semantics::evaluate<tyr::GroundTag>(boolean_comparison<runir::kr::dl::EqTag<runir::kr::dl::BooleanTag>>(repo, b_true, b_false), context)
-            .get_value());
+            .value());
     EXPECT_TRUE(
         runir::kr::dl::semantics::evaluate<tyr::GroundTag>(boolean_comparison<runir::kr::dl::NeqTag<runir::kr::dl::BooleanTag>>(repo, b_true, b_false), context)
-            .get_value());
+            .value());
 
     // Formatting round-trips the keywords and nested children.
     const auto lt = numerical_comparison<runir::kr::dl::LtTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_zero);
@@ -173,7 +174,7 @@ TEST(RunirTests, ArithmeticAndLogicalOperatorsEvaluateAndFormat)
 {
     auto search = make_gripper_ground_context();
     const auto& task = search->task;
-    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    const auto state = tyr::planning::share(*search->state_repository, tyr::planning::get_initial_state(*search->state_repository, *search->axiom_evaluator));
 
     auto repository = std::make_shared<runir::kr::dl::ConstructorRepository>(task->get_repository());
     auto& repo = *repository;
@@ -189,26 +190,26 @@ TEST(RunirTests, ArithmeticAndLogicalOperatorsEvaluateAndFormat)
     auto zero = numerical_constant(repo, 0);
 
     // Arithmetic.
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::AddTag>(repo, two, five), context).get_value(), 7u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::SubTag>(repo, two, five), context).get_value(),
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::AddTag>(repo, two, five), context).value(), 7u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::SubTag>(repo, two, five), context).value(),
               0u);  // saturates at 0
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::SubTag>(repo, five, two), context).get_value(), 3u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MulTag>(repo, two, five), context).get_value(), 10u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::DivTag>(repo, five, two), context).get_value(), 2u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::DivTag>(repo, five, zero), context).get_value(),
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::SubTag>(repo, five, two), context).value(), 3u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MulTag>(repo, two, five), context).value(), 10u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::DivTag>(repo, five, two), context).value(), 2u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::DivTag>(repo, five, zero), context).value(),
               inf);  // div by zero -> inf
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MinTag>(repo, two, five), context).get_value(), 2u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MaxTag>(repo, two, five), context).get_value(), 5u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MinTag>(repo, two, five), context).value(), 2u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MaxTag>(repo, two, five), context).value(), 5u);
 
     // Logical.
     auto b_true = boolean_constant(repo, true);
     auto b_false = boolean_constant(repo, false);
-    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::AndTag>(repo, b_true, b_false), context).get_value());
-    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::AndTag>(repo, b_true, b_true), context).get_value());
-    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::OrTag>(repo, b_true, b_false), context).get_value());
-    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::OrTag>(repo, b_false, b_false), context).get_value());
-    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_not(repo, b_false), context).get_value());
-    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_not(repo, b_true), context).get_value());
+    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::AndTag>(repo, b_true, b_false), context).value());
+    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::AndTag>(repo, b_true, b_true), context).value());
+    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::OrTag>(repo, b_true, b_false), context).value());
+    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::OrTag>(repo, b_false, b_false), context).value());
+    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_not(repo, b_false), context).value());
+    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_not(repo, b_true), context).value());
 
     // Formatting.
     const auto add = numerical_binary<runir::kr::dl::AddTag>(repo, two, five);

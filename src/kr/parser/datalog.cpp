@@ -203,7 +203,7 @@ private:
         }
         catch (const std::invalid_argument&)
         {
-            m_context.diagnostics().throw_at(name, ArityMismatchError(name.text, datalog().view(relation).get_arity(), terms.size()));
+            m_context.diagnostics().throw_at(name, ArityMismatchError(name.text, datalog().view(relation).arity(), terms.size()));
         }
     }
 
@@ -468,7 +468,7 @@ DatalogSection::DatalogSection(const DatalogRules* rules,
     {
         const auto& name = rule.head.relation;
         const auto clashes = [&]<typename T>(T)
-        { return std::ranges::any_of(domain.get_predicates<T>(), [&](auto predicate) { return predicate.get_name() == name.text; }); };
+        { return std::ranges::any_of(domain.predicates<T>(), [&](auto predicate) { return predicate.name() == name.text; }); };
         if (clashes(tyr::formalism::StaticTag {}) || clashes(tyr::formalism::FluentTag {}) || clashes(tyr::formalism::DerivedTag {}))
             diagnostics.throw_at(name, InvalidExpressionError("A Datalog head cannot be named like the predicate " + name.text + "."));
         const auto arity = rule.head.terms.size() + (rule.head.min ? 1 : 0);

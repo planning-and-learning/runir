@@ -29,7 +29,7 @@ concept FeatureContract =
            requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>,
                                  decltype(urd::data<Entity>::variant)>;
            view.index();
-           view.get_variant();
+           view.variant();
        };
 
 using ConceptFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>;

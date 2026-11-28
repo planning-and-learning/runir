@@ -9,7 +9,7 @@
 
 #include <optional>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/states/state_view.hpp>
 #include <urd/elements/builder.hpp>
 #include <urd/elements/children.hpp>
 #include <utility>

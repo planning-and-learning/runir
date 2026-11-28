@@ -43,22 +43,12 @@ constexpr auto members = std::array {
 /// Which accessors a view has, in the order of members.
 template<typename View>
 constexpr auto accessors = std::array {
-    requires(const View& view) { view.get_predicate(); },
-    requires(const View& view) { view.get_polarity(); },
-    requires(const View& view) { view.get_object(); },
-    requires(const View& view) { view.get_objects(); },
-    requires(const View& view) { view.get_n(); },
-    requires(const View& view) { view.get_role(); },
-    requires(const View& view) { view.get_qualifier(); },
-    requires(const View& view) { view.get_operand(); },
-    requires(const View& view) { view.get_left_operand(); },
-    requires(const View& view) { view.get_right_operand(); },
-    requires(const View& view) { view.get_sources(); },
-    requires(const View& view) { view.get_edges(); },
-    requires(const View& view) { view.get_targets(); },
-    requires(const View& view) { view.get_slot(); },
-    requires(const View& view) { view.get_argument(); },
-    requires(const View& view) { view.get_value(); },
+    requires(const View& view) { view.predicate(); },     requires(const View& view) { view.polarity(); }, requires(const View& view) { view.object(); },
+    requires(const View& view) { view.objects(); },       requires(const View& view) { view.n(); },        requires(const View& view) { view.role(); },
+    requires(const View& view) { view.qualifier(); },     requires(const View& view) { view.operand(); },  requires(const View& view) { view.left_operand(); },
+    requires(const View& view) { view.right_operand(); }, requires(const View& view) { view.sources(); },  requires(const View& view) { view.edges(); },
+    requires(const View& view) { view.targets(); },       requires(const View& view) { view.slot(); },     requires(const View& view) { view.argument(); },
+    requires(const View& view) { view.value(); },
 };
 
 /// A record and its view through Repository: indexed, and the view has an accessor for each member, and no other.
@@ -67,8 +57,8 @@ consteval bool records_and_views(boost::mp11::mp_list<Ts...>)
 {
     return ((
                 IndexedDataView<Ts, Repository> && members<urd::data<Ts>> == accessors<urd::index_view<Ts, Repository>>
-                && !requires(const urd::index_view<Ts, Repository>& view) { view.get_columns(); }
-                && requires(urd::data<Ts>& data) { data.plan; } == requires(const urd::index_view<Ts, Repository>& view) { view.get_plan(); })
+                && !requires(const urd::index_view<Ts, Repository>& view) { view.columns(); }
+                && requires(urd::data<Ts>& data) { data.plan; } == requires(const urd::index_view<Ts, Repository>& view) { view.plan(); })
             && ...);
 }
 
@@ -134,7 +124,7 @@ TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
 
     auto restriction_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::AtLeastNumberRestrictionTag>>(5, urd::index<Role>(4));
     const auto restriction = repository->insert(restriction_data).first;
-    EXPECT_EQ(restriction.get_n(), 5);
+    EXPECT_EQ(restriction.n(), 5);
     EXPECT_EQ((*repository)[restriction.index()]->role, urd::index<Role>(4));
 }
 
@@ -163,7 +153,7 @@ TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 
     auto constant_data = urd::data<kr::dl::Boolean<SemanticFamily, kr::dl::BooleanConstantTag>>(true);
     const auto constant = repository->insert(constant_data).first;
-    EXPECT_TRUE(constant.get_value());
+    EXPECT_TRUE(constant.value());
 
     auto unary_data = urd::data<kr::dl::Boolean<SemanticFamily, kr::dl::NotTag>>(urd::index<Constructor>(4));
     const auto unary = repository->insert(unary_data).first;
@@ -184,7 +174,7 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
 
     auto constant_data = urd::data<kr::dl::Numerical<SemanticFamily, kr::dl::NumericalConstantTag>>(7);
-    EXPECT_EQ(repository->insert(constant_data).first.get_value(), 7);
+    EXPECT_EQ(repository->insert(constant_data).first.value(), 7);
 
     auto binary_data = urd::data<kr::dl::Numerical<SemanticFamily, kr::dl::AddTag>>(urd::index<Numerical>(1), urd::index<Numerical>(2));
     const auto binary = repository->insert(binary_data).first;
@@ -251,9 +241,9 @@ TYPED_TEST(RunirKrDlGrammarNumerical, ExposesDistanceOperands)
     const auto distance = repository->insert(distance_data).first;
 
     // A grammar operand resolves to its non-terminal's view, or (grammars) to the variant holding it.
-    EXPECT_EQ(distance.get_sources(), urd::resolve(ConceptOperand(source.index()), *repository));
-    EXPECT_EQ(distance.get_edges(), urd::resolve(RoleOperand(role.index()), *repository));
-    EXPECT_EQ(distance.get_targets(), urd::resolve(ConceptOperand(target.index()), *repository));
+    EXPECT_EQ(distance.sources(), urd::resolve(ConceptOperand(source.index()), *repository));
+    EXPECT_EQ(distance.edges(), urd::resolve(RoleOperand(role.index()), *repository));
+    EXPECT_EQ(distance.targets(), urd::resolve(ConceptOperand(target.index()), *repository));
 }
 
 }  // namespace runir::tests::dl_constructors

@@ -26,7 +26,7 @@ from pyrunir.kr.ps.ext.explore.results import Value
 
 def is_choose(rule: RuleExt | None) -> bool:
     """Return whether `rule` is a concept or role Choose rule."""
-    return rule is not None and isinstance(rule.get_variant(), (RuleChooseConcept, RuleChooseRole))
+    return rule is not None and isinstance(rule.variant(), (RuleChooseConcept, RuleChooseRole))
 
 
 def failure_category(result: LiftedProgramProofResults) -> str | None:
@@ -134,8 +134,8 @@ def object_name(value: Object | tuple[Object, Object] | None) -> str | None:
     if value is None:
         return None
     if isinstance(value, tuple):
-        return f"({value[0].get_name()} {value[1].get_name()})"
-    return str(value.get_name())
+        return f"({value[0].name()} {value[1].name()})"
+    return str(value.name())
 
 
 def register_value(module_state: ModuleState, rule: RuleExt) -> str | None:
@@ -144,13 +144,13 @@ def register_value(module_state: ModuleState, rule: RuleExt) -> str | None:
     Raises:
         TypeError: If `rule` is not a Choose rule.
     """
-    variant = rule.get_variant()
-    registers = module_state.get_registers()
+    variant = rule.variant()
+    registers = module_state.registers()
     if isinstance(variant, RuleChooseConcept):
-        return object_name(registers.get_concept_values()[variant.get_slot().get_identifier().value])
+        return object_name(registers.concept_values()[variant.slot().identifier().value])
     if isinstance(variant, RuleChooseRole):
-        return object_name(registers.get_role_values()[variant.get_slot().get_identifier().value])
-    msg = f"{rule.get_symbol()} is not a Choose rule"
+        return object_name(registers.role_values()[variant.slot().identifier().value])
+    msg = f"{rule.symbol()} is not a Choose rule"
     raise TypeError(msg)
 
 
@@ -174,32 +174,30 @@ def rewrite_choose_as_load(text: str, rule: str) -> str:
     raise KeyError(rule)
 
 
-def object_types(state: lifted.StateBuilderShared) -> dict[str, frozenset[str]]:
+def object_types(state: lifted.StateBuilderView) -> dict[str, frozenset[str]]:
     """Each object's static unary predicates, which include its domain types."""
     types: dict[str, set[str]] = {}
     for atom in state.static_atoms():
-        objects = atom.get_row().resolve_objects()
+        objects = atom.row().resolve_objects()
         if len(objects) == 1:
-            types.setdefault(str(objects[0].get_name()), set()).add(str(atom.get_predicate().get_name()))
+            types.setdefault(str(objects[0].name()), set()).add(str(atom.predicate().name()))
     return {name: frozenset(values) for name, values in types.items()}
 
 
 def atom_text(atom: AtomGroundStatic | AtomGroundFluent | AtomGroundDerived) -> str:
     """A ground atom as PDDL writes it, `(name object ...)`."""
-    names = [str(atom.get_predicate().get_name())]
-    names += [str(item.get_name()) for item in atom.get_row().resolve_objects()]
+    names = [str(atom.predicate().name())]
+    names += [str(item.name()) for item in atom.row().resolve_objects()]
     return "(" + " ".join(names) + ")"
 
 
-def object_atoms(state: lifted.StateBuilderShared, name: str) -> list[tuple[str, tuple[str, ...]]]:
+def object_atoms(state: lifted.StateBuilderView, name: str) -> list[tuple[str, tuple[str, ...]]]:
     """The static, fluent and derived atoms of `state` that mention the object `name`, with `*` for it."""
     atoms: list[tuple[str, tuple[str, ...]]] = []
     for atom in (*state.static_atoms(), *state.fluent_atoms(), *state.derived_atoms()):
-        objects = tuple(str(item.get_name()) for item in atom.get_row().resolve_objects())
+        objects = tuple(str(item.name()) for item in atom.row().resolve_objects())
         if name in objects:
-            atoms.append(
-                (str(atom.get_predicate().get_name()), tuple("*" if item == name else item for item in objects))
-            )
+            atoms.append((str(atom.predicate().name()), tuple("*" if item == name else item for item in objects)))
     return atoms
 
 

@@ -27,8 +27,8 @@ static_assert(requires(Data& data) {
 });
 static_assert(requires(const View& view, kr::ps::ext::ModuleSymbolView symbol) {
     view.index();
-    view.get_entry_mod();
-    view.get_modules();
+    view.entry_mod();
+    view.modules();
     view.find_module(symbol);
 });
 

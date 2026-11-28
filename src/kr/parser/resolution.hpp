@@ -24,12 +24,12 @@ auto require_predicate(tyr::formalism::DomainView domain,
                        const char* constructor_name,
                        const DiagnosticContext& diagnostics)
 {
-    for (auto predicate : domain.template get_predicates<T>())
+    for (auto predicate : domain.template predicates<T>())
     {
-        if (predicate.get_name() != name.text)
+        if (predicate.name() != name.text)
             continue;
-        if (predicate.get_arity() != arity)
-            diagnostics.throw_at(name, ArityMismatchError(constructor_name, arity, predicate.get_arity()));
+        if (predicate.arity() != arity)
+            diagnostics.throw_at(name, ArityMismatchError(constructor_name, arity, predicate.arity()));
         return std::optional(predicate);
     }
     return std::optional<tyr::formalism::PredicateView<T>> {};
@@ -55,8 +55,8 @@ auto resolve_predicate(tyr::formalism::DomainView domain,
 
 inline tyr::formalism::ObjectView require_object(tyr::formalism::DomainView domain, const ast::Identifier& name, const DiagnosticContext& diagnostics)
 {
-    for (auto object : domain.get_constants())
-        if (object.get_name() == name.text)
+    for (auto object : domain.constants())
+        if (object.name() == name.text)
             return object;
 
     diagnostics.throw_at(name, UndefinedSymbolError("constant", name.text));

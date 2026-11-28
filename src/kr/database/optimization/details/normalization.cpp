@@ -12,17 +12,17 @@ QueryView<> Normalizer::project(QueryView<> arg, std::span<const urd::index<ygg:
     if (std::ranges::equal(columns_of(arg), columns, {}, &urd::data<ygg::ColumnLayout>::label))
         return arg;
     if (is<QueryProjectTag>(arg))
-        return project(as<QueryProjectTag>(arg).get_operand(), columns);
+        return project(as<QueryProjectTag>(arg).operand(), columns);
     if (is<QueryUnionTag>(arg))
     {
         const auto operation = as<QueryUnionTag>(arg);
-        return union_(project(operation.get_left_operand(), columns), project(operation.get_right_operand(), columns));
+        return union_(project(operation.left_operand(), columns), project(operation.right_operand(), columns));
     }
     if (is<QueryRenameTag>(arg))
     {
         const auto operation = as<QueryRenameTag>(arg);
         const auto inner = inverse(operation, columns);
-        return rename(project(operation.get_operand(), inner), columns);
+        return rename(project(operation.operand(), inner), columns);
     }
     // Into the left operand of a semijoin or antijoin, keeping the labels it shares with the right operand.
     if (is<QuerySemijoinTag>(arg))

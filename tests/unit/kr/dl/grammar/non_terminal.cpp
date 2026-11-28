@@ -21,7 +21,7 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
                                  data.index;
                                  data.name;
                                  view.index();
-                                 view.get_name();
+                                 view.name();
                              };
 
 template<typename... Ts>

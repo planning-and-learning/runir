@@ -25,7 +25,7 @@ QueryRecord = (
     | db.QuerySemijoinData
     | db.QueryAntijoinData
 )
-Readable = db.ScratchRelation | formalism.RelationSchemaBuilderBorrowed | formalism.RelationSchema
+Readable = db.ScratchRelation | formalism.RelationSchemaBuilderView | formalism.RelationSchema
 # Reads the tests' relation builders and evaluator results.
 RELATIONS = formalism.RelationRepository()
 SCRATCH = db.ScratchRelations()
@@ -75,17 +75,17 @@ def inputs_of(
     return [query(repo, db.QueryInputData(slot, value.columns())) for slot, value in zip(slots, relations, strict=True)]
 
 
-def rows(value: formalism.RelationSchemaBuilderBorrowed | formalism.RelationSchema) -> set[tuple[object, ...]]:
+def rows(value: formalism.RelationSchemaBuilderView | formalism.RelationSchema) -> set[tuple[object, ...]]:
     return set(tuples(value))
 
 
-def borrow(relations: Iterable[db.ScratchRelation]) -> list[formalism.RelationSchemaBuilderBorrowed]:
+def borrow(relations: Iterable[db.ScratchRelation]) -> list[formalism.RelationSchemaBuilderView]:
     return [value.view() for value in relations]
 
 
 def change(
     added: db.ScratchRelation, removed: db.ScratchRelation
-) -> tuple[formalism.RelationSchemaBuilderBorrowed, formalism.RelationSchemaBuilderBorrowed]:
+) -> tuple[formalism.RelationSchemaBuilderView, formalism.RelationSchemaBuilderView]:
     return added.view(), removed.view()
 
 
@@ -93,7 +93,7 @@ def changes(
     schemas: Sequence[Sequence[int]],
     additions: Sequence[Iterable[Sequence[object]]],
     removals: Sequence[Iterable[Sequence[object]]],
-) -> list[tuple[formalism.RelationSchemaBuilderBorrowed, formalism.RelationSchemaBuilderBorrowed]]:
+) -> list[tuple[formalism.RelationSchemaBuilderView, formalism.RelationSchemaBuilderView]]:
     return [change(relation(s, a), relation(s, r)) for s, a, r in zip(schemas, additions, removals, strict=True)]
 
 
@@ -146,13 +146,13 @@ def test_records_views_and_insertion_identity() -> None:
     assert created
     assert isinstance(join, db.QueryJoin)
     assert isinstance(join.index(), db.QueryJoinIndex)
-    assert join.get_left_operand() == a
-    assert join.get_right_operand() == b
+    assert join.left_operand() == a
+    assert join.right_operand() == b
     assert labels(join.columns()) == columns(0, 1, 2)
-    assert labels(join.get_plan().output_columns) == columns(0, 1, 2)
+    assert labels(join.plan().output_columns) == columns(0, 1, 2)
     assert repo.insert(record(db.QueryJoinData, left_operand=a, right_operand=b)) == (join, False)
     erased, _ = repo.insert(db.QueryData(join.index()))
-    variant = erased.get_variant()
+    variant = erased.variant()
     assert isinstance(variant, db.QueryJoin)
     assert variant == join
     selected, _ = repo.insert(
@@ -163,12 +163,12 @@ def test_records_views_and_insertion_identity() -> None:
             right_column=formalism.ColumnIndex(2),
         )
     )
-    assert selected.get_operand() == erased
-    assert selected.get_left_column() == formalism.ColumnIndex(0)
+    assert selected.operand() == erased
+    assert selected.left_column() == formalism.ColumnIndex(0)
     generic, _ = repo.insert(record(db.QueryGenericJoinData, inputs=[a, b], variable_order=columns(1, 0, 2)))
     assert labels(generic.columns()) == columns(0, 1, 2)
-    assert generic.get_output_order() == columns(0, 1, 2)
-    empty, _ = repo.insert(db.QueryEmptyData(a.get_variant().columns()))
+    assert generic.output_order() == columns(0, 1, 2)
+    empty, _ = repo.insert(db.QueryEmptyData(a.variant().columns()))
     assert labels(empty.columns()) == columns(0, 1)
     assert isinstance(repo.insert(record(db.QueryUnionData, left_operand=a, right_operand=a))[0], db.QueryUnion)
     assert isinstance(
@@ -187,7 +187,7 @@ def test_semijoin_and_antijoin_filter_their_left_operand() -> None:
     assert labels(semijoin.columns()) == columns(0, 1)
     antijoin, _ = repo.insert(record(db.QueryAntijoinData, left_operand=edges_query, right_operand=reached_query))
     assert isinstance(antijoin, db.QueryAntijoin)
-    assert antijoin.get_right_operand() == reached_query
+    assert antijoin.right_operand() == reached_query
     roots = [repo.insert(db.QueryData(semijoin.index()))[0], repo.insert(db.QueryData(antijoin.index()))[0]]
     evaluation = db.QueryEvaluator(SCRATCH, db.compile_plan(roots))
     evaluation.evaluate(borrow([edges, reached]))
@@ -229,8 +229,8 @@ def test_incremental_batch_changes_projection_union_and_difference() -> None:
     maintained.initialize(borrow(inputs))
     for index in range(2):
         assert rows(maintained.get_result(index)) == rows(full.get_result(index))
-        assert not maintained.get_delta(index).added.get_rows()
-        assert not maintained.get_delta(index).removed.get_rows()
+        assert not maintained.get_delta(index).added.rows()
+        assert not maintained.get_delta(index).removed.rows()
     assert maintained.memory_usage() > 0
     steps: list[tuple[list[set[tuple[int, int]]], list[set[tuple[int, int]]]]] = [
         ([set(), set(), set()], [{(1, 7)}, set(), set()]),
@@ -291,7 +291,6 @@ def test_borrowed_and_interned_inputs_statistics_and_owners() -> None:
     second = db.QueryEvaluator(SCRATCH, db.compile_plan([root]))
     second.evaluate([borrowed])
     row = second.get_result().row(0)
-    assert not hasattr(second.get_result(), "clear")
     del root, repo, evaluator, second, borrowed, original, store, interned
     gc.collect()
     assert values(row) in {(1,), (2,)}
@@ -308,7 +307,7 @@ def test_query_handle_retains_repository_and_compiled_plan_is_independent() -> N
     plan = db.compile_plan([handle])
     del repo
     gc.collect()
-    assert labels(handle.get_variant().columns()) == columns(4)
+    assert labels(handle.variant().columns()) == columns(4)
     del handle
     gc.collect()
     evaluator = db.QueryEvaluator(SCRATCH, plan)

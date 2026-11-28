@@ -6,8 +6,7 @@
 #include <runir/datasets/graph_types.hpp>
 #include <runir/datasets/state_graph.hpp>
 #include <tyr/formalism/planning/formatter.hpp>
-#include <tyr/planning/formatter.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/states/state_view.hpp>
 
 namespace runir::datasets
 {

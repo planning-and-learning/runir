@@ -95,7 +95,7 @@ void ProjectionEvaluator::initialize(const V& input, Workspace& workspace)
     m_supports.clear();
     m_delta.clear();
     m_pending_removals.clear();
-    for (const auto& held : input.get_rows())
+    for (const auto& held : input.rows())
         ygg::with_values(held, [&](const auto& values) { add(project_row(values, workspace)); });
     m_initialized = true;
 }
@@ -115,9 +115,9 @@ void ProjectionEvaluator::apply(const C& change, Workspace& workspace)
     m_initialized = false;
     m_delta.clear();
     m_pending_removals.clear();
-    for (const auto& held : removed.get_rows())
+    for (const auto& held : removed.rows())
         ygg::with_values(held, [&](const auto& values) { remove(project_row(values, workspace)); });
-    for (const auto& held : added.get_rows())
+    for (const auto& held : added.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          {
@@ -132,10 +132,12 @@ void ProjectionEvaluator::apply(const C& change, Workspace& workspace)
         if (const auto found = m_supports.find(slot); found != m_supports.end() && found->second == 0)
         {
             m_supports.erase(slot);
-            // Its record stays in its slot, values and all, once the row is erased (until a later insert takes the slot).
+            // Its values are read before the row is erased: erasing gives its record back to its slot, emptied. A slot
+            // with a support holds a row of the result.
             const auto& values = m_result->at(slot).values;
-            if (m_result->erase(values))
-                m_delta.removed->insert(values);
+            m_delta.removed->insert(values);
+            [[maybe_unused]] const auto erased = m_result->erase(values);
+            assert(erased);
         }
     m_initialized = true;
 }

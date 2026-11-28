@@ -10,6 +10,7 @@
 #include <limits>
 #include <numeric>
 #include <random>
+#include <runir/datasets/successors.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
@@ -29,7 +30,8 @@
 #include <runir/kr/ps/feature_view.hpp>
 #include <set>
 #include <string>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <vector>
 #include <yggdrasil/serialization/json.hpp>
 
@@ -67,17 +69,17 @@ constexpr auto heads_text = R"(
 template<typename Feature>
 auto expression_of(Feature feature)
 {
-    return std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant());
+    return std::visit([](auto concrete) { return concrete.feature(); }, feature.variant());
 }
 
 template<typename Module, typename Context>
 std::vector<int64_t> values(Module module_, Context& context)
 {
     auto result = std::vector<int64_t>();
-    for (const auto feature : module_.template get_features<kr::dl::NumericalTag>())
-        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(expression_of(feature), context).get_value()));
-    for (const auto feature : module_.template get_features<kr::dl::BooleanTag>())
-        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(expression_of(feature), context).get_value()));
+    for (const auto feature : module_.template features<kr::dl::NumericalTag>())
+        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(expression_of(feature), context).value()));
+    for (const auto feature : module_.template features<kr::dl::BooleanTag>())
+        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(expression_of(feature), context).value()));
     return result;
 }
 
@@ -89,48 +91,48 @@ TEST(RunirTests, DatalogHeadsAreFeatures)
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     const auto module_ = kr::ps::ext::dl::parse_module(heads_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
 
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
-    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, storage);
     // reach = {a, b, c}; degree has a row per reached object; unmarked = {b}; total = 3 + 1; (triple b c a) holds.
     EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 3, 3, 1, 4, 1 }));
 
     // The incremental graph agrees with full evaluation along every successor and back.
     auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
-    for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+    for (const auto feature : module_.features<kr::dl::NumericalTag>())
         roots.emplace_back(expression_of(feature));
-    for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
+    for (const auto feature : module_.features<kr::dl::BooleanTag>())
         roots.emplace_back(expression_of(feature));
     auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<tyr::LiftedTag>(*search->task, roots);
     const auto incremental = [&](auto& state_evaluation)
     {
         auto result = std::vector<int64_t>();
-        for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).get_value()));
-        for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
-            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).get_value()));
+        for (const auto feature : module_.features<kr::dl::NumericalTag>())
+            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).value()));
+        for (const auto feature : module_.features<kr::dl::BooleanTag>())
+            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).value()));
         return result;
     };
     auto& workspace = builder.get_workspace().get_database_workspace();
     storage.reset_dynamic();
     auto first = evaluation.enter(context);
     EXPECT_EQ(incremental(first), (std::vector<int64_t> { 3, 3, 1, 4, 1 }));
-    const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
+    const auto successors = runir::datasets::successor_nodes(*search, initial);
     ASSERT_FALSE(successors.empty());
     for (const auto& successor : successors)
     {
         auto delta = kr::dl::semantics::incremental::Delta {};
-        delta.assign<tyr::LiftedTag>(initial.get_state(), successor.get_state());
+        delta.assign<tyr::LiftedTag>(initial.state(), successor.state());
         storage.reset_dynamic();
-        auto successor_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(successor.get_state(), builder, storage);
+        auto successor_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(successor.state(), builder, storage);
         const auto expected = values(module_, successor_context);
         auto forward = evaluation.enter(successor_context, delta, workspace);
         EXPECT_EQ(incremental(forward), expected);
-        for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+        for (const auto feature : module_.features<kr::dl::NumericalTag>())
             EXPECT_NO_THROW(forward.changed(evaluation.graph().get_index(expression_of(feature))));  // Updated from the delta.
-        for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
+        for (const auto feature : module_.features<kr::dl::BooleanTag>())
             EXPECT_NO_THROW(forward.changed(evaluation.graph().get_index(expression_of(feature))));
         delta.reverse();
         storage.reset_dynamic();
@@ -162,14 +164,14 @@ TEST(RunirTests, DatalogRulesReadFeaturesInModules)
     const auto search = query_search_context();
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
-    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, storage);
     auto result = std::vector<int64_t>();
-    for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(expression_of(feature), context).get_value()));
+    for (const auto feature : module_.features<kr::dl::NumericalTag>())
+        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(expression_of(feature), context).value()));
     // start = {a, c} (markers); next = {b} (a -> b); both = {a, b, c}; pair = {(b, b)}.
     EXPECT_EQ(result, (std::vector<int64_t> { 1, 3, 1, 1 }));
 
@@ -197,11 +199,11 @@ TEST(RunirTests, DatalogRulesNegateGoalAtoms)
     const auto search = query_search_context();
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
-    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, storage);
     EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 3, 3, 2 }));
 }
 
@@ -259,11 +261,11 @@ TEST(RunirTests, DatalogRulesComputeWithNumbers)
     const auto search = query_search_context();
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
-    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, storage);
     // markers a, c; edges a -> b, b -> c: degree a = 1, c = 0; busy = {a}, idle = {c}, twice = {(a, 2), (c, 0)},
     // two = {a}; 1 - 5 and 0 - 5 saturate at 0: left = {a, c}.
     EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 1, 1, 2, 1, 2 }));
@@ -286,11 +288,11 @@ TEST(RunirTests, DatalogWeightedHeadsKeepLeastWeights)
     const auto search = query_search_context();
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
-    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, storage);
     // markers a, c (distance 0); a -> b: b at 1, and c stays 0 although b -> c; one row per object.
     EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 3, 1 }));
 
@@ -323,7 +325,7 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
     const auto domain = search->task->get_domain().get_domain();
-    const auto a = domain.get_constants()[0].index(), b = domain.get_constants()[1].index(), c = domain.get_constants()[2].index();
+    const auto a = domain.constants()[0].index(), b = domain.constants()[1].index(), c = domain.constants()[2].index();
     auto register_data = std::array<urd::data<kr::dl::semantics::RegisterValues>, 2> {};
     for (auto& data : register_data)
     {
@@ -336,14 +338,14 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     register_data[1].concept_values[0] = c;
     register_data[1].role_values[0] = cista::pair(b, b);
 
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     const auto registers = [&](size_t i) { return denotations.insert(register_data[i]).first; };
     // from = {a, b}: one marker. A static concept, interned in the persistent repository.
     auto persistent_caches = kr::dl::semantics::DenotationCaches {};
-    auto static_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, persistent_caches, denotations, storage);
+    auto static_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, persistent_caches, denotations, storage);
     const auto from = kr::dl::semantics::evaluate<tyr::LiftedTag>(
         kr::ps::ext::dl::parse_concept(R"((c_or (c_nominal "a") (c_nominal "b")))",
                                        domain,
@@ -353,7 +355,7 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     argument_data.concept_arguments.push_back(from.index());
     const auto arguments = denotations.insert(argument_data).first;
     const auto context_for = [&](size_t i)
-    { return kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage, arguments, registers(i)); };
+    { return kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, storage, arguments, registers(i)); };
     // near = successors of `here`: {b} for a, {} for c; linked = first of `link` if its second is a marker: {b}, {};
     // given = the markers of `from`: {a}.
     const auto expected = std::array { std::vector<int64_t> { 1, 1, 1 }, std::vector<int64_t> { 0, 0, 1 } };
@@ -366,14 +368,14 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
 
     // Incremental evaluation sees a change of the registers alone.
     auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
-    for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+    for (const auto feature : module_.features<kr::dl::NumericalTag>())
         roots.emplace_back(expression_of(feature));
     auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<tyr::LiftedTag>(*search->task, roots);
     const auto incremental = [&](auto& state_evaluation)
     {
         auto result = std::vector<int64_t>();
-        for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).get_value()));
+        for (const auto feature : module_.features<kr::dl::NumericalTag>())
+            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).value()));
         return result;
     };
     auto& workspace = builder.get_workspace().get_database_workspace();
@@ -382,7 +384,7 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     auto first = evaluation.enter(first_context);
     EXPECT_EQ(incremental(first), expected[0]);
     auto delta = kr::dl::semantics::incremental::Delta {};
-    delta.assign<tyr::LiftedTag>(initial.get_state(), registers(0), initial.get_state(), registers(1));
+    delta.assign<tyr::LiftedTag>(initial.state(), registers(0), initial.state(), registers(1));
     storage.reset_dynamic();
     auto second_context = context_for(1);
     auto second = evaluation.enter(second_context, delta, workspace);
@@ -410,7 +412,7 @@ TEST(RunirTests, DatalogRulesReadBooleanAndNumericalArgumentsAndFeatures)
     const auto search = query_search_context();
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto initial = runir::datasets::initial_node(*search);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -428,26 +430,26 @@ TEST(RunirTests, DatalogRulesReadBooleanAndNumericalArgumentsAndFeatures)
     auto register_data = urd::data<kr::dl::semantics::RegisterValues>();
     const auto registers = denotations.insert(register_data).first;
     auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
-    for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+    for (const auto feature : module_.features<kr::dl::NumericalTag>())
         roots.emplace_back(expression_of(feature));
-    for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
+    for (const auto feature : module_.features<kr::dl::BooleanTag>())
         roots.emplace_back(expression_of(feature));
     auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<tyr::LiftedTag>(*search->task, roots);
     for (const auto& [on, bound] : { std::pair { true, ygg::uint_t { 0 } }, std::pair { false, ygg::uint_t { 5 } } })
     {
         storage.reset_dynamic();
         const auto call = arguments(on, bound);
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage, call, registers);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, storage, call, registers);
         const auto result = values(module_, context);
         // triples, limits; ready, withins, gates: four triples and ready in the initial state.
         EXPECT_EQ(result, (std::vector<int64_t> { 4, static_cast<int64_t>(bound) + 1, 1, 4 <= static_cast<int64_t>(bound), on }));
         storage.reset_dynamic();
         auto state_evaluation = evaluation.enter(context);
         auto incremental = std::vector<int64_t>();
-        for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).get_value()));
-        for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
-            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).get_value()));
+        for (const auto feature : module_.features<kr::dl::NumericalTag>())
+            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).value()));
+        for (const auto feature : module_.features<kr::dl::BooleanTag>())
+            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).value()));
         EXPECT_EQ(incremental, result);
     }
     {
@@ -456,28 +458,28 @@ TEST(RunirTests, DatalogRulesReadBooleanAndNumericalArgumentsAndFeatures)
         const auto incremental = [&](auto& state_evaluation)
         {
             auto result = std::vector<int64_t>();
-            for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).get_value()));
-            for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
-                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).get_value()));
+            for (const auto feature : module_.features<kr::dl::NumericalTag>())
+                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).value()));
+            for (const auto feature : module_.features<kr::dl::BooleanTag>())
+                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(expression_of(feature))).value()));
             return result;
         };
         auto& workspace = builder.get_workspace().get_database_workspace();
         storage.reset_dynamic();
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage, call, registers);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.state(), builder, storage, call, registers);
         auto first = evaluation.enter(context);
         static_cast<void>(incremental(first));
         auto changed = false;
         auto node = initial;
         for (int step = 0; step < 4; ++step)
         {
-            const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
+            const auto successors = runir::datasets::successor_nodes(*search, node);
             ASSERT_FALSE(successors.empty());
             const auto& next = successors.front();
             auto delta = kr::dl::semantics::incremental::Delta {};
-            delta.assign<tyr::LiftedTag>(node.get_state(), next.get_state());
+            delta.assign<tyr::LiftedTag>(node.state(), next.state());
             storage.reset_dynamic();
-            auto next_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage, call, registers);
+            auto next_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.state(), builder, storage, call, registers);
             const auto expected = values(module_, next_context);
             storage.reset_dynamic();
             auto forward = evaluation.enter(next_context, delta, workspace);
@@ -554,11 +556,11 @@ std::vector<std::string> contents(const V& value)
             result.push_back(std::to_string(source.value) + "," + std::to_string(target.value));
     }
     else if constexpr (std::same_as<Category, kr::dl::BooleanTag> || std::same_as<Category, kr::dl::NumericalTag>)
-        result.push_back(std::to_string(value.get_value()));
+        result.push_back(std::to_string(value.value()));
     else
     {
         auto rows = std::set<std::string>();
-        for (const auto& held : value.get_rows())
+        for (const auto& held : value.rows())
             ygg::with_values(held,
                              [&](const auto& values)
                              {
@@ -632,21 +634,17 @@ TEST(RunirTests, DatalogExpressesTheDlConstructors)
     const auto visit = [&](const Case& c, auto f)
     {
         if (c.category == "concept")
-            f(kr::dl::ConceptTag {},
-              expression_of(c.module_.get_features<kr::dl::ConceptTag>()[0]),
-              expression_of(c.module_.get_features<kr::dl::ConceptTag>()[1]));
+            f(kr::dl::ConceptTag {}, expression_of(c.module_.features<kr::dl::ConceptTag>()[0]), expression_of(c.module_.features<kr::dl::ConceptTag>()[1]));
         else if (c.category == "role")
-            f(kr::dl::RoleTag {}, expression_of(c.module_.get_features<kr::dl::RoleTag>()[0]), expression_of(c.module_.get_features<kr::dl::RoleTag>()[1]));
+            f(kr::dl::RoleTag {}, expression_of(c.module_.features<kr::dl::RoleTag>()[0]), expression_of(c.module_.features<kr::dl::RoleTag>()[1]));
         else if (c.category == "boolean")
-            f(kr::dl::BooleanTag {},
-              expression_of(c.module_.get_features<kr::dl::BooleanTag>()[0]),
-              expression_of(c.module_.get_features<kr::dl::BooleanTag>()[1]));
+            f(kr::dl::BooleanTag {}, expression_of(c.module_.features<kr::dl::BooleanTag>()[0]), expression_of(c.module_.features<kr::dl::BooleanTag>()[1]));
         else if (c.category == "numerical")
             f(kr::dl::NumericalTag {},
-              expression_of(c.module_.get_features<kr::dl::NumericalTag>()[0]),
-              expression_of(c.module_.get_features<kr::dl::NumericalTag>()[1]));
+              expression_of(c.module_.features<kr::dl::NumericalTag>()[0]),
+              expression_of(c.module_.features<kr::dl::NumericalTag>()[1]));
         else
-            f(QueryCategory {}, expression_of(c.module_.get_query_features()[0]), expression_of(c.module_.get_query_features()[1]));
+            f(QueryCategory {}, expression_of(c.module_.query_features()[0]), expression_of(c.module_.query_features()[1]));
     };
     auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
     for (const auto& c : cases)
@@ -663,7 +661,7 @@ TEST(RunirTests, DatalogExpressesTheDlConstructors)
     auto& workspace = builder.get_workspace().get_database_workspace();
 
     auto random = std::mt19937(3);
-    auto node = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto node = runir::datasets::initial_node(*search);
     // Per case, the constructor's values seen, so that each case is checked on more than one value.
     auto seen = std::vector<std::set<std::vector<std::string>>>(cases.size());
     const auto check = [&](auto& context, auto& incremental, int step)
@@ -684,18 +682,18 @@ TEST(RunirTests, DatalogExpressesTheDlConstructors)
     };
     {
         storage.reset_dynamic();
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.get_state(), builder, storage);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.state(), builder, storage);
         auto incremental = evaluation.enter(context);
         check(context, incremental, 0);
     }
     for (int step = 1; step <= 400; ++step)
     {
-        const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
+        const auto successors = runir::datasets::successor_nodes(*search, node);
         const auto& next = successors[random() % successors.size()];
         auto delta = kr::dl::semantics::incremental::Delta {};
-        delta.assign<tyr::LiftedTag>(node.get_state(), next.get_state());
+        delta.assign<tyr::LiftedTag>(node.state(), next.state());
         storage.reset_dynamic();
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.state(), builder, storage);
         auto incremental = evaluation.enter(context, delta, workspace);
         check(context, incremental, step);
         node = next;
@@ -733,8 +731,8 @@ TEST(RunirTests, DatalogDistanceAgreesInFullAndIncrementalEvaluationOnTermes)
 )",
                                                        search->task->get_domain().get_domain(),
                                                        *domain_context->ext_repository);
-    const auto best = expression_of(module_.get_features<kr::dl::NumericalTag>()[0]);
-    const auto reachable = expression_of(module_.get_features<kr::dl::BooleanTag>()[0]);
+    const auto best = expression_of(module_.features<kr::dl::NumericalTag>()[0]);
+    const auto reachable = expression_of(module_.features<kr::dl::BooleanTag>()[0]);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -742,27 +740,27 @@ TEST(RunirTests, DatalogDistanceAgreesInFullAndIncrementalEvaluationOnTermes)
     auto& workspace = builder.get_workspace().get_database_workspace();
 
     auto random = std::mt19937(1);
-    auto node = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto node = runir::datasets::initial_node(*search);
     {
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.get_state(), builder, storage);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.state(), builder, storage);
         static_cast<void>(evaluation.enter(context).evaluate(evaluation.graph().get_index(best)));
     }
     auto finite = 0;
     for (int step = 0; step < 300; ++step)
     {
-        const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
+        const auto successors = runir::datasets::successor_nodes(*search, node);
         const auto& next = successors[random() % successors.size()];
         auto delta = kr::dl::semantics::incremental::Delta {};
-        delta.assign<tyr::LiftedTag>(node.get_state(), next.get_state());
+        delta.assign<tyr::LiftedTag>(node.state(), next.state());
         storage.reset_dynamic();
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage);
-        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(best, context).get_value();
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.state(), builder, storage);
+        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(best, context).value();
         finite += expected != std::numeric_limits<ygg::uint_t>::max();
-        ASSERT_EQ(kr::dl::semantics::evaluate<tyr::LiftedTag>(reachable, context).get_value(), expected != std::numeric_limits<ygg::uint_t>::max());
+        ASSERT_EQ(kr::dl::semantics::evaluate<tyr::LiftedTag>(reachable, context).value(), expected != std::numeric_limits<ygg::uint_t>::max());
         storage.reset_dynamic();
         auto incremental = evaluation.enter(context, delta, workspace);
-        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(best)).get_value(), expected) << "step " << step;
-        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(reachable)).get_value(), expected != std::numeric_limits<ygg::uint_t>::max());
+        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(best)).value(), expected) << "step " << step;
+        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(reachable)).value(), expected != std::numeric_limits<ygg::uint_t>::max());
         node = next;
     }
     EXPECT_GT(finite, 0);
@@ -785,7 +783,7 @@ TEST(RunirTests, DatalogTermesTiming)
 )",
                                                        search->task->get_domain().get_domain(),
                                                        *domain_context->ext_repository);
-    const auto feature = expression_of(module_.get_features<kr::dl::NumericalTag>()[0]);
+    const auto feature = expression_of(module_.features<kr::dl::NumericalTag>()[0]);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -794,28 +792,28 @@ TEST(RunirTests, DatalogTermesTiming)
     auto& workspace = builder.get_workspace().get_database_workspace();
 
     auto random = std::mt19937(0);
-    auto node = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto node = runir::datasets::initial_node(*search);
     auto full = std::vector<double>(), incremental = std::vector<double>();
     const auto seconds = [](auto start) { return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count(); };
     {
         storage.reset_all();
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.get_state(), builder, storage);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.state(), builder, storage);
         static_cast<void>(evaluation.enter(context).evaluate(index));
     }
     for (int step = 0; step < 1000; ++step)
     {
-        const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
+        const auto successors = runir::datasets::successor_nodes(*search, node);
         const auto& next = successors[random() % successors.size()];
         auto delta = kr::dl::semantics::incremental::Delta {};
-        delta.assign<tyr::LiftedTag>(node.get_state(), next.get_state());
+        delta.assign<tyr::LiftedTag>(node.state(), next.state());
         storage.reset_dynamic();
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.state(), builder, storage);
         auto start = std::chrono::steady_clock::now();
-        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(feature, context).get_value();
+        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(feature, context).value();
         full.push_back(seconds(start));
         storage.reset_dynamic();
         start = std::chrono::steady_clock::now();
-        const auto value = evaluation.enter(context, delta, workspace).evaluate(index).get_value();
+        const auto value = evaluation.enter(context, delta, workspace).evaluate(index).value();
         incremental.push_back(seconds(start));
         ASSERT_EQ(value, expected);
         node = next;

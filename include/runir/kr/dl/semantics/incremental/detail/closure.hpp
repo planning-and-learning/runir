@@ -69,7 +69,7 @@ void evaluate_closure(Tag,
                       Emit emit)
 {
     static_assert(std::same_as<Tag, TransitiveClosureTag> || std::same_as<Tag, ReflexiveTransitiveClosureTag>);
-    assert(scratch.discovery.size() == role.get_num_objects());
+    assert(scratch.discovery.size() == role.num_objects());
     const auto is_dirty = [&](ygg::uint_t vertex) { return dirty.contains(urd::index<tyr::formalism::Object>(vertex)); };
     for (const auto source : dirty)
     {

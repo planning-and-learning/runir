@@ -30,10 +30,10 @@ private:
     static auto roots(SketchView sketch)
     {
         auto result = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
-        for (const auto feature : sketch.get_features<runir::kr::dl::BooleanTag>())
-            result.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
-        for (const auto feature : sketch.get_features<runir::kr::dl::NumericalTag>())
-            result.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
+        for (const auto feature : sketch.features<runir::kr::dl::BooleanTag>())
+            result.emplace_back(std::visit([](auto concrete) { return concrete.feature(); }, feature.variant()));
+        for (const auto feature : sketch.features<runir::kr::dl::NumericalTag>())
+            result.emplace_back(std::visit([](auto concrete) { return concrete.feature(); }, feature.variant()));
         return result;
     }
 
@@ -62,10 +62,10 @@ public:
         m_policy.reset_target();
     }
 
-    auto make_dl_context(tyr::planning::StateView<Kind> state)
+    auto make_dl_context(tyr::planning::SharedStateBuilderView<Kind> state)
     { return m_policy.make_source_context(StateDlContext(std::move(state), *m_dl_builder, m_source_storage)); }
 
-    auto make_dl_transition_context(tyr::planning::StateView<Kind> source_state, tyr::planning::StateView<Kind> target_state)
+    auto make_dl_transition_context(tyr::planning::SharedStateBuilderView<Kind> source_state, tyr::planning::SharedStateBuilderView<Kind> target_state)
     {
         return make_evaluation_transition_context<BaseFamilyTag, Kind>(
             make_dl_context(std::move(source_state)),

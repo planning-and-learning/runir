@@ -1,21 +1,23 @@
 #ifndef RUNIR_KR_PS_BASE_DETAIL_SUCCESSOR_EXPANDER_IMPL_HPP_
 #define RUNIR_KR_PS_BASE_DETAIL_SUCCESSOR_EXPANDER_IMPL_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/base/successor_expander_decl.hpp"
 
 #include <functional>
 #include <optional>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/node.hpp>
-#include <tyr/planning/state_repository.hpp>
-#include <tyr/planning/successor_generator_concepts.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/successor_generator_concepts.hpp>
 
 namespace runir::kr::ps::base
 {
 
 template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-template<std::predicate<tyr::planning::LabeledNode<Kind>, RuleView> Emit, StopConcept Stop>
-bool SuccessorExpander<Kind, EvaluationPolicy>::for_each_successor(const tyr::planning::StateView<Kind>& state,
+template<std::predicate<runir::datasets::LabeledPlanningNode<Kind>, RuleView> Emit, StopConcept Stop>
+bool SuccessorExpander<Kind, EvaluationPolicy>::for_each_successor(const tyr::planning::SharedStateBuilderView<Kind>& state,
                                                                    SketchSearchStatistics& statistics,
                                                                    const Emit& emit,
                                                                    const Stop& stop)
@@ -27,30 +29,30 @@ bool SuccessorExpander<Kind, EvaluationPolicy>::for_each_successor(const tyr::pl
     m_rules.begin_source();
     auto& search_context = *m_task_context->search_context;
     auto& generator = *search_context.successor_generator;
-    // Tyr requires a Node, but policy expansion does not carry a path metric.
-    const auto node = tyr::planning::Node<Kind>(state, 0);
+    // Tyr reads a source from a node; policy expansion carries no path metric.
+    const auto node = runir::datasets::node_of<Kind>(state);
 
     const auto visit_binding = [&](tyr::planning::ActionBindingView<Kind> binding)
     {
         if (stop())
             return false;
-        const auto successor = generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator);
+        const auto successor = runir::datasets::registered_successor_node<Kind>(search_context, node, binding);
         ++statistics.num_generated;
 
-        const auto rule = m_rules.matching_rule(state, successor.get_state(), stop);
+        const auto rule = m_rules.matching_rule(state, successor.state(), stop);
         if (stop())
             return false;
         if (!rule)
             return true;
-        return emit(LabeledNode { generator.materialize_action_binding(binding), successor }, *rule);
+        return emit(LabeledNode { runir::datasets::interned_binding(search_context, binding), successor }, *rule);
     };
 
-    return generator.for_each_borrowed_applicable_action_binding(node, std::ref(visit_binding));
+    return generator.for_each_applicable_action_binding(node, {}, std::ref(visit_binding));
 }
 
 template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-std::optional<RuleView> SuccessorExpander<Kind, EvaluationPolicy>::matching_rule(const tyr::planning::StateView<Kind>& source_state,
-                                                                                 const tyr::planning::StateView<Kind>& target_state)
+std::optional<RuleView> SuccessorExpander<Kind, EvaluationPolicy>::matching_rule(const tyr::planning::SharedStateBuilderView<Kind>& source_state,
+                                                                                 const tyr::planning::SharedStateBuilderView<Kind>& target_state)
 {
     m_rules.begin_source();
     return m_rules.matching_rule(source_state, target_state, [] { return false; });

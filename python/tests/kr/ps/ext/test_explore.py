@@ -157,7 +157,7 @@ def test_search_from_a_start_state_continues_from_a_proof_graph_vertex(
 
 def test_standalone_expressions_reference_registers_by_name(gripper_parser: Parser) -> None:
     domain, program = _carry_program(gripper_parser)
-    module = program.get_entry_mod()
+    module = program.entry_mod()
     concept = ext.dl.parse_concept("(c_register selected)", gripper_parser.get_domain(), module, domain.ext_repository)
     assert "selected" in str(concept)
     with pytest.raises(UndefinedSymbolError, match="missing"):

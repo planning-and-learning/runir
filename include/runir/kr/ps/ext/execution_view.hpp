@@ -17,7 +17,7 @@
 #include <tuple>
 #include <type_traits>
 #include <tyr/formalism/object_view.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <variant>
 #include <yggdrasil/formalism/declarations.hpp>
@@ -31,11 +31,11 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_state() const { return self().template member<&urd::record_of<V>::state>(); }
+    auto state() const { return self().template member<&urd::record_of<V>::state>(); }
 
-    auto get_module_state() const noexcept { return self().template member<&urd::record_of<V>::module_state>(); }
+    auto module_state() const noexcept { return self().template member<&urd::record_of<V>::module_state>(); }
 
-    auto get_call_stack() const { return self().template member<&urd::record_of<V>::call_stack>(); }
+    auto call_stack() const { return self().template member<&urd::record_of<V>::call_stack>(); }
 };
 
 #endif

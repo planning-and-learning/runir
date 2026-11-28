@@ -14,7 +14,7 @@
 #include <memory>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/plan.hpp>
+#include <tyr/planning/plans/plan_view.hpp>
 
 namespace runir::kr::ps::base
 {
@@ -34,7 +34,7 @@ struct SketchProofResults
     ProofStatus status = ProofStatus::SUCCESS;
     runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<SketchProofGraph<Kind>> graph;
-    std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
+    std::optional<tyr::planning::OwnedPlanRecordView<tyr::planning::DeterministicTag, Kind>> plan = std::nullopt;
     runir::VertexIndexList deadend_states;
     runir::VertexIndexList open_states;
     runir::VertexIndexList cycle;

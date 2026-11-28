@@ -30,8 +30,6 @@ def layouts(*labels: int) -> list[formalism.ColumnLayoutData]:
 
 def test_relation_rows_and_validation() -> None:
     assert database is pyrunir.kr.database
-    exported: list[str] = vars(database)["__all__"]  # the generated type hints do not list __all__
-    assert all(hasattr(database, name) for name in exported)
     relation = database.ScratchRelation(layouts(10, 20))
     schema = relation.columns()
     assert isinstance(schema, list)
@@ -42,14 +40,11 @@ def test_relation_rows_and_validation() -> None:
     assert relation.arity() == 2
     assert relation.empty()
     assert insert(relation, [3, 4]) == insert(relation, [3, 4])
-    assert not hasattr(relation, "rows")  # a builder's rows are read through a repository
     repository = formalism.RelationRepository()
     view = relation.view()
-    assert isinstance(view, formalism.RelationSchemaBuilderBorrowed)
+    assert isinstance(view, formalism.RelationSchemaBuilderView)
     row = view.row(0)
-    assert isinstance(
-        row, formalism.RowSchemaBuilderBorrowed
-    )  # a scratch relation's row is a row builder, not interned
+    assert isinstance(row, formalism.RowSchemaBuilderView)  # a scratch relation's row is a row builder, not interned
     assert relation.size() == 1
     assert not relation.empty()
     assert values(row) == (3, 4)
@@ -84,7 +79,7 @@ def test_nullary_relation() -> None:
     assert isinstance(relation.columns(), list)
     assert relation.columns() == []
     view = relation.view()
-    assert view.get_rows() == []
+    assert view.rows() == []
     relation.insert([])
     relation.insert([])
     assert relation.size() == 1
@@ -126,7 +121,7 @@ def test_row_lists_keep_pooled_rows_alive() -> None:
     relation = database.ScratchRelation(layouts(0, 1))
     insert(relation, [3, 4])
     insert(relation, [5, 6])
-    rows = relation.view().get_rows()
+    rows = relation.view().rows()
     assert isinstance(rows, list)
     del relation, repository
     gc.collect()
@@ -156,8 +151,6 @@ def test_interned_relations_use_typed_identity_and_independent_storage() -> None
     assert hash(relation) == hash(duplicate)
     assert len({relation, duplicate}) == 1
     assert len(repository) == 1
-    assert not hasattr(relation, "insert")
-    assert not hasattr(relation, "clear")
 
     other_repository = formalism.RelationRepository()
     assert intern(other_repository, builder)[0] != relation
@@ -168,8 +161,8 @@ def test_interned_relations_use_typed_identity_and_independent_storage() -> None
     assert tuples(relation) == [(3, 4), (5, 6)]
     assert tuples(builder.view()) == [(8, 9)]
     assert relation.arity() == 2
-    assert len(relation.get_rows()) == 2
-    assert relation.get_rows()
+    assert len(relation.rows()) == 2
+    assert relation.rows()
     assert values(relation.row(1)) == (5, 6)
     with pytest.raises(IndexError):
         relation.row(2)
@@ -181,13 +174,13 @@ def test_interned_relations_use_typed_identity_and_independent_storage() -> None
     assert rename(repository, renamed, columns(10, 20)) == relation
     with pytest.raises(ValueError, match="Columns: renaming must preserve arity"):
         rename(repository, relation, columns(30))
-    with pytest.raises(ValueError, match="Repository: a relation's column labels are distinct"):
+    with pytest.raises(ValueError, match="Columns: duplicate column label"):
         rename(repository, relation, columns(30, 30))
 
     # Every borrowed layer must keep the repository alive, without keeping the
     # mutable builder alive or depending on its buffers.
     row = relation.row(0)
-    rows = renamed.get_rows()
+    rows = renamed.rows()
     del relation, duplicate, renamed, repository, other_repository, builder
     gc.collect()
     assert values(row) == (3, 4)
@@ -200,7 +193,7 @@ def test_interned_nullary_relations_and_repository_reset() -> None:
     false = intern(repository, builder)[0]
     builder.insert([])
     true = intern(repository, builder)[0]
-    assert false.get_rows() == []
+    assert false.rows() == []
     assert tuples(true) == [()]
     assert false != true
     assert len(repository) == 2
@@ -266,7 +259,6 @@ def test_copy_and_assign_remap_relations_and_retain_unpacked_owner() -> None:
     del builder, output, unary
     gc.collect()
     assert tuples(target) == [(4, 5)]
-    assert not hasattr(database, "intern_relation")
 
 
 def test_mixed_column_types_and_float_canonicalization() -> None:

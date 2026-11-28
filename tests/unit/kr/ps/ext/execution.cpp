@@ -7,8 +7,8 @@
 #include <runir/kr/ps/ext/execution_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/icp/execution_view.hpp>
-#include <tyr/planning/state_builder.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_builder.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
@@ -91,10 +91,10 @@ concept ModuleStateContract =
         data.registers;
         data.arguments;
         view.index();
-        view.get_mod();
-        view.get_memory_state();
-        view.get_registers();
-        view.get_arguments();
+        view.mod();
+        view.memory_state();
+        view.registers();
+        view.arguments();
     };
 
 template<typename SharedView>
@@ -104,8 +104,8 @@ concept CallStackContract =
         data.module_state;
         data.caller;
         view.index();
-        view.get_module_state();
-        view.get_caller();
+        view.module_state();
+        view.caller();
     };
 
 template<tyr::TaskKind Kind>
@@ -120,9 +120,9 @@ concept ProgramStateContract =
            data.module_state;
            data.call_stack;
            view.index();
-           view.get_state();
-           view.get_module_state();
-           view.get_call_stack();
+           view.state();
+           view.module_state();
+           view.call_stack();
        };
 
 template<tyr::TaskKind Kind>

@@ -34,7 +34,7 @@ fmt::formatter<urd::index_view<rp::Rule<rk::BaseFamilyTag>, C>>::format(const ur
     auto out = fmt::format_to(context.out(), "(:rule");
     {
         const auto deeper = urd::scoped_indent();
-        out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), std::string_view(value.get_symbol()));
+        out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), std::string_view(value.symbol()));
         out = fmt::format_to(out, "{}(:expression", urd::new_line());
         {
             const auto expression = urd::scoped_indent();
@@ -55,8 +55,8 @@ fmt::formatter<urd::index_view<rp::Rule<rk::BaseFamilyTag>, C>>::format(const ur
                     out = fmt::format_to(out, "{})", urd::new_line());
                 }
             };
-            write_section("conditions", value.get_conditions());
-            write_section("effects", value.get_effects());
+            write_section("conditions", value.conditions());
+            write_section("effects", value.effects());
         }
         out = fmt::format_to(out, "{})", urd::new_line());
     }
@@ -73,16 +73,16 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<rb::Sketch, C>>::fo
         out = fmt::format_to(out, "{}(:features", urd::new_line());
         {
             const auto features = urd::scoped_indent();
-            for (auto feature : value.template get_features<rk::dl::BooleanTag>())
+            for (auto feature : value.template features<rk::dl::BooleanTag>())
                 out = fmt::format_to(out, "{}{}", urd::new_line(), feature);
-            for (auto feature : value.template get_features<rk::dl::NumericalTag>())
+            for (auto feature : value.template features<rk::dl::NumericalTag>())
                 out = fmt::format_to(out, "{}{}", urd::new_line(), feature);
         }
         out = fmt::format_to(out, "{})", urd::new_line());
         out = fmt::format_to(out, "{}(:rules", urd::new_line());
         {
             const auto rules = urd::scoped_indent();
-            for (auto rule : value.get_rules())
+            for (auto rule : value.rules())
                 out = fmt::format_to(out, "{}{}", urd::new_line(), rule);
         }
         out = fmt::format_to(out, "{})", urd::new_line());
@@ -123,7 +123,7 @@ fmt::format_context::iterator fmt::formatter<urd::data<rb::SketchProofVertexLabe
 
 fmt::format_context::iterator fmt::formatter<urd::data<rb::SketchProofEdgeLabel>>::format(const urd::data<rb::SketchProofEdgeLabel>& value,
                                                                                           fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "rule={} action={}", value.rule.get_symbol(), value.action); }
+{ return fmt::format_to(context.out(), "rule={} action={}", value.rule.symbol(), value.action); }
 
 template struct fmt::formatter<urd::index_view<rp::Rule<rk::BaseFamilyTag>, rb::Repository>>;
 template struct fmt::formatter<urd::index_view<rp::Rule<rk::BaseFamilyTag>, rp::ext::Repository>>;

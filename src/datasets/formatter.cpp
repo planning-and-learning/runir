@@ -24,10 +24,10 @@ template<tf::FactKind T>
 fmt::format_context::iterator fmt::formatter<urd::index_view<rd::PredicateColor<T>, rd::ColorRepository>, char>::format(
     const urd::index_view<rd::PredicateColor<T>, rd::ColorRepository>& value,
     fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}:{}[{}]", value.get_context(), value.get_predicate(), value.get_argument_position()); }
+{ return fmt::format_to(context.out(), "{}:{}[{}]", value.predicate_context(), value.predicate(), value.argument_position()); }
 
 fmt::format_context::iterator fmt::formatter<rd::ColorView, char>::format(const rd::ColorView& value, fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value.get_values()); }
+{ return fmt::format_to(context.out(), "{}", value.values()); }
 
 template<tyr::TaskKind Kind>
 fmt::format_context::iterator fmt::formatter<urd::data<rd::StateGraphVertexLabel<Kind>>, char>::format(const urd::data<rd::StateGraphVertexLabel<Kind>>& value,

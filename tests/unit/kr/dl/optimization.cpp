@@ -1,4 +1,5 @@
 #include "planning_fixtures.hpp"
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 
@@ -17,8 +18,9 @@
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
@@ -43,10 +45,10 @@ void check_optimized_queries()
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
 
     // Sample states: the initial state and its successors (removing triples).
-    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto states = std::vector { initial.get_state() };
-    for (const auto& successor : search->successor_generator->get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator))
-        states.push_back(successor.node.get_state());
+    const auto initial = runir::datasets::initial_node(*search);
+    auto states = std::vector { initial.state() };
+    for (const auto& successor : runir::datasets::labeled_successor_nodes(*search, initial))
+        states.push_back(successor.node().state());
 
     using Context = kr::dl::semantics::StateEvaluationContext<Kind>;
     auto builder = kr::dl::semantics::Builder();
@@ -105,7 +107,7 @@ void check_optimized_queries()
         EXPECT_NE(warnings.get()[0].message.find(never + " was empty in all"), std::string::npos) << warnings.get()[0].message;
         const auto optimized = kr::dl::optimize(original, *repository, statistics);
         for (auto* context : context_pointers)
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get_value(), kr::dl::semantics::evaluate<Kind>(original, *context).get_value());
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).value(), kr::dl::semantics::evaluate<Kind>(original, *context).value());
     }
 
     for (const auto& text : expressions)
@@ -140,7 +142,7 @@ void check_optimized_queries()
             const auto formatted = fmt::format("{}", optimized);
             EXPECT_EQ(kr::ps::ext::dl::parse_numerical(formatted, domain, *repository), optimized) << formatted;
             for (auto* context : context_pointers)
-                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get_value(), kr::dl::semantics::evaluate<Kind>(original, *context).get_value())
+                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).value(), kr::dl::semantics::evaluate<Kind>(original, *context).value())
                     << text << " => " << formatted;
             if (text == triangle)
             {

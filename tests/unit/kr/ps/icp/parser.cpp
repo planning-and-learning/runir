@@ -66,16 +66,16 @@ TEST(RunirTests, IcpParserRoundTripAndValidation)
     auto repository = std::make_shared<kr::ps::icp::Repository>(constructors);
     const auto parse = [&](const std::string& text) { return kr::ps::icp::dl::parse_module(text, planning.get_domain(), *repository); };
     const auto module = parse(policy());
-    ASSERT_EQ(module.get_memory_transitions().size(), 2);
-    EXPECT_EQ(module.get_memory_transitions().front().size(), 2);
-    EXPECT_EQ(module.get_query_features().size(), 1);
-    EXPECT_EQ(module.get_reset_pairs().size(), 3);
+    ASSERT_EQ(module.memory_transitions().size(), 2);
+    EXPECT_EQ(module.memory_transitions().front().size(), 2);
+    EXPECT_EQ(module.query_features().size(), 1);
+    EXPECT_EQ(module.reset_pairs().size(), 3);
     // Enter progress is checked against the actual successor, not required as a literal.
     const auto rendered = fmt::format("{}", module);
     EXPECT_EQ(parse(rendered), module);
     EXPECT_NE(rendered.find(":effects"), std::string::npos);
     const auto program = kr::ps::icp::dl::parse_program("(:program (:entry visit) " + rendered + ")", planning.get_domain(), *repository);
-    EXPECT_EQ(program.get_entry_mod(), module);
+    EXPECT_EQ(program.entry_mod(), module);
 
     for (const auto& invalid :
          { replaced(policy(), "(:arguments)", "(:arguments (:concept input))"),

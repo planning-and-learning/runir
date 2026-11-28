@@ -26,63 +26,62 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
     auto children = context.child_context();
     if constexpr (std::same_as<Tag, QueryRenameTag>)
     {
-        const auto child = evaluate<Kind>(constructor.get_operand(), children);
-        for (size_t i = 0; i < child.get_rows().size(); ++i)
+        const auto child = evaluate<Kind>(constructor.operand(), children);
+        for (size_t i = 0; i < child.rows().size(); ++i)
             ygg::with_values(child.row(i), [&result](const auto& values) { result.insert(values); });
     }
     else if constexpr (is_atomic_state_tag_v<Tag>)
     {
         auto& row = context.get_workspace().get_values();
-        const auto predicate = constructor.get_predicate();
-        for (const auto atom : context.get_state().get_atoms(predicate))
-            result.insert(encode_object_row(atom.get_row().get_values(), row));
+        const auto predicate = constructor.predicate();
+        for (const auto atom : context.get_state().atoms(predicate))
+            result.insert(encode_object_row(atom.row().values(), row));
     }
     else if constexpr (is_atomic_goal_tag_v<Tag>)
     {
         auto& row = context.get_workspace().get_values();
-        const auto predicate = constructor.get_predicate();
-        for (const auto atom :
-             context.get_state().context().get_task()->get_task().get_goal().template get_atoms<TagFactKind<Tag>>(constructor.get_polarity(), predicate))
-            result.insert(encode_object_row(atom.get_row().get_values(), row));
+        const auto predicate = constructor.predicate();
+        for (const auto atom : context.get_state().context().get_task()->get_task().goal().template atoms<TagFactKind<Tag>>(constructor.polarity(), predicate))
+            result.insert(encode_object_row(atom.row().values(), row));
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
-        insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_operand(), children), result);
+        insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.operand(), children), result);
     else if constexpr (std::same_as<Tag, QueryRoleTag>)
-        insert_denotation_rows<RoleTag>(evaluate<Kind>(constructor.get_operand(), children), result);
+        insert_denotation_rows<RoleTag>(evaluate<Kind>(constructor.operand(), children), result);
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
+        const auto lhs = evaluate<Kind>(constructor.left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.right_operand(), children);
         if constexpr (std::same_as<Tag, QueryJoinTag>)
         {
-            runir::kr::database::join(lhs, rhs, constructor.get_plan(), result, context.get_workspace().get_database_workspace());
+            runir::kr::database::join(lhs, rhs, constructor.plan(), result, context.get_workspace().get_database_workspace());
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            runir::kr::database::union_(lhs, rhs, constructor.get_plan(), result);
+            runir::kr::database::union_(lhs, rhs, constructor.plan(), result);
         else
-            runir::kr::database::difference(lhs, rhs, constructor.get_plan(), result);
+            runir::kr::database::difference(lhs, rhs, constructor.plan(), result);
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
-        const auto child = evaluate<Kind>(constructor.get_operand(), children);
-        runir::kr::database::project(child, constructor.get_plan(), result, context.get_workspace().get_database_workspace());
+        const auto child = evaluate<Kind>(constructor.operand(), children);
+        runir::kr::database::project(child, constructor.plan(), result, context.get_workspace().get_database_workspace());
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
-        const auto child = evaluate<Kind>(constructor.get_operand(), children);
-        runir::kr::database::select_equal_columns(child, constructor.get_plan(), result);
+        const auto child = evaluate<Kind>(constructor.operand(), children);
+        runir::kr::database::select_equal_columns(child, constructor.plan(), result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
-        const auto child = evaluate<Kind>(constructor.get_operand(), children);
-        runir::kr::database::select_equal_value(child, constructor.get_plan(), result);
+        const auto child = evaluate<Kind>(constructor.operand(), children);
+        runir::kr::database::select_equal_value(child, constructor.plan(), result);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
         urd::Store<urd::sequence<QueryDenotationView>> inputs;
-        for (const auto arg : constructor.get_args())
+        for (const auto arg : constructor.args())
             inputs.push_back(evaluate<Kind>(arg, children));
-        const auto& plan = constructor.get_plan();
+        const auto& plan = constructor.plan();
         runir::kr::database::generic_join(inputs, plan, result, context.get_workspace().get_generic_join_workspace(plan));
     }
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
@@ -91,12 +90,12 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
     }
     else if constexpr (std::same_as<Tag, QueryBooleanTag>)
     {
-        if (evaluate<Kind>(constructor.get_operand(), children).get_value())
+        if (evaluate<Kind>(constructor.operand(), children).value())
             result.insert(std::span<const ygg::Value> {});
     }
     else if constexpr (std::same_as<Tag, QueryNumericalTag>)
     {
-        const auto value = std::array { ygg::encode_value(evaluate<Kind>(constructor.get_operand(), children).get_value()) };
+        const auto value = std::array { ygg::encode_value(evaluate<Kind>(constructor.operand(), children).value()) };
         result.insert(std::span<const ygg::Value>(value));
     }
     else if constexpr (std::same_as<Tag, QueryHeadTag>)

@@ -601,8 +601,8 @@ auto find_module(const urd::Store<urd::map<std::string, urd::index<ModuleSymbol<
 
 auto find_action(tyr::formalism::DomainView domain, const std::string& name)
 {
-    for (const auto action : domain.get_actions())
-        if (action.get_name() == name)
+    for (const auto action : domain.actions())
+        if (action.name() == name)
             return std::optional(action);
     return std::optional<tyr::formalism::ActionView<tyr::LiftedTag>> {};
 }
@@ -611,10 +611,10 @@ void validate_do_action(tyr::formalism::DomainView domain, const ast::DoRule& ru
 {
     const auto action = find_action(domain, rule.action.text);
     if (!action)
-        diagnostics.throw_at(rule.action, runir::kr::UndefinedSymbolError("action in domain '" + domain.get_name().str() + "'", rule.action.text));
+        diagnostics.throw_at(rule.action, runir::kr::UndefinedSymbolError("action in domain '" + domain.name().str() + "'", rule.action.text));
 
-    if (rule.arguments.size() != action->get_original_arity())
-        diagnostics.throw_at(rule.action, runir::kr::ArityMismatchError("action " + rule.action.text, action->get_original_arity(), rule.arguments.size()));
+    if (rule.arguments.size() != action->original_arity())
+        diagnostics.throw_at(rule.action, runir::kr::ArityMismatchError("action " + rule.action.text, action->original_arity(), rule.arguments.size()));
 }
 
 template<BindingRuleKind Kind, typename RuleAst>
@@ -739,14 +739,13 @@ auto parse_rule(
                 const auto action = find_action(domain, concrete.action.text);
                 if (!action)
                     diagnostics.throw_at(concrete.action,
-                                         runir::kr::UndefinedSymbolError("action in domain '" + domain.get_name().str() + "'", concrete.action.text));
+                                         runir::kr::UndefinedSymbolError("action in domain '" + domain.name().str() + "'", concrete.action.text));
                 const auto query_feature = require_feature(query_features, concrete.query_feature, diagnostics);
-                const auto query_arity = schema_of(std::visit([](auto concrete_query) { return concrete_query.get_feature(); },
-                                                              urd::resolve(query_feature, repository).get_variant()))
-                                             .size();
-                if (query_arity != action->get_arity())
-                    diagnostics.throw_at(concrete.query_feature,
-                                         runir::kr::ArityMismatchError("action " + concrete.action.text, action->get_arity(), query_arity));
+                const auto query_arity =
+                    schema_of(std::visit([](auto concrete_query) { return concrete_query.feature(); }, urd::resolve(query_feature, repository).variant()))
+                        .size();
+                if (query_arity != action->arity())
+                    diagnostics.throw_at(concrete.query_feature, runir::kr::ArityMismatchError("action " + concrete.action.text, action->arity(), query_arity));
                 auto data = runir::kr::ps::ext::checkout<Rule<ActionTag>>(builder);
                 urd::store(data->source, repository.view(source));
                 urd::store(data->target, repository.view(*target));
@@ -897,16 +896,16 @@ ModuleReferences module_references(ModuleView module)
     {
         for (const auto view : views)
         {
-            table.by_name.emplace(std::string(view.get_name()), view.index());
+            table.by_name.emplace(std::string(view.name()), view.index());
             table.by_identifier.push_back(view.index());
         }
     };
-    add(references.concept_arguments, module.get_arguments<runir::kr::dl::ConceptTag>());
-    add(references.role_arguments, module.get_arguments<runir::kr::dl::RoleTag>());
-    add(references.boolean_arguments, module.get_arguments<runir::kr::dl::BooleanTag>());
-    add(references.numerical_arguments, module.get_arguments<runir::kr::dl::NumericalTag>());
-    add(references.concept_registers, module.get_registers<runir::kr::dl::ConceptTag>());
-    add(references.role_registers, module.get_registers<runir::kr::dl::RoleTag>());
+    add(references.concept_arguments, module.arguments<runir::kr::dl::ConceptTag>());
+    add(references.role_arguments, module.arguments<runir::kr::dl::RoleTag>());
+    add(references.boolean_arguments, module.arguments<runir::kr::dl::BooleanTag>());
+    add(references.numerical_arguments, module.arguments<runir::kr::dl::NumericalTag>());
+    add(references.concept_registers, module.registers<runir::kr::dl::ConceptTag>());
+    add(references.role_registers, module.registers<runir::kr::dl::RoleTag>());
     return references;
 }
 

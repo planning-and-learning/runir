@@ -4,11 +4,13 @@
 #include <limits>
 #include <memory>
 #include <runir/datasets/state_graph.hpp>
+#include <runir/datasets/successors.hpp>
 #include <stdexcept>
 #include <tuple>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/state_builder.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_builder.hpp>
+#include <tyr/planning/states/state_repository.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/successors.hpp>
 #include <vector>
 
 namespace runir::tests
@@ -17,7 +19,7 @@ namespace runir::tests
 namespace
 {
 /// A state graph of one state, without transitions.
-datasets::StateGraph<tyr::GroundTag> single_state_graph(tyr::planning::PackedStateView<tyr::GroundTag> state)
+datasets::StateGraph<tyr::GroundTag> single_state_graph(tyr::planning::StateView<tyr::GroundTag> state)
 {
     using Graph = datasets::StateGraph<tyr::GroundTag>;
     using Edge = std::tuple<VertexIndex, VertexIndex, urd::data<datasets::StateGraphEdgeLabel>>;
@@ -31,7 +33,7 @@ TEST(StateGraphTest, RejectsUnsupportedCostMode)
 {
     auto context = make_gripper_ground_context();
 
-    const auto initial_state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
+    const auto initial_state = runir::datasets::initial_node(*context).state();
     const auto graph = single_state_graph(initial_state.pack());
 
     EXPECT_THROW(
@@ -102,8 +104,7 @@ TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
     ASSERT_NE(result.graph, nullptr);
     const auto& graph = *result.graph;
     ASSERT_EQ(graph.num_vertices(), 1);
-    EXPECT_EQ(graph.vertex_value(0).state,
-              context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state().pack());
+    EXPECT_EQ(graph.vertex_value(0).state, runir::datasets::initial_node(*context).state().pack());
     EXPECT_EQ(&graph.vertex_value(0).state.context(), context->state_repository.get());
 }
 
@@ -116,13 +117,13 @@ TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)
         const void* released_storage = nullptr;
         auto graph = [&]
         {
-            const auto node = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator);
-            released_storage = &node.get_state().get_numeric_storage().get_values();
-            return single_state_graph(node.get_state().pack());
+            const auto node = runir::datasets::initial_node(*context);
+            released_storage = &node.state().numeric_storage().values();
+            return single_state_graph(node.state().pack());
         }();
         {
-            const auto recycled_builder = context->state_repository->get_state_builder();
-            EXPECT_EQ(&recycled_builder->numeric_storage.values, released_storage);
+            const auto recycled_builder = tyr::planning::get_state_builder(*context->state_repository);
+            EXPECT_EQ(&recycled_builder->numeric_storage->values, released_storage);
         }
         const auto annotated = datasets::annotate_state_graph(*context, graph, datasets::StateGraphCostMode::UNIT_COST);
         return annotated->vertex_value(0).state;

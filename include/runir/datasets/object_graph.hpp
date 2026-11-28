@@ -24,7 +24,7 @@
 #include <cstddef>
 #include <memory>
 #include <tuple>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/repr/graphs/csr_graph.hpp>
 #include <utility>
 #include <variant>
@@ -40,7 +40,7 @@ using ObjectGraph = urd::Store<urd::graph<VertexIndex, std::monostate, ColorView
 static_assert(urd::incidence_graph<ObjectGraph> && urd::edge_list_graph<ObjectGraph>);
 
 template<tyr::TaskKind Kind>
-auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>;
+auto create_object_graph(tyr::planning::StateBuilderView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>;
 
 }  // namespace runir::datasets
 

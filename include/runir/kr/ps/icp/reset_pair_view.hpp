@@ -13,9 +13,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_before() const noexcept { return self().template member<&urd::record_of<V>::before>(); }
+    auto before() const noexcept { return self().template member<&urd::record_of<V>::before>(); }
 
-    auto get_after() const noexcept { return self().template member<&urd::record_of<V>::after>(); }
+    auto after() const noexcept { return self().template member<&urd::record_of<V>::after>(); }
 };
 }  // namespace urd
 

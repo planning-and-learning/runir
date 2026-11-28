@@ -16,7 +16,7 @@ urd::Store<urd::sequence<size_t>> input_slots(std::span<const QueryView<>> roots
     auto slots = urd::Store<urd::sequence<size_t>>();
     for (const auto query : reachable(roots))
         if (is<QueryInputTag>(query))
-            slots.push_back(as<QueryInputTag>(query).get_input_slot());
+            slots.push_back(as<QueryInputTag>(query).input_slot());
     std::ranges::sort(slots);
     const auto [first, last] = std::ranges::unique(slots);
     slots.erase(first, last);

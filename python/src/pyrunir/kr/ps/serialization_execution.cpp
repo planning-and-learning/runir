@@ -11,12 +11,12 @@
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/formalism/planning/planning_task.hpp>
 #include <tyr/formalism/repository.hpp>
-#include <tyr/planning/formatter.hpp>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
-#include <tyr/planning/node.hpp>
-#include <tyr/planning/plan.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
+#include <tyr/planning/plans/plan_view.hpp>
+#include <tyr/planning/states/state_view.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
+#include <tyr/planning/tasks/lifted/task.hpp>
 
 namespace runir::kr::ps
 {

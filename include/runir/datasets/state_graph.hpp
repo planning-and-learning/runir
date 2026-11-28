@@ -45,11 +45,11 @@ namespace urd
 template<tyr::TaskKind Kind>
 struct data<runir::datasets::StateGraphVertexLabel<Kind>>
 {
-    tyr::planning::PackedStateView<Kind> state;
+    tyr::planning::StateView<Kind> state;
 
     data() = default;
 
-    data(tyr::planning::PackedStateView<Kind> state_) noexcept : state(state_) {}
+    data(tyr::planning::StateView<Kind> state_) noexcept : state(state_) {}
 
     static constexpr bool copyable() noexcept
     {
@@ -67,7 +67,7 @@ struct data<runir::datasets::StateGraphVertexLabel<Kind>>
 template<tyr::TaskKind Kind>
 struct data<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>
 {
-    tyr::planning::PackedStateView<Kind> state;
+    tyr::planning::StateView<Kind> state;
     ygg::float_t goal_distance {};
     bool is_initial {};
     bool is_goal {};
@@ -76,12 +76,7 @@ struct data<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>
 
     data() = default;
 
-    data(tyr::planning::PackedStateView<Kind> state_,
-         ygg::float_t goal_distance_,
-         bool is_initial_,
-         bool is_goal_,
-         bool is_alive_,
-         bool is_unsolvable_) noexcept :
+    data(tyr::planning::StateView<Kind> state_, ygg::float_t goal_distance_, bool is_initial_, bool is_goal_, bool is_alive_, bool is_unsolvable_) noexcept :
         state(state_),
         goal_distance(goal_distance_),
         is_initial(is_initial_),

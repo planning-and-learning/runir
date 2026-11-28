@@ -18,7 +18,7 @@ void require_generic_join_order(std::string_view name,
                                 const urd::Store<urd::sequence<urd::index<QueryColumn>>>& input_columns,
                                 const ConstructorRepository& repository)
 {
-    const auto column_name = [&](urd::index<QueryColumn> column) { return std::string(urd::resolve(column, repository).get_name()); };
+    const auto column_name = [&](urd::index<QueryColumn> column) { return std::string(urd::resolve(column, repository).name()); };
     for (size_t i = 0; i < order.size(); ++i)
     {
         if (std::ranges::find(input_columns, order[i]) == input_columns.end())
@@ -77,26 +77,26 @@ void prepare(urd::data<DatalogProgram>& data, const ConstructorRepository& repos
     auto arities = urd::Store<urd::sequence<std::optional<size_t>>>(data.inputs.size());
     const auto read = [&](runir::kr::database::datalog::RelationView relation)
     {
-        if (!relation.get_input())
+        if (!relation.input())
             return;
-        const auto slot = relation.get_input_slot();
+        const auto slot = relation.input_slot();
         if (slot >= data.inputs.size())
             throw std::invalid_argument("Datalog program: an input relation has no input query.");
-        arities[slot] = relation.get_arity();
+        arities[slot] = relation.arity();
     };
     const auto atoms = [&](auto range)
     {
         for (const auto atom : range)
-            read(atom.get_relation());
+            read(atom.relation());
     };
-    for (const auto rule : datalog.view(urd::index<runir::kr::database::datalog::Program>(data.program)).get_rules())
+    for (const auto rule : datalog.view(urd::index<runir::kr::database::datalog::Program>(data.program)).rules())
     {
-        atoms(rule.get_atoms());
-        atoms(rule.get_negated());
-        for (const auto aggregate : rule.get_aggregates())
+        atoms(rule.atoms());
+        atoms(rule.negated());
+        for (const auto aggregate : rule.aggregates())
         {
-            atoms(aggregate.get_atoms());
-            atoms(aggregate.get_negated());
+            atoms(aggregate.atoms());
+            atoms(aggregate.negated());
         }
     }
     data.is_static = true;
@@ -105,7 +105,7 @@ void prepare(urd::data<DatalogProgram>& data, const ConstructorRepository& repos
         const auto input = repository.view(data.inputs[slot]);
         if (const auto& arity = arities[slot]; arity && *arity != schema_of(input).size())
             throw std::invalid_argument("Datalog program: an input query does not have its relation's arity.");
-        data.is_static = data.is_static && input.get_is_static();
+        data.is_static = data.is_static && input.is_static();
     }
 }
 

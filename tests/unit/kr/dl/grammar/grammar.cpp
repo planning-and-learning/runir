@@ -30,15 +30,15 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
                                  data.numerical_derivation_rules;
                                  data.domain;
                                  view.index();
-                                 view.template get_start<kr::dl::ConceptTag>();
-                                 view.template get_start<kr::dl::RoleTag>();
-                                 view.template get_start<kr::dl::BooleanTag>();
-                                 view.template get_start<kr::dl::NumericalTag>();
-                                 view.template get_derivation_rules<kr::dl::ConceptTag>();
-                                 view.template get_derivation_rules<kr::dl::RoleTag>();
-                                 view.template get_derivation_rules<kr::dl::BooleanTag>();
-                                 view.template get_derivation_rules<kr::dl::NumericalTag>();
-                                 view.get_domain();
+                                 view.template start<kr::dl::ConceptTag>();
+                                 view.template start<kr::dl::RoleTag>();
+                                 view.template start<kr::dl::BooleanTag>();
+                                 view.template start<kr::dl::NumericalTag>();
+                                 view.template derivation_rules<kr::dl::ConceptTag>();
+                                 view.template derivation_rules<kr::dl::RoleTag>();
+                                 view.template derivation_rules<kr::dl::BooleanTag>();
+                                 view.template derivation_rules<kr::dl::NumericalTag>();
+                                 view.domain();
                              };
 
 template<typename... Ts>

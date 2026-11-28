@@ -7,7 +7,7 @@
 #include <optional>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/repr/maps/index_map.hpp>
 #include <urd/store.hpp>
 #include <yggdrasil/formalism/row_view.hpp>
@@ -18,7 +18,7 @@ namespace runir::kr::ps::base::detail
 template<tyr::TaskKind Kind>
 struct SearchNode
 {
-    std::optional<tyr::planning::PackedStateView<Kind>> parent_state = std::nullopt;
+    std::optional<tyr::planning::StateView<Kind>> parent_state = std::nullopt;
     std::optional<tyr::formalism::ActionRowView> action = std::nullopt;
     bool is_goal = false;
     bool is_unsolvable = false;
@@ -31,14 +31,14 @@ template<tyr::TaskKind Kind>
 using SearchNodes = urd::Store<urd::map<urd::index<tyr::planning::State<Kind>>, SearchNode<Kind>>, urd::dense, urd::stable_refs>;
 
 template<tyr::TaskKind Kind>
-SearchNode<Kind>& get_or_create_search_node(const tyr::planning::PackedStateView<Kind>& state, SearchNodes<Kind>& search_nodes)
+SearchNode<Kind>& get_or_create_search_node(const tyr::planning::StateView<Kind>& state, SearchNodes<Kind>& search_nodes)
 { return search_nodes[state.index()]; }
 
 template<tyr::TaskKind Kind>
 struct Predecessor
 {
-    tyr::planning::PackedStateView<Kind> source;
-    tyr::planning::PackedStateView<Kind> target;
+    tyr::planning::StateView<Kind> source;
+    tyr::planning::StateView<Kind> target;
     tyr::formalism::ActionRowView action;
     RuleView rule;
 };

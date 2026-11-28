@@ -115,7 +115,7 @@ template<tyr::TaskKind Kind>
 auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kind>& graph) -> Operation
 {
     auto& scratch = graph.scratch();
-    if (expression.get_is_static())
+    if (expression.is_static())
         return QueryStaticEvaluator<Kind>(scratch, expression);
     return std::visit(
         [&]<typename Tag>(QueryView<Tag> concrete) -> Operation
@@ -125,40 +125,40 @@ auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kin
             else if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::DerivedTag>>)
                 return QueryAtomicEvaluator<Kind, tyr::formalism::DerivedTag>(scratch, concrete);
             else if constexpr (std::same_as<Tag, QueryProjectTag>)
-                return QueryProjectionEvaluator<Kind>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_plan());
+                return QueryProjectionEvaluator<Kind>(scratch, graph.prepare(concrete.operand(), m_dependencies), concrete.plan());
             else if constexpr (std::same_as<Tag, QueryJoinTag>)
                 return QueryJoinEvaluator<Kind>(scratch,
-                                                graph.prepare(concrete.get_left_operand(), m_dependencies),
-                                                graph.prepare(concrete.get_right_operand(), m_dependencies),
-                                                concrete.get_plan());
+                                                graph.prepare(concrete.left_operand(), m_dependencies),
+                                                graph.prepare(concrete.right_operand(), m_dependencies),
+                                                concrete.plan());
             else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
             {
                 auto args = urd::Store<urd::sequence<QueryEvaluationIndex>> {};
-                for (const auto arg : concrete.get_args())
+                for (const auto arg : concrete.args())
                     args.push_back(graph.prepare(arg, m_dependencies));
-                return QueryGenericJoinEvaluator<Kind>(scratch, std::move(args), concrete.get_plan());
+                return QueryGenericJoinEvaluator<Kind>(scratch, std::move(args), concrete.plan());
             }
             else if constexpr (std::same_as<Tag, QueryConceptTag>)
-                return QueryFromDenotationEvaluator<Kind, ConceptTag>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_schema());
+                return QueryFromDenotationEvaluator<Kind, ConceptTag>(scratch, graph.prepare(concrete.operand(), m_dependencies), concrete.schema());
             else if constexpr (std::same_as<Tag, QueryRoleTag>)
-                return QueryFromDenotationEvaluator<Kind, RoleTag>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_schema());
+                return QueryFromDenotationEvaluator<Kind, RoleTag>(scratch, graph.prepare(concrete.operand(), m_dependencies), concrete.schema());
             else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
                 return QuerySetCombinationEvaluator<Kind, Tag>(scratch,
-                                                               graph.prepare(concrete.get_left_operand(), m_dependencies),
-                                                               graph.prepare(concrete.get_right_operand(), m_dependencies),
-                                                               concrete.get_schema());
+                                                               graph.prepare(concrete.left_operand(), m_dependencies),
+                                                               graph.prepare(concrete.right_operand(), m_dependencies),
+                                                               concrete.schema());
             else if constexpr (std::same_as<Tag, QueryRenameTag> || std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
-                return QuerySelectionEvaluator<Kind, Tag>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete);
+                return QuerySelectionEvaluator<Kind, Tag>(scratch, graph.prepare(concrete.operand(), m_dependencies), concrete);
             else if constexpr (std::same_as<Tag, QueryBooleanTag>)
-                return QueryFromScalarEvaluator<Kind, BooleanTag>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_schema());
+                return QueryFromScalarEvaluator<Kind, BooleanTag>(scratch, graph.prepare(concrete.operand(), m_dependencies), concrete.schema());
             else if constexpr (std::same_as<Tag, QueryNumericalTag>)
-                return QueryFromScalarEvaluator<Kind, NumericalTag>(scratch, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_schema());
+                return QueryFromScalarEvaluator<Kind, NumericalTag>(scratch, graph.prepare(concrete.operand(), m_dependencies), concrete.schema());
             else if constexpr (std::same_as<Tag, QueryHeadTag>)
                 return QueryHeadEvaluator<Kind>(scratch, concrete, graph, m_dependencies);
             else
                 throw std::logic_error("Incremental query: a static constructor was marked dynamic.");
         },
-        expression.get_variant());
+        expression.variant());
 }
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

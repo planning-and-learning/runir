@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATORS_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATORS_HPP_
 
+#include "runir/datasets/successors.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/action.hpp"
@@ -25,7 +26,8 @@
 #include <ranges>
 #include <stdexcept>
 #include <type_traits>
-#include <tyr/planning/node.hpp>
+#include <tyr/planning/nodes/labeled_node_view.hpp>
+#include <tyr/planning/nodes/node_view.hpp>
 #include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -68,8 +70,8 @@ class RuleEvaluators
     {
         if constexpr (std::same_as<Tag, ActionTag> || std::same_as<Tag, DoTag>)
         {
-            for (const auto action : m_task_context->search_context->task->get_task().get_domain().get_actions())
-                if (action.get_name().str() == rule.get_action_name())
+            for (const auto action : m_task_context->search_context->task->get_task().domain().actions())
+                if (action.name().str() == rule.action_name())
                 {
                     if constexpr (std::same_as<Tag, ActionTag>)
                         return ActionRuleEvaluator<Kind>(rule, variant, action);
@@ -97,22 +99,19 @@ class RuleEvaluators
     template<urd::ViewOf<ProgramState<Kind>> S>
     [[nodiscard]] auto source_rules(S state) const
     {
-        return urd::visit_view(state.get_module_state(),
+        return urd::visit_view(state.module_state(),
                                [this](const auto& module_state)
-                               { return this->source_rules(urd::interned_view(module_state.get_mod()), urd::interned_view(module_state.get_memory_state())); });
+                               { return this->source_rules(urd::interned_view(module_state.mod()), urd::interned_view(module_state.memory_state())); });
     }
 
     [[nodiscard]] auto source_rules(ModuleView module_, MemoryStateView memory_state) const
     {
-        const auto modules = m_program.get_modules();
+        const auto modules = m_program.modules();
         const auto belongs_to_program = &module_.context() == &m_program.context() && std::ranges::find(modules, module_) != modules.end();
-        return module_.get_memory_transitions() | std::views::join
+        return module_.memory_transitions() | std::views::join
                | std::views::filter(
                    [belongs_to_program, memory_state](RuleVariantView rule)
-                   {
-                       return belongs_to_program
-                              && std::visit([memory_state](auto concrete) { return concrete.get_source() == memory_state; }, rule.get_variant());
-                   });
+                   { return belongs_to_program && std::visit([memory_state](auto concrete) { return concrete.source() == memory_state; }, rule.variant()); });
     }
 
     auto find_rule(RuleVariantView rule)
@@ -137,19 +136,19 @@ class RuleEvaluators
                 const auto evaluator = prepare(concrete, rule);
                 return function(evaluator);
             },
-            rule.get_variant());
+            rule.variant());
     }
 
     template<typename Evaluator,
              ExecutionStorageConcept<Kind> Storage,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState,
-             tyr::planning::StateViewConcept<Kind> Candidate,
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
+             tyr::planning::StateBuilderViewConcept<Kind> Candidate,
              ygg::RowViewConcept<tyr::formalism::Action<tyr::LiftedTag>> Binding>
     bool matches(const Evaluator& evaluator,
                  RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
-                 const tyr::planning::LabeledNode<Kind, Candidate, Binding>& candidate)
+                 const runir::datasets::LabeledPlanningNode<Kind, Candidate, Binding>& candidate)
     {
         using Tag = typename Evaluator::RuleTag;
         if constexpr (std::same_as<Tag, ActionTag> || std::same_as<Tag, DoTag> || std::same_as<Tag, SketchTag>)
@@ -167,21 +166,21 @@ public:
         if (&program.context() != m_task_context->domain_context->ext_repository.get())
             throw std::invalid_argument("RuleEvaluators requires a program from the domain context repository.");
         size_t count = 0;
-        for (const auto module_ : program.get_modules())
-            for (const auto transition : module_.get_memory_transitions())
+        for (const auto module_ : program.modules())
+            for (const auto transition : module_.memory_transitions())
                 count += transition.size();
         m_rules.reserve(count);
         m_sketch_rules.reserve(count);
-        for (const auto module_ : program.get_modules())
-            for (const auto transition : module_.get_memory_transitions())
+        for (const auto module_ : program.modules())
+            for (const auto transition : module_.memory_transitions())
                 for (const auto rule : transition)
                     if (m_rule_positions.try_emplace(rule.index(), m_rules.size()).second)
-                        m_rules.push_back(std::visit([&](auto concrete) -> Evaluator { return prepare(concrete, rule); }, rule.get_variant()));
+                        m_rules.push_back(std::visit([&](auto concrete) -> Evaluator { return prepare(concrete, rule); }, rule.variant()));
     }
 
     auto& get_environment() noexcept { return m_environment; }
 
-    template<ExecutionStorageConcept<Kind> Storage, tyr::planning::StateViewConcept<Kind> PlanningState>
+    template<ExecutionStorageConcept<Kind> Storage, tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     auto make_context(Storage& storage, PlanningState planning_state)
     {
         return runir::kr::ps::RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy> {
@@ -193,7 +192,7 @@ public:
              ExecutionStateViewConcept<Storage> State,
              typename Emit,
              StopConcept Stop,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     bool for_each_successor(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                             State state,
                             const Emit& emit,
@@ -212,7 +211,7 @@ public:
         {
             if (stop())
                 return false;
-            if (!std::holds_alternative<ext::RuleView<BacktrackTag>>(rule.get_variant()))
+            if (!std::holds_alternative<ext::RuleView<BacktrackTag>>(rule.variant()))
                 continue;
             if (!with_rule(rule,
                            [&]<typename Concrete>(const Concrete& concrete)
@@ -235,7 +234,7 @@ public:
                                if constexpr (std::same_as<Concrete, BacktrackRuleEvaluator<Kind>>)
                                    return true;
                                if constexpr (std::same_as<Concrete, SketchRuleEvaluator<Kind>>)
-                                   if (!concrete.get_rule().get_effects().empty())
+                                   if (!concrete.get_rule().effects().empty())
                                    {
                                        if (ext::rule_is_applicable(concrete.get_rule(), state, planning_state, *context.environment))
                                            m_sketch_rules.push_back(concrete);
@@ -249,13 +248,15 @@ public:
             return true;
         // Each successor is generated once for the complete effectful Sketch batch.
         auto& generator = *m_task_context->search_context->successor_generator;
+        // Tyr reads a source from a node: one for every binding of this state.
+        const auto planning_node = runir::datasets::node_of<Kind>(planning_state);
         const auto visit = [&](tyr::planning::ActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
-            const auto candidate = context.storage->successor(planning_state, binding);
+            const auto candidate = context.storage->successor(planning_node, binding);
             const auto borrowed_candidate =
-                tyr::planning::LabeledNode<Kind, typename Storage::PlanningState, tyr::planning::ActionBindingView<Kind>> { binding, candidate };
+                runir::datasets::LabeledPlanningNode<Kind, typename Storage::PlanningState, tyr::planning::ActionBindingView<Kind>> { binding, candidate };
             context.environment->reset_target();
             auto label = std::optional<tyr::formalism::ActionRowView> {};
             for (const auto& evaluator : m_sketch_rules)
@@ -267,32 +268,28 @@ public:
                 if (stop())
                     return false;
                 if (!label)
-                    label = generator.materialize_action_binding(binding);
-                const auto labeled = tyr::planning::LabeledNode<Kind, typename Storage::PlanningState> { *label, candidate };
-                if (!emit(detail::planning_step(*context.storage,
-                                                state,
-                                                labeled,
-                                                evaluator.get_variant(),
-                                                evaluator.get_rule().get_target(),
-                                                *context.task_context)))
+                    label = runir::datasets::interned_binding(*m_task_context->search_context, binding);
+                const auto labeled = runir::datasets::LabeledPlanningNode<Kind, typename Storage::PlanningState> { *label, candidate };
+                if (!emit(
+                        detail::planning_step(*context.storage, state, labeled, evaluator.get_variant(), evaluator.get_rule().target(), *context.task_context)))
                     return false;
             }
             return true;
         };
-        return generator.for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0), std::ref(visit));
+        return generator.for_each_applicable_action_binding(planning_node, {}, std::ref(visit));
     }
 
     template<ExecutionStorageConcept<Kind> Storage,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState,
-             tyr::planning::StateViewConcept<Kind> Candidate>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
+             tyr::planning::StateBuilderViewConcept<Kind> Candidate>
     std::optional<RuleVariantView> matching_rule(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                                  State state,
-                                                 const tyr::planning::LabeledNode<Kind, Candidate>& candidate)
+                                                 const runir::datasets::LabeledPlanningNode<Kind, Candidate>& candidate)
     {
         for (const auto rule : source_rules(state))
         {
-            const auto variant = rule.get_variant();
+            const auto variant = rule.variant();
             if (std::holds_alternative<ext::RuleView<BacktrackTag>>(variant)
                 && ext::rule_is_applicable(std::get<ext::RuleView<BacktrackTag>>(variant), state, context.planning_state, *context.environment))
                 return std::nullopt;
@@ -314,12 +311,12 @@ public:
 
     template<ExecutionStorageConcept<Kind> Storage,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState,
-             tyr::planning::StateViewConcept<Kind> Candidate>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState,
+             tyr::planning::StateBuilderViewConcept<Kind> Candidate>
     auto apply(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                State state,
                RuleVariantView rule,
-               const std::optional<tyr::planning::LabeledNode<Kind, Candidate>>& candidate)
+               const std::optional<runir::datasets::LabeledPlanningNode<Kind, Candidate>>& candidate)
     {
         using Result = std::optional<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>>;
         return with_rule(
@@ -329,11 +326,11 @@ public:
                 using Tag = typename Concrete::RuleTag;
                 if constexpr (std::same_as<Tag, ActionTag> || std::same_as<Tag, DoTag> || std::same_as<Tag, SketchTag>)
                 {
-                    if (!std::same_as<Tag, SketchTag> || !evaluator.get_rule().get_effects().empty())
+                    if (!std::same_as<Tag, SketchTag> || !evaluator.get_rule().effects().empty())
                     {
                         if (!candidate || !matches(evaluator, context, state, *candidate))
                             return {};
-                        return detail::planning_step(*context.storage, state, *candidate, rule, evaluator.get_rule().get_target(), *context.task_context);
+                        return detail::planning_step(*context.storage, state, *candidate, rule, evaluator.get_rule().target(), *context.task_context);
                     }
                 }
                 auto result = Result {};
@@ -356,7 +353,7 @@ public:
     template<runir::kr::dl::ConceptOrRoleTag Category,
              ExecutionStorageConcept<Kind> Storage,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     auto apply_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Choice<Category>& choice)
     {
         using Step = ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>;

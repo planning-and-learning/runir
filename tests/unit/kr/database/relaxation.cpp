@@ -259,7 +259,7 @@ TEST(DatabaseRelaxation, ProjectedJoinEliminatesUnneededConjunctsAndAntijoins)
         if (runir::kr::database::is<runir::kr::database::QueryJoinTag>(node))
         {
             const auto join = runir::kr::database::as<runir::kr::database::QueryJoinTag>(node);
-            EXPECT_TRUE(columns_of(join.get_left_operand()).empty() || columns_of(join.get_right_operand()).empty());
+            EXPECT_TRUE(columns_of(join.left_operand()).empty() || columns_of(join.right_operand()).empty());
         }
     }
 
@@ -288,8 +288,8 @@ TEST(DatabaseRelaxation, RootsShareOneInputNumbering)
     const auto plan = runir::kr::database::compile_plan({ relaxed->relaxation.queries[0].value(), relaxed->relaxation.queries[1].value() });
     auto evaluator = runir::kr::database::QueryEvaluator(scratch(), plan);
     evaluator.evaluate(std::array { borrow(inputs[0]), borrow(inputs[2]) });
-    EXPECT_EQ(evaluator.get_result(0).get_rows().size(), 1);
-    EXPECT_EQ(evaluator.get_result(1).get_rows().size(), 1);
+    EXPECT_EQ(evaluator.get_result(0).rows().size(), 1);
+    EXPECT_EQ(evaluator.get_result(1).rows().size(), 1);
 }
 
 TEST(DatabaseRelaxation, ProjectedAwayConjunctsAreTestedOnceByBoundEvaluation)

@@ -77,15 +77,15 @@ public:
         m_dl_target_storage(*m_dl_denotation_repository),
         m_program(program)
     {
-        m_modules.reserve(program.get_modules().size());
+        m_modules.reserve(program.modules().size());
         auto roots = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
-        for (const auto module_ : program.get_modules())
+        for (const auto module_ : program.modules())
         {
             roots.clear();
             const auto append = [&]<typename FeatureTag>()
             {
-                for (const auto feature : module_.template get_features<FeatureTag>())
-                    roots.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
+                for (const auto feature : module_.template features<FeatureTag>())
+                    roots.emplace_back(std::visit([](auto concrete) { return concrete.feature(); }, feature.variant()));
             };
             append.template operator()<runir::kr::dl::ConceptTag>();
             append.template operator()<runir::kr::dl::RoleTag>();
@@ -127,9 +127,9 @@ public:
         // The invocation is the interned module, arguments and caller its state reads (a state being built holds them
         // interned: urd::interned_view).
         const auto caller = call_stack(state);
-        const auto invocation = urd::visit_view(
-            state.get_module_state(),
-            [&](const auto& module_) { return Invocation { urd::interned_view(module_.get_mod()), urd::interned_view(module_.get_arguments()), caller }; });
+        const auto invocation = urd::visit_view(state.module_state(),
+                                                [&](const auto& module_)
+                                                { return Invocation { urd::interned_view(module_.mod()), urd::interned_view(module_.arguments()), caller }; });
         if (m_invocation == invocation)
             return;
         const auto found = std::ranges::find(m_modules, invocation.module_, &ModuleEvaluation::module_);
@@ -149,12 +149,12 @@ public:
             throw std::invalid_argument("EvaluationEnvironment requires an execution state from the selected task.");
         select_source(state);
         const auto planning = planning_state(state);
-        return urd::visit_view(state.get_module_state(),
-                               [&](const auto& activation) { return make_dl_context(planning, activation.get_arguments(), activation.get_registers()); });
+        return urd::visit_view(state.module_state(),
+                               [&](const auto& activation) { return make_dl_context(planning, activation.arguments(), activation.registers()); });
     }
 
     /// Over a planning state, its module's arguments and registers, each as read (a view, or a state builder's child).
-    template<tyr::planning::StateViewConcept<Kind> S,
+    template<tyr::planning::StateBuilderViewConcept<Kind> S,
              urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A,
              urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R>
     auto make_dl_context(S state, const A& arguments, const R& registers)
@@ -166,7 +166,7 @@ public:
 
     /// Call argument roots enter task storage directly; their intermediates use
     /// the ordinary source storage. Argument inputs already belong to this task.
-    template<tyr::planning::StateViewConcept<Kind> S,
+    template<tyr::planning::StateBuilderViewConcept<Kind> S,
              urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A,
              urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R>
     auto make_call_context(S state, const A& read_arguments, const R& registers)
@@ -179,8 +179,8 @@ public:
     }
 
     /// From a source to a target planning state, each of either kind (registered, or being built).
-    template<tyr::planning::StateViewConcept<Kind> S,
-             tyr::planning::StateViewConcept<Kind> U,
+    template<tyr::planning::StateBuilderViewConcept<Kind> S,
+             tyr::planning::StateBuilderViewConcept<Kind> U,
              urd::ReadsAs<runir::kr::dl::semantics::CallArguments> A,
              urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> R,
              urd::ReadsAs<runir::kr::dl::semantics::RegisterValues> T>

@@ -51,7 +51,7 @@ static_assert(!QueryProjectionCategory<kr::dl::BooleanTag> && !QueryProjectionCa
 template<typename Kind>
 concept GeneratesConstructors =
     requires(kr::dl::cnf_grammar::GrammarView grammar,
-             const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
+             const urd::Store<urd::sequence<tyr::planning::StateView<Kind>>>& states,
              kr::dl::ConstructorRepository& constructors,
              kr::dl::semantics::DenotationRepository& denotations,
              const kr::dl::cnf_grammar::GenerateOptions& options) { kr::dl::cnf_grammar::generate<Kind>(grammar, states, constructors, denotations, options); };

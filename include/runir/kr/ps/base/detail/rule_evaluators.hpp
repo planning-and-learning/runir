@@ -25,13 +25,14 @@ public:
     void begin_source() { m_environment.reset_source(); }
 
     /// Reuse source evaluations across candidates and target evaluations across rules.
-    std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source, const tyr::planning::StateView<Kind>& target, StopConcept auto&& stop)
+    std::optional<RuleView>
+    matching_rule(const tyr::planning::SharedStateBuilderView<Kind>& source, const tyr::planning::SharedStateBuilderView<Kind>& target, StopConcept auto&& stop)
     {
         if (source == target)
             return std::nullopt;
         m_environment.reset_target();
-        auto context = RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { &m_environment };
-        for (const auto rule : m_sketch.get_rules())
+        auto context = RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::SharedStateBuilderView<Kind>, EvaluationPolicy> { &m_environment };
+        for (const auto rule : m_sketch.rules())
         {
             if (stop())
                 return std::nullopt;

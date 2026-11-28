@@ -108,9 +108,9 @@ struct Triangle
 
 bool equal(ygg::FreeRelationBuilderView left, ygg::FreeRelationBuilderView right)
 {
-    if (left.get_rows().size() != right.get_rows().size() || !std::ranges::equal(left.columns(), right.columns()))
+    if (left.rows().size() != right.rows().size() || !std::ranges::equal(left.columns(), right.columns()))
         return false;
-    for (const auto& row : left.get_rows())
+    for (const auto& row : left.rows())
         if (!right.contains(values_of(row)))
             return false;
     return true;
@@ -119,21 +119,21 @@ bool equal(ygg::FreeRelationBuilderView left, ygg::FreeRelationBuilderView right
 bool exact_delta(const kr::database::incremental::Delta& delta, const Relation& before, const Relation& after)
 {
     size_t added = 0, removed = 0;
-    for (const auto& row : borrow(after).get_rows())
+    for (const auto& row : borrow(after).rows())
         if (!before.contains(values_of(row)))
         {
             ++added;
             if (!delta.added->view().contains(values_of(row)))
                 return false;
         }
-    for (const auto& row : borrow(before).get_rows())
+    for (const auto& row : borrow(before).rows())
         if (!after.contains(values_of(row)))
         {
             ++removed;
             if (!delta.removed->view().contains(values_of(row)))
                 return false;
         }
-    return added == delta.added->view().get_rows().size() && removed == delta.removed->view().get_rows().size();
+    return added == delta.added->view().rows().size() && removed == delta.removed->view().rows().size();
 }
 
 enum class Planning : std::uint8_t
@@ -225,15 +225,15 @@ void query_updates(benchmark::State& state)
     for (auto _ : state)
     {
         update(true);
-        benchmark::DoNotOptimize(evaluator.get_result().get_rows().size());
+        benchmark::DoNotOptimize(evaluator.get_result().rows().size());
         benchmark::ClobberMemory();
         update(false);
-        benchmark::DoNotOptimize(evaluator.get_result().get_rows().size());
+        benchmark::DoNotOptimize(evaluator.get_result().rows().size());
         benchmark::ClobberMemory();
     }
     state.SetItemsProcessed(state.iterations() * 2);
     state.counters["retained_bytes"] = static_cast<double>(evaluator.memory_usage());
-    state.counters["output_rows"] = static_cast<double>(evaluator.get_result().get_rows().size());
+    state.counters["output_rows"] = static_cast<double>(evaluator.get_result().rows().size());
     constexpr auto delta_rows = 6.0;  // one row added and one removed in each of the three inputs
     state.counters["delta_rows"] = delta_rows;
 }

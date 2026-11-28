@@ -19,15 +19,15 @@ template<dl::CategoryTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<dc::NonTerminal<Category>, dc::ConstructorRepository>>::format(
     const urd::index_view<dc::NonTerminal<Category>, dc::ConstructorRepository>& value,
     fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "{}", value.get_name().str()); }
+{ return fmt::format_to(context.out(), "{}", value.name().str()); }
 
 template<dl::CategoryTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<dc::DerivationRule<Category>, dc::ConstructorRepository>>::format(
     const urd::index_view<dc::DerivationRule<Category>, dc::ConstructorRepository>& value,
     fmt::format_context& context) const
 {
-    auto out = fmt::format_to(context.out(), "({} (", value.get_lhs());
-    std::visit([&out](auto constructor) { out = fmt::format_to(out, "{}", std::pair { constructor, dl::Unparenthesized {} }); }, value.get_rhs());
+    auto out = fmt::format_to(context.out(), "({} (", value.lhs());
+    std::visit([&out](auto constructor) { out = fmt::format_to(out, "{}", std::pair { constructor, dl::Unparenthesized {} }); }, value.rhs());
     return fmt::format_to(out, "))");
 }
 
@@ -35,7 +35,7 @@ template<dl::CategoryTag Category>
 fmt::format_context::iterator fmt::formatter<urd::index_view<dc::SubstitutionRule<Category>, dc::ConstructorRepository>>::format(
     const urd::index_view<dc::SubstitutionRule<Category>, dc::ConstructorRepository>& value,
     fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "({} ({}))", value.get_lhs(), value.get_rhs()); }
+{ return fmt::format_to(context.out(), "({} ({}))", value.lhs(), value.rhs()); }
 
 fmt::format_context::iterator
 fmt::formatter<urd::index_view<dc::Grammar, dc::ConstructorRepository>>::format(const urd::index_view<dc::Grammar, dc::ConstructorRepository>& value,
@@ -47,14 +47,14 @@ fmt::formatter<urd::index_view<dc::Grammar, dc::ConstructorRepository>>::format(
         for (auto rule : rules)
             out = fmt::format_to(out, "    {}\n", rule);
     };
-    write(value.get_derivation_rules<dl::ConceptTag>());
-    write(value.get_derivation_rules<dl::RoleTag>());
-    write(value.get_derivation_rules<dl::BooleanTag>());
-    write(value.get_derivation_rules<dl::NumericalTag>());
-    write(value.get_substitution_rules<dl::ConceptTag>());
-    write(value.get_substitution_rules<dl::RoleTag>());
-    write(value.get_substitution_rules<dl::BooleanTag>());
-    write(value.get_substitution_rules<dl::NumericalTag>());
+    write(value.derivation_rules<dl::ConceptTag>());
+    write(value.derivation_rules<dl::RoleTag>());
+    write(value.derivation_rules<dl::BooleanTag>());
+    write(value.derivation_rules<dl::NumericalTag>());
+    write(value.substitution_rules<dl::ConceptTag>());
+    write(value.substitution_rules<dl::RoleTag>());
+    write(value.substitution_rules<dl::BooleanTag>());
+    write(value.substitution_rules<dl::NumericalTag>());
     return fmt::format_to(out, ")\n");
 }
 

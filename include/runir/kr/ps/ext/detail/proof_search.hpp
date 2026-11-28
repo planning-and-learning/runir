@@ -17,8 +17,8 @@
 #include <tuple>
 #include <type_traits>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
-#include <tyr/planning/ground/successor_generator.hpp>
-#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/successors/ground/successor_generator.hpp>
+#include <tyr/planning/successors/lifted/successor_generator.hpp>
 #include <urd/config.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -41,7 +41,7 @@ template<tyr::TaskKind Kind,
          StateMemorization Memorization,
          UnsolvabilityConcept<Kind> Unsolvability>
 ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
-                               const tyr::planning::StateView<Kind>& initial_state,
+                               const tyr::planning::SharedStateBuilderView<Kind>& initial_state,
                                const StorageStoredState<ExecutionStorage>& initial,
                                const ProgramSearchOptions<Kind>& options,
                                Unsolvability& classifier,
@@ -318,16 +318,16 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
     const auto& task_context = expander.get_task_context();
     auto& search = *task_context->search_context;
     // Goals with dynamic parts are judged relative to the task's initial state, also when continuing from a start state.
-    const auto initial_node = search.successor_generator->get_packed_initial_node(*search.state_repository, *search.axiom_evaluator);
+    const auto initial_node = runir::datasets::packed_initial_node(search);
     const auto start = options.start_state;
-    const auto initial = start ? expander.start_state(*start) : expander.initial_state(initial_node.get_state().unpack());
+    const auto initial = start ? expander.start_state(*start) : expander.initial_state(initial_node.state().unpack());
     using PathPtr = std::shared_ptr<SearchPath<Kind, ExecutionStorage>>;
     auto statistics = ProgramSearchStatistics {};
     auto path_pool = urd::Store<urd::slots<SearchPath<Kind, ExecutionStorage>>> {};
     auto first_goal = PathPtr {};
     auto witness = PathPtr {};
-    const auto status = depth_first_search<
-        Kind>(expander, initial_node.get_state().unpack(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
+    const auto status =
+        depth_first_search<Kind>(expander, initial_node.state().unpack(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
 
     auto result = ProgramProofResults<Kind> {};
     result.task_context_owner = task_context;
@@ -349,12 +349,7 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
                     if (path->transition)
                         actions.push_back(path->transition->action);
                 std::ranges::reverse(actions);
-                auto& search_context = *task_context->search_context;
-                result.plan = tyr::planning::replay_plan<Kind>(initial_node,
-                                                               actions,
-                                                               *search_context.successor_generator,
-                                                               *search_context.state_repository,
-                                                               *search_context.axiom_evaluator);
+                result.plan = runir::datasets::replayed_plan<Kind>(*task_context->search_context, initial_node, actions);
             }
         }
     }

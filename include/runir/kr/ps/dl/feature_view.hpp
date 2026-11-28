@@ -27,9 +27,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
+    auto feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
 
-    const auto& get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
+    const auto& symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
 
     static constexpr auto functions() noexcept
     { return urd::Functions<urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::ps::syntactic_complexity)>> {}; }

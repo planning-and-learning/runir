@@ -25,12 +25,12 @@ OutputIt format_query_plan(OutputIt out, const QueryPlan& plan)
                     | std::views::transform([](const urd::data<ygg::ColumnLayout>& column) { return fmt::format("{}:{}", column.label.value, column.type); });
                 out = fmt::format_to(out, "{}: {}({}) columns=[{}]", id, Tag::operation, fmt::join(children, ","), fmt::join(columns, ","));
                 if constexpr (std::same_as<Tag, QueryInputTag>)
-                    out = fmt::format_to(out, " slot={}", operation.get_input_slot());
+                    out = fmt::format_to(out, " slot={}", operation.input_slot());
                 if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
-                    out = fmt::format_to(out, " variables=[{}]", fmt::join(operation.get_variable_order() | std::views::transform(value), ","));
+                    out = fmt::format_to(out, " variables=[{}]", fmt::join(operation.variable_order() | std::views::transform(value), ","));
                 out = fmt::format_to(out, "\n");
             },
-            plan[urd::index<Query<>>(ygg::to_uint_t(id))].get_variant());
+            plan[urd::index<Query<>>(ygg::to_uint_t(id))].variant());
     return fmt::format_to(out, "roots=[{}]\n", fmt::join(plan.roots() | std::views::transform(value), ","));
 }
 }  // namespace

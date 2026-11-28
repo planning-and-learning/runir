@@ -16,24 +16,24 @@ namespace runir::kr::dl::semantics::detail
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 void on_demand_head(urd::index_view<Query<QueryHeadTag>, C> constructor, Context& context, ygg::FreeScratchRelation& result)
 {
-    const auto program = constructor.get_program();
+    const auto program = constructor.program();
     auto& workspace = context.get_workspace();
-    auto& feature = workspace.get_datalog_feature(context.get_state().get_formalism_repository(),
+    auto& feature = workspace.get_datalog_feature(context.get_state().formalism_repository(),
                                                   constructor.context(),
                                                   program.index().value,
                                                   [&] { return make_datalog_feature(workspace.get_scratch(), program); });
     auto& caches = context.get_caches();
-    if (caches.find_program(program.get_is_static(), program) != feature.generation)
+    if (caches.find_program(program.is_static(), program) != feature.generation)
     {
         auto children = context.child_context();
         auto inputs = urd::Store<urd::sequence<QueryDenotationView>>();
-        for (const auto input : program.get_inputs())
+        for (const auto input : program.inputs())
             inputs.push_back(evaluate<Kind>(input, children));
         feature.evaluator.evaluate(inputs);
-        caches.insert_program(program.get_is_static(), program, ++feature.generation);
+        caches.insert_program(program.is_static(), program, ++feature.generation);
     }
-    const auto head = feature.evaluator.get_result(feature.output(constructor.get_relation().index()));
-    for (const auto& held : head.get_rows())
+    const auto head = feature.evaluator.get_result(feature.output(constructor.relation().index()));
+    for (const auto& held : head.rows())
         ygg::with_values(held, [&](const auto& values) { result.insert(values); });
 }
 

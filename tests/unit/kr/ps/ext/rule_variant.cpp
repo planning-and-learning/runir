@@ -27,8 +27,8 @@ static_assert(requires(Data& data) {
 });
 static_assert(requires(const View& view) {
     view.index();
-    view.get_symbol();
-    view.get_variant();
+    view.symbol();
+    view.variant();
 });
 
 static_assert(requires(kr::ps::ext::Repository& repository, urd::data<kr::ps::Rule<kr::BaseFamilyTag>>& data) {

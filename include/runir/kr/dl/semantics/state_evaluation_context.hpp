@@ -18,7 +18,7 @@
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/state_view_concepts.hpp>
+#include <tyr/planning/states/state_view_concepts.hpp>
 #include <utility>
 #include <variant>
 
@@ -41,7 +41,7 @@ const urd::builder<RegisterValues, DenotationRepository>& empty_register_values(
 /// Evaluation reads state contents; it does not require registered state identity.
 template<typename Context, typename Kind>
 concept StateEvaluationResourcesConcept = tyr::TaskKind<Kind> && requires(Context& context, const Context& const_context) {
-    { const_context.get_state() } -> tyr::planning::StateViewConcept<Kind>;
+    { const_context.get_state() } -> tyr::planning::StateBuilderViewConcept<Kind>;
     { context.get_builder() } -> std::same_as<Builder&>;
     { context.get_denotation_repository() } -> std::same_as<DenotationRepository&>;
     { context.get_workspace() } -> std::same_as<EvaluationWorkspace&>;
@@ -67,7 +67,7 @@ concept StateEvaluationContextConcept =
 
 /// Every context carries registers and call arguments. Registers are empty and arguments absent unless a program binds
 /// them; evaluating a register or an argument that the context does not bind throws.
-template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>>
+template<tyr::TaskKind Kind, tyr::planning::StateBuilderViewConcept<Kind> S = tyr::planning::SharedStateBuilderView<Kind>>
 class StateEvaluationContext
 {
 private:
@@ -92,7 +92,7 @@ private:
 
     void validate_inputs() const
     {
-        const auto* repository = m_state.get_formalism_repository().get();
+        const auto* repository = m_state.formalism_repository().get();
         if (m_arguments && detail::get_formalism_repository(m_arguments->context()) != repository)
             throw std::invalid_argument("Evaluation requires arguments for the same planning task.");
         if (&urd::visit_view(m_registers,
@@ -105,10 +105,17 @@ private:
     /// Retains computed roots in an existing repository while children use reusable storage.
     void select_roots(DenotationCaches& caches, DenotationRepository& repository)
     {
-        if (detail::get_formalism_repository(repository) != m_state.get_formalism_repository().get())
+        if (detail::get_formalism_repository(repository) != m_state.formalism_repository().get())
             throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
         m_caches = &caches;
         m_denotations = { &repository, &repository };
+    }
+
+    /// A reading of register values as the variant of the views of its forms.
+    template<urd::ReadsAs<RegisterValues> R>
+    static RegisterValuesChild forms_of(const R& registers)
+    {
+        return urd::visit_view(registers, [](const auto& form) -> RegisterValuesChild { return form; });
     }
 
     StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage, RegisterValuesChild registers, std::optional<CallArgumentsView> arguments) :
@@ -120,7 +127,7 @@ private:
         m_registers(registers),
         m_arguments(arguments)
     {
-        if (storage.get_denotation_repository(false).template get_ptr<tyr::formalism::Repository>() != m_state.get_formalism_repository())
+        if (storage.get_denotation_repository(false).template get_ptr<tyr::formalism::Repository>() != m_state.formalism_repository())
             throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
     }
 
@@ -142,17 +149,20 @@ public:
         StateEvaluationContext(state, builder, intermediates)
     { select_roots(caches, repository); }
 
-    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage, CallArgumentsView arguments, RegisterValuesChild registers) :
-        StateEvaluationContext(std::move(state), builder, storage, registers, arguments)
+    /// In a program: its arguments, and its registers as read (a view, or a builder's child resolved).
+    template<urd::ReadsAs<RegisterValues> R>
+    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage, CallArgumentsView arguments, const R& registers) :
+        StateEvaluationContext(std::move(state), builder, storage, forms_of(registers), arguments)
     { validate_inputs(); }
 
+    template<urd::ReadsAs<RegisterValues> R>
     StateEvaluationContext(S state,
                            Builder& builder,
                            DenotationCaches& caches,
                            DenotationRepository& repository,
                            EvaluationStorage& intermediates,
                            CallArgumentsView arguments,
-                           RegisterValuesChild registers) :
+                           const R& registers) :
         StateEvaluationContext(std::move(state), builder, intermediates, arguments, registers)
     { select_roots(caches, repository); }
 

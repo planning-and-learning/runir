@@ -131,9 +131,9 @@ class Interpreter
     [[nodiscard]] const Tuples& rows(dl::RelationView relation) const
     {
         static const Tuples none;
-        if (relation.get_input())
-            return (*m_inputs)[relation.get_input_slot()];
-        const auto it = m_relations.find(relation.get_id());
+        if (relation.input())
+            return (*m_inputs)[relation.input_slot()];
+        const auto it = m_relations.find(relation.id());
         return it == m_relations.end() ? none : it->second;
     }
 
@@ -147,7 +147,7 @@ class Interpreter
 
     bool matches(dl::AtomView atom, const Tuple& tuple, std::map<uint_t, uint_t>& assignment) const
     {
-        const auto terms = atom.get_terms();
+        const auto terms = atom.terms();
         for (size_t i = 0; i < terms.size(); ++i)
         {
             if (const auto bound = value(terms[i], assignment))
@@ -167,7 +167,7 @@ class Interpreter
     {
         if (i == atoms.size())
             return f(assignment);
-        for (const auto& tuple : rows(atoms[i].get_relation()))
+        for (const auto& tuple : rows(atoms[i].relation()))
         {
             auto extended = assignment;
             if (matches(atoms[i], tuple, extended))
@@ -184,9 +184,9 @@ class Interpreter
         for (const auto atom : negated)
         {
             auto tuple = Tuple();
-            for (const auto term : atom.get_terms())
+            for (const auto term : atom.terms())
                 tuple.push_back(value(term, assignment).value());
-            if (rows(atom.get_relation()).contains(tuple))
+            if (rows(atom.relation()).contains(tuple))
                 return false;
         }
         return true;
@@ -201,8 +201,8 @@ class Interpreter
     /// The aggregate over the assignments of its variables that extend `outer` on the variables both bind.
     [[nodiscard]] std::optional<uint_t> aggregate(dl::AggregateView aggregate, const std::map<uint_t, uint_t>& outer) const
     {
-        const auto atoms = std::vector<dl::AtomView>(aggregate.get_atoms().begin(), aggregate.get_atoms().end());
-        const auto negated = std::vector<dl::AtomView>(aggregate.get_negated().begin(), aggregate.get_negated().end());
+        const auto atoms = std::vector<dl::AtomView>(aggregate.atoms().begin(), aggregate.atoms().end());
+        const auto negated = std::vector<dl::AtomView>(aggregate.negated().begin(), aggregate.negated().end());
         std::set<std::map<uint_t, uint_t>> assignments;
         enumerate(atoms,
                   0,
@@ -210,20 +210,20 @@ class Interpreter
                   [&](const auto& matched)
                   {
                       auto inner = matched;
-                      bind(aggregate.get_arithmetic(), inner);
+                      bind(aggregate.arithmetic(), inner);
                       for (const auto& [variable, object] : inner)
                           if (const auto it = outer.find(variable); it != outer.end() && it->second != object)
                               return;
-                      if (passes(negated, aggregate.get_comparisons(), inner))
+                      if (passes(negated, aggregate.comparisons(), inner))
                           assignments.insert(inner);
                   });
-        if (aggregate.get_function() == Function::COUNT)
+        if (aggregate.function() == Function::COUNT)
             return static_cast<uint_t>(assignments.size());
         std::vector<uint_t> values;
         values.reserve(assignments.size());
         for (const auto& assignment : assignments)
-            values.push_back(assignment.at(aggregate.get_value()));
-        if (aggregate.get_function() == Function::SUM)
+            values.push_back(assignment.at(aggregate.value()));
+        if (aggregate.function() == Function::SUM)
         {
             uint_t sum = 0;
             for (const auto v : values)
@@ -232,14 +232,14 @@ class Interpreter
         }
         if (values.empty())
             return std::nullopt;
-        return aggregate.get_function() == Function::MIN ? *std::ranges::min_element(values) : *std::ranges::max_element(values);
+        return aggregate.function() == Function::MIN ? *std::ranges::min_element(values) : *std::ranges::max_element(values);
     }
 
     bool apply(dl::RuleView rule)
     {
-        const auto atoms = std::vector<dl::AtomView>(rule.get_atoms().begin(), rule.get_atoms().end());
-        const auto negated = std::vector<dl::AtomView>(rule.get_negated().begin(), rule.get_negated().end());
-        const auto head = rule.get_head();
+        const auto atoms = std::vector<dl::AtomView>(rule.atoms().begin(), rule.atoms().end());
+        const auto negated = std::vector<dl::AtomView>(rule.negated().begin(), rule.negated().end());
+        const auto head = rule.head();
         auto derived = Tuples();
         enumerate(atoms,
                   0,
@@ -247,25 +247,25 @@ class Interpreter
                   [&](const auto& base)
                   {
                       auto assignment = base;
-                      for (const auto aggregate : rule.get_aggregates())
+                      for (const auto aggregate : rule.aggregates())
                       {
                           const auto result = this->aggregate(aggregate, base);
                           if (!result)
                               return;
-                          assignment[aggregate.get_result()] = *result;
+                          assignment[aggregate.result()] = *result;
                       }
-                      bind(rule.get_arithmetic(), assignment);
-                      if (!passes(negated, rule.get_comparisons(), assignment))
+                      bind(rule.arithmetic(), assignment);
+                      if (!passes(negated, rule.comparisons(), assignment))
                           return;
                       auto tuple = Tuple();
-                      for (const auto term : head.get_terms())
+                      for (const auto term : head.terms())
                           tuple.push_back(value(term, assignment).value());
                       derived.insert(tuple);
                   });
-        auto& target = m_relations[head.get_relation().get_id()];
+        auto& target = m_relations[head.relation().id()];
         const auto before = target;
         target.insert(derived.begin(), derived.end());
-        if (head.get_relation().get_weighted())
+        if (head.relation().weighted())
         {
             // The least weight per row of the other columns (Bellman-Ford over the rounds).
             auto least = std::map<Tuple, uint_t>();
@@ -294,26 +294,26 @@ public:
         for (bool changed = true; changed;)
         {
             changed = false;
-            for (const auto rule : program.get_rules())
+            for (const auto rule : program.rules())
             {
-                auto& level = stratum[rule.get_head().get_relation().get_id()];
+                auto& level = stratum[rule.head().relation().id()];
                 const auto require = [&](dl::AtomView atom, size_t above)
                 {
-                    if (atom.get_relation().get_input())
+                    if (atom.relation().input())
                         return;
-                    const auto needed = stratum[atom.get_relation().get_id()] + above;
+                    const auto needed = stratum[atom.relation().id()] + above;
                     if (needed > level)
                     {
                         level = needed;
                         changed = true;
                     }
                 };
-                for (const auto atom : rule.get_atoms())
+                for (const auto atom : rule.atoms())
                     require(atom, 0);
-                for (const auto atom : rule.get_negated())
+                for (const auto atom : rule.negated())
                     require(atom, 1);
-                for (const auto aggregate : rule.get_aggregates())
-                    for (const auto atom : aggregate.get_atoms())
+                for (const auto aggregate : rule.aggregates())
+                    for (const auto atom : aggregate.atoms())
                         require(atom, 1);
             }
         }
@@ -324,8 +324,8 @@ public:
             for (bool changed = true; changed;)
             {
                 changed = false;
-                for (const auto rule : program.get_rules())
-                    if (stratum[rule.get_head().get_relation().get_id()] == level)
+                for (const auto rule : program.rules())
+                    if (stratum[rule.head().relation().id()] == level)
                         changed = apply(rule) || changed;
             }
     }
@@ -365,7 +365,7 @@ Relation relation_of(const Tuples& tuples, size_t arity)
 Tuples tuples_of(ygg::FreeRelationBuilderView relation)
 {
     Tuples result;
-    for (const auto& held : relation.get_rows())
+    for (const auto& held : relation.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          {
@@ -555,8 +555,8 @@ TEST(DatabaseDatalog, EvaluatorEqualsNaiveEvaluation)
         evaluator.evaluate(std::array { borrow(e), borrow(v) });
         const Interpreter expected(fixture.program, inputs);
         for (size_t i = 0; i < fixture.outputs.size(); ++i)
-            EXPECT_EQ(tuples_of(evaluator.get_result(i)), expected.get(fixture.outputs[i].get_id()))
-                << "trial " << trial << ", relation " << fixture.outputs[i].get_id();
+            EXPECT_EQ(tuples_of(evaluator.get_result(i)), expected.get(fixture.outputs[i].id()))
+                << "trial " << trial << ", relation " << fixture.outputs[i].id();
     }
 }
 
@@ -605,7 +605,7 @@ TEST(DatabaseDatalog, EvaluatorUpdatesEqualNaiveEvaluationAfterEveryBatch)
         const Interpreter expected(fixture.program, current);
         for (size_t i = 0; i < fixture.outputs.size(); ++i)
         {
-            const auto relation = fixture.outputs[i].get_id();
+            const auto relation = fixture.outputs[i].id();
             const auto& after = expected.get(relation);
             ASSERT_EQ(tuples_of(evaluator.get_result(i)), after) << "batch " << batch << ", relation " << relation;
             Tuples gained, lost;
@@ -625,7 +625,7 @@ TEST(DatabaseDatalog, EvaluatorReadsOnlyWhatItsOutputsDependOn)
     const std::vector<Tuples> inputs { { { 0, 1 }, { 1, 2 }, { 2, 0 } }, {} };
     const auto e = relation_of(inputs[0], 2), wrong = relation_of({ { 0, 0, 0 } }, 3);
     evaluator.evaluate(std::array { borrow(e), borrow(wrong) });
-    EXPECT_EQ(tuples_of(evaluator.get_result()), Interpreter(fixture.program, inputs).get(fixture.tc.get_id()));
+    EXPECT_EQ(tuples_of(evaluator.get_result()), Interpreter(fixture.program, inputs).get(fixture.tc.id()));
 }
 
 TEST(DatabaseDatalog, DeleteAndRederiveDropsRowsThatOnlySupportEachOther)
@@ -652,8 +652,8 @@ TEST(DatabaseDatalog, DeleteAndRederiveDropsRowsThatOnlySupportEachOther)
     EXPECT_EQ(tuples_of(evaluator.get_result()), (Tuples { { a }, { b }, { c }, { d } }));
     evaluator.update(std::array { Change { borrow(none2), borrow(cut) }, Change { borrow(none1), borrow(none1) } });
     EXPECT_EQ(tuples_of(evaluator.get_result()), (Tuples { { a }, { b }, { c }, { d } }));
-    EXPECT_TRUE(evaluator.get_delta().added->view().get_rows().empty());
-    EXPECT_TRUE(evaluator.get_delta().removed->view().get_rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().added->view().rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().removed->view().rows().empty());
 }
 
 TEST(DatabaseDatalog, WeightedGoalStopsAtTheLeastTarget)
@@ -1239,12 +1239,12 @@ TEST(DatabaseDatalog, DeleteAndRederiveKeepsRowsWithAnotherDerivation)
     path.insert({ 190, 195 });
     const auto edges = relation_of(path, 2), starts = relation_of({ { 0 } }, 1);
     evaluator.initialize(std::array { borrow(edges), borrow(starts) });
-    EXPECT_EQ(evaluator.get_result().get_rows().size(), n);
+    EXPECT_EQ(evaluator.get_result().rows().size(), n);
     const auto none2 = relation_of({}, 2), none1 = relation_of({}, 1), cut = relation_of({ { 192, 193 } }, 2);
     evaluator.update(std::array { Change { borrow(none2), borrow(cut) }, Change { borrow(none1), borrow(none1) } });
     EXPECT_EQ(tuples_of(evaluator.get_delta().removed->view()), (Tuples { { 193 }, { 194 } }));
-    EXPECT_TRUE(evaluator.get_delta().added->view().get_rows().empty());
-    EXPECT_EQ(evaluator.get_result().get_rows().size(), n - 2);
+    EXPECT_TRUE(evaluator.get_delta().added->view().rows().empty());
+    EXPECT_EQ(evaluator.get_result().rows().size(), n - 2);
 }
 
 /// Object columns are read as their index, so that relations of object rows are inputs; other column types are rejected.

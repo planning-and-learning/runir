@@ -20,7 +20,7 @@
 #include <concepts>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/states/state_repository.hpp>
 #include <urd/format.hpp>
 #include <variant>
 #include <yggdrasil/formatting/cista_formatters.hpp>
@@ -44,7 +44,7 @@ fmt::format_context::iterator fmt::formatter<ri::ArgumentPosition>::format(ri::A
 { return fmt::format_to(context.out(), "{}", value.value); }
 
 fmt::format_context::iterator fmt::formatter<ri::ResetPairView>::format(const ri::ResetPairView& value, fmt::format_context& context) const
-{ return fmt::format_to(context.out(), "({}, {})", value.get_before(), value.get_after()); }
+{ return fmt::format_to(context.out(), "({}, {})", value.before(), value.after()); }
 
 template<typename X>
 fmt::format_context::iterator
@@ -53,23 +53,23 @@ fmt::formatter<std::pair<urd::index_view<X, ri::Repository>, ArgumentNames>>::fo
 {
     const auto& [predicate, names] = value;
     const auto& rule = names.rule;
-    auto out = fmt::format_to(context.out(), "({}", predicate.get_operation());
+    auto out = fmt::format_to(context.out(), "({}", predicate.operation());
     std::visit(
         [&]<typename Reference>(const Reference& reference)
         {
             if constexpr (std::same_as<Reference, ri::ArgumentPosition>)
             {
                 const auto position = reference.value;
-                if (rule && position < rule->get_argument_names().size())
-                    out = fmt::format_to(out, " (:argument {})", rule->get_argument_names().at(position));
+                if (rule && position < rule->argument_names().size())
+                    out = fmt::format_to(out, " (:argument {})", rule->argument_names().at(position));
                 else
                     out = fmt::format_to(out, " (:argument arg{})", position);
             }
             else
-                out = fmt::format_to(out, " (:register (:concept {}))", reference.get_name());
+                out = fmt::format_to(out, " (:register (:concept {}))", reference.name());
         },
-        predicate.get_object());
-    return fmt::format_to(out, " (:concept {}))", std::visit([](auto concrete) { return concrete.get_symbol(); }, predicate.get_feature().get_variant()));
+        predicate.object());
+    return fmt::format_to(out, " (:concept {}))", std::visit([](auto concrete) { return concrete.symbol(); }, predicate.feature().variant()));
 }
 
 fmt::format_context::iterator
@@ -90,32 +90,32 @@ fmt::format_context::iterator fmt::formatter<ri::RuleView<Kind>>::format(const r
         const auto write_conditions = [&]
         {
             out = fmt::format_to(out, "{}(:conditions", urd::new_line());
-            for (const auto& condition : value.get_conditions())
+            for (const auto& condition : value.conditions())
                 out = std::visit([&](auto concrete) { return fmt::format_to(out, " {}", concrete); }, condition);
             out = fmt::format_to(out, ")");
         };
         const auto write_effects = [&]
         {
             out = fmt::format_to(out, "{}(:effects", urd::new_line());
-            for (const auto& effect : value.get_effects())
+            for (const auto& effect : value.effects())
                 out = std::visit([&](auto concrete) { return fmt::format_to(out, " {}", concrete); }, effect);
             out = fmt::format_to(out, ")");
         };
 
         if constexpr (std::same_as<Kind, ri::CruleTag>)
         {
-            out = fmt::format_to(out, "{}(:action {:?})", urd::new_line(), value.get_action_name().view());
+            out = fmt::format_to(out, "{}(:action {:?})", urd::new_line(), value.action_name().view());
             out = fmt::format_to(out, "{}(:arguments", urd::new_line());
-            for (const auto& name : value.get_argument_names())
+            for (const auto& name : value.argument_names())
                 out = fmt::format_to(out, " {}", name);
             out = fmt::format_to(out, ")");
             write_conditions();
             out = fmt::format_to(out, "{}(:xconditions", urd::new_line());
-            for (auto predicate : value.get_xconditions())
+            for (auto predicate : value.xconditions())
                 out = fmt::format_to(out, " {}", std::pair { predicate, ArgumentNames { value } });
             out = fmt::format_to(out, ")");
             out = fmt::format_to(out, "{}(:xeffects", urd::new_line());
-            for (auto predicate : value.get_xeffects())
+            for (auto predicate : value.xeffects())
                 out = fmt::format_to(out, " {}", std::pair { predicate, ArgumentNames { value } });
             out = fmt::format_to(out, ")");
             write_effects();
@@ -128,8 +128,8 @@ fmt::format_context::iterator fmt::formatter<ri::RuleView<Kind>>::format(const r
                                  "{}(:{} {})",
                                  urd::new_line(),
                                  Category::keyword,
-                                 std::visit([](auto concrete) { return concrete.get_symbol(); }, value.get_feature().get_variant()));
-            out = fmt::format_to(out, "{}(:register (:{} {}))", urd::new_line(), Category::keyword, value.get_slot().get_name());
+                                 std::visit([](auto concrete) { return concrete.symbol(); }, value.feature().variant()));
+            out = fmt::format_to(out, "{}(:register (:{} {}))", urd::new_line(), Category::keyword, value.slot().name());
             write_effects();
         }
     }
@@ -138,7 +138,7 @@ fmt::format_context::iterator fmt::formatter<ri::RuleView<Kind>>::format(const r
 
 fmt::format_context::iterator fmt::formatter<ri::RuleVariantView>::format(const ri::RuleVariantView& value, fmt::format_context& context) const
 {
-    return std::visit([&](auto concrete) { return fmt::format_to(context.out(), "{}", concrete); }, value.get_variant());
+    return std::visit([&](auto concrete) { return fmt::format_to(context.out(), "{}", concrete); }, value.variant());
 }
 
 fmt::format_context::iterator fmt::formatter<ri::ModuleView>::format(const ri::ModuleView& value, fmt::format_context& context) const
@@ -146,20 +146,20 @@ fmt::format_context::iterator fmt::formatter<ri::ModuleView>::format(const ri::M
     auto out = fmt::format_to(context.out(), "(:module");
     {
         const auto deeper = urd::scoped_indent();
-        out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), value.get_symbol().get_name());
+        out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), value.symbol().name());
         out = fmt::format_to(out, "{}(:arguments)", urd::new_line());
 
         out = fmt::format_to(out, "{}(:registers", urd::new_line());
-        for (auto register_ : value.get_registers<rk::dl::ConceptTag>())
-            out = fmt::format_to(out, " (:{} {})", rk::dl::ConceptTag::keyword, register_.get_name());
-        for (auto register_ : value.get_registers<rk::dl::RoleTag>())
-            out = fmt::format_to(out, " (:{} {})", rk::dl::RoleTag::keyword, register_.get_name());
+        for (auto register_ : value.registers<rk::dl::ConceptTag>())
+            out = fmt::format_to(out, " (:{} {})", rk::dl::ConceptTag::keyword, register_.name());
+        for (auto register_ : value.registers<rk::dl::RoleTag>())
+            out = fmt::format_to(out, " (:{} {})", rk::dl::RoleTag::keyword, register_.name());
         out = fmt::format_to(out, ")");
 
-        out = fmt::format_to(out, "{}(:entry {})", urd::new_line(), value.get_entry_memory_state().get_name());
+        out = fmt::format_to(out, "{}(:entry {})", urd::new_line(), value.entry_memory_state().name());
         out = fmt::format_to(out, "{}(:memory", urd::new_line());
-        for (auto state : value.get_memory_states())
-            out = fmt::format_to(out, " {}", state.get_name());
+        for (auto state : value.memory_states())
+            out = fmt::format_to(out, " {}", state.name());
         out = fmt::format_to(out, ")");
 
         out = fmt::format_to(out, "{}(:features", urd::new_line());
@@ -170,18 +170,18 @@ fmt::format_context::iterator fmt::formatter<ri::ModuleView>::format(const ri::M
                 for (auto feature : range)
                     out = fmt::format_to(out, "{}{}", urd::new_line(), feature);
             };
-            write_features(value.get_features<rk::dl::ConceptTag>());
-            write_features(value.get_features<rk::dl::RoleTag>());
-            write_features(value.get_features<rk::dl::BooleanTag>());
-            write_features(value.get_features<rk::dl::NumericalTag>());
-            write_features(value.get_query_features());
+            write_features(value.features<rk::dl::ConceptTag>());
+            write_features(value.features<rk::dl::RoleTag>());
+            write_features(value.features<rk::dl::BooleanTag>());
+            write_features(value.features<rk::dl::NumericalTag>());
+            write_features(value.query_features());
         }
         out = fmt::format_to(out, "{})", urd::new_line());
 
         out = fmt::format_to(out, "{}(:rules", urd::new_line());
         {
             const auto rules = urd::scoped_indent();
-            for (const auto& transition : value.get_memory_transitions())
+            for (const auto& transition : value.memory_transitions())
             {
                 if (transition.empty())
                     continue;
@@ -189,18 +189,18 @@ fmt::format_context::iterator fmt::formatter<ri::ModuleView>::format(const ri::M
                 out = fmt::format_to(out, "{}(:rule", urd::new_line());
                 {
                     const auto rule_sections = urd::scoped_indent();
-                    out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), first.get_symbol());
+                    out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), first.symbol());
                     out = fmt::format_to(out, "{}(:expression", urd::new_line());
                     {
                         const auto expression = urd::scoped_indent();
                         std::visit(
                             [&](auto first_rule)
                             {
-                                out = fmt::format_to(out, "{}(:source-memory {})", urd::new_line(), first_rule.get_source().get_name());
+                                out = fmt::format_to(out, "{}(:source-memory {})", urd::new_line(), first_rule.source().name());
                                 if constexpr (rp::transition_rule<decltype(first_rule)>)
-                                    out = fmt::format_to(out, "{}(:target-memory {})", urd::new_line(), first_rule.get_target().get_name());
+                                    out = fmt::format_to(out, "{}(:target-memory {})", urd::new_line(), first_rule.target().name());
                             },
-                            first.get_variant());
+                            first.variant());
                         for (auto rule : transition)
                             out = fmt::format_to(out, "{}{}", urd::new_line(), rule);
                     }
@@ -212,10 +212,10 @@ fmt::format_context::iterator fmt::formatter<ri::ModuleView>::format(const ri::M
         out = fmt::format_to(out, "{})", urd::new_line());
 
         const auto symbol = [&](auto feature)
-        { return std::visit([](auto concrete) { return concrete.get_symbol(); }, urd::resolve(feature, value.context()).get_variant()); };
+        { return std::visit([](auto concrete) { return concrete.symbol(); }, urd::resolve(feature, value.context()).variant()); };
         out = fmt::format_to(out, "{}(:reset-spo", urd::new_line());
-        for (const auto& pair : value.get_reset_pairs())
-            out = fmt::format_to(out, " (:prec {} {})", symbol(pair.get_before().index()), symbol(pair.get_after().index()));
+        for (const auto& pair : value.reset_pairs())
+            out = fmt::format_to(out, " (:prec {} {})", symbol(pair.before().index()), symbol(pair.after().index()));
         out = fmt::format_to(out, ")");
     }
     return fmt::format_to(out, "{})", urd::new_line());
@@ -226,8 +226,8 @@ fmt::format_context::iterator fmt::formatter<ri::ProgramView>::format(const ri::
     auto out = fmt::format_to(context.out(), "(:program");
     {
         const auto deeper = urd::scoped_indent();
-        out = fmt::format_to(out, "{}(:entry {})", urd::new_line(), value.get_entry_mod().get_symbol().get_name());
-        out = fmt::format_to(out, "{}{}", urd::new_line(), value.get_entry_mod());
+        out = fmt::format_to(out, "{}(:entry {})", urd::new_line(), value.entry_mod().symbol().name());
+        out = fmt::format_to(out, "{}{}", urd::new_line(), value.entry_mod());
     }
     return fmt::format_to(out, "{})", urd::new_line());
 }
@@ -239,7 +239,7 @@ fmt::format_context::iterator fmt::formatter<urd::data<rp::ProgramProofVertexLab
 {
     return fmt::format_to(context.out(),
                           "state={} initial={} goal={} alive={} unsolvable={}",
-                          value.program_state.get_state().pack().index(),
+                          value.program_state.state().pack().index(),
                           value.is_initial,
                           value.is_goal,
                           value.is_alive,

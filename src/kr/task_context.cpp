@@ -11,9 +11,9 @@
 
 #include <runir/kr/database/syntax/query_repository.hpp>
 #include <stdexcept>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
-#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/states/state_builder.hpp>
+#include <tyr/planning/tasks/ground/task.hpp>
+#include <tyr/planning/tasks/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/formalism/builder_instantiations.hpp>
 #include <yggdrasil/formalism/symbol_context_impl.hpp>

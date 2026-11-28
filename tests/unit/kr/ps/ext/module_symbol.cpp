@@ -26,7 +26,7 @@ static_assert(requires(Data& data) {
 });
 static_assert(requires(const View& view) {
     view.index();
-    view.get_name();
+    view.name();
 });
 
 }

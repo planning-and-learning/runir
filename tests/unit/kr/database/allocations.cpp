@@ -243,7 +243,7 @@ struct PreparedPooledEvaluation
                 valid &= relabeled->empty();
                 relabeled->insert(cells(offset, offset + 1, offset + 2));
                 const auto borrowed = borrow(*relabeled);
-                valid &= borrowed.get_rows().size() == 1;
+                valid &= borrowed.rows().size() == 1;
                 valid &= std::ranges::equal(borrowed.columns(), alternate_join_columns);
             }
             auto joined = std::optional<Relation>(std::in_place, joining.output_columns);
@@ -307,7 +307,7 @@ struct InterningEvaluation
             const auto interned_schema = repository.insert(schema_data).first;
             const auto [duplicate_schema, schema_created] = repository.insert(schema_data);
             valid &= !schema_created && interned_schema.index() == duplicate_schema.index();
-            valid &= std::ranges::equal(interned_schema.get_values(), schema);
+            valid &= std::ranges::equal(interned_schema.values(), schema);
             auto builder = std::optional<Relation>(std::in_place, schema);
             const auto seed = generation * 8192 + static_cast<ygg::uint_t>(logical_index) * 4;
             const std::array<ygg::uint_t, 3> first_row { seed, seed + 1, seed + 2 };
@@ -322,7 +322,7 @@ struct InterningEvaluation
             kr::database::assign(*extracted, copied);
             kr::database::assign(*extracted, borrow(*extracted));
             kr::database::assign(*extracted, extracted->view());
-            valid &= extracted->size() == original.get_rows().size();
+            valid &= extracted->size() == original.rows().size();
             valid &= std::ranges::equal(extracted->columns(), schema);
             valid &= extracted->contains(std::span<const ygg::Value>(packed(first_row)).first(arity));
             builder->clear();
@@ -334,21 +334,21 @@ struct InterningEvaluation
             valid &= original.index() == duplicate.index();
             valid &= original.index() != renamed.index();
             valid &= std::ranges::equal(
-                original.get_rows(),
-                renamed.get_rows(),
+                original.rows(),
+                renamed.rows(),
                 {},
                 [](const auto& row) { return row.index(); },
                 [](const auto& row) { return row.index(); });
-            valid &= original.row(0).get_values().data() == renamed.row(0).get_values().data()
-                     && original.row(0).get_values().first_bit() == renamed.row(0).get_values().first_bit();
-            valid &= original.get_rows().size() == 2 && renamed.columns().size() == arity;
+            valid &= original.row(0).values().data() == renamed.row(0).values().data()
+                     && original.row(0).values().first_bit() == renamed.row(0).values().first_bit();
+            valid &= original.rows().size() == 2 && renamed.columns().size() == arity;
             valid &= renamed.contains(std::span<const ygg::Value>(packed(first_row)).first(arity));
         }
         auto nullary = std::optional<Relation>(std::in_place);
         const auto false_view = runir::tests::ops::intern(repository, *nullary).first;
         nullary->insert(cells());
         const auto true_view = runir::tests::ops::intern(repository, *nullary).first;
-        valid &= false_view.get_rows().empty() && true_view.get_rows().size() == 1;
+        valid &= false_view.rows().empty() && true_view.rows().size() == 1;
         valid &= repository.size<ygg::Relation<ygg::Schema>>() == 2 * count + 2;
         return valid;
     }
@@ -604,12 +604,12 @@ struct IncrementalEvaluation
             joining.update(delta.change(), std::pair { borrow(unchanged), borrow(unchanged) }, workspace);
             const auto& joined_delta = joining.get_delta();
             projecting.update(joined_delta.change(), workspace);
-            valid &= joining.get_result().get_rows().size() == rows * fanout;
-            valid &= projecting.get_result().get_rows().size() == rows;
-            valid &= joined_delta.added->view().get_rows().size() == changed_rows * fanout;
-            valid &= joined_delta.removed->view().get_rows().size() == changed_rows * fanout;
-            valid &= projecting.get_delta().added->view().get_rows().size() == changed_rows;
-            valid &= projecting.get_delta().removed->view().get_rows().size() == changed_rows;
+            valid &= joining.get_result().rows().size() == rows * fanout;
+            valid &= projecting.get_result().rows().size() == rows;
+            valid &= joined_delta.added->view().rows().size() == changed_rows * fanout;
+            valid &= joined_delta.removed->view().rows().size() == changed_rows * fanout;
+            valid &= projecting.get_delta().added->view().rows().size() == changed_rows;
+            valid &= projecting.get_delta().removed->view().rows().size() == changed_rows;
             for (size_t i = begin; i < begin + changed_rows; ++i)
                 valid &= projecting.get_result().contains(cells(values[i]));
         };
@@ -711,7 +711,7 @@ struct ChangingJoinEvaluation
                         ++expected;
                         valid &= joining.get_result().contains(cells(left[0], left[1], right[1]));
                     }
-            valid &= joining.get_result().get_rows().size() == expected;
+            valid &= joining.get_result().rows().size() == expected;
         };
         replace(0, 1);
         replace(changed_rows, 2);
@@ -847,9 +847,9 @@ TEST(YggdrasilTests, DatabaseWarmedDistanceSourceChurnReusesFiniteUniverseStorag
         {
             evaluator.update(changes[vertex].change(), std::pair { borrow(no_edges), borrow(no_edges) }, std::pair { borrow(no_targets), borrow(no_targets) });
             const auto source = (vertex + 1) % vertices;
-            valid &= evaluator.get_result().get_rows().size() == vertices;
+            valid &= evaluator.get_result().rows().size() == vertices;
             valid &= evaluator.get_result().contains(cells(source, 0, (vertices - source) % vertices));
-            valid &= evaluator.get_delta().added->view().get_rows().size() == vertices && evaluator.get_delta().removed->view().get_rows().size() == vertices;
+            valid &= evaluator.get_delta().added->view().rows().size() == vertices && evaluator.get_delta().removed->view().rows().size() == vertices;
         }
         return valid;
     };
@@ -887,15 +887,15 @@ TEST(YggdrasilTests, DatabaseWarmedDistanceEdgeRepairAndUndoRetainStorage)
     const auto cycle = [&]
     {
         evaluator.update(std::pair { borrow(no_sources), borrow(no_sources) }, change.change(), std::pair { borrow(no_targets), borrow(no_targets) });
-        bool valid = evaluator.get_result().get_rows().size() == std::size_t { 2 } * vertices;
+        bool valid = evaluator.get_result().rows().size() == std::size_t { 2 } * vertices;
         valid &= evaluator.get_result().contains(cells(0, 8, 1));
-        valid &= evaluator.get_delta().added->view().get_rows().size() == 8 && evaluator.get_delta().removed->view().get_rows().size() == 8;
+        valid &= evaluator.get_delta().added->view().rows().size() == 8 && evaluator.get_delta().removed->view().rows().size() == 8;
         evaluator.update(std::pair { borrow(no_sources), borrow(no_sources) },
                          std::pair { borrow(change.removed), borrow(change.added) },
                          std::pair { borrow(no_targets), borrow(no_targets) });
-        valid &= evaluator.get_result().get_rows().size() == std::size_t { 2 } * vertices;
+        valid &= evaluator.get_result().rows().size() == std::size_t { 2 } * vertices;
         valid &= evaluator.get_result().contains(cells(0, 8, 8));
-        valid &= evaluator.get_delta().added->view().get_rows().size() == 8 && evaluator.get_delta().removed->view().get_rows().size() == 8;
+        valid &= evaluator.get_delta().added->view().rows().size() == 8 && evaluator.get_delta().removed->view().rows().size() == 8;
         return valid;
     };
     for (size_t i = 0; i < 32; ++i)
@@ -940,19 +940,19 @@ TEST(YggdrasilTests, DatabaseWarmedDistanceDenseLocalHeapChurnRetainsStorage)
     const auto cycle = [&]
     {
         evaluator.update(std::pair { borrow(no_sources), borrow(no_sources) }, change.change(), std::pair { borrow(no_targets), borrow(no_targets) });
-        bool valid = evaluator.get_result().get_rows().size() == std::size_t { 4 } * width;
+        bool valid = evaluator.get_result().rows().size() == std::size_t { 4 } * width;
         valid &= evaluator.get_result().contains(cells(0, first_parent, 1));
         valid &= evaluator.get_result().contains(cells(3, first_child, 2));
-        valid &= evaluator.get_delta().added->view().get_rows().size() == std::size_t { 4 } * width
-                 && evaluator.get_delta().removed->view().get_rows().size() == std::size_t { 4 } * width;
+        valid &= evaluator.get_delta().added->view().rows().size() == std::size_t { 4 } * width
+                 && evaluator.get_delta().removed->view().rows().size() == std::size_t { 4 } * width;
         evaluator.update(std::pair { borrow(no_sources), borrow(no_sources) },
                          std::pair { borrow(change.removed), borrow(change.added) },
                          std::pair { borrow(no_targets), borrow(no_targets) });
-        valid &= evaluator.get_result().get_rows().size() == std::size_t { 4 } * width;
+        valid &= evaluator.get_result().rows().size() == std::size_t { 4 } * width;
         valid &= evaluator.get_result().contains(cells(0, first_parent, first_parent));
         valid &= evaluator.get_result().contains(cells(3, first_child, first_parent - 2));
-        valid &= evaluator.get_delta().added->view().get_rows().size() == std::size_t { 4 } * width
-                 && evaluator.get_delta().removed->view().get_rows().size() == std::size_t { 4 } * width;
+        valid &= evaluator.get_delta().added->view().rows().size() == std::size_t { 4 } * width
+                 && evaluator.get_delta().removed->view().rows().size() == std::size_t { 4 } * width;
         return valid;
     };
     for (size_t i = 0; i < 32; ++i)

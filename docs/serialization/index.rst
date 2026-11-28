@@ -108,9 +108,9 @@ schema is unchanged. For example, keep rule conditions and effects as native tex
    dictionaries.register_table(
        base.Rule, "rules", "r",
        project=lambda rule: {
-           "symbol": rule.get_symbol(),
-           "conditions": [str(condition) for condition in rule.get_conditions()],
-           "effects": [str(effect) for effect in rule.get_effects()],
+           "symbol": rule.symbol(),
+           "conditions": [str(condition) for condition in rule.conditions()],
+           "effects": [str(effect) for effect in rule.effects()],
        },
    )
 
@@ -128,8 +128,8 @@ Or represent a Tyr action binding with its name and references to objects:
        "actions",
        "a",
        project=lambda binding: {
-           "name": binding.get_relation().get_name(),
-           "objects": binding.get_objects(),
+           "name": binding.relation().name(),
+           "objects": binding.objects(),
        },
    )
 

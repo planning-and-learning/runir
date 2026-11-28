@@ -100,16 +100,16 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert greedy.statistics.num_expanded == 1
     assert greedy.statistics.num_generated == 1
     assert greedy.plan is not None
-    assert greedy.plan.get_length() == 1
-    step = greedy.plan.get_labeled_succ_nodes()[0]
+    assert greedy.plan.length() == 1
+    step = greedy.plan.labeled_succ_nodes()[0]
     edge = next(iter(range(greedy.graph.num_edges)))
     source = greedy.graph.vertex_value(greedy.graph.source(edge))
     target = greedy.graph.vertex_value(greedy.graph.target(edge))
-    assert _same_state(greedy.plan.get_start_node().get_state(), source.state)
-    assert _same_state(step.node.get_state(), target.state)
-    assert step.label == greedy.graph.edge_value(edge).action
+    assert _same_state(greedy.plan.start_node().state(), source.state)
+    assert _same_state(step.node().state(), target.state)
+    assert step.label() == greedy.graph.edge_value(edge).action
     assert target.is_goal
-    assert greedy.plan.get_cost() == step.node.get_metric()
+    assert greedy.plan.cost() == step.node().metric()
 
     options.universal = True
     universal = _find_solution(context, sketch, options)
@@ -173,12 +173,11 @@ def test_search_preserves_cumulative_node_metrics(tmp_path: Path, kind: str) -> 
 
     assert result.status == ProofStatus.SUCCESS
     assert result.plan is not None
-    unpacked = result.plan.unpack()
-    for plan in (result.plan, unpacked, unpacked.pack()):
-        assert plan.get_start_node().get_metric() == 7
-        assert [step.node.get_metric() for step in plan.get_labeled_succ_nodes()] == [10, 15]
-        assert plan.get_length() == 2
-        assert plan.get_cost() == 15
+    plan = result.plan
+    assert plan.start_node().metric() == 7
+    assert [step.node().metric() for step in plan.labeled_succ_nodes()] == [10, 15]
+    assert plan.length() == 2
+    assert plan.cost() == 15
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -191,12 +190,12 @@ def test_initial_goal_is_not_expanded(tmp_path: Path, kind: str) -> None:
     assert result.statistics.num_generated == 0
     assert result.plan is not None
     assert result.plan.empty()
-    assert result.plan.get_cost() == 0
-    assert result.plan.get_start_node().get_metric() == 7
+    assert result.plan.cost() == 0
+    assert result.plan.start_node().metric() == 7
     initial = result.graph.vertex_value(next(iter(result.graph.vertices())))
     assert initial.is_initial
     assert initial.is_goal
-    assert _same_state(result.plan.get_start_node().get_state(), initial.state)
+    assert _same_state(result.plan.start_node().state(), initial.state)
 
     options.universal = True
     universal = _find_solution(context, sketch, options)

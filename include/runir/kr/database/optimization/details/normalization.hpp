@@ -72,7 +72,7 @@ class Normalizer
     /// Labels of the renamed query's argument for the given renamed labels.
     static urd::Store<urd::sequence<urd::index<ygg::Column>>> inverse(QueryView<QueryRenameTag> rename, std::span<const urd::index<ygg::Column>> renamed)
     {
-        const auto before = columns_of(rename.get_operand()), after = rename.columns();
+        const auto before = columns_of(rename.operand()), after = rename.columns();
         urd::Store<urd::sequence<urd::index<ygg::Column>>> result;
         for (const auto label : renamed)
             result.push_back(before[static_cast<size_t>(std::ranges::find(after, label, &urd::data<ygg::ColumnLayout>::label) - after.begin())].label);
@@ -111,12 +111,12 @@ class Normalizer
     QueryView<> project_filter_join(QueryView<> arg, std::span<const urd::index<ygg::Column>> columns)
     {
         const auto operation = as<Tag>(arg);
-        const auto left_operand = operation.get_left_operand();
-        const auto kept = kept_labels(left_operand, columns, columns_of(operation.get_right_operand()));
+        const auto left_operand = operation.left_operand();
+        const auto kept = kept_labels(left_operand, columns, columns_of(operation.right_operand()));
         // Nothing to drop below: the projection stays above.
         if (kept.size() == columns_of(left_operand).size())
             return finish_project(arg, columns);
-        return project(filter_join<Tag>(project(left_operand, kept), operation.get_right_operand()), columns);
+        return project(filter_join<Tag>(project(left_operand, kept), operation.right_operand()), columns);
     }
 
     /// A selection's condition alone (its columns; a value selection's constant too): what select carries down. The
@@ -143,11 +143,10 @@ class Normalizer
     static Operation<QuerySelectValueTag> condition(const Operation<QuerySelectValueTag>& data)
     { return condition(data.column, data.constant, data.constant_type); }
 
-    static Operation<QuerySelectEqualTag> condition(QueryView<QuerySelectEqualTag> query)
-    { return condition(query.get_left_column(), query.get_right_column()); }
+    static Operation<QuerySelectEqualTag> condition(QueryView<QuerySelectEqualTag> query) { return condition(query.left_column(), query.right_column()); }
 
     static Operation<QuerySelectValueTag> condition(QueryView<QuerySelectValueTag> query)
-    { return condition(query.get_column(), query.get_constant(), query.get_constant_type()); }
+    { return condition(query.column(), query.constant(), query.constant_type()); }
 
     static urd::Store<urd::sequence<urd::index<ygg::Column>>> tested(const Operation<QuerySelectEqualTag>& data)
     { return { data.left_column, data.right_column }; }
@@ -186,43 +185,43 @@ class Normalizer
         if (is<QueryJoinTag>(arg))
         {
             const auto operation = as<QueryJoinTag>(arg);
-            if (within(operation.get_left_operand()))
-                return join(select(data, operation.get_left_operand()), operation.get_right_operand());
-            if (within(operation.get_right_operand()))
-                return join(operation.get_left_operand(), select(data, operation.get_right_operand()));
+            if (within(operation.left_operand()))
+                return join(select(data, operation.left_operand()), operation.right_operand());
+            if (within(operation.right_operand()))
+                return join(operation.left_operand(), select(data, operation.right_operand()));
         }
         if (is<QueryProjectTag>(arg))
         {
             const auto operation = as<QueryProjectTag>(arg);
-            return project(select(data, operation.get_operand()), operation.get_labels());
+            return project(select(data, operation.operand()), operation.labels());
         }
         if (is<QueryRenameTag>(arg))
         {
             const auto operation = as<QueryRenameTag>(arg);
             auto inner = condition(data);
             retarget(inner, operation);
-            return rename(select(inner, operation.get_operand()), operation.get_labels());
+            return rename(select(inner, operation.operand()), operation.labels());
         }
         if (is<QueryUnionTag>(arg))
         {
             const auto operation = as<QueryUnionTag>(arg);
-            return union_(select(data, operation.get_left_operand()), select(data, operation.get_right_operand()));
+            return union_(select(data, operation.left_operand()), select(data, operation.right_operand()));
         }
         if (is<QueryDifferenceTag>(arg))
         {
             const auto operation = as<QueryDifferenceTag>(arg);
-            return difference(select(data, operation.get_left_operand()), select(data, operation.get_right_operand()));
+            return difference(select(data, operation.left_operand()), select(data, operation.right_operand()));
         }
         // The output of a semijoin or antijoin is its left operand.
         if (is<QuerySemijoinTag>(arg))
         {
             const auto operation = as<QuerySemijoinTag>(arg);
-            return filter_join<QuerySemijoinTag>(select(data, operation.get_left_operand()), operation.get_right_operand());
+            return filter_join<QuerySemijoinTag>(select(data, operation.left_operand()), operation.right_operand());
         }
         if (is<QueryAntijoinTag>(arg))
         {
             const auto operation = as<QueryAntijoinTag>(arg);
-            return filter_join<QueryAntijoinTag>(select(data, operation.get_left_operand()), operation.get_right_operand());
+            return filter_join<QueryAntijoinTag>(select(data, operation.left_operand()), operation.right_operand());
         }
         return m_build.template make<Tag>(
             [&](auto& filtered)
@@ -238,19 +237,19 @@ class Normalizer
     {
         const auto child = [&](QueryView<> operand) { return (*this)(operand); };
         if constexpr (std::same_as<Tag, QueryJoinTag>)
-            return join(child(query.get_left_operand()), child(query.get_right_operand()));
+            return join(child(query.left_operand()), child(query.right_operand()));
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            return union_(child(query.get_left_operand()), child(query.get_right_operand()));
+            return union_(child(query.left_operand()), child(query.right_operand()));
         else if constexpr (std::same_as<Tag, QueryDifferenceTag>)
-            return difference(child(query.get_left_operand()), child(query.get_right_operand()));
+            return difference(child(query.left_operand()), child(query.right_operand()));
         else if constexpr (std::same_as<Tag, QuerySemijoinTag> || std::same_as<Tag, QueryAntijoinTag>)
-            return filter_join<Tag>(child(query.get_left_operand()), child(query.get_right_operand()));
+            return filter_join<Tag>(child(query.left_operand()), child(query.right_operand()));
         else if constexpr (std::same_as<Tag, QueryProjectTag>)
-            return project(child(query.get_operand()), query.get_labels());
+            return project(child(query.operand()), query.labels());
         else if constexpr (std::same_as<Tag, QueryRenameTag>)
-            return rename(child(query.get_operand()), query.get_labels());
+            return rename(child(query.operand()), query.labels());
         else if constexpr (std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
-            return select(condition(query), child(query.get_operand()));
+            return select(condition(query), child(query.operand()));
         else
         {
             urd::Store<urd::sequence<QueryView<>>> children;
@@ -277,7 +276,7 @@ public:
     {
         if (const auto it = m_normalized.find(source.index()); it != m_normalized.end())
             return it->second;
-        const auto normalized = std::visit([&](auto query) { return normalize(source, query); }, source.get_variant());
+        const auto normalized = std::visit([&](auto query) { return normalize(source, query); }, source.variant());
         m_normalized.insert_or_assign(source.index(), normalized);
         return normalized;
     }

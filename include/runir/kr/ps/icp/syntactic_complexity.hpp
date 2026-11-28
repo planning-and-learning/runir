@@ -13,22 +13,22 @@ template<typename C>
 std::size_t syntactic_complexity(const urd::index_view<Module, C>& view)
 {
     auto result = std::size_t { 0 };
-    for (auto feature : view.template get_features<runir::kr::dl::ConceptTag>())
+    for (auto feature : view.template features<runir::kr::dl::ConceptTag>())
         result += runir::kr::ps::syntactic_complexity(feature);
-    for (auto feature : view.template get_features<runir::kr::dl::RoleTag>())
+    for (auto feature : view.template features<runir::kr::dl::RoleTag>())
         result += runir::kr::ps::syntactic_complexity(feature);
-    for (auto feature : view.template get_features<runir::kr::dl::BooleanTag>())
+    for (auto feature : view.template features<runir::kr::dl::BooleanTag>())
         result += runir::kr::ps::syntactic_complexity(feature);
-    for (auto feature : view.template get_features<runir::kr::dl::NumericalTag>())
+    for (auto feature : view.template features<runir::kr::dl::NumericalTag>())
         result += runir::kr::ps::syntactic_complexity(feature);
-    for (auto feature : view.get_query_features())
+    for (auto feature : view.query_features())
         result += runir::kr::ps::syntactic_complexity(feature);
     return result;
 }
 
 template<typename C>
 std::size_t syntactic_complexity(const urd::index_view<Program, C>& view)
-{ return syntactic_complexity(view.get_entry_mod()); }
+{ return syntactic_complexity(view.entry_mod()); }
 
 }  // namespace runir::kr::ps::icp
 

@@ -15,7 +15,7 @@ template<typename C>
 std::size_t syntactic_complexity(const urd::index_view<Classifier, C>& view)
 {
     auto result = std::size_t { 0 };
-    for (auto feature : view.get_features())
+    for (auto feature : view.features())
         result += runir::kr::ps::syntactic_complexity(feature);
     return result;
 }

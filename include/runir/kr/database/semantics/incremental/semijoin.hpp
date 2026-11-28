@@ -46,7 +46,7 @@ class SemijoinEvaluator
         const auto& left_keys = m_plan->left_keys;
         const auto& right_keys = m_plan->right_keys;
         if (left_keys.empty())
-            return !m_right_operand->view().get_rows().empty();
+            return !m_right_operand->view().rows().empty();
         for (const auto [first, last] = m_right_index.equal_range(database::detail::join_key_hash(left_row, left_keys));
              const auto slot : std::ranges::subrange(first, last) | std::views::values)
             if (database::detail::join_keys_equal(m_right_operand->at(slot).values, right_keys, left_row, left_keys))
@@ -76,15 +76,15 @@ class SemijoinEvaluator
     {
         const auto& left_keys = m_plan->left_keys;
         const auto& right_keys = m_plan->right_keys;
-        if (right_rows.get_rows().empty())
+        if (right_rows.rows().empty())
             return;
         if (left_keys.empty())
         {
-            for (const auto& held : m_left_operand->view().get_rows())
+            for (const auto& held : m_left_operand->view().rows())
                 ygg::with_values(held, [&](const auto& values) { reconcile(values); });
             return;
         }
-        for (const auto& right_held : right_rows.get_rows())
+        for (const auto& right_held : right_rows.rows())
             ygg::with_values(right_held,
                              [&](const auto& right_row)
                              {
@@ -103,7 +103,7 @@ class SemijoinEvaluator
         const auto& [right_added, right_removed] = right_operand;
         m_initialized = false;
         m_delta.clear();
-        for (const auto& held : left_removed.get_rows())
+        for (const auto& held : left_removed.rows())
             ygg::with_values(held,
                              [&](const auto& values)
                              {
@@ -114,10 +114,10 @@ class SemijoinEvaluator
         detail::erase_rows(right_removed, *m_right_operand, m_plan->right_keys, m_right_index);
         detail::insert_rows(right_added, *m_right_operand, m_plan->right_keys, m_right_index);
         detail::insert_rows(left_added, *m_left_operand, m_plan->left_keys, m_left_index);
-        for (const auto& held : left_added.get_rows())
+        for (const auto& held : left_added.rows())
             ygg::with_values(held, [&](const auto& values) { reconcile(values); });
         if (m_plan->left_keys.empty())
-            reconcile_matches(right_added.get_rows().empty() ? right_removed : right_added);
+            reconcile_matches(right_added.rows().empty() ? right_removed : right_added);
         else
         {
             reconcile_matches(right_removed);
@@ -162,7 +162,7 @@ public:
         m_delta.clear();
         detail::insert_rows(left_operand, *m_left_operand, m_plan->left_keys, m_left_index);
         detail::insert_rows(right_operand, *m_right_operand, m_plan->right_keys, m_right_index);
-        for (const auto& held : m_left_operand->view().get_rows())
+        for (const auto& held : m_left_operand->view().rows())
             ygg::with_values(held,
                              [&](const auto& values)
                              {

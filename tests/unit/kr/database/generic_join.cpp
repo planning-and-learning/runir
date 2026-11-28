@@ -34,12 +34,12 @@ struct ThrowingRelation : ygg::FreeRelationBuilderView
 
     ThrowingRelation(const RelationBuilder& input, size_t fail_on) : ygg::FreeRelationBuilderView(borrow(input)), fail_on_read(fail_on) {}
 
-    /// Its rows, read whole: the evaluators read a change through get_rows.
-    auto get_rows() const
+    /// Its rows, read whole: the evaluators read a change through rows.
+    auto rows() const
     {
         if (++reads == fail_on_read)
             throw std::runtime_error("Injected relation read failure.");
-        return ygg::FreeRelationBuilderView::get_rows();
+        return ygg::FreeRelationBuilderView::rows();
     }
 };
 
@@ -57,8 +57,8 @@ template<ygg::RelationViewConcept<ygg::Schema> A, ygg::RelationViewConcept<ygg::
 void expect_same(const A& actual, const E& expected)
 {
     ASSERT_TRUE(std::ranges::equal(actual.columns(), expected.columns()));
-    ASSERT_EQ(actual.get_rows().size(), expected.get_rows().size());
-    for (size_t row = 0; row < expected.get_rows().size(); ++row)
+    ASSERT_EQ(actual.rows().size(), expected.rows().size());
+    for (size_t row = 0; row < expected.rows().size(); ++row)
         EXPECT_TRUE(actual.contains(values_of(expected.row(row))));
 }
 
@@ -80,9 +80,9 @@ void apply(RelationBuilder& input, const Change& change, bool undo = false)
     const auto [change_added, change_removed] = change.change();
     const auto& removed = undo ? change_added : change_removed;
     const auto& added = undo ? change_removed : change_added;
-    for (size_t i = 0; i < removed.get_rows().size(); ++i)
+    for (size_t i = 0; i < removed.rows().size(); ++i)
         ASSERT_TRUE(input.erase(values_of(removed.row(i))));
-    for (size_t i = 0; i < added.get_rows().size(); ++i)
+    for (size_t i = 0; i < added.rows().size(); ++i)
         input.insert(values_of(added.row(i)));
 }
 
@@ -212,12 +212,12 @@ TEST(YggdrasilTests, DatabaseGenericJoinHandlesDisconnectedAndNullaryInputs)
     change.added.insert(std::array<ygg::Value, 0> {});
     const std::array changes { std::pair { borrow(change.added), borrow(change.removed) }, std::pair { borrow(change.added), borrow(change.removed) } };
     evaluator.update(changes);
-    EXPECT_EQ(evaluator.get_delta().added->view().get_rows().size(), 1);
-    EXPECT_EQ(evaluator.get_result().get_rows().size(), 1);
+    EXPECT_EQ(evaluator.get_delta().added->view().rows().size(), 1);
+    EXPECT_EQ(evaluator.get_result().rows().size(), 1);
     const std::array undo { std::pair { borrow(change.removed), borrow(change.added) }, std::pair { borrow(change.removed), borrow(change.added) } };
     evaluator.update(undo);
-    EXPECT_TRUE(evaluator.get_result().get_rows().empty());
-    EXPECT_EQ(evaluator.get_delta().removed->view().get_rows().size(), 1);
+    EXPECT_TRUE(evaluator.get_result().rows().empty());
+    EXPECT_EQ(evaluator.get_delta().removed->view().rows().size(), 1);
 }
 
 TEST(YggdrasilTests, DatabaseGenericJoinUsesCanonicalTypedBytesWithoutValueComparators)
@@ -251,7 +251,7 @@ TEST(YggdrasilTests, DatabaseGenericJoinUsesCanonicalTypedBytesWithoutValueCompa
     const std::array changes { std::pair { borrow(left_change.added), borrow(left_change.removed) },
                                std::pair { borrow(right_change.added), borrow(right_change.removed) } };
     evaluator.update(changes);
-    ASSERT_EQ(evaluator.get_result().get_rows().size(), 1);
+    ASSERT_EQ(evaluator.get_result().rows().size(), 1);
     EXPECT_TRUE(evaluator.get_result().contains(std::array { ygg::encode_value(false), ygg::encode_value(std::uint64_t { 6 }), ygg::encode_value(0.0) }));
     const std::array undo { std::pair { borrow(left_change.removed), borrow(left_change.added) },
                             std::pair { borrow(right_change.removed), borrow(right_change.added) } };
@@ -269,8 +269,8 @@ TEST(YggdrasilTests, DatabaseGenericJoinIncrementalConsolidatesMixedAliasChanges
     const auto first = runir::tests::ops::intern(repository, edge).first;
     const auto second = runir::tests::ops::rename(repository, first, runir::tests::ops::cols({ ColumnIndex(2), ColumnIndex(3) }));
     ASSERT_TRUE(std::ranges::equal(
-        first.get_rows(),
-        second.get_rows(),
+        first.rows(),
+        second.rows(),
         {},
         [](const auto& row) { return row.index(); },
         [](const auto& row) { return row.index(); }));  // a rename keeps the rows
@@ -325,9 +325,9 @@ TEST(YggdrasilTests, DatabaseGenericJoinIncrementalAvoidsTransientCrossedMatches
     b.added.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(3)) });
     const std::array changes { std::pair { borrow(a.added), borrow(a.removed) }, std::pair { borrow(b.added), borrow(b.removed) } };
     evaluator.update(changes);
-    EXPECT_TRUE(evaluator.get_result().get_rows().empty());
-    EXPECT_TRUE(evaluator.get_delta().added->view().get_rows().empty());
-    EXPECT_TRUE(evaluator.get_delta().removed->view().get_rows().empty());
+    EXPECT_TRUE(evaluator.get_result().rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().added->view().rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().removed->view().rows().empty());
 }
 
 TEST(YggdrasilTests, DatabaseGenericJoinIncrementalProjectionPreservesReplacedWitnesses)
@@ -351,9 +351,9 @@ TEST(YggdrasilTests, DatabaseGenericJoinIncrementalProjectionPreservesReplacedWi
     const std::array changes { std::pair { borrow(a.added), borrow(a.removed) }, std::pair { borrow(b.added), borrow(b.removed) } };
     evaluator.update(changes);
     projected.update(evaluator.get_delta().change(), workspace);
-    EXPECT_EQ(projected.get_result().get_rows().size(), 1);
-    EXPECT_TRUE(projected.get_delta().added->view().get_rows().empty());
-    EXPECT_TRUE(projected.get_delta().removed->view().get_rows().empty());
+    EXPECT_EQ(projected.get_result().rows().size(), 1);
+    EXPECT_TRUE(projected.get_delta().added->view().rows().empty());
+    EXPECT_TRUE(projected.get_delta().removed->view().rows().empty());
 }
 
 TEST(YggdrasilTests, DatabaseGenericJoinIncrementalRandomBatchesMatchFullReevaluation)
@@ -460,13 +460,13 @@ TEST(YggdrasilTests, DatabaseGenericJoinRejectsInvalidBatchesBeforeMutationAndGu
     const std::array invalid { std::pair { borrow(first.added), borrow(first.removed) }, std::pair { borrow(second.added), borrow(second.removed) } };
     EXPECT_THROW(evaluator.update(invalid), std::invalid_argument);
     expect_same(evaluator.get_result(), borrow(input));
-    EXPECT_TRUE(evaluator.get_delta().added->view().get_rows().empty());
-    EXPECT_TRUE(evaluator.get_delta().removed->view().get_rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().added->view().rows().empty());
+    EXPECT_TRUE(evaluator.get_delta().removed->view().rows().empty());
 
     // The late invalid slot must not have removed the first slot's row.
     second.clear();
     EXPECT_NO_THROW(evaluator.update(invalid));
-    EXPECT_TRUE(evaluator.get_result().get_rows().empty());
+    EXPECT_TRUE(evaluator.get_result().rows().empty());
     expect_same(evaluator.get_delta().change().second, borrow(input));
 
     const std::array single_input { borrow(input) };
@@ -486,7 +486,7 @@ TEST(YggdrasilTests, DatabaseGenericJoinRejectsInvalidBatchesBeforeMutationAndGu
     failing.initialize(single_input);
     const std::array valid { std::pair { borrow(insertion.added), borrow(insertion.removed) } };
     failing.update(valid);
-    EXPECT_EQ(failing.get_result().get_rows().size(), 2);
+    EXPECT_EQ(failing.get_result().rows().size(), 2);
     expect_same(failing.get_delta().change().first, borrow(insertion.added));
 }
 }  // namespace runir::tests

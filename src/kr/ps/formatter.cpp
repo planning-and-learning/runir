@@ -27,9 +27,9 @@ namespace
 template<typename C>
 std::optional<std::string> query_head(urd::index_view<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>, C> view, size_t arity)
 {
-    if (view.get_columns().size() != arity)
+    if (view.columns().size() != arity)
         return std::nullopt;
-    return std::string(view.get_relation().get_name());
+    return std::string(view.relation().name());
 }
 
 template<typename V>
@@ -39,7 +39,7 @@ std::optional<std::string> query_head(V, size_t)
 template<typename C>
 std::optional<std::string> query_head(urd::index_view<runir::kr::dl::Query<>, C> view, size_t arity)
 {
-    return std::visit([&](auto concrete) { return query_head(concrete, arity); }, view.get_variant());
+    return std::visit([&](auto concrete) { return query_head(concrete, arity); }, view.variant());
 }
 
 /// The head that a feature's expression reads whole, as `(:head h)` parses into (parse_head_feature in
@@ -48,30 +48,30 @@ std::optional<std::string> query_head(urd::index_view<runir::kr::dl::Query<>, C>
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 std::optional<std::string> read_head(urd::index_view<runir::kr::dl::QueryProjection<Category>, C> view)
 {
-    const auto columns = view.get_columns();
+    const auto columns = view.columns();
     const auto arity = std::same_as<Category, runir::kr::dl::ConceptTag> ? size_t { 1 } : size_t { 2 };
-    auto result = query_head(view.get_operand(), arity);
+    auto result = query_head(view.operand(), arity);
     if (result)
         std::visit(
             [&](auto concrete)
             {
-                if constexpr (requires { concrete.get_relation(); })
-                    if (!std::ranges::equal(concrete.get_columns(), columns))
+                if constexpr (requires { concrete.relation(); })
+                    if (!std::ranges::equal(concrete.columns(), columns))
                         result.reset();
             },
-            view.get_operand().get_variant());
+            view.operand().variant());
     return result;
 }
 
 template<typename C>
 std::optional<std::string> read_head(urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::NonemptyTag>, C> view)
 {
-    return std::visit([&](auto operand) { return query_head(operand, 0); }, view.get_operand());
+    return std::visit([&](auto operand) { return query_head(operand, 0); }, view.operand());
 }
 
 template<typename C>
 std::optional<std::string> read_head(urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::ValueTag>, C> view)
-{ return query_head(view.get_operand(), 1); }
+{ return query_head(view.operand(), 1); }
 
 template<typename V>
 std::optional<std::string> read_head(V)
@@ -83,7 +83,7 @@ fmt::format_context::iterator
 fmt::formatter<urd::index_view<rp::Feature<Family, FeatureTag>, C>>::format(const urd::index_view<rp::Feature<Family, FeatureTag>, C>& value,
                                                                             fmt::format_context& context) const
 {
-    return std::visit([&](auto concrete) { return fmt::format_to(context.out(), "{}", concrete); }, value.get_variant());
+    return std::visit([&](auto concrete) { return fmt::format_to(context.out(), "{}", concrete); }, value.variant());
 }
 
 template<rk::FamilyTag Family, rp::dl::FeatureTag FeatureTag, typename C>
@@ -94,15 +94,15 @@ fmt::formatter<urd::index_view<rp::ConcreteFeature<Family, FeatureTag>, C>>::for
     auto out = fmt::format_to(context.out(), "(:{}", FeatureTag::keyword);
     {
         const auto deeper = urd::scoped_indent();
-        out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), value.get_symbol());
+        out = fmt::format_to(out, "{}(:symbol {})", urd::new_line(), value.symbol());
         // A feature that reads a :datalog head whole prints as it is written, so that the program parses again.
         auto head = std::optional<std::string>();
-        if constexpr (requires { value.get_feature().get_variant(); })
-            head = std::visit([](auto concrete) { return read_head(concrete); }, value.get_feature().get_variant());
+        if constexpr (requires { value.feature().variant(); })
+            head = std::visit([](auto concrete) { return read_head(concrete); }, value.feature().variant());
         if (head)
             out = fmt::format_to(out, "{}(:head {})", urd::new_line(), *head);
         else
-            out = fmt::format_to(out, "{}(:expression {})", urd::new_line(), value.get_feature());
+            out = fmt::format_to(out, "{}(:expression {})", urd::new_line(), value.feature());
     }
     return fmt::format_to(out, "{})", urd::new_line());
 }
@@ -115,7 +115,7 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<rp::ConcreteConditi
     return fmt::format_to(context.out(),
                           "({} {})",
                           ObservationTag::keyword,
-                          std::visit([](auto concrete) { return concrete.get_symbol(); }, value.get_feature().get_variant()));
+                          std::visit([](auto concrete) { return concrete.symbol(); }, value.feature().variant()));
 }
 
 template<rk::FamilyTag Family, rp::dl::FeatureTag FeatureTag, rp::dl::EffectObservationTag<FeatureTag> ObservationTag, typename C>
@@ -126,7 +126,7 @@ fmt::format_context::iterator fmt::formatter<urd::index_view<rp::ConcreteEffect<
     return fmt::format_to(context.out(),
                           "({} {})",
                           ObservationTag::keyword,
-                          std::visit([](auto concrete) { return concrete.get_symbol(); }, value.get_feature().get_variant()));
+                          std::visit([](auto concrete) { return concrete.symbol(); }, value.feature().variant()));
 }
 
 fmt::format_context::iterator fmt::formatter<rp::ProofStatus>::format(rp::ProofStatus value, fmt::format_context& context) const
@@ -137,7 +137,7 @@ fmt::format_context::iterator fmt::formatter<urd::data<rp::ProgramProofEdgeLabel
                                                                                                    fmt::format_context& context) const
 {
     if (value.rule)
-        return fmt::format_to(context.out(), "rule={}", value.rule->get_symbol());
+        return fmt::format_to(context.out(), "rule={}", value.rule->symbol());
     return fmt::format_to(context.out(), "rule=<none>");
 }
 

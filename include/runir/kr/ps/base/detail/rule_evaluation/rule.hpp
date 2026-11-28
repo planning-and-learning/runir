@@ -18,9 +18,9 @@ public:
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
 
     template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-    bool matches(RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
-                 tyr::planning::StateView<Kind> source,
-                 tyr::planning::StateView<Kind> target) const
+    bool matches(RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::SharedStateBuilderView<Kind>, EvaluationPolicy>& context,
+                 tyr::planning::SharedStateBuilderView<Kind> source,
+                 tyr::planning::SharedStateBuilderView<Kind> target) const
     {
         auto transition = context.make_dl_transition_context(source, target);
         return runir::kr::ps::base::is_compatible_with<Kind>(m_rule, transition);

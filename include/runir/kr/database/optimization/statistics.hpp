@@ -40,13 +40,13 @@ template<ygg::RelationViewConcept<ygg::Schema> Relation>
 RelationStatistics measure_relation(const Relation& relation)
 {
     RelationStatistics stats;
-    stats.rows = static_cast<double>(relation.get_rows().size());
+    stats.rows = static_cast<double>(relation.rows().size());
     const auto columns = relation.columns();
     auto seen = urd::Store<urd::set<ygg::Value>>();
     for (size_t c = 0; c < columns.size(); ++c)
     {
         seen.clear();
-        for (const auto& held : relation.get_rows())
+        for (const auto& held : relation.rows())
             ygg::with_values(held, [&](const auto& values) { seen.insert(*std::ranges::next(std::ranges::begin(values), static_cast<std::ptrdiff_t>(c))); });
         stats.distinct[columns[c].label] = static_cast<double>(seen.size());
     }

@@ -32,7 +32,7 @@ QueryView<> clone_query(QueryView<> source, std::span<const QueryView<>> childre
             urd::build_from(concrete, *built, [&](QueryView<>) { return children[child++]; });
             return insert_query(destination, builder, *built);
         },
-        source.get_variant());
+        source.variant());
 }
 }
 

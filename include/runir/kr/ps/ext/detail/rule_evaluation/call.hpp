@@ -28,7 +28,7 @@ public:
     CallRuleEvaluator(RuleView<CallTag> rule, RuleVariantView variant, ProgramView program) :
         m_rule(rule),
         m_variant(variant),
-        m_callee(program.find_module(rule.get_callee()))
+        m_callee(program.find_module(rule.callee()))
     {
     }
 
@@ -39,31 +39,30 @@ public:
 private:
     static bool arguments_match(ModuleView callee, runir::kr::dl::semantics::CallArgumentsView arguments)
     {
-        return arguments.template arguments<runir::kr::dl::ConceptTag>().size() == callee.template get_arguments<runir::kr::dl::ConceptTag>().size()
-               && arguments.template arguments<runir::kr::dl::RoleTag>().size() == callee.template get_arguments<runir::kr::dl::RoleTag>().size()
-               && arguments.template arguments<runir::kr::dl::BooleanTag>().size() == callee.template get_arguments<runir::kr::dl::BooleanTag>().size()
-               && arguments.template arguments<runir::kr::dl::NumericalTag>().size() == callee.template get_arguments<runir::kr::dl::NumericalTag>().size();
+        return arguments.template arguments<runir::kr::dl::ConceptTag>().size() == callee.template arguments<runir::kr::dl::ConceptTag>().size()
+               && arguments.template arguments<runir::kr::dl::RoleTag>().size() == callee.template arguments<runir::kr::dl::RoleTag>().size()
+               && arguments.template arguments<runir::kr::dl::BooleanTag>().size() == callee.template arguments<runir::kr::dl::BooleanTag>().size()
+               && arguments.template arguments<runir::kr::dl::NumericalTag>().size() == callee.template arguments<runir::kr::dl::NumericalTag>().size();
     }
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              urd::ViewOf<ProgramState<Kind>> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     auto evaluate_call_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                  RuleView<CallTag> rule,
                                  State state,
                                  const PlanningState& planning_state) const
     {
         auto result = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::CallArguments>();
-        auto state_context = urd::visit_view(
-            state.get_module_state(),
-            [&](const auto& module_) { return context.environment->make_call_context(planning_state, module_.get_arguments(), module_.get_registers()); });
-        for (const auto& argument : rule.get_arguments())
+        auto state_context = urd::visit_view(state.module_state(),
+                                             [&](const auto& module_)
+                                             { return context.environment->make_call_context(planning_state, module_.arguments(), module_.registers()); });
+        for (const auto& argument : rule.arguments())
             std::visit(
                 [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> feature)
                 {
-                    const auto denotation =
-                        evaluate<Kind>(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()), state_context);
+                    const auto denotation = evaluate<Kind>(std::visit([](auto concrete) { return concrete.feature(); }, feature.variant()), state_context);
                     if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
                         result->concept_arguments.push_back(denotation.index());
                     else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
@@ -83,7 +82,7 @@ public:
              EmitConcept<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
+             tyr::planning::StateBuilderViewConcept<Kind> PlanningState>
     bool
     emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
@@ -99,13 +98,13 @@ public:
         if (!callee || !arguments_match(*callee, arguments))
             return emit(detail::make_step<Kind, Storage>(ProgramOutcome::MALFORMED_CALL, context.storage->retain(state), *context.task_context));
 
-        auto caller = context.storage->save_caller(state, rule.get_target());
+        auto caller = context.storage->save_caller(state, rule.target());
         auto registers = (*context.task_context)->dl_builder.template scratch<runir::kr::dl::semantics::RegisterValues>();
-        registers->concept_values.resize(callee->template get_registers<runir::kr::dl::ConceptTag>().size());
-        registers->role_values.resize(callee->template get_registers<runir::kr::dl::RoleTag>().size());
+        registers->concept_values.resize(callee->template registers<runir::kr::dl::ConceptTag>().size());
+        registers->role_values.resize(callee->template registers<runir::kr::dl::RoleTag>().size());
         auto target = context.storage->store(planning_state,
                                              *callee,
-                                             callee->get_entry_memory_state(),
+                                             callee->entry_memory_state(),
                                              context.storage->registers(*registers),
                                              arguments,
                                              std::optional(caller));

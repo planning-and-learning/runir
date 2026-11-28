@@ -65,7 +65,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
     auto evaluator = runir::kr::database::QueryEvaluator(scratch(), runir::kr::database::compile_plan({ edges }));
     evaluator.evaluate(borrow_all(maximal));
     auto supergraph = Relation(evaluator.get_result().columns());
-    for (size_t i = 0; i < evaluator.get_result().get_rows().size(); ++i)
+    for (size_t i = 0; i < evaluator.get_result().rows().size(); ++i)
         supergraph.insert(values_of(evaluator.get_result().row(i)));
     auto heuristic = HalfDistance {};
     heuristic.columns = sources.columns();
@@ -79,7 +79,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
         evaluator.evaluate(views);
         const auto materialized = evaluator.get_result();
         auto edge_relation = Relation(materialized.columns());
-        for (size_t i = 0; i < materialized.get_rows().size(); ++i)
+        for (size_t i = 0; i < materialized.rows().size(); ++i)
             edge_relation.insert(values_of(materialized.row(i)));
         const auto expected = runir::kr::database::min_distance(borrow(sources), borrow(edge_relation), borrow(targets), plan, result, workspace);
         const auto input = [&](size_t slot) { return views[slot]; };
@@ -94,10 +94,10 @@ void check_sequence(runir::kr::database::QueryView<> edges,
             for (size_t slot = 0; slot < inputs.size(); ++slot)
             {
                 auto& change = changes.emplace_back(Change { Relation(inputs[slot].columns()), Relation(inputs[slot].columns()) });
-                for (const auto& row : borrow(inputs[slot]).get_rows())
+                for (const auto& row : borrow(inputs[slot]).rows())
                     if (!previous[slot].contains(values_of(row)))
                         change.added.insert(values_of(row));
-                for (const auto& row : borrow(previous[slot]).get_rows())
+                for (const auto& row : borrow(previous[slot]).rows())
                     if (!inputs[slot].contains(values_of(row)))
                         change.removed.insert(values_of(row));
                 if (!static_slots.contains(slot) && (!change.added.empty() || !change.removed.empty()))
@@ -109,7 +109,7 @@ void check_sequence(runir::kr::database::QueryView<> edges,
         for (const auto& relation : inputs)
         {
             auto& copy = previous.emplace_back(relation.columns());
-            for (const auto& row : borrow(relation).get_rows())
+            for (const auto& row : borrow(relation).rows())
                 copy.insert(values_of(row));
         }
         heuristic.distances = distances_to(borrow(supergraph), borrow(targets), k);
@@ -500,7 +500,7 @@ TEST(DatabaseIncrementalBoundEvaluation, FailedChangesLeaveTheInputUnchanged)
     added.insert(std::array { ygg::encode_value(static_cast<ygg::uint_t>(0)), ygg::encode_value(static_cast<ygg::uint_t>(2)) });
     EXPECT_THROW(evaluator.update(0, borrow(added), borrow(removed)), std::invalid_argument);
     EXPECT_EQ(evaluator.version(), version);
-    EXPECT_EQ(evaluator.input(0).get_rows().size(), 2);
+    EXPECT_EQ(evaluator.input(0).rows().size(), 2);
     EXPECT_TRUE(evaluator.input(0).contains(std::array { ygg::encode_value(ygg::uint_t(0)), ygg::encode_value(ygg::uint_t(1)) }));
     EXPECT_FALSE(evaluator.input(0).contains(std::array { ygg::encode_value(ygg::uint_t(0)), ygg::encode_value(ygg::uint_t(3)) }));
     EXPECT_EQ(count(), 2);

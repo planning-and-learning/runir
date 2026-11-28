@@ -23,11 +23,11 @@ namespace detail
 /// Whether a selection accepts a row, by its values (a stored row's, or contiguous).
 template<ygg::RowValues R>
 bool query_accepts(QueryView<QuerySelectEqualTag> selection, const R& row)
-{ return field_value(row, selection.get_plan().left_position) == field_value(row, selection.get_plan().right_position); }
+{ return field_value(row, selection.plan().left_position) == field_value(row, selection.plan().right_position); }
 
 template<ygg::RowValues R>
 bool query_accepts(QueryView<QuerySelectValueTag> selection, const R& row)
-{ return field_value(row, selection.get_plan().position) == selection.get_plan().value; }
+{ return field_value(row, selection.plan().position) == selection.plan().value; }
 
 /// Validates each input binding of the plan; inputs must not alias the evaluator's storage.
 template<RelationViewRange R, typename IsInternal>
@@ -38,7 +38,7 @@ void validate_bindings(const QueryPlan& plan, const R& bindings, IsInternal is_i
         const auto query = plan[urd::index<Query<>>(ygg::to_uint_t(i))];
         if (!is<QueryInputTag>(query))
             continue;
-        const auto slot = as<QueryInputTag>(query).get_input_slot();
+        const auto slot = as<QueryInputTag>(query).input_slot();
         if (slot >= std::ranges::size(bindings))
             throw std::invalid_argument("Query: missing input binding.");
         if (is_internal(bindings[slot]))
@@ -58,22 +58,22 @@ template<StatelessQueryTag Tag, RelationViewRange R, std::invocable<QueryView<>>
 void evaluate_stateless(QueryView<Tag> operation, const R& bindings, GetResult result, ygg::FreeScratchRelation& out)
 {
     if constexpr (std::same_as<Tag, QueryInputTag>)
-        database::assign(out, bindings[operation.get_input_slot()]);
+        database::assign(out, bindings[operation.input_slot()]);
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
         out.clear();
     else if constexpr (std::same_as<Tag, QueryRenameTag>)
     {
-        database::assign(out, result(operation.get_operand()));
+        database::assign(out, result(operation.operand()));
         out.relation.rename(out.rows, operation.columns());
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
-        database::select_equal_columns(result(operation.get_operand()), operation.get_plan(), out);
+        database::select_equal_columns(result(operation.operand()), operation.plan(), out);
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
-        database::select_equal_value(result(operation.get_operand()), operation.get_plan(), out);
+        database::select_equal_value(result(operation.operand()), operation.plan(), out);
     else if constexpr (std::same_as<Tag, QueryUnionTag>)
-        database::union_(result(operation.get_left_operand()), result(operation.get_right_operand()), operation.get_plan(), out);
+        database::union_(result(operation.left_operand()), result(operation.right_operand()), operation.plan(), out);
     else
-        database::difference(result(operation.get_left_operand()), result(operation.get_right_operand()), operation.get_plan(), out);
+        database::difference(result(operation.left_operand()), result(operation.right_operand()), operation.plan(), out);
 }
 }  // namespace detail
 
@@ -96,11 +96,11 @@ class QueryEvaluator
                 []<typename Tag>(QueryView<Tag> operation) -> State
                 {
                     if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
-                        return GenericJoinWorkspace(operation.get_plan());
+                        return GenericJoinWorkspace(operation.plan());
                     else
                         return std::monostate {};
                 },
-                query.get_variant()))
+                query.variant()))
         {
         }
     };
@@ -139,22 +139,22 @@ public:
                     if constexpr (detail::StatelessQueryTag<Tag>)
                         detail::evaluate_stateless(operation, bindings, child, out);
                     else if constexpr (std::same_as<Tag, QueryJoinTag>)
-                        database::join(child(operation.get_left_operand()), child(operation.get_right_operand()), operation.get_plan(), out, m_workspace);
+                        database::join(child(operation.left_operand()), child(operation.right_operand()), operation.plan(), out, m_workspace);
                     else if constexpr (std::same_as<Tag, QuerySemijoinTag>)
-                        database::semijoin(child(operation.get_left_operand()), child(operation.get_right_operand()), operation.get_plan(), out, m_workspace);
+                        database::semijoin(child(operation.left_operand()), child(operation.right_operand()), operation.plan(), out, m_workspace);
                     else if constexpr (std::same_as<Tag, QueryAntijoinTag>)
-                        database::antijoin(child(operation.get_left_operand()), child(operation.get_right_operand()), operation.get_plan(), out, m_workspace);
+                        database::antijoin(child(operation.left_operand()), child(operation.right_operand()), operation.plan(), out, m_workspace);
                     else if constexpr (std::same_as<Tag, QueryProjectTag>)
-                        database::project(child(operation.get_operand()), operation.get_plan(), out, m_workspace);
+                        database::project(child(operation.operand()), operation.plan(), out, m_workspace);
                     else
                     {
                         static_assert(std::same_as<Tag, QueryGenericJoinTag>);
                         const auto inputs =
-                            operation.get_inputs() | std::views::transform([&](QueryView<> input) { return m_nodes[input.index()].result->view(); });
-                        generic_join(inputs, operation.get_plan(), out, std::get<GenericJoinWorkspace>(state.state));
+                            operation.inputs() | std::views::transform([&](QueryView<> input) { return m_nodes[input.index()].result->view(); });
+                        generic_join(inputs, operation.plan(), out, std::get<GenericJoinWorkspace>(state.state));
                     }
                 },
-                m_plan[id].get_variant());
+                m_plan[id].variant());
         }
         m_ready = true;
     }

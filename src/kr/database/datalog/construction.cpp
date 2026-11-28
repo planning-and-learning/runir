@@ -17,7 +17,7 @@ namespace
 {
 void add_variables(AtomView atom, urd::Store<urd::sequence<ygg::uint_t>>& variables)
 {
-    for (const auto term : atom.get_terms())
+    for (const auto term : atom.terms())
         if (term.is_variable() && std::ranges::find(variables, term.value) == variables.end())
             variables.push_back(term.value);
 }
@@ -45,7 +45,7 @@ void require_bound(const Atoms& atoms, std::span<const Comparison> comparisons, 
             throw std::invalid_argument(std::string("Datalog: a variable of ") + what + " is not bound by a positive atom.");
     };
     for (const auto atom : atoms)
-        for (const auto term : atom.get_terms())
+        for (const auto term : atom.terms())
             check(term);
     for (const auto& comparison : comparisons)
     {
@@ -63,7 +63,7 @@ void prepare_for_insert(const DatalogRepository&, urd::data<Relation>& data)
 
 void prepare_for_insert(const DatalogRepository& repository, urd::data<Atom>& data)
 {
-    if (repository.view(data.relation).get_arity() != data.terms.size())
+    if (repository.view(data.relation).arity() != data.terms.size())
         throw std::invalid_argument("Datalog: an atom's terms do not match its relation's arity.");
 }
 
@@ -85,14 +85,14 @@ void prepare_for_insert(const DatalogRepository& repository, urd::data<Aggregate
 void prepare_for_insert(const DatalogRepository& repository, urd::data<Rule>& data)
 {
     const auto head = repository.view(data.head);
-    if (head.get_relation().get_input())
+    if (head.relation().input())
         throw std::invalid_argument("Datalog: a rule's head is an input relation.");
     auto head_variables = urd::Store<urd::sequence<ygg::uint_t>>();
-    const auto terms = head.get_terms();
+    const auto terms = head.terms();
     for (size_t i = 0; i < terms.size(); ++i)
     {
         // A weighted head's weight may be a constant, the weight of a base case.
-        if (!terms[i].is_variable() && head.get_relation().get_weighted() && i + 1 == terms.size())
+        if (!terms[i].is_variable() && head.relation().weighted() && i + 1 == terms.size())
             continue;
         if (!terms[i].is_variable() || std::ranges::find(head_variables, terms[i].value) != head_variables.end())
             throw std::invalid_argument("Datalog: a rule's head must have distinct variables.");
@@ -103,9 +103,9 @@ void prepare_for_insert(const DatalogRepository& repository, urd::data<Rule>& da
         add_variables(atom, bound);
     for (const auto aggregate : urd::resolve(data.aggregates, repository))
     {
-        if (std::ranges::find(bound, aggregate.get_result()) != bound.end())
+        if (std::ranges::find(bound, aggregate.result()) != bound.end())
             throw std::invalid_argument("Datalog: an aggregate's result is a variable of the rule's atoms or another result.");
-        bound.push_back(aggregate.get_result());
+        bound.push_back(aggregate.result());
     }
     bind_arithmetic({ data.arithmetic.data(), data.arithmetic.size() }, bound, "a rule");
     require_bound(std::array { head }, {}, bound, "a rule's head");

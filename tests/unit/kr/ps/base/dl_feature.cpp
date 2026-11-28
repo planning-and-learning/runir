@@ -33,7 +33,7 @@ concept FeatureContract = IndexedDataView<Entity> && std::same_as<decltype(urd::
                                  requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>,
                                                        decltype(urd::data<Entity>::variant)>;
                                  view.index();
-                                 view.get_variant();
+                                 view.variant();
                              };
 
 template<typename Entity, typename Expression>
@@ -50,8 +50,8 @@ concept ConcreteFeatureContract =
            requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>, urd::index<Expression>>;
            requires std::same_as<std::remove_cvref_t<std::tuple_element_t<1, urd::detail::identity_t<urd::data<Entity>>>>, urd::flat_string>;
            view.index();
-           view.get_feature();
-           view.get_symbol();
+           view.feature();
+           view.symbol();
        };
 
 using BooleanFeature = kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>;

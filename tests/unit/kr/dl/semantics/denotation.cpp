@@ -49,7 +49,7 @@ consteval bool scalar_denotation()
                     const urd::index_view<T, kr::dl::semantics::DenotationRepository>& view) {
         data.value;
         builder.get();
-        view.get_value();
+        view.value();
     };
 }
 
@@ -85,10 +85,10 @@ static_assert(requires(urd::data<Role>& data,
     builder.get(object);
     builder.storage_bits();
     view.value(object);
-    view.get_num_objects();
-    view.get_values().bits().storage_bits();
-    view.get_values().bits().storage_bits().any();
-    view.get_values().bits().storage_bits().count();
+    view.num_objects();
+    view.values().bits().storage_bits();
+    view.values().bits().storage_bits().any();
+    view.values().bits().storage_bits().count();
 });
 // A builder's reads are its view's: it has none of its own.
 template<typename B>
@@ -144,26 +144,26 @@ TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
 
     auto boolean_data = urd::data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(true);
     auto numerical_data = urd::data<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(9);
-    EXPECT_TRUE(repository.insert(boolean_data).first.get_value());
-    EXPECT_EQ(repository.insert(numerical_data).first.get_value(), 9);
+    EXPECT_TRUE(repository.insert(boolean_data).first.value());
+    EXPECT_EQ(repository.insert(numerical_data).first.value(), 9);
 }
 
 TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
 {
     auto words = Words();
     auto builder = words.make<Role>(3);
-    EXPECT_FALSE(words.view(builder).get_values().bits().storage_bits().any());
-    EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().count(), 0);
+    EXPECT_FALSE(words.view(builder).values().bits().storage_bits().any());
+    EXPECT_EQ(words.view(builder).values().bits().storage_bits().count(), 0);
 
     builder.get(urd::index<tyr::formalism::Object>(0)).set(1);
     builder.get(urd::index<tyr::formalism::Object>(2)).set(0);
-    EXPECT_TRUE(words.view(builder).get_values().bits().storage_bits().any());
-    EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().count(), 2);
+    EXPECT_TRUE(words.view(builder).values().bits().storage_bits().any());
+    EXPECT_EQ(words.view(builder).values().bits().storage_bits().count(), 2);
 
     const auto view = words.insert(builder);
 
-    EXPECT_TRUE(view.get_values().bits().storage_bits().any());
-    EXPECT_EQ(view.get_values().bits().storage_bits().count(), 2);
+    EXPECT_TRUE(view.values().bits().storage_bits().any());
+    EXPECT_EQ(view.values().bits().storage_bits().count(), 2);
 }
 
 TEST(RunirKrDlSemanticsDenotation, ConceptMutationsClearIdentityAndRetainStorage)
@@ -174,15 +174,15 @@ TEST(RunirKrDlSemanticsDenotation, ConceptMutationsClearIdentityAndRetainStorage
     auto words = Words();
     auto builder = words.make<Concept>(size);
     const auto* storage = own_words(builder).data();
-    EXPECT_FALSE(words.view(builder).get_values().bits().storage_bits().any());
-    EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().count(), 0);
+    EXPECT_FALSE(words.view(builder).values().bits().storage_bits().any());
+    EXPECT_EQ(words.view(builder).values().bits().storage_bits().count(), 0);
     for (const auto& [present, changed] : { std::pair { true, true }, { true, false }, { false, true }, { false, false } })
     {
         builder.index = urd::index<Concept>(7);
         EXPECT_EQ(builder.set(object, present), changed);
         EXPECT_EQ(words.view(builder).contains(object), present);
-        EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().any(), present);
-        EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().count(), present ? 1 : 0);
+        EXPECT_EQ(words.view(builder).values().bits().storage_bits().any(), present);
+        EXPECT_EQ(words.view(builder).values().bits().storage_bits().count(), present ? 1 : 0);
         EXPECT_EQ(builder.index, urd::index<Concept>());
         EXPECT_EQ(own_words(builder).data(), storage);
     }
@@ -191,12 +191,12 @@ TEST(RunirKrDlSemanticsDenotation, ConceptMutationsClearIdentityAndRetainStorage
     builder.index = urd::index<Concept>(7);
     builder.flip();
     EXPECT_EQ(builder.index, urd::index<Concept>());
-    EXPECT_TRUE(words.view(builder).get_values().bits().storage_bits().any());
-    EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().count(), size - 2);
+    EXPECT_TRUE(words.view(builder).values().bits().storage_bits().any());
+    EXPECT_EQ(words.view(builder).values().bits().storage_bits().count(), size - 2);
     for (ygg::uint_t i = 0; i < size; ++i)
         EXPECT_EQ(words.view(builder).contains(urd::index<tyr::formalism::Object>(i)), i != 0 && i != digits);
     EXPECT_TRUE(builder.get().trailing_bits_zero());
-    EXPECT_EQ(builder.storage_bits().count(), words.view(builder).get_values().bits().storage_bits().count());
+    EXPECT_EQ(builder.storage_bits().count(), words.view(builder).values().bits().storage_bits().count());
     for (size_t i = size; i < builder.storage_bits().size(); ++i)
         EXPECT_FALSE(builder.storage_bits().test(i));
     EXPECT_EQ(own_words(builder).data(), storage);
@@ -216,8 +216,8 @@ TEST(RunirKrDlSemanticsDenotation, RoleMutationsClearIdentityAndPreserveRowPaddi
         builder.index = urd::index<Role>(7);
         EXPECT_EQ(builder.set(source, target, present), changed);
         EXPECT_EQ(words.view(builder).contains(source, target), present);
-        EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().any(), present);
-        EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().count(), present ? 1 : 0);
+        EXPECT_EQ(words.view(builder).values().bits().storage_bits().any(), present);
+        EXPECT_EQ(words.view(builder).values().bits().storage_bits().count(), present ? 1 : 0);
         EXPECT_EQ(builder.index, urd::index<Role>());
         EXPECT_EQ(own_words(builder).data(), storage);
     }
@@ -228,7 +228,7 @@ TEST(RunirKrDlSemanticsDenotation, RoleMutationsClearIdentityAndPreserveRowPaddi
     builder.index = urd::index<Role>(7);
     kr::dl::semantics::assign_row(builder, source, words.view(row).value());
     EXPECT_EQ(builder.index, urd::index<Role>());
-    EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().count(), 3);
+    EXPECT_EQ(words.view(builder).values().bits().storage_bits().count(), 3);
     EXPECT_EQ(builder.get(source), words.view(row).value());
     EXPECT_TRUE(words.view(builder).contains(urd::index<tyr::formalism::Object>(0), source));
     EXPECT_TRUE(builder.get(source).trailing_bits_zero());
@@ -237,8 +237,8 @@ TEST(RunirKrDlSemanticsDenotation, RoleMutationsClearIdentityAndPreserveRowPaddi
     builder.index = urd::index<Role>(7);
     builder.flip();
     EXPECT_EQ(builder.index, urd::index<Role>());
-    EXPECT_TRUE(words.view(builder).get_values().bits().storage_bits().any());
-    EXPECT_EQ(words.view(builder).get_values().bits().storage_bits().count(), static_cast<size_t>(size) * size - 3);
+    EXPECT_TRUE(words.view(builder).values().bits().storage_bits().any());
+    EXPECT_EQ(words.view(builder).values().bits().storage_bits().count(), static_cast<size_t>(size) * size - 3);
     for (ygg::uint_t i = 0; i < size; ++i)
     {
         EXPECT_TRUE(builder.get(urd::index<tyr::formalism::Object>(i)).trailing_bits_zero());
@@ -456,8 +456,8 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
         auto lhs = words.make<Role>(size);
         auto rhs = words.make<Role>(size);
         auto result = words.make<Role>(size);
-        EXPECT_FALSE(words.view(result).get_values().bits().storage_bits().any());
-        EXPECT_EQ(words.view(result).get_values().bits().storage_bits().count(), 0);
+        EXPECT_FALSE(words.view(result).values().bits().storage_bits().any());
+        EXPECT_EQ(words.view(result).values().bits().storage_bits().count(), 0);
         EXPECT_EQ(result.storage_bits().size(), own_words(result).size() * urd::bitset_span<ygg::uint_t>::Digits);
         const auto* storage = own_words(result).data();
         for (ygg::uint_t source = 0; source < size; ++source)
@@ -469,11 +469,11 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
 
         for (const auto intersection : { false, true })
         {
-            result.storage_bits().copy_from(words.view(lhs).get_values().bits().storage_bits());
+            result.storage_bits().copy_from(words.view(lhs).values().bits().storage_bits());
             if (intersection)
-                result.storage_bits() &= words.view(rhs).get_values().bits().storage_bits();
+                result.storage_bits() &= words.view(rhs).values().bits().storage_bits();
             else
-                result.storage_bits() |= words.view(rhs).get_values().bits().storage_bits();
+                result.storage_bits() |= words.view(rhs).values().bits().storage_bits();
             EXPECT_EQ(own_words(result).data(), storage);
             auto count = size_t { 0 };
             for (ygg::uint_t source = 0; source < size; ++source)
@@ -488,12 +488,12 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
                     count += expected;
                 }
             }
-            EXPECT_EQ(words.view(result).get_values().bits().storage_bits().count(), count);
-            EXPECT_EQ(words.view(result).get_values().bits().storage_bits().any(), count != 0);
+            EXPECT_EQ(words.view(result).values().bits().storage_bits().count(), count);
+            EXPECT_EQ(words.view(result).values().bits().storage_bits().any(), count != 0);
             const auto view = words.insert(result);
-            EXPECT_EQ(view.get_values().bits().storage_bits(), words.view(result).get_values().bits().storage_bits());
-            EXPECT_EQ(view.get_values().bits().storage_bits().count(), count);
-            EXPECT_EQ(view.get_values().bits().storage_bits().any(), count != 0);
+            EXPECT_EQ(view.values().bits().storage_bits(), words.view(result).values().bits().storage_bits());
+            EXPECT_EQ(view.values().bits().storage_bits().count(), count);
+            EXPECT_EQ(view.values().bits().storage_bits().any(), count != 0);
             EXPECT_EQ(std::ranges::distance(view.indices()), count);
             EXPECT_EQ(std::ranges::distance(urd::resolve(result, repository).indices()), count);
             auto iterated = size_t { 0 };

@@ -29,8 +29,8 @@ template<ygg::RelationViewConcept<ygg::Schema> V>
 void insert_rows(const V& input, ygg::FreeScratchRelation& rows, std::span<const ColumnSlice> keys, RowsByKey& index)
 {
     if (!keys.empty())
-        index.reserve(rows.view().get_rows().size() + input.get_rows().size());
-    for (const auto& held : input.get_rows())
+        index.reserve(rows.view().rows().size() + input.rows().size());
+    for (const auto& held : input.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          {
@@ -45,7 +45,7 @@ void insert_rows(const V& input, ygg::FreeScratchRelation& rows, std::span<const
 template<ygg::RelationViewConcept<ygg::Schema> V>
 void erase_rows(const V& input, ygg::FreeScratchRelation& rows, std::span<const ColumnSlice> keys, RowsByKey& index)
 {
-    for (const auto& held : input.get_rows())
+    for (const auto& held : input.rows())
         ygg::with_values(held,
                          [&](const auto& values)
                          {
@@ -145,7 +145,7 @@ void JoinEvaluator::initialize(const L& left_operand, const R& right_operand, Wo
     // Both indexes are ready, so probe the smaller input.
     const auto left = m_left_operand->view();
     const auto right = m_right_operand->view();
-    join(left, right, left.get_rows().size() >= right.get_rows().size(), *m_result, workspace);
+    join(left, right, left.rows().size() >= right.rows().size(), *m_result, workspace);
     m_initialized = true;
 }
 
